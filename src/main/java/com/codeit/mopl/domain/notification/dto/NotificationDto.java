@@ -5,33 +5,25 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
+public record NotificationDto(
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class NotificationDto {
+    @NotNull
+    UUID id,
 
-  @NotNull
-  private UUID id;
+    @NotNull
+    Instant createdAt,
 
-  @NotNull
-  private Instant createdAt;
+    @NotNull
+    UUID receiverId,
 
-  @NotNull
-  private UUID receiverId;
+    @NotBlank
+    String title,
 
-  @NotBlank
-  private String title;
+    @NotBlank
+    String content,
 
-  @NotBlank
-  private String content;
+    @NotNull
+    Level level
 
-  @NotNull
-  private Level level;
-}
+) {}

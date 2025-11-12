@@ -1,11 +1,15 @@
 package com.codeit.mopl.domain.notification.entity;
 
 import com.codeit.mopl.domain.base.DeletableEntity;
+import com.codeit.mopl.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.util.UUID;
 import lombok.Getter;
@@ -21,9 +25,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 public class Notification extends DeletableEntity {
 
-  // 유저의 id를 외래키로 사용하도록 추후 변경해야함
-  @Column(nullable = false, columnDefinition = "uuid")
-  private UUID receiverId;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_id", nullable = false, columnDefinition = "uuid")
+  private User user;
 
   @Column(nullable = false)
   private String title;

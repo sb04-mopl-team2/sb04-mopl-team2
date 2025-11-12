@@ -1,7 +1,6 @@
 package com.codeit.mopl.domain.playlist.entity;
 
 import com.codeit.mopl.domain.base.UpdatableEntity;
-import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.playlist.playlistitem.PlaylistItem;
 import com.codeit.mopl.domain.user.entity.User;
 import jakarta.persistence.*;

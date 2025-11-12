@@ -2,15 +2,16 @@ package com.codeit.mopl.domain.user.dto.response;
 
 import com.codeit.mopl.domain.user.entity.Role;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record UserDto(
-        @NotBlank
+        @NotNull
         UUID id,
 
-        @NotBlank
+        @NotNull
         LocalDateTime createdAt,
 
         @NotBlank
@@ -21,7 +22,7 @@ public record UserDto(
 
         String profileImageUrl,
 
-        @NotBlank
+        @NotNull
         Role role,
 
         Boolean locked

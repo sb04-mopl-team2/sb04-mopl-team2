@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public record CursorResponseNotificationDto(
 
-    @NotEmpty
+    @NotNull
     List<NotificationDto> data,
 
     String nextCursor,

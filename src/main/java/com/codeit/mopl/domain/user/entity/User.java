@@ -31,7 +31,7 @@ public class User extends UpdatableEntity {
     @Column
     private boolean locked;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "BIGINT DEFAULT 0")
     private long followerCount;
 
     public User(String email, String password, String name, String profileImageUrl) {

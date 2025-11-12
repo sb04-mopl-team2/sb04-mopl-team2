@@ -5,34 +5,26 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class CursorResponseNotificationDto {
+public record CursorResponseNotificationDto(
 
-  @NotEmpty
-  private List<NotificationDto> data;
+    @NotEmpty
+    List<NotificationDto> data,
 
-  private String nextCursor;
+    String nextCursor,
 
-  private UUID nextIdAfter;
+    UUID nextIdAfter,
 
-  @NotNull
-  private Boolean hasNext;
+    @NotNull
+    Boolean hasNext,
 
-  @NotNull
-  private Long totalCount;
+    @NotNull
+    Long totalCount,
 
-  @NotNull
-  private String sortBy;
+    @NotNull
+    String sortBy,
 
-  @NotNull
-  private SortDirection sortDirection;
+    @NotNull
+    SortDirection sortDirection
 
-}
+) {}

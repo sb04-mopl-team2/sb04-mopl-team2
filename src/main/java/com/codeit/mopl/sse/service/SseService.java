@@ -116,6 +116,7 @@ public class SseService {
 
       for (SseEmitter emitter : emitters) {
         if (!ping(emitter)) {
+          emitter.complete();
           emitterRepository.removeEmitter(receiverId, emitter);
         }
       }

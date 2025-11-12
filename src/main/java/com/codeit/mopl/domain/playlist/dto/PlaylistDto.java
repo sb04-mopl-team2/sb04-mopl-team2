@@ -9,13 +9,13 @@ import java.util.UUID;
 
 public record PlaylistDto (
         UUID id,
-        UserSummaryDto owner,
+        UserSummary owner,
         String title,
         String description,
         LocalDateTime updatedAt,
         long subscriberCount,
         boolean subscribedByMe,
-        List<ContentSummaryDto> contents
+        List<ContentSummary> contents
 
         //아직 생성되지 않은 dto 가 있어 추후에 따로 확인하여 import할 예정입니다.
 )

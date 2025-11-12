@@ -31,8 +31,13 @@ public class EmitterRepository {
   }
 
   public void removeEmitter(UUID receiverId, SseEmitter emitter) {
-    data.computeIfAbsent(receiverId, id -> new CopyOnWriteArrayList<>())
-        .remove(emitter);
+    List<SseEmitter> emitters = data.get(receiverId);
+    if (emitters != null) {
+      emitters.remove(emitter);
+      if (emitters.isEmpty()) {
+        data.remove(receiverId);
+      }
+    }
   }
 
   public SseMessage addNewEvent(UUID receiverId, String eventName, Object eventData) {

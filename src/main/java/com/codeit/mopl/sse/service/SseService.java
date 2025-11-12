@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties.Sse;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -113,17 +114,10 @@ public class SseService {
         continue;
       }
 
-      Iterator<SseEmitter> it = emitters.iterator();
-      while (it.hasNext()) {
-        SseEmitter emitter = it.next();
+      for (SseEmitter emitter : emitters) {
         if (!ping(emitter)) {
-          it.remove();
-          log.debug("[SSE CLEANUP] removed closed connection. receiverId={}", receiverId);
+          emitterRepository.removeEmitter(receiverId, emitter);
         }
-      }
-
-      if (emitters.isEmpty()) {
-        emitterRepository.getData().remove(receiverId);
       }
     }
 

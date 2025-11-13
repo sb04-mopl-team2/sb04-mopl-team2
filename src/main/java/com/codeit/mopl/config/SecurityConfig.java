@@ -7,12 +7,14 @@ import com.codeit.mopl.security.jwt.JwtRegistry;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.filter.JwtAuthenticationFilter;
 import com.codeit.mopl.security.jwt.handler.JwtLoginSuccessHandler;
+import com.codeit.mopl.security.jwt.handler.JwtLogoutHandler;
 import com.codeit.mopl.security.jwt.handler.LoginFailureHandler;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.Customizer;
@@ -26,6 +28,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.*;
 import org.springframework.util.StringUtils;
 
@@ -40,7 +43,7 @@ public class SecurityConfig {
                                            UserDetailsService customUserDetailsService,
                                            JwtRegistry jwtRegistry,
                                            JwtLoginSuccessHandler jwtLoginSuccessHandler,
-                                           LoginFailureHandler loginFailureHandler) throws Exception {
+                                           LoginFailureHandler loginFailureHandler, JwtLogoutHandler jwtLogoutHandler) throws Exception {
         http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
@@ -54,6 +57,11 @@ public class SecurityConfig {
                             .passwordParameter("password")
                             .successHandler(jwtLoginSuccessHandler)
                             .failureHandler(loginFailureHandler)
+                )
+                .logout(logout ->
+                        logout.logoutUrl("/api/auth/sign-out")
+                                .addLogoutHandler(jwtLogoutHandler)
+                                .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
                 )
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(sessionManagement ->

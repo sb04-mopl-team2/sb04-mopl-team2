@@ -7,8 +7,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ContentType {
   MOVIE("movie"),
-  TV("tv"),
-  SPORTS("sports");
+  TV("tvSeries"),
+  SPORT("sport");
 
   private final String type;
+
+  public static ContentType fromType(String type) {
+    for (ContentType ct : values()) {
+      if (ct.type.equals(type)) {
+        return ct;
+      }
+    }
+    throw new IllegalArgumentException("유효하지 않은 콘텐츠 타입입니다. 타입 : " + type);
+  }
 }

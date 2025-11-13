@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
   @ExceptionHandler(MoplException.class)
-  public ResponseEntity<ErrorResponse> handleMoNewException(MoplException e) {
+  public ResponseEntity<ErrorResponse> handleMoplException(MoplException e) {
     log.error(e.getMessage(), e);
 
     ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode().name(), e.getErrorCode().getMessage(), e.getDetails(), e.getTimestamp());

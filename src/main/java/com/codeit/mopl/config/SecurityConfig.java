@@ -6,6 +6,8 @@ import com.codeit.mopl.security.CustomUserDetailsService;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.filter.JwtAuthenticationFilter;
+import com.codeit.mopl.security.jwt.handler.JwtLoginSuccessHandler;
+import com.codeit.mopl.security.jwt.handler.LoginFailureHandler;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -36,16 +38,23 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JwtTokenProvider jwtTokenProvider,
                                            UserDetailsService customUserDetailsService,
-                                           JwtRegistry jwtRegistry) throws Exception {
+                                           JwtRegistry jwtRegistry,
+                                           JwtLoginSuccessHandler jwtLoginSuccessHandler,
+                                           LoginFailureHandler loginFailureHandler) throws Exception {
         http
-//                .csrf(csrf -> csrf
-//                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-//                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
-//                )
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
+                )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService, jwtRegistry),
                         UsernamePasswordAuthenticationFilter.class)
-                .formLogin(AbstractHttpConfigurer::disable)
+                .formLogin(login ->
+                    login.loginProcessingUrl("/api/auth/sign-in")
+                            .usernameParameter("username")
+                            .passwordParameter("password")
+                            .successHandler(jwtLoginSuccessHandler)
+                            .failureHandler(loginFailureHandler)
+                )
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)

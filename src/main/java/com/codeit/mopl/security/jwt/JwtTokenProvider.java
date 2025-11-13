@@ -44,6 +44,7 @@ public class JwtTokenProvider {
                     .claim("type", "access")
                     .expirationTime(expiration)
                     .issueTime(new Date())
+                    .jwtID(UUID.randomUUID().toString())
                     .build();
 
             SignedJWT signedJWT = new SignedJWT(
@@ -72,6 +73,7 @@ public class JwtTokenProvider {
                     .claim("type", "refresh")
                     .expirationTime(expiration)
                     .issueTime(new Date())
+                    .jwtID(UUID.randomUUID().toString())
                     .build();
 
             SignedJWT signedJWT = new SignedJWT(

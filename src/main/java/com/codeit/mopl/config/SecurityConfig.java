@@ -53,8 +53,6 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class)
                 .formLogin(login ->
                     login.loginProcessingUrl("/api/auth/sign-in")
-                            .usernameParameter("username")
-                            .passwordParameter("password")
                             .successHandler(jwtLoginSuccessHandler)
                             .failureHandler(loginFailureHandler)
                 )
@@ -73,19 +71,20 @@ public class SecurityConfig {
                                 .accessDeniedHandler(new AccessDeniedHandlerImpl())
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        .anyRequest().permitAll()
-//                        .requestMatchers("/api/auth/csrf-token").permitAll()
-//                        .requestMatchers("/api/auth/sign-in").permitAll()
-//                        .requestMatchers("/ws/**").permitAll()
-//                        .requestMatchers("*", "/actuator/**", "/swagger-resource/**"
-//                                , "/swagger-ui.html", "/swagger-ui/**", "/v3/**",
-//                                "/assets/**").permitAll()
-//                        .requestMatchers(HttpMethod.GET, "/api/users/*").hasRole("ADMIN")
-//                        .requestMatchers(HttpMethod.POST, "/api/users/{userId}/role", "/api/users/{userId}/locked",
-//                                "/api/contents/").hasRole("ADMIN")
-//                        .requestMatchers(HttpMethod.DELETE, "/api/contents/{contentId}").hasRole("ADMIN")
-//                        .requestMatchers(HttpMethod.PATCH, "/api/contents/{contentId}").hasRole("ADMIN")
-//                        .anyRequest().authenticated()
+                        .requestMatchers("/api/auth/csrf-token").permitAll()  // csrf-token 조회
+                        .requestMatchers("/api/auth/sign-in").permitAll()  // 로그인
+                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()  // 회원가입
+                        .requestMatchers("/ws/**").permitAll()  // 웹소켓
+                        .requestMatchers("*", "/actuator/**", "/swagger-resource/**"
+                                , "/swagger-ui.html", "/swagger-ui/**", "/v3/**",
+                                "/assets/**").permitAll()
+                        // ADMIN 권한이 있는 경우에만 접근 가능
+                        .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")  // 전체 회원 목록 조회
+                        .requestMatchers(HttpMethod.POST, "/api/users/{userId}/role", "/api/users/{userId}/locked",
+                                "/api/contents/").hasRole("ADMIN")  // 회원 권한 변경, 회원 잠금, 콘텐츠 생성
+                        .requestMatchers(HttpMethod.DELETE, "/api/contents/{contentId}").hasRole("ADMIN")  // 콘텐츠 삭제
+                        .requestMatchers(HttpMethod.PATCH, "/api/contents/{contentId}").hasRole("ADMIN")  // 콘텐츠 수정
+                        .anyRequest().authenticated()
                 );
         return http.build();
     }

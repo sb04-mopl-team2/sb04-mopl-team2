@@ -1,15 +1,10 @@
 package com.codeit.mopl.domain.watchingsession.controller;
 
 import com.codeit.mopl.domain.user.dto.response.UserDto;
-import com.codeit.mopl.domain.user.entity.User;
-import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.watchingsession.dto.ContentChatDto;
 import com.codeit.mopl.domain.watchingsession.entity.ContentChatSendRequest;
 import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
-import com.codeit.mopl.domain.watchingsession.entity.WatchingSessionChange;
-import com.codeit.mopl.exception.user.ErrorCode;
 import com.codeit.mopl.security.CustomUserDetails;
-import com.codeit.mopl.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -29,7 +24,7 @@ public class ChatController {
 
   private final SimpMessagingTemplate messagingTemplate;
 
-  @MessageMapping("/contents/{contentId}/chat") // adds /pub
+  @MessageMapping("/contents/{contentId}/chat") // adds /pub, client -> server
   public void sendChat(@DestinationVariable String contentId,
       @Payload ContentChatSendRequest contentChatSendRequest,
       @AuthenticationPrincipal CustomUserDetails principal

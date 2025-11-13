@@ -56,17 +56,17 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(authorize -> authorize
                         .anyRequest().permitAll()
-                        .requestMatchers("/api/auth/csrf-token").permitAll()
-                        .requestMatchers("/api/auth/sign-in").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("*", "/actuator/**", "/swagger-resource/**"
-                                , "/swagger-ui.html", "/swagger-ui/**", "/v3/**",
-                                "/assets/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/users/*").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/users/{userId}/role", "/api/users/{userId}/locked",
-                                "/api/contents/").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/contents/{contentId}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/contents/{contentId}").hasRole("ADMIN")
+//                        .requestMatchers("/api/auth/csrf-token").permitAll()
+//                        .requestMatchers("/api/auth/sign-in").permitAll()
+//                        .requestMatchers("/ws/**").permitAll()
+//                        .requestMatchers("*", "/actuator/**", "/swagger-resource/**"
+//                                , "/swagger-ui.html", "/swagger-ui/**", "/v3/**",
+//                                "/assets/**").permitAll()
+//                        .requestMatchers(HttpMethod.GET, "/api/users/*").hasRole("ADMIN")
+//                        .requestMatchers(HttpMethod.POST, "/api/users/{userId}/role", "/api/users/{userId}/locked",
+//                                "/api/contents/").hasRole("ADMIN")
+//                        .requestMatchers(HttpMethod.DELETE, "/api/contents/{contentId}").hasRole("ADMIN")
+//                        .requestMatchers(HttpMethod.PATCH, "/api/contents/{contentId}").hasRole("ADMIN")
 //                        .anyRequest().authenticated()
                 );
         return http.build();

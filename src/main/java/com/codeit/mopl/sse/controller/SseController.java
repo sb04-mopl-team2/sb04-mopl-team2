@@ -22,7 +22,7 @@ public class SseController {
   @GetMapping(value = "/api/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   public SseEmitter connect(
       @AuthenticationPrincipal UserDetails user,
-      @RequestParam("LastEventId") UUID lastEventId
+      @RequestParam(value = "LastEventId", required = false) UUID lastEventId
   ) {
     // 인증 안 된 경우 방어
     if (user == null) {

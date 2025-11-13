@@ -6,14 +6,18 @@ import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
+import com.codeit.mopl.domain.notification.exception.NotificationNotAuthentication;
+import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
 import com.codeit.mopl.domain.notification.repository.RepositoryNotificationRepository;
 import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
+import java.lang.reflect.Executable;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,15 +25,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.not;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * NotificationService#getNotifications 단위 테스트
- */
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
 
@@ -58,7 +61,6 @@ class NotificationServiceTest {
     this.sortDirection = SortDirection.DESCENDING;
     this.sortBy = SortBy.createdAt;
   }
-
 
   @Test
   @DisplayName("알림이 하나도 없으면 빈 응답과 기본 sort 설정을 반환한다")
@@ -125,8 +127,6 @@ class NotificationServiceTest {
   @DisplayName("알림 개수가 limit+1 이면 hasNext=true, nextCursor/nextIdAfter가 설정된다")
   void getNotifications_whenSizeGreaterThanLimit_shouldHaveNextAndSetCursor() {
     // given
-
-    // limit+1 = 3개 생성
     Notification n1 = createNotification("테스트 1", LocalDateTime.now().minusMinutes(4));
     Notification n2 = createNotification("테스트 2", LocalDateTime.now().minusMinutes(3));
     Notification n3 = createNotification("테스트 3", LocalDateTime.now().minusMinutes(2));
@@ -151,10 +151,7 @@ class NotificationServiceTest {
     );
 
     // then
-    // data는 limit 개수만 남아야 함
     assertThat(result.data()).hasSize(limit);
-
-    // nextCursor / nextIdAfter 는 limit-1 인덱스의 createdAt / id
     assertThat(result.nextCursor()).isEqualTo(n2.getCreatedAt().toString());
     assertThat(result.hasNext()).isTrue();
     assertThat(result.totalCount()).isEqualTo(totalCount);
@@ -164,11 +161,81 @@ class NotificationServiceTest {
     verify(notificationRepository).countByUserIdAndStatus(userId, Status.UNREAD);
   }
 
-  // ---- 테스트용 헬퍼 메소드들 ----
+  @Test
+  @DisplayName("정상적으로 알림을 읽음 처리한다")
+  void deleteNotification_success() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID notificationId = UUID.randomUUID();
 
+    User user = mock(User.class);
+    Notification notification = mock(Notification.class);
+
+    when(notification.getUser()).thenReturn(user);
+    when(user.getId()).thenReturn(userId);
+
+    when(notificationRepository.findById(notificationId))
+        .thenReturn(Optional.of(notification));
+
+
+    // when
+    notificationService.deleteNotification(userId, notificationId);
+
+    // then
+    verify(notification).setStatus(Status.READ);
+    verify(notificationRepository).save(notification);
+  }
+
+
+  @Test
+  @DisplayName("존재하지 않는 알림이면 NotificationNotFoundException 발생")
+  void deleteNotification_notFound() {
+    // given
+    UUID notificationId = UUID.randomUUID();
+
+    when(notificationRepository.findById(notificationId))
+        .thenReturn(Optional.empty());
+
+    // when
+    Runnable act = () ->
+        notificationService.deleteNotification(UUID.randomUUID(), notificationId);
+
+    // then
+    assertThatThrownBy(act::run)
+        .isInstanceOf(NotificationNotFoundException.class);
+  }
+
+  @Test
+  void deleteNotification_notOwner() {
+    // given
+    UUID ownerId = UUID.randomUUID();
+    UUID attackerId = UUID.randomUUID();
+    UUID notificationId = UUID.randomUUID();
+
+    User owner = mock(User.class);
+    Notification notification = mock(Notification.class);
+
+    when(notificationRepository.findById(notificationId))
+        .thenReturn(Optional.of(notification));
+
+    when(notification.getUser()).thenReturn(owner);
+    when(owner.getId()).thenReturn(ownerId);
+
+    // when
+    Runnable act = () ->
+        notificationService.deleteNotification(attackerId, notificationId);
+
+    // then
+    assertThatThrownBy(act::run)
+        .isInstanceOf(NotificationNotAuthentication.class);
+
+    verify(notification, never()).setStatus(any(Status.class));
+    verify(notificationRepository, never()).save(any(Notification.class));
+  }
+
+  // ---- 테스트용 헬퍼 메소드들 ----
   private Notification createNotification(String title, LocalDateTime createdAt) {
     Notification notification = new Notification(UUID.randomUUID(), createdAt);
-    // Notification 엔티티에 맞게 set 메소드 수정 필요, id를 설정할 수 없으므로 대용으로 title을 사용함
     notification.setTitle(title);
     notification.setStatus(Status.UNREAD);
     return notification;
@@ -179,7 +246,7 @@ class NotificationServiceTest {
         notification.getId(),
         notification.getCreatedAt(),
         null,
-        notification.getTitle(), // 실제 Dto 필드에 맞게 수정
+        notification.getTitle(),
         notification.getContent(),
         notification.getLevel()
     );

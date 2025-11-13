@@ -22,6 +22,7 @@ public class Playlist extends UpdatableEntity {
     @JoinColumn(name = "owner_id", nullable = false)
     private User user;
 
+    @Builder.Default
     @OneToMany(mappedBy = "playlist", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<PlaylistItem> playlistItems = new ArrayList<>();
 

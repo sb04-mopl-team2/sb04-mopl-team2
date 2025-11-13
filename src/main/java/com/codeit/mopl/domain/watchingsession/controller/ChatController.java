@@ -24,10 +24,12 @@ public class ChatController {
 
   private final SimpMessagingTemplate messagingTemplate;
 
-  @MessageMapping("/contents/{contentId}/chat") // adds /pub, client -> server
+  // (adds /pub) client -> server
+  // 엔드포인트: SEND /pub/contents/{contentId}/chat
+  @MessageMapping("/contents/{contentId}/chat")
   public void sendChat(@DestinationVariable String contentId,
-      @Payload ContentChatSendRequest contentChatSendRequest,
-      @AuthenticationPrincipal CustomUserDetails principal
+                       @Payload ContentChatSendRequest contentChatSendRequest,
+                       @AuthenticationPrincipal CustomUserDetails principal
   ) {
     UserDto userDto = principal.getUser();
 
@@ -42,6 +44,7 @@ public class ChatController {
     );
 
     // server -> client
+    // 엔드포인트: SUBSCRIBE /sub/contents/{contentId}/chat
     String destination = String.format("/sub/contents/%s/chat", contentId);
     messagingTemplate.convertAndSend(destination, contentChatDto);
   }

@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public class PlaylistSearchCond {
 
+
         private String keywordLike;
         private UUID ownerIdEqual;
         private UUID subscriberIdEqual;

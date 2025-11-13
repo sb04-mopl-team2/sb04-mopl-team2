@@ -5,6 +5,7 @@ import com.codeit.mopl.domain.notification.dto.NotificationSearchRequest;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ public class NotificationController {
   @GetMapping
   public ResponseEntity<CursorResponseNotificationDto> getNotifications(
       @AuthenticationPrincipal UserDetails user,
-      @Validated NotificationSearchRequest request
+      @Valid NotificationSearchRequest request
   ) {
     log.info("알림 조회 요청 실행");
 

@@ -1,5 +1,7 @@
 package com.codeit.mopl.config;
 
+import com.codeit.mopl.domain.user.entity.Role;
+import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.security.CustomUserDetailsService;
@@ -11,6 +13,7 @@ import com.codeit.mopl.security.jwt.handler.JwtLogoutHandler;
 import com.codeit.mopl.security.jwt.handler.LoginFailureHandler;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -36,6 +39,13 @@ import java.util.function.Supplier;
 
 @Configuration
 public class SecurityConfig {
+    @Value("${admin.email}")
+    private String adminEmail;
+    @Value("${admin.name}")
+    private String adminName;
+    @Value("${admin.password}")
+    private String adminPassword;
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
@@ -76,9 +86,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()  // 회원가입
                         .requestMatchers("/api/auth/refresh").permitAll()  // 토큰 재발급
                         .requestMatchers("/ws/**").permitAll()  // 웹소켓
-                        .requestMatchers("*", "/actuator/**", "/swagger-resource/**"
+                        .requestMatchers( "*","/actuator/**", "/swagger-resource/**"
                                 , "/swagger-ui.html", "/swagger-ui/**", "/v3/**",
-                                "/assets/**").permitAll()
+                                "/assets/**","/h2/**").permitAll()
                         // ADMIN 권한이 있는 경우에만 접근 가능
                         .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")  // 전체 회원 목록 조회
                         .requestMatchers(HttpMethod.POST, "/api/users/{userId}/role", "/api/users/{userId}/locked",
@@ -140,6 +150,12 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService customUserDetailsService(UserRepository userRepository, UserMapper userMapper) {
+        if(!userRepository.existsByEmail(adminEmail)) {
+            String encodedPassword = passwordEncoder().encode(adminPassword);
+            User admin = new User(adminEmail,encodedPassword,adminName);
+            admin.updateRole(Role.ADMIN);
+            userRepository.save(admin);
+        }
         return new CustomUserDetailsService(userRepository, userMapper);
     }
 }

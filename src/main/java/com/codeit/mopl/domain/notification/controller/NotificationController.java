@@ -34,7 +34,7 @@ public class NotificationController {
       @AuthenticationPrincipal UserDetails user,
       @Validated NotificationSearchRequest request
   ) {
-    // 서비스 호출
+    log.info("알림 조회 요청 실행");
 
     //UUID userId = user.getId()
     // TODO 추후 AuthenticationPrincipal 기능이 구현되면 userId를 AuthenticationPrincipal 에서 가져오도록 변경하기
@@ -43,6 +43,8 @@ public class NotificationController {
     CursorResponseNotificationDto response = notificationService.getNotifications(userId,
         request.cursor(), request.idAfter(), request.limit(), request.sortDirection(), request.sortBy()
     );
+
+    log.info("알림 조회 요청 종료");
     return ResponseEntity.ok(response);
   }
 
@@ -51,15 +53,17 @@ public class NotificationController {
       @PathVariable("notificationId") UUID notificationId,
       @AuthenticationPrincipal UserDetails user
   ){
+    log.info("알림 삭제 요청 실행");
 
     //UUID userId = user.getId()
     // TODO 추후 AuthenticationPrincipal 기능이 구현되면 userId를 AuthenticationPrincipal 에서 가져오도록 변경하기
     UUID userId = UUID.randomUUID();
 
     notificationService.deleteNotification(userId, notificationId);
+    log.info("알림 삭제 요청 종료");
+
     return ResponseEntity
         .status(HttpStatus.NO_CONTENT)
         .build();
   }
-
 }

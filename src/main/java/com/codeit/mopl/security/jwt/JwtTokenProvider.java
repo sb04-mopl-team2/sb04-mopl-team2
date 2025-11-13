@@ -21,13 +21,13 @@ import java.util.UUID;
 @Component
 public class JwtTokenProvider {
     @Getter
-    @Value("${jwt.key:mopl-secretKey-codeit-advanced-team-project-3-start-at-2025-11-10}")
+    @Value("${jwt.key}")
     private String secretKey;
     @Getter
-    @Value("${jwt.access-token-expiration-minutes:10}")
+    @Value("${jwt.access-token-expiration-minutes}")
     private int accessTokenExpirationMinutes;
     @Getter
-    @Value("${jwt.refresh-token-expiration-minutes:60}")
+    @Value("${jwt.refresh-token-expiration-minutes}")
     private int refreshTokenExpirationMinutes;
 
     public String generateAccessToken(Map<String, Object> claims, String subject) {

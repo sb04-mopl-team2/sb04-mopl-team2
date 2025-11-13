@@ -1,5 +1,10 @@
 package com.codeit.mopl.domain.playlist.repository;
 
-public class PlaylistRepository {
+import com.codeit.mopl.domain.playlist.entity.Playlist;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
 
 }

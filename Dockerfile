@@ -36,12 +36,14 @@ WORKDIR /app
 ENV SPRING_PROFILES_ACTIVE=prod \
     JVM_OPTS=""
 
-# gradle 유저 생성 (보안용)
+# 런타임 실행용 app 유저 생성 (보안용)
 RUN addgroup -S app && adduser -S app -G app
-USER app
 
 # 빌드 결과 JAR 복사
-COPY --from=builder /app/build/libs/*.jar app.jar
+# 빌드 아티팩트를 app 소유로 복사
+COPY --from=builder --chown=app:app /app/build/libs/*.jar app.jar
+
+USER app
 
 # 포트 노출
 EXPOSE 80

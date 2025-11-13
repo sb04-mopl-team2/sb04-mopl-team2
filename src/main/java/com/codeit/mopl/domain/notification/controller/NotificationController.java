@@ -1,6 +1,7 @@
 package com.codeit.mopl.domain.notification.controller;
 
 import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
+import com.codeit.mopl.domain.notification.dto.NotificationSearchRequest;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.service.NotificationService;
@@ -10,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -26,11 +28,7 @@ public class NotificationController {
   @GetMapping
   public ResponseEntity<CursorResponseNotificationDto> getNotifications(
       @AuthenticationPrincipal UserDetails user,
-      @RequestParam(value = "cursor", required = false) String cursor,
-      @RequestParam(value = "idAfter", required = false) UUID idAfter,
-      @RequestParam(value = "limit") int limit,
-      @RequestParam(value = "sortDirection") SortDirection sortDirection,
-      @RequestParam(value = "sortBy") SortBy sortBy
+      @Validated NotificationSearchRequest request
   ) {
     // 서비스 호출
 
@@ -39,7 +37,7 @@ public class NotificationController {
     UUID userId = UUID.randomUUID();
 
     CursorResponseNotificationDto response = notificationService.getNotifications(userId,
-        cursor, idAfter, limit, sortDirection, sortBy
+        request.cursor(), request.idAfter(), request.limit(), request.sortDirection(), request.sortBy()
     );
     return ResponseEntity.ok(response);
   }

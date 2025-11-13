@@ -24,8 +24,8 @@ public class NotificationQueryDslRepository implements CustomNotificationReposit
   @Override
   public List<Notification> searchNotifications(
       UUID userId,
-      String cursor,  // null 일 수 있음
-      UUID idAfter,   // null 일 수 있음
+      String cursor,
+      UUID idAfter,
       int limit,
       SortDirection sortDirection,
       SortBy sortBy){
@@ -81,21 +81,18 @@ public class NotificationQueryDslRepository implements CustomNotificationReposit
 
     switch (sortBy.toString()) {
       case "createdAt": {
-        // <=가 아님, 프로토 타입에서는 < 로 구현되어 있음
         if (sortDirection == SortDirection.DESCENDING) {
           condition = qnotification.createdAt.lt(cursorTime);
         }
-        else { // ASCENDING 일단 프로토 타입에서는 DESCENDING만 전달하기는 함
+        else {
           condition = qnotification.createdAt.gt(cursorTime);
         }
         break;
       }
 
       default:
-        // 다른 sortBy 는 아직 없음
         break;
     }
-    // idAfter는 UUID 형태라서 순서가 보장되지 않기 때문에 현재로선 사용되지 않는다.
     return condition;
   }
 }

@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -34,11 +36,11 @@ public class User extends UpdatableEntity {
     @Column(nullable = false)
     private long followerCount;
 
-    public User(String email, String password, String name, String profileImageUrl) {
+    public User(String email, String password, String name) {
         this.email = email;
         this.password = password;
         this.name = name;
-        this.profileImageUrl = profileImageUrl;
+        this.profileImageUrl = null;
         this.role = Role.USER;
         this.locked = false;
         this.followerCount = 0;
@@ -46,5 +48,20 @@ public class User extends UpdatableEntity {
 
     public void updateRole(Role role) {
         this.role = role;
+    }
+
+    public void updateProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof User user)) return false;
+        return getId() == user.getId();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 }

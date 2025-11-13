@@ -7,10 +7,9 @@ import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.security.GeneralSecurityException;
 
 @Service
 @RequiredArgsConstructor
@@ -31,10 +30,24 @@ public class UserService {
         return userMapper.toDto(user);
     }
 
+    public UserDto findByEmail(String email) {
+        User findUser = findUserByEmail(email);
+        UserDto userDto = userMapper.toDto(findUser);
+        return userDto;
+    }
+
     private void validateEmail(String email) {
         if (userRepository.existsByEmail(email)) {
             log.warn("이메일 중복 가입 email = {}", email);
             throw new IllegalArgumentException("Email already exists");
         }
+    }
+
+    private User findUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    log.info("해당 유저를 찾을 수 없음 email = {}", email);
+                    throw new UsernameNotFoundException("Email not found");
+                });
     }
 }

@@ -35,7 +35,7 @@ public class UserDetailsServiceTest {
     @Test
     void loadUserByUsername() {
         // given
-        User user = new User("test@example.com", "encodedPassword", "TEST", null);
+        User user = new User("test@example.com", "encodedPassword", "TEST");
         UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@example.com", "TEST", null, Role.USER, false);
         when(userRepository.findByEmail("test@example.com"))
                 .thenReturn(Optional.of(user));

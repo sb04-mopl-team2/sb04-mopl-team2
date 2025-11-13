@@ -1,4 +1,4 @@
-package com.codeit.mopl.config;
+package com.codeit.mopl.security.config;
 
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
@@ -6,11 +6,8 @@ import com.codeit.mopl.security.CustomUserDetailsService;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.filter.JwtAuthenticationFilter;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.Customizer;
@@ -24,13 +21,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.*;
-import org.springframework.util.StringUtils;
-
-import java.util.function.Supplier;
 
 @Configuration
-public class SecurityConfig {
+public class TestSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
@@ -52,11 +45,11 @@ public class SecurityConfig {
                 )
                 .cors(Customizer.withDefaults())
                 .exceptionHandling(ex -> ex
-                                .authenticationEntryPoint(new Http403ForbiddenEntryPoint())
-                                .accessDeniedHandler(new AccessDeniedHandlerImpl())
+                        .authenticationEntryPoint(new Http403ForbiddenEntryPoint())
+                        .accessDeniedHandler(new AccessDeniedHandlerImpl())
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        .anyRequest().permitAll()
+                                .anyRequest().permitAll()
 //                        .requestMatchers("/api/auth/csrf-token").permitAll()
 //                        .requestMatchers("/api/auth/sign-in").permitAll()
 //                        .requestMatchers("/ws/**").permitAll()
@@ -83,42 +76,6 @@ public class SecurityConfig {
         RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
         roleHierarchy.setHierarchy("ROLE_ADMIN > ROLE_USER");
         return roleHierarchy;
-    }
-
-    public class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler {
-        private final CsrfTokenRequestHandler plain = new CsrfTokenRequestAttributeHandler();
-
-        private final CsrfTokenRequestHandler xor = new XorCsrfTokenRequestAttributeHandler();
-
-        @Override
-        public void handle(HttpServletRequest request, HttpServletResponse response, Supplier<CsrfToken> csrfToken) {
-            /*
-             * Always use XorCsrfTokenRequestAttributeHandler to provide BREACH protection of
-             * the CsrfToken when it is rendered in the response body.
-             */
-            this.xor.handle(request, response, csrfToken);
-            /*
-             * Render the token value to a cookie by causing the deferred token to be loaded.
-             */
-            csrfToken.get();
-        }
-
-        @Override
-        public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
-            String headerValue = request.getHeader(csrfToken.getHeaderName());
-            /*
-             * If the request contains a request header, use CsrfTokenRequestAttributeHandler
-             * to resolve the CsrfToken. This applies when a single-page application includes
-             * the header value automatically, which was obtained via a cookie containing the
-             * raw CsrfToken.
-             *
-             * In all other cases (e.g. if the request contains a request parameter), use
-             * XorCsrfTokenRequestAttributeHandler to resolve the CsrfToken. This applies
-             * when a server-side rendered form includes the _csrf request parameter as a
-             * hidden input.
-             */
-            return (StringUtils.hasText(headerValue) ? this.plain : this.xor).resolveCsrfTokenValue(request, csrfToken);
-        }
     }
 
     @Bean

@@ -6,12 +6,16 @@ import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
+import com.codeit.mopl.domain.notification.exception.NotificationNotAuthentication;
+import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
 import com.codeit.mopl.domain.notification.repository.RepositoryNotificationRepository;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +24,7 @@ public class NotificationService {
   private final RepositoryNotificationRepository notificationRepository;
   private final NotificationMapper notificationMapper;
 
+  @Transactional(readOnly = true)
   public CursorResponseNotificationDto getNotifications(UUID userId, String cursor, UUID idAfter, int limit, SortDirection sortDirection, SortBy sortBy) {
 
     List<NotificationDto> data = null;
@@ -49,6 +54,17 @@ public class NotificationService {
 
     totalCount = getTotalCount(userId);
     return new CursorResponseNotificationDto(data, nextCursor, nextIdAfter, hasNext, totalCount, sortBy, sortDirection);
+  }
+
+  public void deleteNotification(UUID userId ,UUID notificationId) {
+    Notification notification = notificationRepository.findById(notificationId)
+        .orElseThrow(NotificationNotFoundException::new);
+
+    if (!notification.getUser().getId().equals(userId)){
+      throw new NotificationNotAuthentication();
+    }
+    notification.setStatus(Status.READ);
+    notificationRepository.save(notification);
   }
 
   private List<Notification> searchNotifications(UUID userId, String cursor, UUID idAfter, int limit, SortDirection sortDirection, SortBy sortBy){

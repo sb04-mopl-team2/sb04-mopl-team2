@@ -8,11 +8,15 @@ import com.codeit.mopl.domain.notification.service.NotificationService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,6 +44,22 @@ public class NotificationController {
         request.cursor(), request.idAfter(), request.limit(), request.sortDirection(), request.sortBy()
     );
     return ResponseEntity.ok(response);
+  }
+
+  @DeleteMapping("/{notificationId}")
+  public ResponseEntity<Void> readNotification(
+      @PathVariable("notificationId") UUID notificationId,
+      @AuthenticationPrincipal UserDetails user
+  ){
+
+    //UUID userId = user.getId()
+    // TODO 추후 AuthenticationPrincipal 기능이 구현되면 userId를 AuthenticationPrincipal 에서 가져오도록 변경하기
+    UUID userId = UUID.randomUUID();
+
+    notificationService.deleteNotification(userId, notificationId);
+    return ResponseEntity
+        .status(HttpStatus.NO_CONTENT)
+        .build();
   }
 
 }

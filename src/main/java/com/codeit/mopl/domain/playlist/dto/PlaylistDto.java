@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.playlist.dto;
 
 
 import com.codeit.mopl.domain.content.entity.Content;
+import com.codeit.mopl.domain.user.dto.response.UserSummary;
 
 import java.time.LocalDateTime;
 import java.util.List;

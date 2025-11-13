@@ -31,7 +31,7 @@ public class PlaylistController {
 
     @PostMapping
     public Playlist createPlaylist(@Valid @RequestBody PlaylistCreateRequest request ) {
-        return null;
+        
     }
 
 }

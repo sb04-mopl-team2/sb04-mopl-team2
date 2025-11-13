@@ -8,6 +8,5 @@ import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring", imports = MapperUtils.class)
 public interface NotificationMapper {
-  @Mapping(target = "createdAt", expression = "java(MapperUtils.asInstant(entity.getCreatedAt()))")
   NotificationDto toDto(Notification entity);
 }

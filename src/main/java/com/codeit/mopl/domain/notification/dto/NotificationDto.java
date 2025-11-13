@@ -18,10 +18,10 @@ public record NotificationDto(
     @NotNull
     UUID receiverId,
 
-    @NotBlank
+    @NotNull
     String title,
 
-    @NotBlank
+    @NotNull
     String content,
 
     @NotNull

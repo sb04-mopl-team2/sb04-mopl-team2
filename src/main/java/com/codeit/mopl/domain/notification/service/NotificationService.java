@@ -29,7 +29,7 @@ public class NotificationService {
     Long totalCount = 0L; // 총 데이터의 개수
 
     List<Notification> notificationList;
-    notificationList = searchNotifications(userId, cursor, idAfter, limit+1, sortDirection, sortBy);
+    notificationList = searchNotifications(userId, cursor, idAfter, limit, sortDirection, sortBy);
     // 경우의 수가 2가지 밖에 없어서 QueryDsl을 안사용해도 무방함, 나중에 QueryDsl을 이용해서 고도화도 고려하기
 
     if (notificationList.isEmpty()) {
@@ -37,10 +37,10 @@ public class NotificationService {
     }
 
     if (notificationList.size() > limit) {
+      notificationList = notificationList.subList(0, limit); // limit+1 번째의 값을 제거함, 가장 첫 번 째의 값은 get(0) 이므로 limit+1의 값은 get(limit)임
       nextCursor = notificationList.get(limit-1).getCreatedAt().toString();
-      hasNext = true;
       nextIdAfter = notificationList.get(limit-1).getId(); // 가장 마지막 알림의 id
-      notificationList.remove(limit); // limit+1 번째의 값을 제거함, 가장 첫 번 째의 값은 get(0) 이므로 limit+1의 값은 get(limit)임
+      hasNext = true;
     }
 
     data = notificationList.stream()

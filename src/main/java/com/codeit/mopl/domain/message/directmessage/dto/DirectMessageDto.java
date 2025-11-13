@@ -7,8 +7,8 @@ public record DirectMessageDto(
     UUID id,
     UUID conversationId,
     LocalDateTime createdAt,
-    UserSummaryDto sender,
-    UserSummaryDto receiver,
+    //UserSummaryDto sender,
+    //UserSummaryDto receiver,
     String content
 ) {
 }

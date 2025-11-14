@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.notification.dto;
 
+import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -22,7 +23,7 @@ public record CursorResponseNotificationDto(
     Long totalCount,
 
     @NotNull
-    String sortBy,
+    SortBy sortBy,
 
     @NotNull
     SortDirection sortDirection

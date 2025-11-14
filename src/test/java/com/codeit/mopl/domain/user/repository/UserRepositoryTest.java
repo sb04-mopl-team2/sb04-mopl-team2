@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 
 @DataJpaTest
-@EnableJpaAuditing
 public class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;

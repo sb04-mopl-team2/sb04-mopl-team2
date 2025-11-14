@@ -38,4 +38,11 @@ public class UserController {
         log.info("비밀번호 변경 응답 userId = {}", userId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity findUser(@PathVariable UUID userId) {
+        log.info("[사용자 관리] 사용자 상세 정보 조회 호출 userId = {}", userId);
+        UserDto response = userService.findUser(userId);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
 }

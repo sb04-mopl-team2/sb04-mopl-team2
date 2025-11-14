@@ -6,19 +6,23 @@ import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,5 +70,41 @@ public class UserServiceTest {
         Exception exception = assertThrows(IllegalArgumentException.class, () -> userService.create(request));
 
         assertEquals("Email already exists", exception.getMessage());
+    }
+
+    @DisplayName("올바른 유저 아이디를 조회하면 정상적으로 해당 유저의 상세정보가 표시된다.")
+    @Test
+    void checkUserInformationShouldSucceedWhenValidateUserId() {
+        // given
+        User findUser = new User("test@example.com","testPassword","test");
+        UUID uuid = UUID.randomUUID();
+        UserDto findUserDto = new UserDto(uuid, LocalDateTime.now(), "test@example.com","test",null, Role.USER, false);
+        given(userRepository.findById(any(UUID.class))).willReturn(Optional.of(findUser));
+        given(userMapper.toDto(findUser)).willReturn(findUserDto);
+
+        // when
+        UserDto responseUserDto = userService.findUser(uuid);
+
+        // then
+        assertEquals(responseUserDto.email(), findUser.getEmail());
+        assertEquals(responseUserDto.role(), Role.USER);
+        assertEquals(responseUserDto.id(), uuid);
+        assertEquals(responseUserDto.name(), findUser.getName());
+    }
+
+    @DisplayName("존재하지 않는 유저ID로 유저 정보를 조회하면 404 NOT_FOUND 예외가 발생한다")
+    @Test
+    void checkUserInformationShouldFailWhenUserIdNotFound() {
+        // given
+        UUID uuid = UUID.randomUUID();
+        given(userRepository.findById(any(UUID.class))).willReturn(Optional.empty());
+
+        // when
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> {
+            userService.findUser(uuid);
+        });
+
+        assertEquals("유저를 찾을 수 없습니다.", exception.getErrorCode().getMessage());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getErrorCode().getStatus());
     }
 }

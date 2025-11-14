@@ -12,7 +12,7 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleMoplException(MoplException e) {
     log.error(e.getMessage(), e);
 
-    ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode().name(), e.getErrorCode().getMessage(), e.getDetails(), e.getTimestamp());
+    ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode().getName(), e.getErrorCode().getMessage(), e.getDetails(), e.getTimestamp());
 
     return ResponseEntity.status(e.getErrorCode().getStatus()).body(errorResponse);
   }

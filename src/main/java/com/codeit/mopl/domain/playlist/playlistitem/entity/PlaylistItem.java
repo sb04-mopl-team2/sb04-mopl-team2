@@ -1,4 +1,4 @@
-package com.codeit.mopl.domain.playlist.playlistitem;
+package com.codeit.mopl.domain.playlist.playlistitem.entity;
 
 import com.codeit.mopl.domain.base.BaseEntity;
 import com.codeit.mopl.domain.content.entity.Content;

@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.user.service;
 
 import com.codeit.mopl.domain.user.dto.request.ChangePasswordRequest;
 import com.codeit.mopl.domain.user.dto.request.UserCreateRequest;
+import com.codeit.mopl.domain.user.dto.request.UserRoleUpdateRequest;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
@@ -62,6 +63,15 @@ public class UserService {
         UserDto userDto = userMapper.toDto(findUser);
         log.info("[사용자 관리] 회원 정보 조회 성공 userId = {}", userDto.id());
         return userDto;
+    }
+
+    @Transactional
+    public void updateRole(UUID userId, UserRoleUpdateRequest request) {
+        log.info("[사용자 관리] 회원 권한 수정 동작 userId = {}", userId);
+        User findUser = getValidUserByUserId(userId);
+        log.debug("[사용자 관리] 회원 권한 수정 {} -> {}", findUser.getRole(), request.role());
+        findUser.updateRole(request.role());
+        log.info("[사용자 관리] 회원 권한 수정 완료 userId = {}, Role = {}", userId, request.role());
     }
 
     private void validateEmail(String email) {

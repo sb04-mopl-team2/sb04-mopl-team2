@@ -4,6 +4,7 @@ import com.codeit.mopl.domain.notification.entity.Level;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record NotificationDto(
@@ -12,15 +13,15 @@ public record NotificationDto(
     UUID id,
 
     @NotNull
-    Instant createdAt,
+    LocalDateTime createdAt,
 
     @NotNull
     UUID receiverId,
 
-    @NotBlank
+    @NotNull
     String title,
 
-    @NotBlank
+    @NotNull
     String content,
 
     @NotNull

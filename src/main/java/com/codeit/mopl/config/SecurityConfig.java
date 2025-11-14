@@ -1,16 +1,23 @@
 package com.codeit.mopl.config;
 
+import com.codeit.mopl.domain.user.entity.Role;
+import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.security.CustomUserDetailsService;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.filter.JwtAuthenticationFilter;
+import com.codeit.mopl.security.jwt.handler.JwtLoginSuccessHandler;
+import com.codeit.mopl.security.jwt.handler.JwtLogoutHandler;
+import com.codeit.mopl.security.jwt.handler.LoginFailureHandler;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.Customizer;
@@ -24,6 +31,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.*;
 import org.springframework.util.StringUtils;
 
@@ -31,20 +39,39 @@ import java.util.function.Supplier;
 
 @Configuration
 public class SecurityConfig {
+    @Value("${admin.email}")
+    private String adminEmail;
+    @Value("${admin.name}")
+    private String adminName;
+    @Value("${admin.password}")
+    private String adminPassword;
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JwtTokenProvider jwtTokenProvider,
                                            UserDetailsService customUserDetailsService,
-                                           JwtRegistry jwtRegistry) throws Exception {
+                                           JwtRegistry jwtRegistry,
+                                           JwtLoginSuccessHandler jwtLoginSuccessHandler,
+                                           LoginFailureHandler loginFailureHandler, JwtLogoutHandler jwtLogoutHandler) throws Exception {
         http
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
-                )
+//                .csrf(csrf -> csrf
+//                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+//                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
+//                )
+                .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService, jwtRegistry),
                         UsernamePasswordAuthenticationFilter.class)
-                .formLogin(AbstractHttpConfigurer::disable)
+                .formLogin(login ->
+                    login.loginProcessingUrl("/api/auth/sign-in")
+                            .successHandler(jwtLoginSuccessHandler)
+                            .failureHandler(loginFailureHandler)
+                )
+                .logout(logout ->
+                        logout.logoutUrl("/api/auth/sign-out")
+                                .addLogoutHandler(jwtLogoutHandler)
+                                .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
+                )
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -55,19 +82,21 @@ public class SecurityConfig {
                                 .accessDeniedHandler(new AccessDeniedHandlerImpl())
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        .anyRequest().permitAll()
-//                        .requestMatchers("/api/auth/csrf-token").permitAll()
-//                        .requestMatchers("/api/auth/sign-in").permitAll()
-//                        .requestMatchers("/ws/**").permitAll()
-//                        .requestMatchers("*", "/actuator/**", "/swagger-resource/**"
-//                                , "/swagger-ui.html", "/swagger-ui/**", "/v3/**",
-//                                "/assets/**").permitAll()
-//                        .requestMatchers(HttpMethod.GET, "/api/users/*").hasRole("ADMIN")
-//                        .requestMatchers(HttpMethod.POST, "/api/users/{userId}/role", "/api/users/{userId}/locked",
-//                                "/api/contents/").hasRole("ADMIN")
-//                        .requestMatchers(HttpMethod.DELETE, "/api/contents/{contentId}").hasRole("ADMIN")
-//                        .requestMatchers(HttpMethod.PATCH, "/api/contents/{contentId}").hasRole("ADMIN")
-//                        .anyRequest().authenticated()
+                        .requestMatchers("/api/auth/csrf-token").permitAll()  // csrf-token 조회
+                        .requestMatchers("/api/auth/sign-in").permitAll()  // 로그인
+                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()  // 회원가입
+                        .requestMatchers("/api/auth/refresh").permitAll()  // 토큰 재발급
+                        .requestMatchers("/ws/**").permitAll()  // 웹소켓
+                        .requestMatchers( "*","/actuator/**", "/swagger-resource/**"
+                                , "/swagger-ui.html", "/swagger-ui/**", "/v3/**",
+                                "/assets/**","/h2/**").permitAll()
+                        // ADMIN 권한이 있는 경우에만 접근 가능
+                        .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")  // 전체 회원 목록 조회
+                        .requestMatchers(HttpMethod.POST, "/api/users/{userId}/role", "/api/users/{userId}/locked",
+                                "/api/contents/").hasRole("ADMIN")  // 회원 권한 변경, 회원 잠금, 콘텐츠 생성
+                        .requestMatchers(HttpMethod.DELETE, "/api/contents/{contentId}").hasRole("ADMIN")  // 콘텐츠 삭제
+                        .requestMatchers(HttpMethod.PATCH, "/api/contents/{contentId}").hasRole("ADMIN")  // 콘텐츠 수정
+                        .anyRequest().authenticated()
                 );
         return http.build();
     }
@@ -122,6 +151,12 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService customUserDetailsService(UserRepository userRepository, UserMapper userMapper) {
+        if(!userRepository.existsByEmail(adminEmail)) {
+            String encodedPassword = passwordEncoder().encode(adminPassword);
+            User admin = new User(adminEmail,encodedPassword,adminName);
+            admin.updateRole(Role.ADMIN);
+            userRepository.save(admin);
+        }
         return new CustomUserDetailsService(userRepository, userMapper);
     }
 }

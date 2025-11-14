@@ -5,7 +5,7 @@ import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
-import com.codeit.mopl.domain.watchingsession.entity.ChangeType;
+import com.codeit.mopl.domain.watchingsession.entity.enums.ChangeType;
 import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSessionChange;
@@ -115,7 +115,7 @@ public class WebSocketEventListener {
     messagingTemplate.convertAndSend(payloadDestination, watchingSessionChange);
   }
 
-  // ==================== helper methods
+  // ==================== helper methods ====================
   private User getUser(StompHeaderAccessor accessor, String sessionId) {
     Authentication authentication = (Authentication) accessor.getUser();
     if (authentication == null) {
@@ -153,6 +153,7 @@ public class WebSocketEventListener {
                 user.getEmail(),
                 user.getProfileImageUrl()
             )
+            // add contentsummary
         ),
         watcherCount
     );

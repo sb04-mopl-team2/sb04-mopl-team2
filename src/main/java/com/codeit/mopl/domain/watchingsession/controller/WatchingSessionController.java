@@ -46,7 +46,7 @@ public class WatchingSessionController {
       @Valid WatchingSessionRequest request,
       @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
-    log.info("[실시간 세션] 특정 콘텐츠의 시청 세션 목록 조회 시작. contentId = {}", contentId);
+    log.info("[실시간 세션] 특정 콘텐츠의 시청 세션 목록 요청 수신. contentId = {}", contentId);
     CursorResponseWatchingSessionDto response = watchingSessionService.getWatchingSessions(
         userDetails.getUser().id(),
         contentId,
@@ -57,7 +57,7 @@ public class WatchingSessionController {
         request.sortDirection(),
         request.sortBy()
     );
-    log.info("[실시간 세션] 특정 콘텐츠의 시청 세션 목록 조회 완료. contentId = {}", contentId);
+    log.info("[실시간 세션] 특정 콘텐츠의 시청 세션 목록 응답 반환. contentId = {}", contentId);
     return ResponseEntity.ok(response);
   }
 

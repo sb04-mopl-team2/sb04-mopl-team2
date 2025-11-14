@@ -11,6 +11,7 @@ import com.codeit.mopl.exception.user.ErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -28,6 +29,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public UserDto create(UserCreateRequest request) {
@@ -71,6 +73,8 @@ public class UserService {
         User findUser = getValidUserByUserId(userId);
         log.debug("[사용자 관리] 회원 권한 수정 {} -> {}", findUser.getRole(), request.role());
         findUser.updateRole(request.role());
+        // **추후 이벤트가 정해지면 수정하겠습니다**
+        // publisher.publishEvent(new UserRoleUpdateEvent(userMapper.toDto(findUser)));
         log.info("[사용자 관리] 회원 권한 수정 완료 userId = {}, Role = {}", userId, request.role());
     }
 

@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.user.controller;
 
+import com.codeit.mopl.domain.user.dto.request.ChangePasswordRequest;
 import com.codeit.mopl.domain.user.dto.request.UserCreateRequest;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.service.UserService;
@@ -8,10 +9,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,5 +27,15 @@ public class UserController {
         UserDto response = userService.create(request);
         log.info("유저 생성 응답 userId = {}", response.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PatchMapping("/{userId}/password")
+    @PreAuthorize("#userId == authentication.principal.user.id")
+    public ResponseEntity updatePassword(@PathVariable UUID userId,
+                                         @Valid @RequestBody ChangePasswordRequest request) {
+        log.info("비밀번호 변경 호출 userId = {}", userId);
+        userService.changePassword(userId,request);
+        log.info("비밀번호 변경 응답 userId = {}", userId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

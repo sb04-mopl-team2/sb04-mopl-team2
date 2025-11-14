@@ -54,6 +54,10 @@ public class User extends UpdatableEntity {
         this.profileImageUrl = profileImageUrl;
     }
 
+    public void updatePassword(String password) {
+        this.password = password;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof User user)) return false;

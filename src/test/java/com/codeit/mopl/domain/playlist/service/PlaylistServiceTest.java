@@ -89,8 +89,5 @@ public class PlaylistServiceTest {
             verify(userRepository).findById(nonExistentUserId);
             verify(playlistRepository, never()).save(any());
         }
-
-
     }
-
 }

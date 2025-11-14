@@ -7,6 +7,7 @@ import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
 import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.service.PlaylistService;
+import com.codeit.mopl.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +35,11 @@ public class PlaylistController {
 
     @PostMapping
     public ResponseEntity<PlaylistDto> createPlaylist(
-            @AuthenticationPrincipal LoginUser loginUser,  //인증 부분 완성되면 import할 예정입니다.
+            @AuthenticationPrincipal CustomUserDetails loginUser,
             @Valid @RequestBody PlaylistCreateRequest request ) {
-        PlaylistDto response = playlistService.createPlaylist(loginUser.getUserId(), request);
+        log.info("[플레이리스트] 플레이리스트 생성 요청 - userId = {}", loginUser.getUser().id());
+        PlaylistDto response = playlistService.createPlaylist(loginUser.getUser().id(), request);
+        log.info("[플레이리스트] 플레이리스트 생성 응답 - playlistId = {}", response.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

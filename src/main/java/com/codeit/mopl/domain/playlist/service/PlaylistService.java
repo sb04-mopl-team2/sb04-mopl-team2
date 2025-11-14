@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -56,7 +55,7 @@ public class PlaylistService {
                 .build();
 
         Playlist saved = playlistRepository.save(playlist);
+        log.info("[플레이리스트] 플레이리스트 생성 완료 - 플레이리스트 제목 = {}", saved.getTitle());
         return playlistMapper.toPlaylistDto(saved);
     }
-
 }

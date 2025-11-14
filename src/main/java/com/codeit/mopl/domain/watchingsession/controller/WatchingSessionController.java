@@ -1,8 +1,5 @@
 package com.codeit.mopl.domain.watchingsession.controller;
 
-import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
-import com.codeit.mopl.domain.notification.entity.SortBy;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.watchingsession.WatchingSessionService;
 import com.codeit.mopl.domain.watchingsession.dto.CursorResponseWatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
@@ -17,9 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 
 /*
    시청 세션 데이터 조회용 컨트롤러
@@ -38,9 +33,9 @@ public class WatchingSessionController {
   public ResponseEntity<WatchingSessionDto> getWatchingSessionPerUser(
       @PathVariable UUID watcherId
   ) {
-    log.info("[실시간 세션] 특정 사용자 시청 목록 조회 시작. userId = {}", watcherId);
+    log.info("[실시간 세션] 특정 사용자 시청 목록 요청 수신. userId = {}", watcherId);
     WatchingSessionDto response = watchingSessionService.getByUserId(watcherId);
-    log.info("[실시간 세션] 특정 사용자 시청 목록 조회 완료. userId = {}", watcherId);
+    log.info("[실시간 세션] 특정 사용자 시청 목록 응답 반환. userId = {}", watcherId);
     return ResponseEntity.ok(response);
   }
 

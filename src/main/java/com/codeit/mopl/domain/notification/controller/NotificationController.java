@@ -5,6 +5,7 @@ import com.codeit.mopl.domain.notification.dto.NotificationSearchRequest;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -32,36 +33,30 @@ public class NotificationController {
 
   @GetMapping
   public ResponseEntity<CursorResponseNotificationDto> getNotifications(
-      @AuthenticationPrincipal UserDetails user,
+      @AuthenticationPrincipal CustomUserDetails user,
       @Valid NotificationSearchRequest request
   ) {
-    log.info("알림 조회 요청 실행");
+    log.info("[알림] 알림 조회 요청 시작, userId = {}", user.getUser().id());
 
-    //UUID userId = user.getId()
-    // TODO 추후 AuthenticationPrincipal 기능이 구현되면 userId를 AuthenticationPrincipal 에서 가져오도록 변경하기
-    UUID userId = UUID.randomUUID();
-
+    UUID userId = user.getUser().id();
     CursorResponseNotificationDto response = notificationService.getNotifications(userId,
         request.cursor(), request.idAfter(), request.limit(), request.sortDirection(), request.sortBy()
     );
 
-    log.info("알림 조회 요청 종료");
+    log.info("[알림] 알림 조회 요청 종료");
     return ResponseEntity.ok(response);
   }
 
   @DeleteMapping("/{notificationId}")
   public ResponseEntity<Void> readNotification(
       @PathVariable("notificationId") UUID notificationId,
-      @AuthenticationPrincipal UserDetails user
+      @AuthenticationPrincipal CustomUserDetails user
   ){
-    log.info("알림 삭제 요청 실행");
+    log.info("[알림] 알림 삭제 요청 시작, userId = {}, notificationId = {}", user.getUser().id(), notificationId);
 
-    //UUID userId = user.getId()
-    // TODO 추후 AuthenticationPrincipal 기능이 구현되면 userId를 AuthenticationPrincipal 에서 가져오도록 변경하기
-    UUID userId = UUID.randomUUID();
-
+    UUID userId = user.getUser().id();
     notificationService.deleteNotification(userId, notificationId);
-    log.info("알림 삭제 요청 종료");
+    log.info("[알림] 알림 삭제 요청 종료");
 
     return ResponseEntity
         .status(HttpStatus.NO_CONTENT)

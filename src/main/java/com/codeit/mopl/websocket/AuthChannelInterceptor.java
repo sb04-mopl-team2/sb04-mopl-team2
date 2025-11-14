@@ -41,7 +41,7 @@ public class AuthChannelInterceptor implements ChannelInterceptor {
     StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
     if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-      log.info("STOMP CONNECT 요청. 세션 ID: {}", accessor.getSessionId());
+      log.info("[WebSocket] STOMP CONNECT 요청: sessionId = {}", accessor.getSessionId());
 
       String jwt = accessor.getFirstNativeHeader("Authorization");
       if (StringUtils.hasText(jwt) && jwt.startsWith("Bearer ")) {
@@ -62,18 +62,19 @@ public class AuthChannelInterceptor implements ChannelInterceptor {
               );
           // STOMP 세션에 인증 정보 설정
           accessor.setUser(authenticationToken);
-          log.info("STOMP 인증 성공. 사용자: {}, 세션: {}", userEmail, accessor.getSessionId());        }
+          log.info("[WebSocket] STOMP 인증 성공. userEmail = {}, sessionId = {}", userEmail, accessor.getSessionId());        }
       } catch (AuthenticationException | JwtException e) {
-        log.warn("STOMP CONNECT: Authorization 헤더에 JWT 토큰이 없습니다.");
-        throw new AuthenticationException("JWT 토큰이 필요합니다.", e) {}; // 커스텀 exception
+        log.warn("[WebSocket] STOMP CONNECT: Authorization 헤더에 JWT 토큰이 없습니다.");
+        // 커스텀 exception
+        throw new AuthenticationException("JWT 토큰이 필요합니다.", e) {};
       } catch (Exception e) {
-        log.error("STOMP 인증 처리 중 알 수 없는 예외 발생", e);
+        log.error("[WebSocket] STOMP 인증 처리 중 알 수 없는 예외 발생", e);
         throw new RuntimeException("인증 처리 중 오류가 발생했습니다.", e);
       }
     }
 
     if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
-      log.info("STOMP DISCONNECT. 세션 ID: {}", accessor.getSessionId());
+      log.info("[WebSocket] STOMP DISCONNECT. sessionId = {}", accessor.getSessionId());
     }
     return message;
   }

@@ -1,6 +1,7 @@
 package com.codeit.mopl.domain.user.service;
 
 import com.codeit.mopl.domain.user.dto.request.UserCreateRequest;
+import com.codeit.mopl.domain.user.dto.request.UserRoleUpdateRequest;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
@@ -106,5 +107,21 @@ public class UserServiceTest {
 
         assertEquals("유저를 찾을 수 없습니다.", exception.getErrorCode().getMessage());
         assertEquals(HttpStatus.NOT_FOUND, exception.getErrorCode().getStatus());
+    }
+
+    @DisplayName("올바른 유저 ID와 올바른 ROLE이 주어지면 유저의 권한이 성공적으로 변경된다")
+    @Test
+    void updateRoleShouldSucceedWhenValidUserIdAndValidRole() {
+        // given
+        UUID userId = UUID.randomUUID();
+        UserRoleUpdateRequest request = new UserRoleUpdateRequest(Role.ADMIN);
+        User findUser = new User("test@example.com","password","test");  // new User는 Default Role.USER
+        given(userRepository.findById(any(UUID.class))).willReturn(Optional.of(findUser));
+
+        // when
+        userService.updateRole(userId, request);
+
+        // when
+        assertEquals(Role.ADMIN, findUser.getRole());
     }
 }

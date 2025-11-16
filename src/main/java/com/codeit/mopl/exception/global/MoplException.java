@@ -8,10 +8,10 @@ import lombok.Getter;
 public class MoplException extends RuntimeException {
 
   final LocalDateTime timestamp;
-  final ErrorCode errorCode;
+  final ErrorCodeInterface errorCode;
   final Map<String, Object> details;
 
-  public MoplException(ErrorCode errorCode, Map<String, Object> details) {
+  public MoplException(ErrorCodeInterface errorCode, Map<String, Object> details) {
     this.timestamp = LocalDateTime.now();
     this.errorCode = errorCode;
     this.details = details;

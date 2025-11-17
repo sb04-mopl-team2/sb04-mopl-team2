@@ -35,7 +35,7 @@ class ContentServiceTest {
   private ContentService contentService;
 
   @Test
-  @DisplayName("콘텐츠 수옫생성")
+  @DisplayName("콘텐츠 수동생성")
   void createContent_Success() {
     // given
     List<String> tags = Arrays.asList("액션", "스릴러");

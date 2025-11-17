@@ -8,4 +8,6 @@ import java.util.List;
 public interface CustomPlaylistRepository {
 
     List<Playlist> findAllByCond(PlaylistSearchCond cond);
+
+    long countAllByCond(PlaylistSearchCond cond);
 }

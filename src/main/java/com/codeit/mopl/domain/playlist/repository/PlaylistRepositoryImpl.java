@@ -31,8 +31,21 @@ public class PlaylistRepositoryImpl implements CustomPlaylistRepository {
                         subscriberEq(cond.getSubscriberIdEqual())
                 )
                 .orderBy(playlist.createdAt.desc())
-                .limit(cond.getLimit())
+                .limit(cond.getLimit() + 1 )
                 .fetch();
+    }
+
+    @Override
+    public long countAllByCond(PlaylistSearchCond cond) {
+        return query
+                .select(playlist.count())
+                .from(playlist)
+                .where(
+                        keywordLike(cond.getKeywordLike()),
+                        ownerEq(cond.getOwnerIdEqual()),
+                        subscriberEq(cond.getSubscriberIdEqual())
+                )
+                .fetchOne();
     }
 
     private BooleanExpression keywordLike(String keyword) {

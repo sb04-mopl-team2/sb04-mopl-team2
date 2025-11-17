@@ -6,6 +6,7 @@ import com.codeit.mopl.domain.playlist.dto.PlaylistCreateRequest;
 import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
 import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
+import com.codeit.mopl.domain.playlist.entity.SortBy;
 import com.codeit.mopl.domain.playlist.mapper.PlaylistMapper;
 import com.codeit.mopl.domain.playlist.playlistitem.entity.PlaylistItem;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
@@ -115,14 +116,15 @@ public class PlaylistServiceTest {
             cond.setCursor(null);
             cond.setLimit(10);
             cond.setSortDirection(SortDirection.DESCENDING);
-            cond.setSortBy(PlaylistSearchCond.SortBy.updatedAt);
+            cond.setSortBy(SortBy.updatedAt);
 
             UUID playlistId = UUID.randomUUID();
             UUID ownerId = UUID.randomUUID();
             UserSummary userSummary = new UserSummary(ownerId, "test", "test");
             Playlist playlist = Playlist.builder().title("테스트").build();
-            given(playlistRepository.findAll()).willReturn(Arrays.asList(playlist));
+            given(playlistRepository.findAllByCond(cond)).willReturn(Arrays.asList(playlist));
             given(playlistMapper.toPlaylistDto(playlist)).willReturn(new PlaylistDto(playlistId, userSummary, "테스트","테스트 설명", null, 0, false,null));
+            given(playlistRepository.countAllByCond(cond)).willReturn(1L);
 
             // when
             CursorResponsePlaylistDto result = playlistService.getAllPlaylists(cond);
@@ -145,20 +147,22 @@ public class PlaylistServiceTest {
             cond.setCursor(null);
             cond.setLimit(10);
             cond.setSortDirection(SortDirection.DESCENDING);
-            cond.setSortBy(PlaylistSearchCond.SortBy.updatedAt);
+            cond.setSortBy(SortBy.updatedAt);
+            Playlist playlist1 = Playlist.builder().title("키워드 포함 제목1").description("테스트 설명1").build();
+            Playlist playlist2 = Playlist.builder().title("키워드 포함 제목2").description("테스트 설명2").build();
+            List<Playlist> playlists = Arrays.asList(playlist1, playlist2);
+            given(playlistRepository.findAllByCond(cond)).willReturn(playlists);
 
             UUID playlist1_Id = UUID.randomUUID();
             UUID playlist2_Id = UUID.randomUUID();
             UUID ownerId = UUID.randomUUID();
             UserSummary userSummary = new UserSummary(ownerId, "test", "test");
-            Playlist playlist1 = Playlist.builder().title("키워드 포함 제목1").description("테스트 설명1").build();
-            Playlist playlist2 = Playlist.builder().title("키워드 포함 제목2").description("테스트 설명2").build();
-            List<Playlist> playlists = Arrays.asList(playlist1, playlist2);
-            given(playlistRepository.findAllByCond(cond)).willReturn(playlists);
+
             given(playlistMapper.toPlaylistDto(playlist1))
                     .willReturn(new PlaylistDto(playlist1_Id, userSummary, "키워드 포함 제목1", "테스트 설명1", null, 0, false,null));
             given(playlistMapper.toPlaylistDto(playlist2))
                     .willReturn(new PlaylistDto(playlist2_Id, userSummary, "키워드 포함 제목2", "테스트 설명2", null, 0, false,null));
+            given(playlistRepository.countAllByCond(cond)).willReturn(2L);
 
             //when
             CursorResponsePlaylistDto result = playlistService.getAllPlaylists(cond);
@@ -181,7 +185,7 @@ public class PlaylistServiceTest {
             cond.setCursor(null);
             cond.setLimit(10);
             cond.setSortDirection(SortDirection.DESCENDING);
-            cond.setSortBy(PlaylistSearchCond.SortBy.updatedAt);
+            cond.setSortBy(SortBy.updatedAt);
 
             given(playlistRepository.findAllByCond(cond)).willReturn(Collections.emptyList());
 

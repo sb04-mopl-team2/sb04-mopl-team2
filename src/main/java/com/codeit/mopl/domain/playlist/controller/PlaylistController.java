@@ -5,7 +5,6 @@ import com.codeit.mopl.domain.playlist.dto.CursorResponsePlaylistDto;
 import com.codeit.mopl.domain.playlist.dto.PlaylistCreateRequest;
 import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
 import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
-import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.service.PlaylistService;
 import com.codeit.mopl.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -17,8 +16,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @Slf4j
 @RestController
 @Validated
@@ -26,12 +23,6 @@ import java.util.List;
 @RequestMapping("/api/playlists")
 public class PlaylistController {
     private final PlaylistService playlistService;
-
-    @GetMapping
-    public ResponseEntity<CursorResponsePlaylistDto> getPlaylists(@Validated PlaylistSearchCond request) {
-        CursorResponsePlaylistDto response = playlistService.getAllPlaylists(request);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
 
     @PostMapping
     public ResponseEntity<PlaylistDto> createPlaylist(
@@ -41,5 +32,15 @@ public class PlaylistController {
         PlaylistDto response = playlistService.createPlaylist(loginUser.getUser().id(), request);
         log.info("[플레이리스트] 플레이리스트 생성 응답 - playlistId = {}", response.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<CursorResponsePlaylistDto> getPlaylists(@Validated @ModelAttribute PlaylistSearchCond request) {
+        log.info("[플레이리스트] 플레이리스트 목록 조회 요청 - keyword = {}, ownerId = {}, subscriberId = {}, cursor = {}",
+                request.getKeywordLike(), request.getOwnerIdEqual(), request.getSubscriberIdEqual(), request.getCursor());
+        CursorResponsePlaylistDto response = playlistService.getAllPlaylists(request);
+        log.info("[플레이리스트] 플레이리스트 목록 조회 응답 - totalCount={}, hasNext={}, nextCursor={}",
+                response.totalCount(), response.hasNext(), response.nextCursor());
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

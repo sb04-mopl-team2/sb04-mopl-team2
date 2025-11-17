@@ -1,10 +1,15 @@
 package com.codeit.mopl.domain.playlist.service;
 
+import com.codeit.mopl.domain.notification.entity.SortDirection;
+import com.codeit.mopl.domain.playlist.dto.CursorResponsePlaylistDto;
 import com.codeit.mopl.domain.playlist.dto.PlaylistCreateRequest;
 import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
+import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
+import com.codeit.mopl.domain.playlist.mapper.PlaylistMapper;
 import com.codeit.mopl.domain.playlist.playlistitem.entity.PlaylistItem;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
+import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -15,10 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -31,6 +33,7 @@ public class PlaylistServiceTest {
 
     @Mock private PlaylistRepository playlistRepository;
     @Mock private UserRepository userRepository;
+    @Mock private PlaylistMapper playlistMapper;
     @InjectMocks private PlaylistService playlistService;
 
     @Nested
@@ -88,6 +91,99 @@ public class PlaylistServiceTest {
                     () -> playlistService.createPlaylist(nonExistentUserId, request));
             verify(userRepository).findById(nonExistentUserId);
             verify(playlistRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("find()")
+    class findPlaylist {
+
+        @Test
+        @DisplayName("요청 파라미터 없이 모든 등록된 플레이리스트 목록을 조회함")
+        void shouldReturnAllPlaylists() {
+            //given
+            PlaylistSearchCond cond = new PlaylistSearchCond();
+            cond.setKeywordLike(null);
+            cond.setOwnerIdEqual(null);
+            cond.setSubscriberIdEqual(null);
+            cond.setCursor(null);
+            cond.setLimit(10);
+            cond.setSortDirection(SortDirection.DESCENDING);
+            cond.setSortBy(PlaylistSearchCond.SortBy.updatedAt);
+
+            UUID playlistId = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
+            UserSummary userSummary = new UserSummary(ownerId, "test", "test");
+            Playlist playlist = Playlist.builder().title("테스트").build();
+            given(playlistRepository.findAll()).willReturn(Arrays.asList(playlist));
+            given(playlistMapper.toPlaylistDto(playlist)).willReturn(new PlaylistDto(playlistId, userSummary, "테스트","테스트 설명", null, 0, false));
+
+            // when
+            CursorResponsePlaylistDto result = playlistService.getAllPlaylists(cond);
+
+            //then
+            assertThat(result.totalCount()).isEqualTo(1);
+            assertThat(result.playlists().get(0).title()).isEqualTo("테스트");
+            assertThat(result.playlists().get(0).description()).isEqualTo("테스트 설명");
+            assertThat(result.playlists().get(0).owner().name()).isEqualTo("test");
+        }
+
+        @Test
+        @DisplayName("해당 키워드가 제목 또는 설명에 포함된 플레이리스트만 조회함")
+        void shouldReturnPlaylistsByKeyword(){
+            //given
+            PlaylistSearchCond cond = new PlaylistSearchCond();
+            cond.setKeywordLike("키워드");
+            cond.setOwnerIdEqual(null);
+            cond.setSubscriberIdEqual(null);
+            cond.setCursor(null);
+            cond.setLimit(10);
+            cond.setSortDirection(SortDirection.DESCENDING);
+            cond.setSortBy(PlaylistSearchCond.SortBy.updatedAt);
+
+            UUID playlist1_Id = UUID.randomUUID();
+            UUID playlist2_Id = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
+            UserSummary userSummary = new UserSummary(ownerId, "test", "test");
+            Playlist playlist1 = Playlist.builder().title("키워드 포함 제목1").description("테스트 설명1").build();
+            Playlist playlist2 = Playlist.builder().title("키워드 포함 제목2").description("테스트 설명2").build();
+            List<Playlist> playlists = Arrays.asList(playlist1, playlist2);
+            given(playlistRepository.findAllByCond(cond)).willReturn(playlists);
+            given(playlistMapper.toPlaylistDto(playlist1))
+                    .willReturn(new PlaylistDto(playlist1_Id, userSummary, "키워드 포함 제목1", "테스트 설명1", null, 0, false));
+            given(playlistMapper.toPlaylistDto(playlist2))
+                    .willReturn(new PlaylistDto(playlist2_Id, userSummary, "키워드 포함 제목2", "테스트 설명2", null, 0, false));
+
+            //when
+            CursorResponsePlaylistDto result = playlistService.getAllPlaylists(cond);
+
+            //then
+            assertThat(result.totalCount()).isEqualTo(2);
+            assertThat(result.playlists().get(0).title()).isEqualTo("키워드 포함 제목1");
+            assertThat(result.playlists().get(0).description()).isEqualTo("테스트 설명1");
+            assertThat(result.playlists().get(0).owner().name()).isEqualTo("test");
+        }
+
+        @Test
+        @DisplayName("키워드와 일치하는 결과가 없을 경우 빈 리스트를 반환함")
+        void shouldReturnEmptyWhenKeywordNotFound() {
+            //given
+            PlaylistSearchCond cond = new PlaylistSearchCond();
+            cond.setKeywordLike("없는 키워드");
+            cond.setOwnerIdEqual(null);
+            cond.setSubscriberIdEqual(null);
+            cond.setCursor(null);
+            cond.setLimit(10);
+            cond.setSortDirection(SortDirection.DESCENDING);
+            cond.setSortBy(PlaylistSearchCond.SortBy.updatedAt);
+
+            given(playlistRepository.findAllByCond(cond)).willReturn(Collections.emptyList());
+
+            //when
+            CursorResponsePlaylistDto result = playlistService.getAllPlaylists(cond);
+
+            //then
+            assertThat(result.totalCount()).isEqualTo(0);
         }
     }
 }

@@ -2,9 +2,11 @@ package com.codeit.mopl.domain.playlist.dto;
 
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import jakarta.validation.constraints.NotNull;
+import lombok.Setter;
 
 import java.util.UUID;
 
+@Setter
 public class PlaylistSearchCond {
 
 

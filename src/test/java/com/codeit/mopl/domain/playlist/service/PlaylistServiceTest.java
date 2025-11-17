@@ -12,6 +12,7 @@ import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -61,9 +62,14 @@ public class PlaylistServiceTest {
                     .subscribedByMe(false)
                     .build();
 
+            UserSummary summary = new UserSummary(ownerId, "test", "test");
+            PlaylistDto dto =
+                    new PlaylistDto(UUID.randomUUID(), summary, "test title","test description", null,10,false,null);
+
             given(userRepository.findById(ownerId)).willReturn(Optional.of(user));
             given(playlistRepository.save(any(Playlist.class)))
                     .willReturn(saved);
+            given(playlistMapper.toPlaylistDto(saved)).willReturn(dto);
 
             //when
             PlaylistDto result =  playlistService.createPlaylist(ownerId, request);
@@ -87,7 +93,7 @@ public class PlaylistServiceTest {
             given(userRepository.findById(nonExistentUserId)).willReturn(Optional.empty());
 
             //when & then
-            assertThrows(IllegalAccessException.class,
+            assertThrows(UserNotFoundException.class,
                     () -> playlistService.createPlaylist(nonExistentUserId, request));
             verify(userRepository).findById(nonExistentUserId);
             verify(playlistRepository, never()).save(any());
@@ -116,7 +122,7 @@ public class PlaylistServiceTest {
             UserSummary userSummary = new UserSummary(ownerId, "test", "test");
             Playlist playlist = Playlist.builder().title("테스트").build();
             given(playlistRepository.findAll()).willReturn(Arrays.asList(playlist));
-            given(playlistMapper.toPlaylistDto(playlist)).willReturn(new PlaylistDto(playlistId, userSummary, "테스트","테스트 설명", null, 0, false));
+            given(playlistMapper.toPlaylistDto(playlist)).willReturn(new PlaylistDto(playlistId, userSummary, "테스트","테스트 설명", null, 0, false,null));
 
             // when
             CursorResponsePlaylistDto result = playlistService.getAllPlaylists(cond);
@@ -150,9 +156,9 @@ public class PlaylistServiceTest {
             List<Playlist> playlists = Arrays.asList(playlist1, playlist2);
             given(playlistRepository.findAllByCond(cond)).willReturn(playlists);
             given(playlistMapper.toPlaylistDto(playlist1))
-                    .willReturn(new PlaylistDto(playlist1_Id, userSummary, "키워드 포함 제목1", "테스트 설명1", null, 0, false));
+                    .willReturn(new PlaylistDto(playlist1_Id, userSummary, "키워드 포함 제목1", "테스트 설명1", null, 0, false,null));
             given(playlistMapper.toPlaylistDto(playlist2))
-                    .willReturn(new PlaylistDto(playlist2_Id, userSummary, "키워드 포함 제목2", "테스트 설명2", null, 0, false));
+                    .willReturn(new PlaylistDto(playlist2_Id, userSummary, "키워드 포함 제목2", "테스트 설명2", null, 0, false,null));
 
             //when
             CursorResponsePlaylistDto result = playlistService.getAllPlaylists(cond);

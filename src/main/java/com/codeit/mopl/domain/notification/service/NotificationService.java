@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.notification.service;
 
 import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
+import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
@@ -9,11 +10,16 @@ import com.codeit.mopl.domain.notification.entity.Status;
 import com.codeit.mopl.domain.notification.exception.NotificationNotAuthentication;
 import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
-import com.codeit.mopl.domain.notification.repository.RepositoryNotificationRepository;
+import com.codeit.mopl.domain.notification.repository.NotificationRepository;
+import com.codeit.mopl.domain.user.entity.User;
+import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.event.NotificationCreateEvent;
+import com.codeit.mopl.sse.service.SseService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,8 +28,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NotificationService {
 
-  private final RepositoryNotificationRepository notificationRepository;
+  private final NotificationRepository notificationRepository;
   private final NotificationMapper notificationMapper;
+  private final SseService sseService;
+  private final UserRepository userRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional(readOnly = true)
   public CursorResponseNotificationDto getNotifications(
@@ -50,7 +59,7 @@ public class NotificationService {
           null, null, null, false, 0L, SortBy.createdAt, SortDirection.DESCENDING);
 
       log.info("[알림] 알림 조회 종료, userId={}, resultSize={}, hasNext={}, totalCount={}",
-          userId, cursorResponseNotificationDto.data().size(), cursorResponseNotificationDto.hasNext(), cursorResponseNotificationDto.totalCount());
+          userId, 0L, cursorResponseNotificationDto.hasNext(), cursorResponseNotificationDto.totalCount());
       return cursorResponseNotificationDto;
     }
 
@@ -102,6 +111,34 @@ public class NotificationService {
     notificationRepository.save(notification);
 
     log.info("[알림] 알림 삭제 종료, notificationId={}", notificationId);
+  }
+
+  @Transactional
+  public void createNotification(UUID userId, String title, String content, Level level) {
+    log.info("[알림] 알림 생성 시작, userId = {}, title = {}, content = {}, level = {}", userId, title, content, level);
+    User user = userRepository.findById(userId).orElseThrow(); // UserNotFoundException 추후에 추가하기
+
+    Notification notification = new Notification();
+    notification.setUser(user);
+    notification.setTitle(title);
+    notification.setContent(content);
+    notification.setLevel(level);
+    notificationRepository.save(notification);
+
+    NotificationDto notificationDto = notificationMapper.toDto(notification);
+    eventPublisher.publishEvent(new NotificationCreateEvent(notificationDto));
+
+    log.info("[알림] 알림 생성 종료, userId = {}, notificationId = {}", userId, notification.getId());
+  }
+
+  public void sendNotification(NotificationDto notificationDto) {
+    log.info("[알림] SSE 전송 호출 시작, notificationDto = {}", notificationDto);
+
+    UUID receiverId = notificationDto.receiverId();
+    String eventName = "notification";
+    Object data = notificationDto;
+    sseService.send(receiverId, eventName, data);
+    log.info("[알림] SSE 전송 호출 종료, notificationDto = {}", notificationDto);
   }
 
   private List<Notification> searchNotifications(

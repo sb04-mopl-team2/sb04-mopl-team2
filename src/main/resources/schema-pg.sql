@@ -108,10 +108,10 @@ CREATE TABLE IF NOT EXISTS reviews
 CREATE TABLE IF NOT EXISTS conversations
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    "with" UUID NOT NULL,
+    with_user_id UUID NOT NULL,
     user_id UUID NOT NULL,
     has_unread BOOLEAN NOT NULL DEFAULT FALSE,
-    FOREIGN KEY ("with") REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (with_user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
@@ -140,10 +140,6 @@ CREATE TABLE IF NOT EXISTS follows
     FOREIGN KEY (followee_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE (follower_id, followee_id)
     );
-
--- 자기 자신 팔로우 금지
-ALTER TABLE follows
-    ADD CONSTRAINT no_self_follow CHECK (follower_id <> followee_id);
 
 -- WATCHING SESSION TABLE
 CREATE TABLE IF NOT EXISTS watching_sessions

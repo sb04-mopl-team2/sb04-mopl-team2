@@ -59,63 +59,36 @@ public class SseService {
     return emitter;
   }
 
-  public void send(Collection<UUID> receiverIds, String eventName, Object data) {
-    log.info("[SSE] SSE 이벤트 전송 시작, receiverIds = {}, eventName = {}, data = {}", receiverIds, eventName, data);
-    for (UUID receiverId : receiverIds) {
-      SseMessage saved = sseEmitterRegistry.addNewEvent(receiverId, eventName, data);
+  public void send(UUID receiverId, String eventName, Object data) {
+    log.info("[SSE] SSE 이벤트 전송 시작, receiverId = {}, eventName = {}, data = {}", receiverId, eventName, data);
+    SseMessage saved = sseEmitterRegistry.addNewEvent(receiverId, eventName, data);
 
-      List<SseEmitter> emitters = sseEmitterRegistry.getData().get(receiverId);
-      if (emitters == null || emitters.isEmpty()) {
-        log.debug("[SSE] 활성화된 연결이 없음. receiverId = {}", receiverId);
-        continue;
-      }
+    List<SseEmitter> emitters = sseEmitterRegistry.getData().get(receiverId);
+    if (emitters == null || emitters.isEmpty()) {
+      log.debug("[SSE] 활성화된 연결이 없음. receiverId = {}", receiverId);
+      log.info("[SSE] SSE 이벤트 전송 종료");
+      return;
+    }
 
-      for (SseEmitter emitter : emitters) {
-        try {
-          emitter.send(
-              SseEmitter.event()
-                  .id(saved.getEventId().toString())
-                  .name(saved.getEventName())
-                  .data(saved.getData())
-          );
+    for (SseEmitter emitter : emitters) {
+      try {
+        emitter.send(
+            SseEmitter.event()
+                .id(saved.getEventId().toString())
+                .name(saved.getEventName())
+                .data(saved.getData())
+        );
 
-          log.debug("[SSE] SSE 이벤트 전송 성공 receiverId = {}, eventId = {}, eventName = {}",
-              receiverId, saved.getEventId(), saved.getEventName());
+        log.debug("[SSE] SSE 이벤트 전송 성공 receiverId = {}, eventId = {}, eventName = {}",
+            receiverId, saved.getEventId(), saved.getEventName());
 
-        } catch (Exception e) {
-          log.warn("[SSE] SSE 이벤트 전송 실패 receiverId = {}, reason = {}", receiverId, e.getMessage());
-          sseEmitterRegistry.removeEmitter(receiverId, emitter);
-        }
+      } catch (Exception e) {
+        log.warn("[SSE] SSE 이벤트 전송 실패 receiverId = {}, reason = {}", receiverId, e.getMessage());
+        sseEmitterRegistry.removeEmitter(receiverId, emitter);
       }
     }
     log.info("[SSE] SSE 이벤트 전송 종료");
   }
-
-  public void broadcast(String eventName, Object data) {
-
-    Set<UUID> allUserIds = sseEmitterRegistry.getData().keySet();
-
-    // 브로드캐스트 시작 (INFO)
-    log.info("[SSE] BROADCAST 이벤트 전송 시작, eventName = {}, targetCount = {}",
-        eventName, allUserIds.size());
-
-    // 연결 대상 없음 (DEBUG)
-    if (allUserIds.isEmpty()) {
-      log.debug("[SSE] BROADCAST active connection 없음. 전송 스킵됨. eventName = {}", eventName);
-      return;
-    }
-
-    // 상세 로깅 (DEBUG)
-    log.debug("[SSE] BROADCAST 대상 사용자 목록 = {}", allUserIds);
-
-    // 실제 전송
-    send(allUserIds, eventName, data);
-
-    // 완료 로그 (INFO)
-    log.info("[SSE] BROADCAST 이벤트 전송 종료, eventName = {}, targetCount = {}",
-        eventName, allUserIds.size());
-  }
-
 
   @Scheduled(fixedDelay = 1000 * 60 * 30) // 30분마다 실행
   public void cleanUp() {

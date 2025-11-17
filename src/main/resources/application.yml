@@ -1,23 +1,61 @@
 spring:
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-  datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    driver-class-name: org.postgresql.Driver
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-  jpa:
-    hibernate:
-      ddl-auto: create
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.H2Dialect
-    open-in-view: false
-  profiles:
-    active: dev
   application:
     name: mopl
+  profiles:
+    active: dev
+  config:
+    import: optional:file:.env[.properties]
+  servlet:
+   multipart:
+     maxFileSize: 10MB
+     maxRequestSize: 30MB
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+
+  info:
+    name: Mopl
+    version: 1.0
+    java:
+      version: 0.0.1-SNAPSHOT
+    spring-boot:
+      version: 3.5.7
+    config:
+      datasource:
+        url: ${spring.datasource.url}
+        driver-class-name: ${spring.datasource.driver-class-name}
+      jpa:
+        ddl-auto: ${spring.jpa.hibernate.ddl-auto}
+      storage:
+        type: s3
+      multipart:
+        max-file-size: ${spring.servlet.multipart.maxFileSize}
+        max-request-size: ${spring.servlet.multipart.maxRequestSize}
+
+logging:
+  level:
+    root: info
+
+mopl:
+  storage:
+    s3:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+      region: ${AWS_REGION}
+      bucket: ${AWS_S3_BUCKET}
+      presigned-url: ${AWS_S3_PRESIGNED_URL_EXPIRATION}
+
+admin:
+  email: ${ADMIN_EMAIL}
+  name: ${ADMIN_NAME}
+  password: ${ADMIN_PASSWORD}
+
+jwt:
+  key: ${JWT_KEY}
+  access-token-expiration-minutes: ${ACCESS_TOKEN_EXPIRATION_MINUTES}
+  refresh-token-expiration-minutes: ${REFRESH_TOKEN_EXPIRATION_MINUTES}

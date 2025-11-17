@@ -17,7 +17,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class NotificationQueryDslRepository implements CustomNotificationRepository {
+public class NotificationRepositoryImpl implements CustomNotificationRepository {
 
   private final JPAQueryFactory queryFactory;
 

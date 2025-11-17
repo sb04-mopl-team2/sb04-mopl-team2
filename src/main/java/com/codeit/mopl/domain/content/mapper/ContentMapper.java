@@ -1,6 +1,6 @@
 package com.codeit.mopl.domain.content.mapper;
 
-import com.codeit.mopl.domain.content.dto.ContentDto;
+import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.request.ContentCreateRequest;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;

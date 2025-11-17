@@ -1,9 +1,9 @@
-package com.codeit.mopl.domain.content.dto;
+package com.codeit.mopl.domain.content.dto.response;
 
 import java.util.List;
 import java.util.UUID;
 
-public record ContentDto(
+public record contentSummary(
     UUID id,
     String type,
     String title,
@@ -11,6 +11,6 @@ public record ContentDto(
     String thumbnailUrl,
     List<String> tags,
     Double averageRating,
-    Integer reviewCount,
-    Long watcherCount
-) {}
+    Integer reviewCount
+) {
+}

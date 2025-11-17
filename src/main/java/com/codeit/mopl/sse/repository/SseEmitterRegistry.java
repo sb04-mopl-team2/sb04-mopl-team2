@@ -11,11 +11,11 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.Getter;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-@Repository
-public class EmitterRepository {
+@Component
+public class SseEmitterRegistry {
 
   @Getter
   private final ConcurrentMap<UUID, List<SseEmitter>> data = new ConcurrentHashMap<>();

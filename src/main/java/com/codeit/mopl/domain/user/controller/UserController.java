@@ -27,9 +27,9 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity createUser(@Valid @RequestBody UserCreateRequest request) {
-        log.info("유저 생성 호출 email = {}", request.email());
+        log.info("[사용자 관리] 유저 생성 호출 email = {}", request.email());
         UserDto response = userService.create(request);
-        log.info("유저 생성 응답 userId = {}", response.id());
+        log.info("[사용자 관리] 유저 생성 응답 userId = {}", response.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -37,9 +37,9 @@ public class UserController {
     @PreAuthorize("#userId == authentication.principal.user.id")
     public ResponseEntity updatePassword(@PathVariable UUID userId,
                                          @Valid @RequestBody ChangePasswordRequest request) {
-        log.info("비밀번호 변경 호출 userId = {}", userId);
+        log.info("[사용자 관리] 비밀번호 변경 호출 userId = {}", userId);
         userService.changePassword(userId,request);
-        log.info("비밀번호 변경 응답 userId = {}", userId);
+        log.info("[사용자 관리] 비밀번호 변경 응답 userId = {}", userId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
@@ -47,6 +47,7 @@ public class UserController {
     public ResponseEntity findUser(@PathVariable UUID userId) {
         log.info("[사용자 관리] 사용자 상세 정보 조회 호출 userId = {}", userId);
         UserDto response = userService.findUser(userId);
+        log.info("[사용자 관리] 사용자 상세 정보 조회 응답 userId = {}", response.id());
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -55,6 +56,7 @@ public class UserController {
     public ResponseEntity updateRole(@PathVariable UUID userId, @Valid @RequestBody UserRoleUpdateRequest request, @AuthenticationPrincipal UserDetails authenticatedPrincipal) {
         log.info("[사용자 관리] 사용자 권한 변경 호출 userId = {}, adminEmail = {}", userId, authenticatedPrincipal.getUsername());
         userService.updateRole(userId, request);
+        log.info("[사용자 관리] 사용자 권한 변경 응답 userId = {}, 변경 권한 = {}", userId, request.role());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
@@ -63,6 +65,7 @@ public class UserController {
     public ResponseEntity updateLcok(@PathVariable UUID userId, @Valid @RequestBody UserLockUpdateRequest request, @AuthenticationPrincipal UserDetails authenticatedPrincipal) {
         log.info("[사용자 관리] 사용자 계정 잠금 변경 호출 userId = {}, adminEmail = {}", userId, authenticatedPrincipal.getUsername());
         userService.updateLock(userId, request);
+        log.info("[사용자 관리] 사용자 계정 잠금 변경 응답 userId = {}, 잠금 상태 = {}", userId, request.locked());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

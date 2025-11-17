@@ -1,5 +1,7 @@
 package com.codeit.mopl.security.jwt;
 
+import com.codeit.mopl.exception.auth.ErrorCode;
+import com.codeit.mopl.exception.auth.InvalidTokenException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -24,7 +26,7 @@ public class JwtRegistry {
     }
 
     public void registerJwtInformation(JwtInformation jwtInformation) {
-        log.info("JwtInformation 등록 userEmail = {}", jwtInformation.getUserDto().email());
+        log.info("[JWT] JwtInformation 등록 userEmail = {}", jwtInformation.getUserDto().email());
         if (!origin.containsKey(jwtInformation.getUserDto().id())) {
             origin.put(jwtInformation.getUserDto().id(), new ConcurrentLinkedQueue<>());
         }
@@ -36,12 +38,12 @@ public class JwtRegistry {
     }
 
     public void invalidateJwtInformationByUserId(UUID userId) {
-        log.debug("JwtInformation 삭제 userId = {}", userId);
+        log.debug("[JWT] JwtInformation 삭제 userId = {}", userId);
         origin.remove(userId);
     }
 
     public boolean hasActiveJwtInformationByUserId(UUID userId) {
-        log.debug("JwtInformation 등록 유저 검증 userId = {}", userId);
+        log.debug("[JWT] JwtInformation 등록 유저 검증 userId = {}", userId);
         Queue<JwtInformation> queue = origin.get(userId);
         if (queue == null || queue.isEmpty()) {
             return false;
@@ -50,7 +52,7 @@ public class JwtRegistry {
     }
 
     public boolean hasActiveJwtInformationByAccessToken(String accessToken) {
-        log.debug("JwtInformation AccessToken 검증 accessToken = {}", accessToken);
+        log.debug("[JWT] JwtInformation AccessToken 검증 accessToken = {}", accessToken);
         return origin.values()
                 .stream()
                 .flatMap(Collection::stream)
@@ -58,7 +60,7 @@ public class JwtRegistry {
     }
 
     public boolean hasActiveJwtInformationByRefreshToken(String refreshToken) {
-        log.debug("JwtInformation Refresh Token 검증 refreshToken = {}", refreshToken);
+        log.debug("[JWT] JwtInformation Refresh Token 검증 refreshToken = {}", refreshToken);
         return origin.values()
                 .stream()
                 .flatMap(Collection::stream)
@@ -66,7 +68,7 @@ public class JwtRegistry {
     }
 
     public void rotateJwtInformation(String refreshToken, JwtInformation newJwtInformation) {
-        log.info("JwtInformation RefreshToken Rotate userEmail = {}", newJwtInformation.getUserDto().email());
+        log.info("[JWT] JwtInformation RefreshToken Rotate userEmail = {}", newJwtInformation.getUserDto().email());
         UUID userId = origin.values()
                 .stream()
                 .flatMap(Collection::stream)
@@ -74,8 +76,8 @@ public class JwtRegistry {
                         jwtInfo.getRefreshToken().equals(refreshToken))
                 .findFirst()
                 .orElseThrow(() -> {
-                    log.warn("JwtInformation 내 찾을 수 없음 refreshToken = {}", refreshToken);
-                    throw new IllegalArgumentException("Invalid refresh token");
+                    log.warn("[JWT] JwtInformation 내 찾을 수 없음 refreshToken = {}", refreshToken);
+                    throw new InvalidTokenException(ErrorCode.TOKEN_INVALID,Map.of("type","refresh token"));
                 })
                 .getUserDto().id();
         Queue<JwtInformation> queue = origin.get(userId);
@@ -87,7 +89,7 @@ public class JwtRegistry {
 
     @Scheduled(fixedRate = 1000 * 60 * 5)
     public void clearExpiredJwtInformation() {
-        log.info("유효기간이 만료된 JwtInformation 정리");
+        log.info("[JWT] 유효기간이 만료된 JwtInformation 정리");
         origin.forEach((userId, queue) -> {
             queue.removeIf(jwtInformation ->
                     jwtTokenProvider.isExpired(jwtInformation.getRefreshToken()));

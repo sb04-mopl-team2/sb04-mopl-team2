@@ -31,7 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String token = request.getHeader("Authorization").replace("Bearer ", "");
             if (!jwtRegistry.hasActiveJwtInformationByAccessToken(token)) {
-                log.warn("Access Token이 유효하지 않음 token = {}", token);
+                log.warn("[JWT 인증] Access Token이 유효하지 않음 token = {}", token);
                 throw new AuthenticationServiceException("Invalid access token");
             }
             jwtTokenProvider.verifyJws(token);

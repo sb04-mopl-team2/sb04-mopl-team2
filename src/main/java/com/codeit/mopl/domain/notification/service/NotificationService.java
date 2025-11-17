@@ -59,7 +59,7 @@ public class NotificationService {
           null, null, null, false, 0L, SortBy.createdAt, SortDirection.DESCENDING);
 
       log.info("[알림] 알림 조회 종료, userId={}, resultSize={}, hasNext={}, totalCount={}",
-          userId, cursorResponseNotificationDto.data().size(), cursorResponseNotificationDto.hasNext(), cursorResponseNotificationDto.totalCount());
+          userId, 0L, cursorResponseNotificationDto.hasNext(), cursorResponseNotificationDto.totalCount());
       return cursorResponseNotificationDto;
     }
 

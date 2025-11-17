@@ -10,5 +10,4 @@ import java.util.UUID;
 public interface PlaylistRepository extends JpaRepository<Playlist, UUID>,
 CustomPlaylistRepository {
 
-
 }

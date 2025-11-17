@@ -15,7 +15,7 @@ jobs:
       id-token: write
 
     env:
-      REPO_URI: ${{ secrets.ECR_REPOSITORY_URI }}
+      REPO_URI: "${{ secrets.ECR_URI_PREFIX }}/${{ secrets.ECR_URI_NAME }}"
 
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
@@ -41,6 +41,11 @@ jobs:
       - name: 이미지 태그 설정
         id: set-tag
         run: echo "image_tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      - name: Debug REPO_URI
+        run: |
+          echo "REPO_URI=${REPO_URI}"
+          echo "Literal: $REPO_URI"
 
       - name: 도커 빌드
         uses: docker/build-push-action@v5

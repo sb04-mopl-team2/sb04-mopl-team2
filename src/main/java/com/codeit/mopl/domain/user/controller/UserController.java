@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.user.controller;
 
 import com.codeit.mopl.domain.user.dto.request.ChangePasswordRequest;
 import com.codeit.mopl.domain.user.dto.request.UserCreateRequest;
+import com.codeit.mopl.domain.user.dto.request.UserLockUpdateRequest;
 import com.codeit.mopl.domain.user.dto.request.UserRoleUpdateRequest;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.service.UserService;
@@ -54,6 +55,14 @@ public class UserController {
     public ResponseEntity updateRole(@PathVariable UUID userId, @Valid @RequestBody UserRoleUpdateRequest request, @AuthenticationPrincipal UserDetails authenticatedPrincipal) {
         log.info("[사용자 관리] 사용자 권한 변경 호출 userId = {}, adminEmail = {}", userId, authenticatedPrincipal.getUsername());
         userService.updateRole(userId, request);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @PatchMapping("/{userId}/locked")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity updateLcok(@PathVariable UUID userId, @Valid @RequestBody UserLockUpdateRequest request, @AuthenticationPrincipal UserDetails authenticatedPrincipal) {
+        log.info("[사용자 관리] 사용자 계정 잠금 변경 호출 userId = {}, adminEmail = {}", userId, authenticatedPrincipal.getUsername());
+        userService.updateLock(userId, request);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

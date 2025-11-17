@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
+@Table(name = "contents")
 public class Content extends UpdatableEntity {
 
   @NotNull
@@ -40,7 +42,7 @@ public class Content extends UpdatableEntity {
   @Column(nullable = false)
   private ContentType contentType;
 
-  @Column(columnDefinition = "DOUBLE DEFAULT 0.0")
+  @Column(columnDefinition = "DOUBLE PRECISION DEFAULT 0.0")
   private Double averageRating = 0.0;
 
   @Column(columnDefinition = "INTEGER DEFAULT 0")

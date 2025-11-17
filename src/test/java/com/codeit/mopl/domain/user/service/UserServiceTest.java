@@ -1,6 +1,7 @@
 package com.codeit.mopl.domain.user.service;
 
 import com.codeit.mopl.domain.user.dto.request.UserCreateRequest;
+import com.codeit.mopl.domain.user.dto.request.UserLockUpdateRequest;
 import com.codeit.mopl.domain.user.dto.request.UserRoleUpdateRequest;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
@@ -15,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
@@ -36,6 +38,9 @@ public class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private SessionRegistry sessionRegistry;
 
     @InjectMocks
     private UserService userService;
@@ -123,5 +128,21 @@ public class UserServiceTest {
 
         // when
         assertEquals(Role.ADMIN, findUser.getRole());
+    }
+
+    @DisplayName("올바른 유저 ID와 Request가 주어졌을 때 업데이트의 성공한다")
+    @Test
+    void updateUserLockShouldSucceedWhenValidUserIdAndValidRequest() {
+        // given
+        UUID userId = UUID.randomUUID();
+        UserLockUpdateRequest request = new UserLockUpdateRequest(true);
+        User findUser = new User("test@example.com","password","test");
+        given(userRepository.findById(userId)).willReturn(Optional.of(findUser));
+
+        // when
+        userService.updateLock(userId, request);
+
+        // then
+        assertEquals(true, findUser.isLocked());
     }
 }

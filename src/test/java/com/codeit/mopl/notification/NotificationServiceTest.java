@@ -1,7 +1,16 @@
 package com.codeit.mopl.notification;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
+import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
@@ -9,10 +18,12 @@ import com.codeit.mopl.domain.notification.entity.Status;
 import com.codeit.mopl.domain.notification.exception.NotificationNotAuthentication;
 import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
-import com.codeit.mopl.domain.notification.repository.RepositoryNotificationRepository;
+import com.codeit.mopl.domain.notification.repository.NotificationRepository;
 import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
-import java.lang.reflect.Executable;
+import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.event.NotificationCreateEvent;
+import com.codeit.mopl.sse.service.SseService;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,27 +34,32 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
 
   @Mock
-  private RepositoryNotificationRepository notificationRepository;
+  private NotificationRepository notificationRepository;
+
+  @Mock
+  private UserRepository userRepository;
 
   @Mock
   private NotificationMapper notificationMapper;
 
   @InjectMocks
   private NotificationService notificationService;
+
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
+
+  @Mock
+  private SseService sseService;
 
   private UUID userId;
   private String cursor;
@@ -233,6 +249,56 @@ class NotificationServiceTest {
     verify(notificationRepository, never()).save(any(Notification.class));
   }
 
+  @Test
+  @DisplayName("알림 생성 메소드 테스트")
+  void createNotification_shouldSaveEntityAndPublishEvent() {
+    // given
+    User user = new User();
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+    String title = "테스트 제목";
+    String content = "테스트 내용";
+    Level level = Level.INFO;
+
+    Notification notification = createNotification(title, LocalDateTime.now());
+    NotificationDto notificationDto = createDtoFrom(notification);
+
+    when(notificationMapper.toDto(any(Notification.class))).thenReturn(notificationDto);
+
+    // when
+    notificationService.createNotification(userId, title, content, level);
+
+    // then
+    verify(userRepository).findById(userId);
+    verify(notificationRepository).save(any(Notification.class));
+    verify(notificationMapper).toDto(any(Notification.class));
+
+    ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+    verify(eventPublisher).publishEvent(eventCaptor.capture());
+
+    Object published = eventCaptor.getValue();
+    assertThat(published).isInstanceOf(NotificationCreateEvent.class);
+
+    NotificationCreateEvent event = (NotificationCreateEvent) published;
+    assertThat(event.notificationDto()).isEqualTo(notificationDto);
+  }
+
+  @Test
+  @DisplayName("알림 송신 메소드 테스트")
+  void sendNotification_shouldCallSseServiceSend() {
+    // given
+    UUID receiverId = UUID.randomUUID();
+    String title = "테스트 제목";
+
+    Notification notification = createNotification(title, LocalDateTime.now());
+    NotificationDto notificationDto = createDtoFrom(notification);
+
+    // when
+    notificationService.sendNotification(notificationDto);
+
+    // then
+    verify(sseService).send(eq(receiverId), eq("notification"), eq(notificationDto));
+  }
   // ---- 테스트용 헬퍼 메소드들 ----
   private Notification createNotification(String title, LocalDateTime createdAt) {
     Notification notification = new Notification(UUID.randomUUID(), createdAt);

@@ -1,7 +1,7 @@
 package com.codeit.mopl.domain.playlist.entity;
 
 import com.codeit.mopl.domain.base.UpdatableEntity;
-import com.codeit.mopl.domain.playlist.playlistitem.PlaylistItem;
+import com.codeit.mopl.domain.playlist.playlistitem.entity.PlaylistItem;
 import com.codeit.mopl.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,12 +18,12 @@ import java.util.List;
 @Builder
 public class Playlist extends UpdatableEntity {
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User user;
 
     @Builder.Default
-    @OneToMany(mappedBy = "playlist", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "playlist", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PlaylistItem> playlistItems = new ArrayList<>();
 
     @Column(nullable = false)

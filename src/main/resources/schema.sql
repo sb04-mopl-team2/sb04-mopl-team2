@@ -63,6 +63,20 @@ CREATE TABLE IF NOT EXISTS playlist_items
     FOREIGN KEY (content_id) REFERENCES contents(id) ON DELETE CASCADE
     );
 
+-- PLAYLIST SUBSCRIPTIONS TABLE
+CREATE TABLE IF NOT EXISTS playlist_subscriptions
+(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    subscriber_id UUID NOT NULL,
+    playlist_id UUID NOT NULL,
+
+    FOREIGN KEY (subscriber_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+
+    UNIQUE (subscriber_id, playlist_id)
+    );
+
 -- NOTIFICATIONS TABLE
 CREATE TABLE IF NOT EXISTS notifications
 (
@@ -130,3 +144,16 @@ CREATE TABLE IF NOT EXISTS follows
 -- 자기 자신 팔로우 금지
 ALTER TABLE follows
     ADD CONSTRAINT no_self_follow CHECK (follower_id <> followee_id);
+
+-- WATCHING SESSION TABLE
+CREATE TABLE IF NOT EXISTS watching_sessions
+(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    content_id UUID NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (content_id) REFERENCES contents(id) ON DELETE CASCADE,
+    UNIQUE(user_id)
+    );

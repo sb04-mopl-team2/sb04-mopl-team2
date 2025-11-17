@@ -53,7 +53,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
         JwtInformation jwtInformation = new JwtInformation(userDto, accessToken, refreshToken);
         if (jwtRegistry.hasActiveJwtInformationByUserId(userDto.id())) {
-            log.info("중복 로그인 감지 username = {}", userDto.name());
+            log.info("[사용자 관리] 중복 로그인 감지 username = {}", userDto.name());
             jwtRegistry.invalidateJwtInformationByUserId(userDto.id());
         }
         jwtRegistry.registerJwtInformation(jwtInformation);

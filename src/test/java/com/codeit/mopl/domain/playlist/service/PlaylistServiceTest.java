@@ -131,9 +131,9 @@ public class PlaylistServiceTest {
 
             //then
             assertThat(result.totalCount()).isEqualTo(1);
-            assertThat(result.playlists().get(0).title()).isEqualTo("테스트");
-            assertThat(result.playlists().get(0).description()).isEqualTo("테스트 설명");
-            assertThat(result.playlists().get(0).owner().name()).isEqualTo("test");
+            assertThat(result.data().get(0).title()).isEqualTo("테스트");
+            assertThat(result.data().get(0).description()).isEqualTo("테스트 설명");
+            assertThat(result.data().get(0).owner().name()).isEqualTo("test");
         }
 
         @Test
@@ -169,9 +169,9 @@ public class PlaylistServiceTest {
 
             //then
             assertThat(result.totalCount()).isEqualTo(2);
-            assertThat(result.playlists().get(0).title()).isEqualTo("키워드 포함 제목1");
-            assertThat(result.playlists().get(0).description()).isEqualTo("테스트 설명1");
-            assertThat(result.playlists().get(0).owner().name()).isEqualTo("test");
+            assertThat(result.data().get(0).title()).isEqualTo("키워드 포함 제목1");
+            assertThat(result.data().get(0).description()).isEqualTo("테스트 설명1");
+            assertThat(result.data().get(0).owner().name()).isEqualTo("test");
         }
 
         @Test

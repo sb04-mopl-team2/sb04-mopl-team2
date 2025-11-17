@@ -37,6 +37,6 @@ public class Review extends DeletableEntity {
   @Column(nullable = false)
   private Double rating;
 
-  private Boolean isDeleted;
-
+  @Column(nullable = false)
+  private Boolean isDeleted = false;
 }

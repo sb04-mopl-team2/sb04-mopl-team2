@@ -1,6 +1,6 @@
 name: ci.yml
 on:
-  push:
+  pull_request:
     branches:
       - "develop"
       - "main"

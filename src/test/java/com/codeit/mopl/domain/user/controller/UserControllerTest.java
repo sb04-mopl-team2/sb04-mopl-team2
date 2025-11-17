@@ -1,6 +1,7 @@
 package com.codeit.mopl.domain.user.controller;
 
 import com.codeit.mopl.domain.user.dto.request.UserCreateRequest;
+import com.codeit.mopl.domain.user.dto.request.UserLockUpdateRequest;
 import com.codeit.mopl.domain.user.dto.request.UserRoleUpdateRequest;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
@@ -180,6 +181,47 @@ public class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(content)
                 .accept(MediaType.APPLICATION_JSON_VALUE)
+        );
+
+        resultActions.andExpect(status().isForbidden());
+    }
+
+    @DisplayName("유저 잠금상태 변경 호출 시 UUID 형태의 userId와 올바른 Boolean이 주어졌을 때 " +
+            "호출한 계정이 어드민의 권한을 가지고 있을 경우 유저의 권한 변경에 성공한다.")
+    @WithMockUser(username = "admin@admin.com", roles = {"ADMIN"})
+    @Test
+    void updateUserLockedShouldSucceedWhenValidRequestAndRequesterIsAdmin() throws Exception {
+        // 본문 생성
+        UserLockUpdateRequest request = new UserLockUpdateRequest(true);
+        String content = om.writeValueAsString(request);
+        UUID userId = UUID.randomUUID();
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                patch("/api/users/" + userId + "/locked")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(content)
+                        .accept(MediaType.APPLICATION_JSON_VALUE)
+        );
+
+        // then
+        resultActions.andExpect(status().isNoContent());
+    }
+
+    @DisplayName("ADMIN 권한이 아닌 유저가 유저 잠금상태 변경 호출 시 403 Forbidden을 반환한다")
+    @WithMockUser(username = "test", roles = {"USER"})
+    @Test
+    void updateUserLockedShouldFailWhenRequesterIsNotAdmin() throws Exception {
+        UserLockUpdateRequest request = new UserLockUpdateRequest(true);
+        String content = om.writeValueAsString(request);
+
+        ResultActions resultActions = mockMvc.perform(
+                patch("/api/users/" + UUID.randomUUID() + "/locked")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(content)
+                        .accept(MediaType.APPLICATION_JSON_VALUE)
         );
 
         resultActions.andExpect(status().isForbidden());

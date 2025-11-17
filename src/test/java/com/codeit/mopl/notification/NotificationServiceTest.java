@@ -1,5 +1,13 @@
 package com.codeit.mopl.notification;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.entity.Notification;
@@ -9,10 +17,9 @@ import com.codeit.mopl.domain.notification.entity.Status;
 import com.codeit.mopl.domain.notification.exception.NotificationNotAuthentication;
 import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
-import com.codeit.mopl.domain.notification.repository.RepositoryNotificationRepository;
+import com.codeit.mopl.domain.notification.repository.NotificationRepository;
 import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
-import java.lang.reflect.Executable;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,19 +32,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
 
   @Mock
-  private RepositoryNotificationRepository notificationRepository;
+  private NotificationRepository notificationRepository;
 
   @Mock
   private NotificationMapper notificationMapper;

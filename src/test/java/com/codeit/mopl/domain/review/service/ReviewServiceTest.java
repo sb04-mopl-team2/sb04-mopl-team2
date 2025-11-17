@@ -1,4 +1,4 @@
-package com.codeit.mopl.review;
+package com.codeit.mopl.domain.review.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,7 +14,6 @@ import com.codeit.mopl.domain.review.entity.ReviewSortBy;
 import com.codeit.mopl.domain.review.entity.SortDirection;
 import com.codeit.mopl.domain.review.mapper.ReviewMapper;
 import com.codeit.mopl.domain.review.repository.ReviewRepository;
-import com.codeit.mopl.domain.review.service.ReviewService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;

@@ -56,17 +56,16 @@ public class ReviewRepositoryImpl implements CustomReviewRepository {
 
     if (sortBy != null && sortDirection != null) {
       Order order = sortDirection.equals(SortDirection.DESCENDING) ? Order.DESC : Order.ASC;
-      switch (sortBy.toString()) {
-        case "createdAt":
+      switch (sortBy) {
+        case createdAt:
           orders.add(new OrderSpecifier<>(order, qReview.createdAt));
           break;
-        case "rating":
+        case rating:
           orders.add(new OrderSpecifier<>(order, qReview.rating));
           break;
       }
     }
 
-    orders.add(new OrderSpecifier<>(Order.DESC, qReview.createdAt));
     return orders;
   }
 

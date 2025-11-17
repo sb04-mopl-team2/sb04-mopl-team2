@@ -9,7 +9,7 @@ import com.codeit.mopl.domain.notification.entity.Status;
 import com.codeit.mopl.domain.notification.exception.NotificationNotAuthentication;
 import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
-import com.codeit.mopl.domain.notification.repository.RepositoryNotificationRepository;
+import com.codeit.mopl.domain.notification.repository.NotificationRepository;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NotificationService {
 
-  private final RepositoryNotificationRepository notificationRepository;
+  private final NotificationRepository notificationRepository;
   private final NotificationMapper notificationMapper;
 
   @Transactional(readOnly = true)

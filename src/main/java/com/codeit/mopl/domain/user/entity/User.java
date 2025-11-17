@@ -58,6 +58,10 @@ public class User extends UpdatableEntity {
         this.password = password;
     }
 
+    public void updateLock(boolean locked) {
+        this.locked = locked;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof User user)) return false;

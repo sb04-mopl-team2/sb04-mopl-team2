@@ -1,5 +1,6 @@
 package com.codeit.mopl.sse.controller;
 
+import com.codeit.mopl.security.CustomUserDetails;
 import com.codeit.mopl.sse.service.SseService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,24 +22,16 @@ public class SseController {
 
   @GetMapping(value = "/api/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   public SseEmitter connect(
-      @AuthenticationPrincipal UserDetails user,
+      @AuthenticationPrincipal CustomUserDetails user,
       @RequestParam(value = "LastEventId", required = false) UUID lastEventId
   ) {
-    // 인증 안 된 경우 방어
-    if (user == null) {
-      log.warn("SSE connect called without authenticated user");
-      throw new RuntimeException("Unauthenticated SSE connection");
-    }
 
-    // TODO: 추후 UserDetailService와 연동하여 receiverId를 가져오도록 수정
-    //UUID receiverId = user.getUserDto().id();
-    UUID receiverId = UUID.randomUUID(); // 임시로 쓰는 랜덤 uuid
-
-    log.info("SSE connect start: receiverId={}, lastEventId={}", receiverId, lastEventId);
+    log.info("[SSE] SSE 연결 요청 시작, receiverId = {}, lastEventId = {}", user.getUser().id(), lastEventId);
+    UUID receiverId = user.getUser().id();
 
     SseEmitter emitter = sseService.connect(receiverId, lastEventId);
 
-    log.info("SSE connect success: receiverId={}, lastEventId={}", receiverId, lastEventId);
+    log.info("[SSE] SSE 연결 요청 종료, receiverId = {}", receiverId);
     return emitter;
   }
 }

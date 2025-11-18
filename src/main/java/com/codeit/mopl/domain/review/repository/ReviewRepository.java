@@ -6,4 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
+public interface ReviewRepository extends JpaRepository<Review, UUID>, CustomReviewRepository {
+
+  long countByContentIdAndIsDeleted(UUID contentId, Boolean isDeleted);
 }

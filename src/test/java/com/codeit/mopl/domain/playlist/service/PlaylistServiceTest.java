@@ -116,7 +116,7 @@ public class PlaylistServiceTest {
             cond.setCursor(null);
             cond.setLimit(10);
             cond.setSortDirection(SortDirection.DESCENDING);
-            cond.setSortBy(SortBy.updatedAt);
+            cond.setSortBy(SortBy.UPDATED_AT);
 
             UUID playlistId = UUID.randomUUID();
             UUID ownerId = UUID.randomUUID();
@@ -147,7 +147,7 @@ public class PlaylistServiceTest {
             cond.setCursor(null);
             cond.setLimit(10);
             cond.setSortDirection(SortDirection.DESCENDING);
-            cond.setSortBy(SortBy.updatedAt);
+            cond.setSortBy(SortBy.UPDATED_AT);
             Playlist playlist1 = Playlist.builder().title("키워드 포함 제목1").description("테스트 설명1").build();
             Playlist playlist2 = Playlist.builder().title("키워드 포함 제목2").description("테스트 설명2").build();
             List<Playlist> playlists = Arrays.asList(playlist1, playlist2);
@@ -185,7 +185,7 @@ public class PlaylistServiceTest {
             cond.setCursor(null);
             cond.setLimit(10);
             cond.setSortDirection(SortDirection.DESCENDING);
-            cond.setSortBy(SortBy.updatedAt);
+            cond.setSortBy(SortBy.UPDATED_AT);
 
             given(playlistRepository.findAllByCond(cond)).willReturn(Collections.emptyList());
 

@@ -52,7 +52,7 @@ public class ReviewService {
     log.info("[리뷰] 리뷰 수정 시작, userId = {}, reviewId = {}, text = {}, rating = {}", userId, reviewId, text, rating);
 
     Review review = getValidReviewByReviewId(reviewId);
-    if (review.getUser().getId() != userId) {
+    if (!review.getUser().getId().equals(userId)) {
       log.warn("[리뷰] 리뷰를 수정할 권한이 없습니다. reviewId = {}", review.getId());
       throw new ReviewUnAuthorizeException(com.codeit.mopl.exception.review.ErrorCode.REVIEW_UNAUTHORIZED, Map.of("reviewId", review.getId()));
     }

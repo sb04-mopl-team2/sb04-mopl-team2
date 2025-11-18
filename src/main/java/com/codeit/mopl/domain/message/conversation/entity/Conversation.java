@@ -15,7 +15,7 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@Table(name = "conversation")
+@Table(name = "conversations")
 @AllArgsConstructor
 @NoArgsConstructor
 public class Conversation extends UpdatableEntity {
@@ -27,7 +27,7 @@ public class Conversation extends UpdatableEntity {
 
     // 대화의 상대방
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "with", nullable = false)
+    @JoinColumn(name = "with_user_id", nullable = false)
     private User with;
 
     // 메세지를 읽었는지 여부

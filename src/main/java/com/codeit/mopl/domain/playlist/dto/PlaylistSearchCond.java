@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Setter
@@ -19,6 +20,7 @@ public class PlaylistSearchCond {
         private UUID subscriberIdEqual;
 
         private String cursor;
+        private UUID idAfter;
 
         @Positive
         @Max(100)

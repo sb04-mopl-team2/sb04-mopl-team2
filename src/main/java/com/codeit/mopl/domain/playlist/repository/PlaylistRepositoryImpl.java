@@ -9,6 +9,8 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,7 +30,8 @@ public class PlaylistRepositoryImpl implements CustomPlaylistRepository {
                 .where(
                         keywordLike(cond.getKeywordLike()),
                         ownerEq(cond.getOwnerIdEqual()),
-                        subscriberEq(cond.getSubscriberIdEqual())
+                        subscriberEq(cond.getSubscriberIdEqual()),
+                        cursorLessThan(cond.getCursor(), cond.getIdAfter())
                 )
                 .orderBy(playlist.createdAt.desc())
                 .limit(cond.getLimit() + 1 )
@@ -73,5 +76,20 @@ public class PlaylistRepositoryImpl implements CustomPlaylistRepository {
                 query.select(subscription.playlist.id)
                         .from(subscription)
                         .where(subscription.subscriber.id.eq(subscriberId)));
+    }
+
+    private BooleanExpression cursorLessThan(String cursor, UUID idAfter) {
+        if (cursor == null) {
+            return null;
+        }
+        LocalDateTime cursorCreatedAt = LocalDateTime.parse(cursor);
+        BooleanExpression lessTanCreatedAt = playlist.createdAt.lt(cursorCreatedAt);
+
+        if (idAfter == null) {
+            return lessTanCreatedAt;
+        }
+        BooleanExpression equalAndLtId = playlist.createdAt.eq(cursorCreatedAt)
+                .and(playlist.id.lt(idAfter));
+        return lessTanCreatedAt.or(equalAndLtId);
     }
 }

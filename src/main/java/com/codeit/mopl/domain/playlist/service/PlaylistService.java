@@ -69,16 +69,13 @@ public class PlaylistService {
         List<Playlist> playlists = playlistRepository.findAllByCond(cond);
         int originalSize = playlists.size();
 
-        String nextCursor = null;
-        if (playlists.size() > cond.getLimit()) {
-            nextCursor = playlists.get(cond.getLimit() - 1).getId().toString();
-            playlists = playlists.subList(0, cond.getLimit());
-        }
+        Playlist lastPlaylist = playlists.get(originalSize - 1);
+        String nextCursor = lastPlaylist.getCreatedAt().toString();
+        UUID nextIdAfter = lastPlaylist.getId();
 
         List<PlaylistDto> playlistDtos =
                 playlists.stream().map(playlistMapper::toPlaylistDto).collect(Collectors.toList());
 
-        UUID nextIdAfter = nextCursor != null ? UUID.fromString(nextCursor) : null;
         boolean hasNext = originalSize > cond.getLimit();
         long totalCount = playlistRepository.countAllByCond(cond);
         log.info("[플레이리스트] 플레이리스트 목록 조회 완료 - totalCount = {}", totalCount);

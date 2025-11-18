@@ -25,7 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -263,7 +263,7 @@ public class PlaylistServiceTest {
                     null,
                     0,
                     true,
-                    null);
+                    Collections.emptyList());
             given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
             given(playlistMapper.toPlaylistDto(playlist)).willReturn(dto);
 
@@ -271,7 +271,7 @@ public class PlaylistServiceTest {
             PlaylistDto result = playlistService.getPlaylist(playlistId);
 
             //then
-            assertThat(result.contents().isEmpty());
+            assertThat(result.contents()).isEmpty();
         }
     }
 }

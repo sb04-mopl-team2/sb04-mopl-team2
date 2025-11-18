@@ -46,7 +46,7 @@ public class PlaylistController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @GetMapping
+    @GetMapping("/{playlistId}")
     public ResponseEntity<PlaylistDto> getPlaylist(@PathVariable UUID playlistId) {
         log.info("[플레이리스트] 플레이리스트 단건 조회 요청 - playlistId = {}", playlistId);
         PlaylistDto response = playlistService.getPlaylist(playlistId);

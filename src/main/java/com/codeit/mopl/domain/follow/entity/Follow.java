@@ -30,4 +30,10 @@ public class Follow extends BaseEntity {
     @JoinColumn(name = "followee_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User followee;
+
+    public Follow(User follower, User followee) {
+        this.follower = follower;
+        this.followee = followee;
+    }
+
 }

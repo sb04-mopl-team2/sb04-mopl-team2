@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,6 +22,7 @@ import com.codeit.mopl.domain.review.repository.ReviewRepository;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.review.ReviewDuplicateException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -246,6 +248,35 @@ class ReviewServiceTest {
     // then
     assertThatThrownBy(act::run)
         .isInstanceOf(UserNotFoundException.class);
+  }
+
+  @Test
+  @DisplayName("리뷰 생성 실패 - 이미 리뷰가 있을 때")
+  void createReview_fail_reviewDuplicated() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID contentId = UUID.randomUUID();
+    String text = "좋은 리뷰입니다!";
+    double rating = 4.5;
+    User user = new User();
+    Content content = new Content();
+    Review review = new Review(user, content, text, rating, false);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(contentRepository.findById(contentId)).thenReturn(Optional.of(content));
+
+    UUID reviewId = UUID.randomUUID();
+    Review duplicatedReview = mock(Review.class);
+    when(duplicatedReview.getId()).thenReturn(reviewId);
+    when(reviewRepository.findByUserAndContent(user, content)).thenReturn(Optional.of(duplicatedReview));
+
+    // when
+    Runnable act = () ->
+        reviewService.createReview(userId, contentId, text, rating);
+
+    // then
+    assertThatThrownBy(act::run)
+        .isInstanceOf(ReviewDuplicateException.class);
   }
 
   private Review createReview(UUID id, LocalDateTime createdAt) {

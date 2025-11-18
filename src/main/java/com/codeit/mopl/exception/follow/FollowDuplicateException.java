@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public class FollowDuplicateException extends FollowException {
     public FollowDuplicateException(Map<String, Object> details) {
-        super(ErrorCode.FOLLOW_DUPLICATE, details);
+        super(FollowErrorCode.FOLLOW_DUPLICATE, details);
     }
 
     public static FollowDuplicateException withFollowerIdAndFolloweeId(UUID followerId, UUID followeeId) {

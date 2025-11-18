@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public class FollowSelfProhibitedException extends FollowException {
     public FollowSelfProhibitedException(Map<String, Object> details) {
-        super(ErrorCode.FOLLOW_SELF_PROHIBITED, details);
+        super(FollowErrorCode.FOLLOW_SELF_PROHIBITED, details);
     }
 
     public static FollowSelfProhibitedException withFollowerIdAndFolloweeId(UUID followerId, UUID followeeId) {

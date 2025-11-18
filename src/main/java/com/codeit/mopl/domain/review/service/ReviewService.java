@@ -13,6 +13,7 @@ import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.review.ReviewDuplicateException;
 import com.codeit.mopl.exception.review.ReviewNotFoundException;
+import com.codeit.mopl.exception.review.ReviewUnAuthorizeException;
 import com.codeit.mopl.exception.user.ErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import jakarta.transaction.Transactional;
@@ -43,6 +44,23 @@ public class ReviewService {
     Review review = new Review(user, content, text, rating, false);
     reviewRepository.save(review);
     log.info("[리뷰] 리뷰 생성 종료, userId = {}, contentId = {}, reviewId = {}", userId, contentId, review.getId());
+    return reviewMapper.toDto(review);
+  }
+
+  @Transactional
+  public ReviewDto updateReview(UUID userId, UUID reviewId, String text, double rating) {
+    log.info("[리뷰] 리뷰 수정 시작, userId = {}, reviewId = {}, text = {}, rating = {}", userId, reviewId, text, rating);
+
+    Review review = getValidReviewByReviewId(reviewId);
+    if (review.getUser().getId() != userId) {
+      log.warn("[리뷰] 리뷰를 수정할 권한이 없습니다. reviewId = {}", review.getId());
+      throw new ReviewUnAuthorizeException(com.codeit.mopl.exception.review.ErrorCode.REVIEW_UNAUTHORIZED, Map.of("reviewId", review.getId()));
+    }
+    review.setText(text);
+    review.setRating(rating);
+    reviewRepository.save(review);
+
+    log.info("[리뷰] 리뷰 수정 종료, reviewId = {}", reviewId);
     return reviewMapper.toDto(review);
   }
 

@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.watchingsession.service;
 
+import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.domain.watchingsession.dto.CursorResponseWatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
@@ -7,13 +8,17 @@ import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
 import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
+import com.codeit.mopl.exception.watchingsession.ErrorCode;
+import com.codeit.mopl.exception.watchingsession.ContentNotFoundException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.codeit.mopl.exception.user.UserNotFoundException;
 
 /*
    Controller에서 불려지는 조회용 함수들
@@ -25,6 +30,7 @@ public class WatchingSessionService {
 
   private final WatchingSessionRepository watchingSessionRepository;
   private final WatchingSessionMapper watchingSessionMapper;
+  private final ContentRepository contentRepository;
 
   @Transactional(readOnly = true)
   public WatchingSessionDto getByUserId(UUID userId) {
@@ -32,7 +38,10 @@ public class WatchingSessionService {
     WatchingSession watchingSession = watchingSessionRepository.findByUserId(userId)
         .orElseThrow(() -> {
           log.warn("해당 유저를 찾을 수 없음 userId = {}", userId);
-          return new UsernameNotFoundException("userId not found");
+          return new UserNotFoundException(
+              com.codeit.mopl.exception.user.ErrorCode.USER_NOT_FOUND,
+              Map.of("userId",userId)
+          );
         });
     log.info("[실시간 세션] 서비스: 사용자 시청 세션 조회 및 DTO 변환 완료. userId = {}", userId);
     return watchingSessionMapper.toDto(watchingSession);
@@ -54,6 +63,9 @@ public class WatchingSessionService {
         "[실시간 세션] 서비스: 특정 콘텐츠의 시청 세션 목록 조회 시작. contentId = {}, userId = {}",
         contentId, userId
     );
+    if (!contentRepository.existsById(contentId)) {
+      throw new ContentNotFoundException(ErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId));
+    }
     int internalLimit = limit + 1;
     List<WatchingSession> watchingSessions = watchingSessionRepository.findWatchingSessions(
         userId,

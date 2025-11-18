@@ -10,10 +10,11 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Repository;
 
+import java.time.DateTimeException;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -85,7 +86,12 @@ public class PlaylistRepositoryImpl implements CustomPlaylistRepository {
         if (cursor == null) {
             return null;
         }
-        LocalDateTime cursorCreatedAt = LocalDateTime.parse(cursor);
+        LocalDateTime cursorCreatedAt;
+        try {
+            cursorCreatedAt = LocalDateTime.parse(cursor);
+        } catch (DateTimeException e) {
+            throw new IllegalArgumentException("올바르지 않은 커서 포맷" + cursor, e);
+        }
         BooleanExpression lessThanCreatedAt = playlist.createdAt.lt(cursorCreatedAt);
 
         if (idAfter == null) {

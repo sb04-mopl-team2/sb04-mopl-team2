@@ -65,9 +65,6 @@ public class WatchingSessionControllerTest {
   @MockitoBean
   private WatchingSessionService watchingSessionService;
 
-  @Autowired
-  private ObjectMapper om;
-
   @MockitoBean
   private UserRepository userRepository;
 
@@ -194,7 +191,7 @@ public class WatchingSessionControllerTest {
         new contentSummary(contentId,null,null,null, null,null,null,null
         )
     );
-    CursorResponseWatchingSessionDto responseWrapper = new CursorResponseWatchingSessionDto(
+    CursorResponseWatchingSessionDto cursorResponseWatchingSessionDto = new CursorResponseWatchingSessionDto(
         List.of(watchingSessionDto),
         "nextCursor_123",
         UUID.randomUUID(),
@@ -204,16 +201,9 @@ public class WatchingSessionControllerTest {
         SortDirection.ASCENDING
     );
     when(watchingSessionService.getWatchingSessions(
-        any(UUID.class),
-        eq(contentId),
-        any(),
-        any(),
-        any(),
-        anyInt(),
-        any(),
-        any()
-    )).thenReturn(responseWrapper);
-
+        any(UUID.class), eq(contentId),
+        any(), any(), any(), anyInt(), any(), any()
+    )).thenReturn(cursorResponseWatchingSessionDto);
 
     // when & then
     ResultActions resultActions = mockMvc.perform(
@@ -226,7 +216,6 @@ public class WatchingSessionControllerTest {
             .accept(MediaType.APPLICATION_JSON_VALUE)
     );
     resultActions.andExpect(status().isOk());
-
   }
 
   @DisplayName("잘못된 형태의 컨텐츠 아이디면 특정 콘텐츠의 시청 세션 목록 조회는 실패한다")
@@ -249,7 +238,7 @@ public class WatchingSessionControllerTest {
   void getWatchingSessionPerContentFailWhenNonExistentContentId() throws Exception {
     String password = "password";
     UserDto mockUser = new UserDto(
-        UUID.randomUUID(), // You can use a fixed UUID if you 'any()' it below
+        UUID.randomUUID(),
         LocalDateTime.now(),
         "test@test.com",
         "test",

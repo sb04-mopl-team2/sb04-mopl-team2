@@ -8,11 +8,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -74,5 +76,15 @@ public class UserController {
         CursorResponseUserDto response = userService.getAllUsers(request);
         log.info("[사용자 관리] 유저 목록 조회 응답 totalCount = {}", response.totalCount());
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping(value = "/{userId}",consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity updateProfile(@PathVariable UUID userId,
+                                        @RequestPart(value = "request") UserUpdateRequest request,
+                                        @RequestPart(value = "image", required = false) MultipartFile profileImage) {
+        log.info("[사용자 관리] 유저 프로필 변경 호출 userId = {}", userId);
+        UserDto response = userService.updateProfile(userId, request, profileImage);
+        log.info("[사용자 관리] 유저 프로필 변경 응답 userId = {}", response.id());
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

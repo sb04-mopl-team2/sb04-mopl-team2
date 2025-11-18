@@ -13,6 +13,7 @@ import com.codeit.mopl.security.jwt.JwtTokenProvider;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -67,7 +68,7 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity resetPassword(@RequestBody ResetPasswordRequest request) throws MessagingException {
+    public ResponseEntity resetPassword(@Valid @RequestBody ResetPasswordRequest request) throws MessagingException {
         log.info("[사용자] 비밀번호 초기화 요청 email = {}", request.email());
 
         authService.resetPassword(request);

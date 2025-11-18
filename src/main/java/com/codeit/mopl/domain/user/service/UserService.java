@@ -9,6 +9,7 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.user.ErrorCode;
 import com.codeit.mopl.exception.user.UserEmailAlreadyExistsException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import com.codeit.mopl.s3.S3Storage;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +21,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -35,6 +37,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher publisher;
     private final JwtRegistry jwtRegistry;
+    private final S3Storage s3Storage;
 
     @Transactional
     public UserDto create(UserCreateRequest request) {
@@ -134,6 +137,24 @@ public class UserService {
         log.debug("[사용자 관리] 목록 조회 완료 cursor = {}, after = {}", lastItemCursor, lastItemAfter);
 
         return response;
+    }
+
+    @Transactional
+    public UserDto updateProfile(UUID userId, UserUpdateRequest request, MultipartFile profileImage) {
+        log.info("[사용자 관리] 유저 프로필 업데이트 실행 userId = {}", userId);
+        User findUser = getValidUserByUserId(userId);
+        Optional.ofNullable(request.name()).ifPresent(name -> {
+            log.debug("[사용자 관리] 닉네임 변경 {} -> {}", findUser.getName(), request.name());
+            findUser.setName(name);
+        });
+        Optional.ofNullable(profileImage).ifPresent(profile -> {
+            log.debug("[사용자 관리] 프로필 이미지 생성");
+            String key = UUID.randomUUID().toString();
+            s3Storage.upload(profile,key);
+            findUser.setProfileImageUrl(key);
+        });
+        userRepository.save(findUser);
+        return userMapper.toDto(findUser);
     }
 
     private void validateEmail(String email) {

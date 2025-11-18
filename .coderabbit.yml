@@ -14,7 +14,7 @@ general:
       on_reopen: true        # 닫혔다가 다시 열릴 때
 
     # 리뷰 깊이 (low | medium | high)
-    depth: medium
+    depth: low
 
     # 코멘트 스타일
     comment_style:
@@ -78,5 +78,3 @@ severity:
     - name: info
       label: "💡 제안"
       block_merge: false
-
-

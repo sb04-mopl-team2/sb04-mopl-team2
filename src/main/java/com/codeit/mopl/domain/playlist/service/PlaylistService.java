@@ -67,16 +67,33 @@ public class PlaylistService {
     public CursorResponsePlaylistDto getAllPlaylists(PlaylistSearchCond cond) {
         log.info("[플레이리스트] 플레이리스트 목록 조회 시작");
         List<Playlist> playlists = playlistRepository.findAllByCond(cond);
-        int originalSize = playlists.size();
 
-        Playlist lastPlaylist = playlists.get(originalSize - 1);
-        String nextCursor = lastPlaylist.getCreatedAt().toString();
-        UUID nextIdAfter = lastPlaylist.getId();
+        // 빈 리스트에 대한 체크
+        if (playlists.isEmpty()) {
+            log.info("[플레이리스트] 플레이리스트 목록 조회 완료 - 결과 없음");
+            return new CursorResponsePlaylistDto(
+                    new ArrayList<>(),
+                    null,
+                    null,
+                    false,
+                    0L,
+                    cond.getSortBy(),
+                    cond.getSortDirection()
+            );
+        }
+        int originalSize = playlists.size();
+        boolean hasNext = originalSize > cond.getLimit();
+
+        // findAllByCond에서 limit + 1로 조회했으므로 hasNext가 true 이면 마지막 항목 제거
+        List<Playlist> resultPlaylists = hasNext ? playlists.subList(0, cond.getLimit()) : playlists;
+
+        Playlist lastPlaylist = resultPlaylists.get(resultPlaylists.size() - 1);
+        String nextCursor = hasNext ? lastPlaylist.getCreatedAt().toString() : null;
+        UUID nextIdAfter = hasNext ? lastPlaylist.getId() : null;
 
         List<PlaylistDto> playlistDtos =
                 playlists.stream().map(playlistMapper::toPlaylistDto).collect(Collectors.toList());
 
-        boolean hasNext = originalSize > cond.getLimit();
         long totalCount = playlistRepository.countAllByCond(cond);
         log.info("[플레이리스트] 플레이리스트 목록 조회 완료 - totalCount = {}", totalCount);
         return new CursorResponsePlaylistDto(

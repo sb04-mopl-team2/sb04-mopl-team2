@@ -10,6 +10,7 @@ import com.codeit.mopl.domain.playlist.mapper.PlaylistMapper;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
 import com.codeit.mopl.exception.user.ErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
@@ -110,7 +111,12 @@ public class PlaylistService {
     @Transactional(readOnly = true)
     public PlaylistDto getPlaylist(UUID playlistId) {
         log.info("[플레이리스트] 플레이리스트 단건 조회 시작 - playlistId = {}", playlistId);
-
+        Playlist playlist = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> {
+                    log.warn("[플레이리스트] 플레이리스트 조회 실패 - 플레이리스트가 존재하지 않음 - playlistId = {}", playlistId);
+                    return PlaylistNotFoundException.withId(playlistId);
+                });
+        log.info("[플레이리스트] 플레이리스트 단건 조회 완료 - playlistId = {}", playlistId);
+        return playlistMapper.toPlaylistDto(playlist);
     }
-
 }

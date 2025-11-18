@@ -152,8 +152,9 @@ public class WebSocketEventListener {
                 user.getId(),
                 user.getEmail(),
                 user.getProfileImageUrl()
-            )
+            ),
             // add contentsummary
+            null
         ),
         watcherCount
     );

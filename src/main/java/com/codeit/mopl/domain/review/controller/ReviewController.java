@@ -27,7 +27,7 @@ public class ReviewController {
       @Validated ReviewSearchRequestDto request
   ) {
 
-    log.info("[리뷰] 알림 조회 요청 시작, userId = {}", user.getUser().id());
+    log.info("[리뷰] 리뷰 조회 요청 시작, userId = {}", user.getUser().id());
 
     CursorResponseReviewDto response = reviewService.findReviews(
         request.contentId(),
@@ -38,7 +38,7 @@ public class ReviewController {
         request.sortBy()
     );
 
-    log.info("[리뷰] 알림 조회 요청 종료");
+    log.info("[리뷰] 리뷰 조회 요청 종료");
     return ResponseEntity.ok(response);
   }
 

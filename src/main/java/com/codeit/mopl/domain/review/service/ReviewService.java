@@ -27,48 +27,61 @@ public class ReviewService {
       int limit,
       SortDirection sortDirection,
       ReviewSortBy sortBy
-  ){
-    List<ReviewDto> data = null;
+  ) {
+    List<Review> reviewList =
+        reviewRepository.searchReview(contentId, cursor, idAfter, limit, sortDirection, sortBy);
+
+    String sortByValue = (sortBy != null) ? sortBy.toString() : null;
+
+    if (reviewList.isEmpty()) {
+      CursorResponseReviewDto dto = new CursorResponseReviewDto(
+          List.of(),
+          null,
+          null,
+          false,
+          0L,
+          sortByValue,
+          sortDirection
+      );
+
+      log.info("[리뷰] 리뷰 조회 종료, contentId = {}, reviewListSize = {}, hasNext = {}, totalCount = {}",
+          contentId, 0, dto.hasNext(), dto.totalCount());
+
+      return dto;
+    }
+
     String nextCursor = null;
     UUID nextIdAfter = null;
     boolean hasNext = false;
-    long totalCount = 0;
-
-    List<Review> reviewList = reviewRepository.searchReview(contentId, cursor, idAfter, limit, sortDirection, sortBy);
-
-    if (reviewList.isEmpty()) {
-      log.debug("[리뷰] 리뷰 리스트가 비었음, contentId = {}", contentId);
-      CursorResponseReviewDto cursorResponseReviewDto =  new CursorResponseReviewDto(data, nextCursor, nextIdAfter, hasNext, totalCount, sortBy.toString(), sortDirection);
-
-      log.info("[리뷰] 알림 조회 종료, contentId = {}, reviewListSize = {}, hasNext = {}, totalCount = {}",
-          contentId, 0L, cursorResponseReviewDto.hasNext(), cursorResponseReviewDto.totalCount());
-      return cursorResponseReviewDto;
-    }
-
 
     if (reviewList.size() > limit) {
-      log.debug("[리뷰] 리뷰 리스트의 사이즈가 limit 값 보다 큼, limit = {}, ListSize = {}", limit, reviewList.size());
       reviewList = reviewList.subList(0, limit);
-      nextCursor = reviewList.get(limit - 1).getCreatedAt().toString();
-      nextIdAfter = reviewList.get(limit - 1).getId();
+      Review last = reviewList.get(limit - 1);
+      nextCursor = last.getCreatedAt().toString();
+      nextIdAfter = last.getId();
       hasNext = true;
     }
 
-    data = reviewList.stream()
+    List<ReviewDto> data = reviewList.stream()
         .map(reviewMapper::toDto)
         .toList();
 
-    totalCount = reviewRepository.countByContentIdAndIsDeleted(contentId, false);
+    long totalCount = reviewRepository.countByContentIdAndIsDeleted(contentId, false);
 
-    CursorResponseReviewDto cursorResponseReviewDto = new CursorResponseReviewDto
-        (data, nextCursor, nextIdAfter, hasNext, totalCount, sortBy.toString(), sortDirection);
+    CursorResponseReviewDto dto = new CursorResponseReviewDto(
+        data,
+        nextCursor,
+        nextIdAfter,
+        hasNext,
+        totalCount,
+        sortByValue,
+        sortDirection
+    );
 
+    log.info("[리뷰] 리뷰 조회 종료, contentId = {}, reviewListSize = {}, hasNext = {}, totalCount = {}",
+        contentId, data.size(), dto.hasNext(), dto.totalCount());
 
-    log.info("[리뷰] 알림 조회 종료, contentId = {}, reviewListSize = {}, hasNext = {}, totalCount = {}",
-        contentId, 0L, cursorResponseReviewDto.hasNext(), cursorResponseReviewDto.totalCount());
-
-    return cursorResponseReviewDto;
+    return dto;
   }
-
 
 }

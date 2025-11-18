@@ -16,7 +16,6 @@ public record ReviewSearchRequestDto(
 
     UUID idAfter,
 
-    @Positive
     @Min(1)
     @Max(100)
     int limit,

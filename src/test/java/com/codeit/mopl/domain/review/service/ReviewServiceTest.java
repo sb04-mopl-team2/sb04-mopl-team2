@@ -39,7 +39,7 @@ class ReviewServiceTest {
   private ReviewService reviewService;
 
   @Test
-  @DisplayName("리뷰 목록 조회 - 결과가 비어있으면 data=null, hasNext=false, totalCount=0")
+  @DisplayName("리뷰 목록 조회 - 결과가 비어있으면 data는 빈 리스트, hasNext=false, totalCount=0")
   void findReviews_whenEmptyResult_shouldReturnEmptyCursorResponse() {
     // given
     UUID contentId = UUID.randomUUID();
@@ -64,7 +64,8 @@ class ReviewServiceTest {
     );
 
     // then
-    assertThat(result.data()).isNull();
+    assertThat(result.data()).isNotNull();
+    assertThat(result.data()).isEmpty();            // ✔ null → empty list 로 변경됨
     assertThat(result.hasNext()).isFalse();
     assertThat(result.totalCount()).isZero();
     assertThat(result.nextCursor()).isNull();
@@ -72,7 +73,7 @@ class ReviewServiceTest {
     assertThat(result.sortBy()).isEqualTo(sortBy.toString());
     assertThat(result.sortDirection()).isEqualTo(sortDirection);
 
-    // 빈 결과일 땐 totalCount 조회 안 하는지 확인 (현재 구현 그대로라면)
+    // ✔ 빈 결과일 때 totalCount 조회 안 하는지 검증
     verify(reviewRepository, never()).countByContentIdAndIsDeleted(any(), any());
   }
 

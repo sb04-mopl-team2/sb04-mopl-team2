@@ -92,9 +92,9 @@ public class PlaylistService {
         UUID nextIdAfter = hasNext ? lastPlaylist.getId() : null;
 
         List<PlaylistDto> playlistDtos =
-                playlists.stream().map(playlistMapper::toPlaylistDto).collect(Collectors.toList());
+                resultPlaylists.stream().map(playlistMapper::toPlaylistDto).collect(Collectors.toList());
 
-        long totalCount = playlistRepository.countAllByCond(cond);
+        long totalCount = playlistRepository.countAllByCond(cond.withoutCursor());
         log.info("[플레이리스트] 플레이리스트 목록 조회 완료 - totalCount = {}", totalCount);
         return new CursorResponsePlaylistDto(
                 playlistDtos,

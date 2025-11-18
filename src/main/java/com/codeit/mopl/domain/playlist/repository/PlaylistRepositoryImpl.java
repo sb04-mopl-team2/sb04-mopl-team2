@@ -1,9 +1,12 @@
 package com.codeit.mopl.domain.playlist.repository;
 
+import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.entity.QPlaylist;
+import com.codeit.mopl.domain.playlist.entity.SortBy;
 import com.codeit.mopl.domain.playlist.subscription.QSubscription;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +36,7 @@ public class PlaylistRepositoryImpl implements CustomPlaylistRepository {
                         subscriberEq(cond.getSubscriberIdEqual()),
                         cursorLessThan(cond.getCursor(), cond.getIdAfter())
                 )
-                .orderBy(playlist.createdAt.desc())
+                .orderBy(buildOrderBy(cond.getSortBy(), cond.getSortDirection()))
                 .limit(cond.getLimit() + 1 )
                 .fetch();
     }
@@ -83,13 +86,26 @@ public class PlaylistRepositoryImpl implements CustomPlaylistRepository {
             return null;
         }
         LocalDateTime cursorCreatedAt = LocalDateTime.parse(cursor);
-        BooleanExpression lessTanCreatedAt = playlist.createdAt.lt(cursorCreatedAt);
+        BooleanExpression lessThanCreatedAt = playlist.createdAt.lt(cursorCreatedAt);
 
         if (idAfter == null) {
-            return lessTanCreatedAt;
+            return lessThanCreatedAt;
         }
         BooleanExpression equalAndLtId = playlist.createdAt.eq(cursorCreatedAt)
                 .and(playlist.id.lt(idAfter));
-        return lessTanCreatedAt.or(equalAndLtId);
+        return lessThanCreatedAt.or(equalAndLtId);
+    }
+
+    private OrderSpecifier<?> buildOrderBy(SortBy sortBy, SortDirection sortDirection) {
+        QPlaylist playlist = QPlaylist.playlist;
+        boolean isAscending = sortDirection == SortDirection.ASCENDING;
+
+        return switch (sortBy) {
+            case UPDATED_AT ->
+                    isAscending ? playlist.updatedAt.asc() : playlist.updatedAt.desc();
+            case SUBSCRIBER_COUNT ->
+                isAscending ? playlist.subscriberCount.asc() : playlist.subscriberCount.desc();
+            default -> playlist.createdAt.desc();
+        };
     }
 }

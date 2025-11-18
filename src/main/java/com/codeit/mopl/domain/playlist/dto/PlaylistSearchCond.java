@@ -33,4 +33,16 @@ public class PlaylistSearchCond {
         @NotNull(message = "정렬 기준(sortBy)은 필수입니다.")
         private SortBy sortBy;
 
+        public PlaylistSearchCond withoutCursor () {
+                PlaylistSearchCond cond = new PlaylistSearchCond();
+                cond.setKeywordLike(this.keywordLike);
+                cond.setOwnerIdEqual(this.ownerIdEqual);
+                cond.setSubscriberIdEqual(this.subscriberIdEqual);
+                cond.setCursor(null);
+                cond.setIdAfter(null);
+                cond.setLimit(this.limit);
+                cond.setSortDirection(this.sortDirection);
+                cond.setSortBy(this.sortBy);
+                return cond;
+        }
 }

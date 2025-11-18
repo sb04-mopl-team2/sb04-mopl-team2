@@ -11,8 +11,8 @@ import com.codeit.mopl.domain.review.mapper.ReviewMapper;
 import com.codeit.mopl.domain.review.repository.ReviewRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.review.ReviewDuplicateException;
 import com.codeit.mopl.exception.review.ReviewNotFoundException;
-import com.codeit.mopl.exception.review.ReviewUnAuthorizeException;
 import com.codeit.mopl.exception.user.ErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import jakarta.transaction.Transactional;
@@ -22,7 +22,6 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -138,7 +137,7 @@ public class ReviewService {
     Optional<Review> review = reviewRepository.findByUserAndContent(user, content);
     if (review.isPresent()) {
       log.warn("[리뷰] 이미 리뷰가 존재합니다. reviewId = {}", review.get().getId());
-      throw new ReviewNotFoundException(com.codeit.mopl.exception.review.ErrorCode.REVIEW_DUPLICATED, Map.of("reviewId", review.get().getId()));
+      throw new ReviewDuplicateException(com.codeit.mopl.exception.review.ErrorCode.REVIEW_DUPLICATED, Map.of("reviewId", review.get().getId()));
     }
   }
 }

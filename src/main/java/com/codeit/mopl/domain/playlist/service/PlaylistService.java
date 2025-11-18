@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.playlist.service;
 
+import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.playlist.dto.CursorResponsePlaylistDto;
 import com.codeit.mopl.domain.playlist.dto.PlaylistCreateRequest;
 import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
@@ -9,13 +10,21 @@ import com.codeit.mopl.domain.playlist.mapper.PlaylistMapper;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.user.ErrorCode;
+import com.codeit.mopl.exception.user.UserNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -32,17 +41,12 @@ public class PlaylistService {
         this.playlistMapper = playlistMapper;
     }
 
-    @Transactional(readOnly = true)
-    public CursorResponsePlaylistDto getAllPlaylists(PlaylistSearchCond cond) {
-        return null;
-    }
-
     public PlaylistDto createPlaylist(UUID ownerId, PlaylistCreateRequest request) {
         log.info("[플레이리스트] 플레이리스트 생성 시작");
         User user = userRepository.findById(ownerId)
                 .orElseThrow(() -> {
                     log.warn("[플레이리스트] 유저 검증 실패 - 유저 ID={}", ownerId);
-                    return new EntityNotFoundException("커스텀 예외로 대체 예정");
+                    return new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId", ownerId));
                 });
 
         Playlist playlist = Playlist.builder()
@@ -57,5 +61,49 @@ public class PlaylistService {
         Playlist saved = playlistRepository.save(playlist);
         log.info("[플레이리스트] 플레이리스트 생성 완료 - 플레이리스트 제목 = {}", saved.getTitle());
         return playlistMapper.toPlaylistDto(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public CursorResponsePlaylistDto getAllPlaylists(PlaylistSearchCond cond) {
+        log.info("[플레이리스트] 플레이리스트 목록 조회 시작");
+        List<Playlist> playlists = playlistRepository.findAllByCond(cond);
+
+        // 빈 리스트에 대한 체크
+        if (playlists.isEmpty()) {
+            log.info("[플레이리스트] 플레이리스트 목록 조회 완료 - 결과 없음");
+            return new CursorResponsePlaylistDto(
+                    new ArrayList<>(),
+                    null,
+                    null,
+                    false,
+                    0L,
+                    cond.getSortBy(),
+                    cond.getSortDirection()
+            );
+        }
+        int originalSize = playlists.size();
+        boolean hasNext = originalSize > cond.getLimit();
+
+        // findAllByCond에서 limit + 1로 조회했으므로 hasNext가 true 이면 마지막 항목 제거
+        List<Playlist> resultPlaylists = hasNext ? playlists.subList(0, cond.getLimit()) : playlists;
+
+        Playlist lastPlaylist = resultPlaylists.get(resultPlaylists.size() - 1);
+        String nextCursor = hasNext ? lastPlaylist.getCreatedAt().toString() : null;
+        UUID nextIdAfter = hasNext ? lastPlaylist.getId() : null;
+
+        List<PlaylistDto> playlistDtos =
+                resultPlaylists.stream().map(playlistMapper::toPlaylistDto).collect(Collectors.toList());
+
+        long totalCount = playlistRepository.countAllByCond(cond.withoutCursor());
+        log.info("[플레이리스트] 플레이리스트 목록 조회 완료 - totalCount = {}", totalCount);
+        return new CursorResponsePlaylistDto(
+                playlistDtos,
+                nextCursor,
+                nextIdAfter,
+                hasNext,
+                totalCount,
+                cond.getSortBy(),
+                cond.getSortDirection()
+        );
     }
 }

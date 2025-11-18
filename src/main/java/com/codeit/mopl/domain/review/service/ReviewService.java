@@ -110,14 +110,14 @@ public class ReviewService {
     return userRepository.findById(userId)
         .orElseThrow(() -> {
           log.warn("[리뷰] 해당 유저를 찾을 수 없음 userId = {}", userId);
-          throw new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId",userId));
+          return new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId", userId));
         });
   }
   
   private Content getValidContentByContentId(UUID contentId) {
     return contentRepository.findById(contentId).orElseThrow(() -> {
       log.warn("[리뷰] 해당 컨텐츠를 찾을 수 없음 contentId = {}", contentId);
-      throw new IllegalArgumentException();// 추후에 ContentNotFoundException으로 변경
+      return new IllegalArgumentException();// 추후에 ContentNotFoundException으로 변경
     });
   }
 }

@@ -1,12 +1,16 @@
 package com.codeit.mopl.domain.review.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.codeit.mopl.domain.content.entity.Content;
+import com.codeit.mopl.domain.content.repository.ContentRepository;
+import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.review.dto.CursorResponseReviewDto;
 import com.codeit.mopl.domain.review.dto.ReviewDto;
 import com.codeit.mopl.domain.review.entity.Review;
@@ -14,9 +18,14 @@ import com.codeit.mopl.domain.review.entity.ReviewSortBy;
 import com.codeit.mopl.domain.review.entity.SortDirection;
 import com.codeit.mopl.domain.review.mapper.ReviewMapper;
 import com.codeit.mopl.domain.review.repository.ReviewRepository;
+import com.codeit.mopl.domain.user.dto.response.UserSummary;
+import com.codeit.mopl.domain.user.entity.User;
+import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.user.UserNotFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,6 +40,12 @@ class ReviewServiceTest {
 
   @Mock
   private ReviewRepository reviewRepository;
+
+  @Mock
+  private UserRepository userRepository;
+
+  @Mock
+  private ContentRepository contentRepository;
 
   @Mock
   private ReviewMapper reviewMapper;
@@ -174,6 +189,63 @@ class ReviewServiceTest {
     assertThat(result.totalCount()).isEqualTo(3L);
     assertThat(result.sortBy()).isEqualTo(sortBy.toString());
     assertThat(result.sortDirection()).isEqualTo(sortDirection);
+  }
+
+  @Test
+  @DisplayName("리뷰 생성 성공 - 유효한 요청 시 ReviewDto 반환")
+  void createReview_success() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID contentId = UUID.randomUUID();
+    String text = "좋은 리뷰입니다!";
+    double rating = 4.5;
+
+    User user = new User();
+    Content content = new Content();
+    Review review = new Review(user, content, text, rating, false);
+
+    UserSummary userSummary = new UserSummary(userId, "유저 이름", "유저 프로필 이미지 url");
+
+    ReviewDto dto = new ReviewDto(
+        UUID.randomUUID(),
+        contentId,
+        userSummary,
+        text,
+        rating
+    );
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(contentRepository.findById(contentId)).thenReturn(Optional.of(content));
+    when(reviewRepository.save(any(Review.class))).thenReturn(review);
+    when(reviewMapper.toDto(any(Review.class))).thenReturn(dto);
+
+    // when
+    ReviewDto result = reviewService.createReview(userId, contentId, text, rating);
+
+    // then
+    assertThat(result).isNotNull();
+    assertThat(result.text()).isEqualTo(text);
+    assertThat(result.rating()).isEqualTo(rating);
+  }
+
+  @Test
+  @DisplayName("리뷰 생성 실패 - 유저가 없을 때")
+  void createReview_fail_userNotFound() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID contentId = UUID.randomUUID();
+    String text = "좋은 리뷰입니다!";
+    double rating = 4.5;
+
+    when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+    // when
+    Runnable act = () ->
+        reviewService.createReview(userId, contentId, text, rating);
+
+    // then
+    assertThatThrownBy(act::run)
+        .isInstanceOf(UserNotFoundException.class);
   }
 
   private Review createReview(UUID id, LocalDateTime createdAt) {

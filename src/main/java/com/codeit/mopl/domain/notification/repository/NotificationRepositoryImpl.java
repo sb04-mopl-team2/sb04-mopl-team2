@@ -53,7 +53,8 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
     return notifications;
   }
 
-  private List<OrderSpecifier<?>> buildOrderSpecifiers(SortBy sortBy, SortDirection sortDirection, QNotification qnotification) {
+  private List<OrderSpecifier<?>> buildOrderSpecifiers(SortBy sortBy, SortDirection sortDirection,
+      QNotification qnotification) {
     List<OrderSpecifier<?>> orders = new ArrayList<>();
 
     if (sortBy != null && sortDirection != null) {
@@ -69,7 +70,8 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
     return orders;
   }
 
-  private BooleanExpression buildCursorCondition(String cursor, UUID idAfter, SortBy sortBy, SortDirection sortDirection, QNotification qnotification) {
+  private BooleanExpression buildCursorCondition(String cursor, UUID idAfter, SortBy sortBy,
+      SortDirection sortDirection, QNotification qnotification) {
 
     if (sortBy == null || sortDirection == null) {
       return null;

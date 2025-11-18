@@ -1,8 +1,7 @@
 package com.codeit.mopl.domain.watchingsession.dto;
 
-import com.codeit.mopl.domain.notification.dto.NotificationDto;
-import com.codeit.mopl.domain.notification.entity.SortBy;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
+import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
+import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.UUID;

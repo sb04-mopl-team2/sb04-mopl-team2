@@ -1,6 +1,6 @@
 package com.codeit.mopl.domain.watchingsession.controller;
 
-import com.codeit.mopl.domain.watchingsession.WatchingSessionService;
+import com.codeit.mopl.domain.watchingsession.service.WatchingSessionService;
 import com.codeit.mopl.domain.watchingsession.dto.CursorResponseWatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionRequest;

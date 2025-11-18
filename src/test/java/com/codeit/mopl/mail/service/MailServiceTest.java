@@ -1,6 +1,7 @@
 package com.codeit.mopl.mail.service;
 
 import jakarta.mail.internet.MimeMessage;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,8 +21,9 @@ public class MailServiceTest {
     @InjectMocks
     MailService mailService;
 
+    @DisplayName("이메일 전송에 성공한다")
     @Test
-    void sendMail_buildsMimeMessage() throws Exception {
+    void sendMailShouldSucceed() throws Exception {
         // given
         String email = "test@test.com";
         String tempPw = "Abcd1234!";

@@ -1,9 +1,7 @@
 package com.codeit.mopl.domain.user.service;
 
-import com.codeit.mopl.domain.user.dto.request.ChangePasswordRequest;
-import com.codeit.mopl.domain.user.dto.request.UserCreateRequest;
-import com.codeit.mopl.domain.user.dto.request.UserLockUpdateRequest;
-import com.codeit.mopl.domain.user.dto.request.UserRoleUpdateRequest;
+import com.codeit.mopl.domain.user.dto.request.*;
+import com.codeit.mopl.domain.user.dto.response.CursorResponseUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
@@ -11,18 +9,18 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.user.ErrorCode;
 import com.codeit.mopl.exception.user.UserEmailAlreadyExistsException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
-import com.codeit.mopl.security.CustomUserDetails;
+import com.codeit.mopl.security.jwt.JwtRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.session.SessionInformation;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -36,7 +34,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher publisher;
-    private final SessionRegistry sessionRegistry;
+    private final JwtRegistry jwtRegistry;
 
     @Transactional
     public UserDto create(UserCreateRequest request) {
@@ -83,7 +81,7 @@ public class UserService {
         log.debug("[사용자 관리] 회원 권한 수정 {} -> {}", findUser.getRole(), request.role());
         findUser.updateRole(request.role());
 
-        sessionDown(findUser.getId());
+        removeToken(findUser.getId());
 
         // **추후 이벤트가 정해지면 수정하겠습니다**
         // publisher.publishEvent(new UserRoleUpdateEvent(userMapper.toDto(findUser)));
@@ -97,9 +95,45 @@ public class UserService {
         log.debug("[사용자 관리] 회원 잠금 상태 변경 {} -> {}", findUser.isLocked(), request.locked());
         findUser.updateLock(request.locked());
 
-        sessionDown(findUser.getId());
+        removeToken(findUser.getId());
 
         log.info("[사용자 관리] 회원 잠금상태 수정 완료 userId = {}", userId);
+    }
+
+    @Transactional(readOnly = true)
+    public CursorResponseUserDto getAllUsers(CursorRequestUserDto request) {
+        log.info("[사용자 관리] 목록 조회 실행 ");
+        Slice<UserDto> page = userRepository.findAllPage(request);
+
+        if (page.getContent().isEmpty()) {
+            Sort.Direction direction = request.sortDirection().equals("ASCENDING") ? Sort.Direction.ASC : Sort.Direction.DESC;
+            Slice slice = new SliceImpl<>(List.of(), PageRequest.of(0,request.limit(), direction, request.sortBy()),false);
+            return CursorResponseUserDto.from(slice,null,null,0L, request.sortBy(), request.sortDirection());
+        }
+
+        UserDto lastDto = page.getContent().get(page.getContent().size() - 1);
+        String lastItemCursor = null;
+
+        if ("name".equalsIgnoreCase(request.sortBy())){
+            lastItemCursor = lastDto.name();
+        } else if ("email".equalsIgnoreCase(request.sortBy())) {
+            lastItemCursor = lastDto.email();
+        } else if ("createdAt".equalsIgnoreCase(request.sortBy())) {
+            lastItemCursor = lastDto.createdAt().toString();
+        } else if ("isLocked".equalsIgnoreCase(request.sortBy())) {
+            lastItemCursor = lastDto.locked().toString();
+        } else if ("role".equalsIgnoreCase(request.sortBy())) {
+            lastItemCursor = lastDto.role().toString();
+        }
+
+        UUID lastItemAfter = lastDto.id();
+
+        Long totalElements = userRepository.countTotalElements(request.emailLike());
+        CursorResponseUserDto response = CursorResponseUserDto.from(page,lastItemCursor,lastItemAfter,totalElements, request.sortBy(), request.sortDirection());
+        log.info("[사용자 관리] 목록 조회 완료 검색어 = {}, 결과수 = {}", request.emailLike(), response.data().size());
+        log.debug("[사용자 관리] 목록 조회 완료 cursor = {}, after = {}", lastItemCursor, lastItemAfter);
+
+        return response;
     }
 
     private void validateEmail(String email) {
@@ -125,20 +159,8 @@ public class UserService {
                 });
     }
 
-    private void sessionDown(UUID userId) {
-        sessionRegistry.getAllPrincipals()
-                .forEach(principal -> {
-                    if (principal instanceof CustomUserDetails) {
-                        CustomUserDetails userDetails = (CustomUserDetails) principal;
-                        if (userDetails.getUser().id().equals(userId)) {
-                            List<SessionInformation> info = sessionRegistry.getAllSessions(principal, false);
-                            info.forEach(sessionInformation -> {
-                                log.debug("[사용자 관리] 세션 만료 sessionId = {}", sessionInformation.getSessionId());
-                                sessionInformation.expireNow();
-                            });
-                            log.debug("[사용자 관리] 세션 {}개 무효화", info.size());
-                        }
-                    }
-                });
+    private void removeToken(UUID userId) {
+        log.info("[사용자 관리] 강제 로그아웃 - token 삭제 userId = {}", userId);
+        jwtRegistry.invalidateJwtInformationByUserId(userId);
     }
 }

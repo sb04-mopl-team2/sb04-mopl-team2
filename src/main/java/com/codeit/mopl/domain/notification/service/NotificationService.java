@@ -58,7 +58,7 @@ public class NotificationService {
       CursorResponseNotificationDto cursorResponseNotificationDto = new CursorResponseNotificationDto(
           null, null, null, false, 0L, SortBy.createdAt, SortDirection.DESCENDING);
 
-      log.info("[알림] 알림 조회 종료, userId={}, resultSize={}, hasNext={}, totalCount={}",
+      log.info("[알림] 알림 조회 종료, userId = {}, notificationListSize = {}, hasNext = {}, totalCount = {}",
           userId, 0L, cursorResponseNotificationDto.hasNext(), cursorResponseNotificationDto.totalCount());
       return cursorResponseNotificationDto;
     }
@@ -77,7 +77,7 @@ public class NotificationService {
 
     long totalCount = getTotalCount(userId);
 
-    log.info("[알림] 알림 조회 종료, userId={}, resultSize={}, hasNext={}, totalCount={}",
+    log.info("[알림] 알림 조회 종료, userId = {}, notificationListSize = {}, hasNext = {}, totalCount = {}",
         userId, data.size(), hasNext, totalCount);
 
     CursorResponseNotificationDto cursorResponseNotificationDto = new CursorResponseNotificationDto(

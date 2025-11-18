@@ -1,9 +1,7 @@
 package com.codeit.mopl.domain.user.controller;
 
-import com.codeit.mopl.domain.user.dto.request.ChangePasswordRequest;
-import com.codeit.mopl.domain.user.dto.request.UserCreateRequest;
-import com.codeit.mopl.domain.user.dto.request.UserLockUpdateRequest;
-import com.codeit.mopl.domain.user.dto.request.UserRoleUpdateRequest;
+import com.codeit.mopl.domain.user.dto.request.*;
+import com.codeit.mopl.domain.user.dto.response.CursorResponseUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.service.UserService;
 import jakarta.validation.Valid;
@@ -67,5 +65,14 @@ public class UserController {
         userService.updateLock(userId, request);
         log.info("[사용자 관리] 사용자 계정 잠금 변경 응답 userId = {}, 잠금 상태 = {}", userId, request.locked());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity getAllUsers(@Valid @ModelAttribute CursorRequestUserDto request) {
+        log.info("[사용자 관리] 유저 목록 조회 호출");
+        CursorResponseUserDto response = userService.getAllUsers(request);
+        log.info("[사용자 관리] 유저 목록 조회 응답 totalCount = {}", response.totalCount());
+        return ResponseEntity.ok(response);
     }
 }

@@ -1,22 +1,15 @@
-package com.codeit.mopl.exception.user;
+package com.codeit.mopl.exception.auth;
 
 import com.codeit.mopl.exception.global.ErrorCodeInterface;
-import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+@RequiredArgsConstructor
 public enum ErrorCode implements ErrorCodeInterface {
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "유저를 찾을 수 없습니다."),
-    USER_LOCKED(HttpStatus.UNAUTHORIZED, "계정이 잠겨있습니다."),
-    EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "해당 이메일로 가입된 아이디가 이미 존재합니다.");
+    TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "검증되지 않은 토큰입니다.");
 
     private final HttpStatus status;
     private final String message;
-
-    ErrorCode(HttpStatus status, String message) {
-        this.status = status;
-        this.message = message;
-    }
-
 
     @Override
     public String getName() {

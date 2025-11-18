@@ -6,6 +6,7 @@ import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.user.ErrorCode;
 import com.codeit.mopl.exception.user.UserLockedException;
+import com.codeit.mopl.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -29,8 +30,8 @@ public class CustomUserDetailsService implements UserDetailsService {
     private User findUserByEmail(String email) {
         User user = userRepository.findByEmail((email))
                 .orElseThrow(() ->
-                        new UsernameNotFoundException(ErrorCode.USER_NOT_FOUND.getMessage()));
-        if (user.isLocked()) throw new UserLockedException(ErrorCode.USER_LOCKED, Map.of("UserEmail",email));
+                        new UserNotFoundException(ErrorCode.USER_NOT_FOUND,Map.of("email", email)));
+        if (user.isLocked()) throw new UserLockedException(ErrorCode.USER_LOCKED, Map.of("email",user.getEmail()));
         return user;
     }
 }

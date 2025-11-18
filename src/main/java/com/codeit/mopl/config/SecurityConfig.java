@@ -8,6 +8,7 @@ import com.codeit.mopl.security.CustomUserDetailsService;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.filter.JwtAuthenticationFilter;
+import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
 import com.codeit.mopl.security.jwt.handler.JwtLoginSuccessHandler;
 import com.codeit.mopl.security.jwt.handler.JwtLogoutHandler;
 import com.codeit.mopl.security.jwt.handler.LoginFailureHandler;
@@ -31,7 +32,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
-import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.*;
@@ -56,13 +56,13 @@ public class SecurityConfig {
                                            UserDetailsService customUserDetailsService,
                                            JwtRegistry jwtRegistry,
                                            JwtLoginSuccessHandler jwtLoginSuccessHandler,
-                                           LoginFailureHandler loginFailureHandler, JwtLogoutHandler jwtLogoutHandler) throws Exception {
+                                           LoginFailureHandler loginFailureHandler, JwtLogoutHandler jwtLogoutHandler, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) throws Exception {
         http
-//                .csrf(csrf -> csrf
-//                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-//                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
-//                )
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
+                )
+//                .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService, jwtRegistry),
                         UsernamePasswordAuthenticationFilter.class)
                 .formLogin(login ->
@@ -81,7 +81,7 @@ public class SecurityConfig {
                 )
                 .cors(Customizer.withDefaults())
                 .exceptionHandling(ex -> ex
-                                .authenticationEntryPoint(new Http403ForbiddenEntryPoint())
+                                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                                 .accessDeniedHandler(new AccessDeniedHandlerImpl())
                 )
                 .authorizeHttpRequests(authorize -> authorize

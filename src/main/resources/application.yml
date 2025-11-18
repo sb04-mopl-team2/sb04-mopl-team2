@@ -59,3 +59,22 @@ jwt:
   key: ${JWT_KEY}
   access-token-expiration-minutes: ${ACCESS_TOKEN_EXPIRATION_MINUTES}
   refresh-token-expiration-minutes: ${REFRESH_TOKEN_EXPIRATION_MINUTES}
+
+mail:
+  host: smtp.gmail.com
+  port: 587
+  username: ${MAIL_USERNAME}
+  password: ${MAIL_PASSWORD}
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+      debug: true
+aws:
+  access-key: ${AWS_S3_ACCESS_KEY}
+  secret-key: ${AWS_S3_SECRET_KEY}
+  region: ${AWS_S3_REGION}
+  bucket: ${AWS_S3_BUCKET}
+  presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION:600} # (기본값: 10분)

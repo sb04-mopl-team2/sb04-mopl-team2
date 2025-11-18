@@ -7,6 +7,8 @@ import com.codeit.mopl.domain.follow.mapper.FollowMapper;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.follow.FollowDuplicateException;
+import com.codeit.mopl.exception.follow.FollowSelfProhibitedException;
 import com.codeit.mopl.exception.user.ErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +29,21 @@ public class FollowService {
 
     public FollowDto createFollow(FollowRequest request, UUID followerId) {
         UUID followeeId = request.followeeId();
-        log.info("[팔로우 관리] 팔로우 생성 시작 - followeeId: {}, followerId: {}", followeeId, followerId);
+        log.info("[팔로우 관리] 팔로우 생성 시작 - followerId: {}, followeeId: {}", followerId, followeeId);
+
+        // 자기 자신 팔로우 금지
+        if (followerId == followeeId) {
+            throw FollowSelfProhibitedException.withFollowerIdAndFolloweeId(followerId, followeeId);
+        }
+
         User follower = getUserById(followerId);
         User followee = getUserById(followeeId);
+
+        // 중복 팔로우 금지
+        if (followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId)) {
+            throw FollowDuplicateException.withFollowerIdAndFolloweeId(followerId, followeeId);
+        }
+
         Follow follow = new Follow(follower, followee);
         FollowDto dto = followMapper.toDto(followRepository.save(follow));
         log.info("[팔로우 관리] 팔로우 생성 완료 - id: {}", dto.id());

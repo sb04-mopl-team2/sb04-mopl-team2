@@ -106,4 +106,11 @@ public class PlaylistService {
                 cond.getSortDirection()
         );
     }
+
+    @Transactional(readOnly = true)
+    public PlaylistDto getPlaylist(UUID playlistId) {
+        log.info("[플레이리스트] 플레이리스트 단건 조회 시작 - playlistId = {}", playlistId);
+
+    }
+
 }

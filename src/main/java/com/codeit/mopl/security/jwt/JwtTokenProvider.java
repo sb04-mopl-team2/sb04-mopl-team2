@@ -31,7 +31,7 @@ public class JwtTokenProvider {
     private int refreshTokenExpirationMinutes;
 
     public String generateAccessToken(Map<String, Object> claims, String subject) {
-        log.info("AccessToken 발급 시도 subject = {}", subject);
+        log.info("[JWT] AccessToken 발급 시도 subject = {}", subject);
         try {
             JWSSigner signer = new MACSigner(secretKey.getBytes(StandardCharsets.UTF_8));
 
@@ -52,7 +52,7 @@ public class JwtTokenProvider {
                     claimsSet
             );
             signedJWT.sign(signer);
-            log.info("AccessToken 발급 성공 subject = {}", subject);
+            log.info("[JWT] AccessToken 발급 성공 subject = {}", subject);
             return signedJWT.serialize();
         } catch (Exception e) {
             throw new RuntimeException("JWT 발급 실패", e);
@@ -60,7 +60,7 @@ public class JwtTokenProvider {
     }
 
     public String generateRefreshToken(Map<String, Object> claims, String subject) {
-        log.info("RefreshToken 발급 시도 subject = {}", subject);
+        log.info("[JWT] RefreshToken 발급 시도 subject = {}", subject);
         try {
             JWSSigner signer = new MACSigner(secretKey.getBytes(StandardCharsets.UTF_8));
 
@@ -81,7 +81,7 @@ public class JwtTokenProvider {
                     claimsSet
             );
             signedJWT.sign(signer);
-            log.info("RefreshToken 발급 성공 subject = {}", subject);
+            log.info("[JWT] RefreshToken 발급 성공 subject = {}", subject);
             return signedJWT.serialize();
         } catch (Exception e) {
             throw new RuntimeException("JWT 발급 실패", e);
@@ -112,7 +112,7 @@ public class JwtTokenProvider {
             if (jwt.getJWTClaimsSet().getExpirationTime().before(new Date())) {
                 throw new ExpiredJWTException("Access Token Expired");
             }
-            log.info("JWS 검증 성공");
+            log.info("[JWT] JWS 검증 성공");
         } catch (Exception e) {
             throw new RuntimeException("JWT 검증 실패", e);
         }
@@ -135,15 +135,15 @@ public class JwtTokenProvider {
     }
 
     public boolean isExpired(String token) {
-        log.info("Token 유효기간 검증 시도");
+        log.info("[JWT] Token 유효기간 검증 시도");
         try {
             Date now = new Date();
             SignedJWT jwt = SignedJWT.parse(token);
             if (jwt.getJWTClaimsSet().getExpirationTime().before(now)) {
-                log.info("Token의 유효기간 만료 subject = {}", jwt.getJWTClaimsSet().getSubject());
+                log.info("[JWT] Token의 유효기간 만료 subject = {}", jwt.getJWTClaimsSet().getSubject());
                 return true;
             }
-            log.info("Token의 유효기간 검증 성공 subject = {}", jwt.getJWTClaimsSet().getSubject());
+            log.info("[JWT] Token의 유효기간 검증 성공 subject = {}", jwt.getJWTClaimsSet().getSubject());
             return false;
         } catch (Exception e) {
             throw new RuntimeException("Token의 유효기간 검증 중 오류 발생", e);
@@ -165,25 +165,25 @@ public class JwtTokenProvider {
             SignedJWT signedJWT = SignedJWT.parse(token);
 
             if (!signedJWT.verify(verifier)) {
-                log.debug("JWT signature verification failed for {} token", expectedType);
+                log.debug("[JWT] JWT signature verification failed for {} token", expectedType);
                 return false;
             }
 
             String tokenType = (String) signedJWT.getJWTClaimsSet().getClaim("type");
             if (!expectedType.equals(tokenType)) {
-                log.debug("JWT token type mismatch: expected {}, got {}", expectedType, tokenType);
+                log.debug("[JWT] JWT token type mismatch: expected {}, got {}", expectedType, tokenType);
                 return false;
             }
 
             Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
             if (expirationTime == null || expirationTime.before(new Date())) {
-                log.debug("JWT {} token expired", expectedType);
+                log.debug("[JWT] JWT {} token 만료됨", expectedType);
                 return false;
             }
 
             return true;
         } catch (Exception e) {
-            log.debug("JWT {} token validation failed: {}", expectedType, e.getMessage());
+            log.debug("[JWT] JWT {} token 검증 실패 msg = {}", expectedType, e.getMessage());
             return false;
         }
     }

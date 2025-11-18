@@ -4,6 +4,8 @@ import com.codeit.mopl.domain.review.entity.Review;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+public interface ReviewRepository extends JpaRepository<Review, UUID> {
+
 public interface ReviewRepository extends JpaRepository<Review, UUID>, CustomReviewRepository {
 
   long countByContentIdAndIsDeleted(UUID contentId, Boolean isDeleted);

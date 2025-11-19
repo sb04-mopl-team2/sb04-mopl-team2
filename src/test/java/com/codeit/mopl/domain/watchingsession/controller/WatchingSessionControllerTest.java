@@ -11,12 +11,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.codeit.mopl.domain.content.dto.response.contentSummary;
-import com.codeit.mopl.domain.user.dto.response.UserDto;
-import com.codeit.mopl.domain.user.entity.Role;
-import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.user.service.UserService;
+import com.codeit.mopl.util.WithCustomMockUser;
 import com.codeit.mopl.domain.watchingsession.dto.CursorResponseWatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
@@ -31,13 +29,10 @@ import com.codeit.mopl.security.CustomUserDetailsService;
 import com.codeit.mopl.security.config.TestSecurityConfig;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,12 +42,8 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.test.context.support.TestExecutionEvent;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
 @WebMvcTest(WatchingSessionController.class)
@@ -86,29 +77,9 @@ public class WatchingSessionControllerTest {
   @MockitoBean
   private CustomUserDetailsService customUserDetailsService;
 
-
-  @BeforeEach
-  void setUp() {
-    // setting this up for UserDetails
-    String password = "password";
-    UserDto mockUser = new UserDto(
-        UUID.randomUUID(),
-        LocalDateTime.now(),
-        "test@test.com",
-        "test",
-        null,
-        Role.USER,
-        false);
-    CustomUserDetails mockUserDetails = new CustomUserDetails(mockUser, password);
-
-    given(customUserDetailsService.loadUserByUsername("test@test.com"))
-        .willReturn(mockUserDetails);
-  }
-
   /**
    * @GetMapping("/users/{watcherId}/watching-sessions") 관련 테스트들
    */
-
   @DisplayName("특정 사용자의 시청 목록 조회를 시도한다.")
   @Test
   void getWatchingSessionPerUserSuccess() throws Exception {
@@ -161,44 +132,26 @@ public class WatchingSessionControllerTest {
    * @GetMapping("/contents/{contentId}/watching-sessions") 관련 테스트들
    */
 
+  @WithCustomMockUser
   @DisplayName("특정 콘텐츠의 시청 세션 목록 조회를 시도한다")
   @Test
   void getWatchingSessionPerContentSuccess() throws Exception {
-    String password = "password";
-    UUID userId = UUID.randomUUID();
-    UserDto mockUser = new UserDto(
-        userId,
-        LocalDateTime.now(),
-        "test@test.com",
-        "test",
-        null,
-        Role.USER,
-        false);
-    CustomUserDetails mockUserDetails = new CustomUserDetails(mockUser, password);
-
-    Authentication auth = new UsernamePasswordAuthenticationToken(
-        mockUserDetails,
-        "password",
-        mockUserDetails.getAuthorities()
-    );
-
     // given
     UUID contentId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
     WatchingSessionDto watchingSessionDto = new WatchingSessionDto(
         UUID.randomUUID(),
         LocalDateTime.now(),
         new UserSummary(userId,"test",null),
-        new contentSummary(contentId,null,null,null, null,null,null,null
+        new contentSummary(contentId,null,null,
+            null, null,null,null,null
         )
     );
     CursorResponseWatchingSessionDto cursorResponseWatchingSessionDto = new CursorResponseWatchingSessionDto(
         List.of(watchingSessionDto),
         "nextCursor_123",
-        UUID.randomUUID(),
-        true,
-        1L,
-        SortBy.createdAt,
-        SortDirection.ASCENDING
+        userId,true,1L,
+        SortBy.createdAt, SortDirection.ASCENDING
     );
     when(watchingSessionService.getWatchingSessions(
         any(UUID.class), eq(contentId),
@@ -208,7 +161,6 @@ public class WatchingSessionControllerTest {
     // when & then
     ResultActions resultActions = mockMvc.perform(
         get("/api/contents/" + contentId +"/watching-sessions")
-            .with(authentication(auth))
             .param("limit", "10")
             .param("sortDirection", "ASCENDING")
             .param("sortBy", "createdAt")
@@ -233,37 +185,17 @@ public class WatchingSessionControllerTest {
     resultActions.andExpect(status().isBadRequest());
   }
 
+  @WithCustomMockUser
   @DisplayName("존재하지 않는 컨텐츠 아이디면 특정 콘텐츠의 시청 세션 목록 조회는 실패한다")
   @Test
   void getWatchingSessionPerContentFailWhenNonExistentContentId() throws Exception {
-    String password = "password";
-    UserDto mockUser = new UserDto(
-        UUID.randomUUID(),
-        LocalDateTime.now(),
-        "test@test.com",
-        "test",
-        null,
-        Role.USER,
-        false);
-    CustomUserDetails mockUserDetails = new CustomUserDetails(mockUser, password);
-
-    Authentication auth = new UsernamePasswordAuthenticationToken(
-        mockUserDetails,
-        "password",
-        mockUserDetails.getAuthorities()
-    );
-
     // given
     UUID contentId = UUID.randomUUID();
     given(watchingSessionService.getWatchingSessions(
         any(UUID.class),
         eq(contentId),
-        any(),
-        any(),
-        any(),
-        anyInt(),
-        any(),
-        any()
+        any(), any(), any(),
+        anyInt(), any(), any()
         ))
         .willThrow(new ContentNotFoundException(
             ErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId))
@@ -272,7 +204,6 @@ public class WatchingSessionControllerTest {
     // when & then
     ResultActions resultActions = mockMvc.perform(
         get("/api/contents/" + contentId +"/watching-sessions")
-            .with(authentication(auth))
             .param("limit", "10")
             .param("sortDirection", "ASCENDING")
             .param("sortBy", "createdAt")

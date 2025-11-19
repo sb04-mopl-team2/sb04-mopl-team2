@@ -30,7 +30,7 @@ public class S3Storage {
     private final S3Client s3Client;
     private final S3Presigner presigner;
 
-    @Value("${aws.bucket}")
+    @Value("${mopl.storage.s3.bucket}")
     private String bucket;
 
     @Retryable(

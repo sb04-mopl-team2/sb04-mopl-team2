@@ -7,7 +7,7 @@ import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
-import com.codeit.mopl.domain.notification.exception.NotificationNotAuthentication;
+import com.codeit.mopl.domain.notification.exception.NotificationForbidden;
 import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
@@ -104,7 +104,7 @@ public class NotificationService {
     if (!ownerId.equals(userId)) {
       log.warn("[알림] 알림 삭제 실패, 알림을 삭제할 권한이 없음, userId = {}, notificationId = {}, ownerId = {}",
           userId, notificationId, ownerId);
-      throw new NotificationNotAuthentication();
+      throw new NotificationForbidden();
     }
 
     notification.setStatus(Status.READ);

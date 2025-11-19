@@ -4,7 +4,7 @@ import java.util.Map;
 
 public class ReviewDuplicateException extends ReviewException {
 
-    public ReviewDuplicateException(ErrorCode errorCode, Map<String, Object> details) {
-        super(errorCode,details);
+    public ReviewDuplicateException(ReviewErrorCode reviewErrorCode, Map<String, Object> details) {
+        super(reviewErrorCode,details);
     }
 }

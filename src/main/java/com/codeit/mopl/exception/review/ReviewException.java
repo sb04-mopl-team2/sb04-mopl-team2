@@ -4,7 +4,7 @@ import com.codeit.mopl.exception.global.MoplException;
 import java.util.Map;
 
 public class ReviewException extends MoplException {
-    public ReviewException(ErrorCode errorCode, Map<String, Object> details) {
-        super(errorCode, details);
+    public ReviewException(ReviewErrorCode reviewErrorCode, Map<String, Object> details) {
+        super(reviewErrorCode, details);
     }
 }

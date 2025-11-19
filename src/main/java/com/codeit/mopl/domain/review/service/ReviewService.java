@@ -12,8 +12,9 @@ import com.codeit.mopl.domain.review.repository.ReviewRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.review.ReviewDuplicateException;
+import com.codeit.mopl.exception.review.ReviewErrorCode;
 import com.codeit.mopl.exception.review.ReviewNotFoundException;
-import com.codeit.mopl.exception.review.ReviewUnAuthorizeException;
+import com.codeit.mopl.exception.review.ReviewUnauthorizedException;
 import com.codeit.mopl.exception.user.ErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import jakarta.transaction.Transactional;
@@ -54,7 +55,8 @@ public class ReviewService {
     Review review = getValidReviewByReviewId(reviewId);
     if (!review.getUser().getId().equals(userId)) {
       log.warn("[리뷰] 리뷰를 수정할 권한이 없습니다. reviewId = {}", review.getId());
-      throw new ReviewUnAuthorizeException(com.codeit.mopl.exception.review.ErrorCode.REVIEW_UNAUTHORIZED, Map.of("reviewId", review.getId()));
+      throw new ReviewUnauthorizedException(
+          ReviewErrorCode.REVIEW_UNAUTHORIZED, Map.of("reviewId", review.getId()));
     }
     review.setText(text);
     review.setRating(rating);
@@ -147,7 +149,8 @@ public class ReviewService {
     return reviewRepository.findById(reviewId)
         .orElseThrow(() -> {
           log.warn("[리뷰] 해당 리뷰를 찾을 수 없음 reviewId = {}", reviewId);
-          return new ReviewNotFoundException(com.codeit.mopl.exception.review.ErrorCode.REVIEW_NOT_FOUND, Map.of("reviewId", reviewId));
+          return new ReviewNotFoundException(
+              ReviewErrorCode.REVIEW_NOT_FOUND, Map.of("reviewId", reviewId));
         });
   }
 
@@ -155,7 +158,8 @@ public class ReviewService {
     Optional<Review> review = reviewRepository.findByUserAndContent(user, content);
     if (review.isPresent()) {
       log.warn("[리뷰] 이미 리뷰가 존재합니다. reviewId = {}", review.get().getId());
-      throw new ReviewDuplicateException(com.codeit.mopl.exception.review.ErrorCode.REVIEW_DUPLICATED, Map.of("reviewId", review.get().getId()));
+      throw new ReviewDuplicateException(
+          ReviewErrorCode.REVIEW_DUPLICATED, Map.of("reviewId", review.get().getId()));
     }
   }
 }

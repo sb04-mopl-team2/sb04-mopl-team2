@@ -6,15 +6,11 @@ import com.codeit.mopl.domain.playlist.mapper.PlaylistMapper;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
-import com.codeit.mopl.exception.playlist.PlaylistException;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
 import com.codeit.mopl.exception.playlist.PlaylistUpdateForbiddenException;
 import com.codeit.mopl.exception.user.ErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
-import com.codeit.mopl.security.CustomUserDetails;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

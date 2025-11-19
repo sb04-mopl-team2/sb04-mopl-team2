@@ -45,13 +45,13 @@ public class FollowService {
             throw FollowSelfProhibitedException.withFollowerIdAndFolloweeId(followerId, followeeId);
         }
 
-        User follower = getUserById(followerId);
-        User followee = getUserById(followeeId);
-
         // 중복 팔로우 금지
         if (followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId)) {
             throw FollowDuplicateException.withFollowerIdAndFolloweeId(followerId, followeeId);
         }
+
+        User follower = getUserById(followerId);
+        User followee = getUserById(followeeId);
 
         Follow follow = new Follow(follower, followee);
         FollowDto dto = followMapper.toDto(followRepository.save(follow));
@@ -67,9 +67,8 @@ public class FollowService {
     @Transactional
     public void increaseFollowerCount(FollowDto followDto) {
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followDto: {}", followDto);
-        User followee = getUserById(followDto.followeeId());
-        UUID followeeId = followee.getId();
-        userRepository.increaseFollowerCount(followeeId);
+        UUID followeeId = followDto.followeeId();
+        userRepository.increaseFollowerCountByUserId(followeeId);
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
     }
 

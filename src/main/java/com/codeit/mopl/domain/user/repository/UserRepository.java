@@ -15,6 +15,6 @@ public interface UserRepository extends JpaRepository<User, UUID> , CustomUserRe
 
     @Modifying
     @Query("UPDATE User u SET u.followerCount = u.followerCount + 1 WHERE u.id = :userId")
-    void increaseFollowerCount(UUID userId);
+    void increaseFollowerCountByUserId(UUID userId);
 
 }

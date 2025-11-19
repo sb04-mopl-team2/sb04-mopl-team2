@@ -151,13 +151,13 @@ public class UserService {
         });
         Optional.ofNullable(profileImage).ifPresent(profile -> {
             log.debug("[사용자 관리] 프로필 이미지 생성");
+            String extension = getFileExtension(profile.getOriginalFilename());
+            String key = UUID.randomUUID() + extension;
+            s3Storage.upload(profile,key);
             if (StringUtils.hasText(findUser.getProfileImageUrl())){
                 log.debug("[사용자 관리] 기존 프로필 삭제 imageKey = {}", profileImage.getOriginalFilename());
                 s3Storage.delete(findUser.getProfileImageUrl());
             }
-            String extension = getFileExtension(profile.getOriginalFilename());
-            String key = UUID.randomUUID() + extension;
-            s3Storage.upload(profile,key);
             findUser.setProfileImageUrl(key);
         });
         userRepository.save(findUser);
@@ -193,6 +193,9 @@ public class UserService {
     }
 
     private String getFileExtension(String filename) {
+        if (!StringUtils.hasText(filename)) {
+            throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("filename", filename));
+        }
         int dotIndex = filename.lastIndexOf(".");
         if (dotIndex == -1 || dotIndex == filename.length() - 1) {
             throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("filename", filename));

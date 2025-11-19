@@ -34,7 +34,7 @@ public class User extends UpdatableEntity {
     private boolean locked;
 
     @Column(nullable = false, columnDefinition = "BIGINT DEFAULT 0")
-    private long followerCount;
+    private Long followerCount;
 
     public User(String email, String password, String name) {
         this.email = email;
@@ -43,7 +43,7 @@ public class User extends UpdatableEntity {
         this.profileImageUrl = null;
         this.role = Role.USER;
         this.locked = false;
-        this.followerCount = 0;
+        this.followerCount = 0L;
     }
 
     public void updateRole(Role role) {

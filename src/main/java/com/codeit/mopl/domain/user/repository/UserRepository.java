@@ -14,8 +14,9 @@ public interface UserRepository extends JpaRepository<User, UUID> , CustomUserRe
     boolean existsByEmail(String email);
 
     @Modifying
-    @Query("update User u set u.followerCount = u.followerCount + 1 where u.id = :userId")
+    @Query("UPDATE User u SET u.followerCount = u.followerCount + 1 WHERE u.id = :userId")
     void increaseFollowerCount(UUID userId);
 
-    long findFollowerCountById(UUID userId);
+    @Query("SELECT u.followerCount FROM User u WHERE u.id = :userId")
+    Long findFollowerCountById(UUID userId);
 }

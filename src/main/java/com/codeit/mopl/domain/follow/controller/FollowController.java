@@ -38,7 +38,7 @@ public class FollowController {
         // 알람 전송
         UUID followeeId = dto.followeeId();
         String title = followService.getFollowNotificationTitle(followeeId);
-        notificationService.createNotification(followeeId, title, null, Level.INFO);
+        notificationService.createNotification(followeeId, title, "", Level.INFO);
         log.info("[팔로우 관리] 팔로우 요청 응답 - id: {}, followeeId: {}, followerId: {}", dto.id(), dto.followeeId(), dto.followerId());
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }

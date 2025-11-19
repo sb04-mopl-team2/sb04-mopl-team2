@@ -9,6 +9,13 @@ spring:
    multipart:
      maxFileSize: 10MB
      maxRequestSize: 30MB
+  batch:
+   jdbc:
+     initialize-schema: always
+   initial-load:
+     enabled: false
+   job:
+     enabled: false
 management:
   endpoints:
     web:
@@ -59,3 +66,8 @@ jwt:
   key: ${JWT_KEY}
   access-token-expiration-minutes: ${ACCESS_TOKEN_EXPIRATION_MINUTES}
   refresh-token-expiration-minutes: ${REFRESH_TOKEN_EXPIRATION_MINUTES}
+
+tmdb:
+  api:
+    token : ${TMDB_API_TOKEN}
+  base-url : ${TMDB_BASE_URL}

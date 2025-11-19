@@ -70,7 +70,6 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity resetPassword(@Valid @RequestBody ResetPasswordRequest request) throws MessagingException {
         log.info("[사용자] 비밀번호 초기화 요청 email = {}", request.email());
-
         authService.resetPassword(request);
         log.info("[사용자] 비밀번호 초기화 응답 email = {}", request.email());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

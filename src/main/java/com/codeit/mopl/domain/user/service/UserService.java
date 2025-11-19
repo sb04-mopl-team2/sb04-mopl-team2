@@ -6,7 +6,7 @@ import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
-import com.codeit.mopl.exception.user.ErrorCode;
+import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserEmailAlreadyExistsException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.s3.S3Storage;
@@ -21,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -149,7 +150,12 @@ public class UserService {
         });
         Optional.ofNullable(profileImage).ifPresent(profile -> {
             log.debug("[사용자 관리] 프로필 이미지 생성");
-            String key = UUID.randomUUID().toString();
+            if (!StringUtils.hasText(findUser.getProfileImageUrl())){
+                log.debug("[사용자 관리] 기존 프로필 삭제 imageKey = {}", profileImage.getOriginalFilename());
+                s3Storage.delete(findUser.getProfileImageUrl());
+            }
+            String extension = getFileExtension(profile.getOriginalFilename());
+            String key = UUID.randomUUID() + extension;
             s3Storage.upload(profile,key);
             findUser.setProfileImageUrl(key);
         });
@@ -160,7 +166,7 @@ public class UserService {
     private void validateEmail(String email) {
         if (userRepository.existsByEmail(email)) {
             log.warn("[사용자 관리] 이메일 중복 가입 email = {}", email);
-            throw new UserEmailAlreadyExistsException(ErrorCode.EMAIL_ALREADY_EXISTS, Map.of("email", email));
+            throw new UserEmailAlreadyExistsException(UserErrorCode.EMAIL_ALREADY_EXISTS, Map.of("email", email));
         }
     }
 
@@ -168,7 +174,7 @@ public class UserService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> {
                     log.info("[사용자 관리] 해당 유저를 찾을 수 없음 email = {}", email);
-                    throw new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("email", email));
+                    throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("email", email));
                 });
     }
 
@@ -176,12 +182,16 @@ public class UserService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.warn("[사용자 관리] 해당 유저를 찾을 수 없음 userId = {}", userId);
-                    throw new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId",userId));
+                    throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId",userId));
                 });
     }
 
     private void removeToken(UUID userId) {
         log.info("[사용자 관리] 강제 로그아웃 - token 삭제 userId = {}", userId);
         jwtRegistry.invalidateJwtInformationByUserId(userId);
+    }
+
+    private String getFileExtension(String filename) {
+        return filename.substring(filename.lastIndexOf("."));
     }
 }

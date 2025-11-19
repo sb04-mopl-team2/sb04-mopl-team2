@@ -12,6 +12,7 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.user.UserEmailAlreadyExistsException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.s3.S3Storage;
+import com.codeit.mopl.security.jwt.JwtRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +49,9 @@ public class UserServiceTest {
 
     @Mock
     private S3Storage s3Storage;
+
+    @Mock
+    private JwtRegistry jwtRegistry;
 
     @InjectMocks
     private UserService userService;
@@ -128,7 +132,7 @@ public class UserServiceTest {
         UUID userId = UUID.randomUUID();
         UserRoleUpdateRequest request = new UserRoleUpdateRequest(Role.ADMIN);
         User findUser = new User("test@example.com","password","test");  // new User는 Default Role.USER
-        given(userRepository.findById(any(UUID.class))).willReturn(Optional.of(findUser));
+        given(userRepository.findById(userId)).willReturn(Optional.of(findUser));
 
         // when
         userService.updateRole(userId, request);
@@ -159,7 +163,7 @@ public class UserServiceTest {
         UUID userId = UUID.randomUUID();
         UserUpdateRequest request = new UserUpdateRequest("changeName");
         User user = new User("test@test.com","password","beforeName");
-        MockMultipartFile profile = new MockMultipartFile("image","originalName",MediaType.IMAGE_JPEG_VALUE,"image".getBytes(StandardCharsets.UTF_8));
+        MockMultipartFile profile = new MockMultipartFile("image","originalName.jpg",MediaType.IMAGE_JPEG_VALUE,"image".getBytes(StandardCharsets.UTF_8));
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
 

@@ -157,7 +157,7 @@ public class UserService {
             String key = UUID.randomUUID() + extension;
             s3Storage.upload(profile,key);
             if (StringUtils.hasText(findUser.getProfileImageUrl())){
-                log.debug("[사용자 관리] 기존 프로필 삭제 imageKey = {}", profileImage.getOriginalFilename());
+                log.debug("[사용자 관리] 기존 프로필 삭제 imageKey = {}", findUser.getProfileImageUrl());
                 s3Storage.delete(findUser.getProfileImageUrl());
             }
             findUser.setProfileImageUrl(key);

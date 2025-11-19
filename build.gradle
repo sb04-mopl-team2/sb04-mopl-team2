@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.7'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'com.codeit'
@@ -57,6 +58,12 @@ dependencies {
     annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta' // ✅ Q클래스 생성기
     annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
     annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+
+    // mail
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+    // greenmail - mailTest
+    testImplementation 'com.icegreen:greenmail-junit5:2.0.0'
 }
 
 tasks.named('test') {

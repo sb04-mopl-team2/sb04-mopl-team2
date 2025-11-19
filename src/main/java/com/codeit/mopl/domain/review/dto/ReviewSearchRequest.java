@@ -5,10 +5,9 @@ import com.codeit.mopl.domain.review.entity.SortDirection;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import java.util.UUID;
 
-public record ReviewSearchRequestDto(
+public record ReviewSearchRequest(
 
     UUID contentId,
 

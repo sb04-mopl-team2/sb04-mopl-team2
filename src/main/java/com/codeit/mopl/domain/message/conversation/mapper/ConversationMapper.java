@@ -11,7 +11,7 @@ import org.mapstruct.Mapping;
         uses = {UserMapper.class})
 public interface ConversationMapper {
 
-    @Mapping(source ="with.id", target = "withUserId")
-    @Mapping(source = "latestMessageDto", target = "lastestMessage")
-    ConversationDto toConversationDto(Conversation entity, DirectMessageDto lastMessage);
+    @Mapping(source ="entity.with", target = "with")
+    @Mapping(source = "lastestMessage", target = "lastestMessage")
+    ConversationDto toConversationDto(Conversation entity, DirectMessageDto lastestMessage);
 }

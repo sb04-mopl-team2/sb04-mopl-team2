@@ -196,7 +196,7 @@ public class UserService {
 
     private String getFileExtension(String filename) {
         if (!StringUtils.hasText(filename)) {
-            throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("filename", filename));
+            throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("filename", String.valueOf(filename)));
         }
         int dotIndex = filename.lastIndexOf(".");
         if (dotIndex == -1 || dotIndex == filename.length() - 1) {
@@ -210,7 +210,7 @@ public class UserService {
             throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("file", "empty"));
         }
         if (!ImageContentType.isImage(profileImage.getContentType())) {
-            throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("contentType",profileImage.getContentType()));
+            throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("contentType",String.valueOf(profileImage.getContentType())));
         }
     }
 }

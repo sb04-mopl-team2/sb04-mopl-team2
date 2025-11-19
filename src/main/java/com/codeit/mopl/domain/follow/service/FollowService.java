@@ -5,6 +5,8 @@ import com.codeit.mopl.domain.follow.dto.FollowRequest;
 import com.codeit.mopl.domain.follow.entity.Follow;
 import com.codeit.mopl.domain.follow.mapper.FollowMapper;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
+import com.codeit.mopl.domain.notification.entity.Level;
+import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
@@ -28,8 +30,9 @@ public class FollowService {
 
     private final FollowRepository followRepository;
     private final FollowMapper followMapper;
-    private final UserRepository userRepository;
     //
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -53,6 +56,10 @@ public class FollowService {
         Follow follow = new Follow(follower, followee);
         FollowDto dto = followMapper.toDto(followRepository.save(follow));
         eventPublisher.publishEvent(new FollowerIncreaseEvent(dto));
+
+        // 알람 발행
+        String title = getFollowNotificationTitle(followerId);
+        notificationService.createNotification(followeeId, title, "", Level.INFO);
         log.info("[팔로우 관리] 팔로우 생성 완료 - id: {}", dto.id());
         return dto;
     }

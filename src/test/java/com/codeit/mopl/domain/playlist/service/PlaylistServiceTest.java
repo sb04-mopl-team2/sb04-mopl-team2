@@ -1,10 +1,9 @@
 package com.codeit.mopl.domain.playlist.service;
 
+import com.codeit.mopl.domain.base.BaseEntity;
+import com.codeit.mopl.domain.base.UpdatableEntity;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
-import com.codeit.mopl.domain.playlist.dto.CursorResponsePlaylistDto;
-import com.codeit.mopl.domain.playlist.dto.PlaylistCreateRequest;
-import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
-import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
+import com.codeit.mopl.domain.playlist.dto.*;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.entity.SortBy;
 import com.codeit.mopl.domain.playlist.mapper.PlaylistMapper;
@@ -13,7 +12,9 @@ import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.playlist.PlaylistException;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
+import com.codeit.mopl.exception.playlist.PlaylistUpdateForbiddenException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,7 +23,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.test.context.support.WithMockUser;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,7 +38,7 @@ import static org.mockito.Mockito.*;
 public class PlaylistServiceTest {
 
     @Mock private PlaylistRepository playlistRepository;
-    @Mock private UserRepository userRepository;
+    @Mock private UserRepository    userRepository;
     @Mock private PlaylistMapper playlistMapper;
     @InjectMocks private PlaylistService playlistService;
 
@@ -272,6 +275,96 @@ public class PlaylistServiceTest {
 
             //then
             assertThat(result.contents()).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("update()")
+    class updatePlaylist {
+
+        @Test
+        @DisplayName("요청이 유효할 경우 플레이리스트 정보를 수정함")
+        void shouldUpdatePlaylist() {
+            //given
+            UUID playlistId = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
+            User owner = new User();
+            setId(owner, ownerId);
+
+            Playlist playlist = Playlist.builder()
+                    .title("테스트 제목")
+                    .description("테스트 설명")
+                    .user(owner)
+                    .playlistItems(Collections.emptyList())
+                    .build();
+
+            PlaylistUpdateRequest request = new PlaylistUpdateRequest(
+                    "테스트 제목 수정",
+                    "테스트 설명 수정"
+            );
+            given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
+            UserSummary summary = new UserSummary(UUID.randomUUID(), "test", "test");
+            PlaylistDto updatedDto = new PlaylistDto(
+                    playlistId,
+                    summary,
+                    "테스트 제목 수정",
+                    "테스트 설명 수정",
+                    null,
+                    0,
+                    true,
+                    Collections.emptyList()
+            );
+            given(playlistMapper.toPlaylistDto(playlist)).willReturn(updatedDto);
+
+            //when
+            PlaylistDto result = playlistService.updatePlaylist(ownerId,playlistId,request);
+            //then
+            assertThat(result.title()).isEqualTo("테스트 제목 수정");
+            assertThat(result.description()).isEqualTo("테스트 설명 수정");
+        }
+
+        @WithMockUser
+        @Test
+        @DisplayName("요청자가 플레이리스트의 owner가 아닐 경우 권한 예외 발생")
+        void shouldThrowExceptionWhenUserNotAuthorized() {
+            //given
+            UUID playlistId = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
+            UUID requestUserId = UUID.randomUUID();
+
+            User owner = new User();
+            setId(owner, ownerId);
+
+            User requester = new User();
+            setId(requester, requestUserId);
+
+            Playlist playlist = Playlist.builder()
+                    .title("테스트 제목")
+                    .description("테스트 설명")
+                    .user(owner)
+                    .playlistItems(Collections.emptyList())
+                    .build();
+            PlaylistUpdateRequest request = new PlaylistUpdateRequest(
+                    "테스트 제목 수정",
+                    "테스트 설명 수정"
+            );
+            given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
+            //when & then
+            assertThrows(PlaylistUpdateForbiddenException.class, () -> playlistService.updatePlaylist(requestUserId,playlistId,request) );
+            verify(playlistRepository).findById(playlistId);
+            verify(playlistMapper, never()).toPlaylistDto(any());
+
+        }
+    }
+
+    //UpdatableEntity 상속 받 엔티티의 setId()를 가능하게 하는 헬퍼메서드
+    private static void setId(Object target, UUID id) {
+        try {
+            Field idField = BaseEntity.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(target, id);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set ID via reflection", e);
         }
     }
 }

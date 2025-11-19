@@ -1,0 +1,23 @@
+package com.codeit.mopl.exception.playlist;
+
+import com.codeit.mopl.exception.global.ErrorCode;
+import com.codeit.mopl.exception.global.MoplException;
+
+import java.util.Map;
+import java.util.UUID;
+
+public class PlaylistNotFoundException extends MoplException {
+    public PlaylistNotFoundException(PlaylistErrorCode errorCode, Map<String, Object> details) {
+        super(errorCode, details);}
+
+    private PlaylistNotFoundException() {
+        super(PlaylistErrorCode.PLAYLIST_NOT_FOUND, Map.of());
+    }
+
+
+    public static PlaylistNotFoundException withId(UUID playlistId) {
+        PlaylistNotFoundException exception = new PlaylistNotFoundException();
+        exception.getDetails().put("playlistId", playlistId);
+        return exception;
+    }
+}

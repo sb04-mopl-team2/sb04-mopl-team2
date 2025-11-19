@@ -1,4 +1,22 @@
-package com.codeit.mopl.domain.notification.service;
+package com.codeit.mopl.notification;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
@@ -7,7 +25,7 @@ import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
-import com.codeit.mopl.domain.notification.exception.NotificationNotAuthentication;
+import com.codeit.mopl.domain.notification.exception.NotificationForbidden;
 import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
@@ -30,11 +48,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
@@ -239,7 +252,7 @@ class NotificationServiceTest {
 
     // then
     assertThatThrownBy(act::run)
-        .isInstanceOf(NotificationNotAuthentication.class);
+        .isInstanceOf(NotificationForbidden.class);
 
     verify(notification, never()).setStatus(any(Status.class));
     verify(notificationRepository, never()).save(any(Notification.class));
@@ -287,7 +300,7 @@ class NotificationServiceTest {
     String title = "테스트 제목";
 
     Notification notification = createNotification(title, LocalDateTime.now());
-    NotificationDto notificationDto = createDtoFrom(notification);
+    NotificationDto notificationDto = createDtoFrom(notification, receiverId);
 
     // when
     notificationService.sendNotification(notificationDto);
@@ -308,6 +321,17 @@ class NotificationServiceTest {
         notification.getId(),
         notification.getCreatedAt(),
         null,
+        notification.getTitle(),
+        notification.getContent(),
+        notification.getLevel()
+    );
+  }
+
+  private NotificationDto createDtoFrom(Notification notification, UUID receiverId) {
+    return new NotificationDto(
+        notification.getId(),
+        notification.getCreatedAt(),
+        receiverId,
         notification.getTitle(),
         notification.getContent(),
         notification.getLevel()

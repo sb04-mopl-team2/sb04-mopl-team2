@@ -132,7 +132,22 @@ public class PlaylistService {
         }
 
         playlist.update(request.title(), request.description());
-        log.info("[플레이리스트]  - playlistId = {}", playlistId);
+        log.info("[플레이리스트] 플레이리스트 정보 수정 완료 - playlistId = {}", playlistId);
         return playlistMapper.toPlaylistDto(playlist);
+    }
+
+    public void deletePlaylist(UUID playlistId, UUID requestUserId) {
+        log.info("[플레이리스트] 플레이리스트 삭제 시작 - playlistId = {}", playlistId);
+        Playlist playlist = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> {
+                    log.warn("[플레이리스트] 플레이리스트 삭제 중 조회 실패 - 플레이리스트가 존재하지 않음 - playlistId = {}", playlistId);
+                    return PlaylistNotFoundException.withId(playlistId);
+                });
+        if (!requestUserId.equals(playlist.getUser().getId())) {
+            log.warn("[플레이리스트] 플레이리스트 삭제 실패 - 권한 없음 - userId = {}", requestUserId);
+            throw new PlaylistUpdateForbiddenException(playlistId);
+        }
+        playlistRepository.deleteById(playlistId);
+        log.info("[플레이리스트] 플레이리스트 삭제 완료 - playlistId = {}", playlistId);
     }
 }

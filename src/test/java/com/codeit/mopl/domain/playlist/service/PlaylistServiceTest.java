@@ -13,6 +13,7 @@ import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,7 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -116,7 +117,7 @@ public class PlaylistServiceTest {
             cond.setCursor(null);
             cond.setLimit(10);
             cond.setSortDirection(SortDirection.DESCENDING);
-            cond.setSortBy(SortBy.updatedAt);
+            cond.setSortBy(SortBy.UPDATED_AT);
 
             UUID playlistId = UUID.randomUUID();
             UUID ownerId = UUID.randomUUID();
@@ -147,7 +148,7 @@ public class PlaylistServiceTest {
             cond.setCursor(null);
             cond.setLimit(10);
             cond.setSortDirection(SortDirection.DESCENDING);
-            cond.setSortBy(SortBy.updatedAt);
+            cond.setSortBy(SortBy.UPDATED_AT);
             Playlist playlist1 = Playlist.builder().title("키워드 포함 제목1").description("테스트 설명1").build();
             Playlist playlist2 = Playlist.builder().title("키워드 포함 제목2").description("테스트 설명2").build();
             List<Playlist> playlists = Arrays.asList(playlist1, playlist2);
@@ -185,7 +186,7 @@ public class PlaylistServiceTest {
             cond.setCursor(null);
             cond.setLimit(10);
             cond.setSortDirection(SortDirection.DESCENDING);
-            cond.setSortBy(SortBy.updatedAt);
+            cond.setSortBy(SortBy.UPDATED_AT);
 
             given(playlistRepository.findAllByCond(cond)).willReturn(Collections.emptyList());
 
@@ -194,6 +195,83 @@ public class PlaylistServiceTest {
 
             //then
             assertThat(result.totalCount()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("요청이 유효할 경우 플레이리스트 상세보기 선택 시(플레이리스트 클릭) 플레이리스트 단건 조회함")
+        void shouldGetPlaylist() {
+            //given
+            UUID playlistId = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
+            UserSummary userSummary = new UserSummary(ownerId, "test", "test");
+
+            Playlist playlist = Playlist.builder()
+                    .title("테스트 제목")
+                    .description("테스트 설명")
+                    .build();
+
+            PlaylistDto dto = new PlaylistDto(
+                    playlistId,
+                    userSummary,
+                    "테스트 제목",
+                    "테스트 설명",
+                    null,
+                    2,
+                    true,
+                    null);
+            given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
+            given(playlistMapper.toPlaylistDto(playlist)).willReturn(dto);
+
+            //when
+            PlaylistDto result = playlistService.getPlaylist(playlistId);
+
+            //then
+            assertThat(result.title()).isEqualTo("테스트 제목");
+            assertThat(result.description()).isEqualTo("테스트 설명");
+        }
+
+        @Test
+        @DisplayName("존재하지 않은 플레이리스트 ID로 단건 조회 요청 시 예외 발생")
+        void shouldThrowExceptionWhenPlaylistNotFound() {
+            //given
+            UUID nonExistentPlaylistId = UUID.randomUUID();
+
+            given(playlistRepository.findById(nonExistentPlaylistId)).willReturn(Optional.empty());
+            //when & then
+            assertThrows(PlaylistNotFoundException.class, () -> {
+                playlistService.getPlaylist(nonExistentPlaylistId);
+            });
+        }
+
+        @Test
+        @DisplayName("플레이리스트 내 콘텐츠가 존재하지 않을 경우 빈 리스트 반환")
+        void shouldReturnEmptyWhenContentNotFound() {
+            //given
+            UUID playlistId = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
+            UserSummary userSummary = new UserSummary(ownerId, "test", "test");
+            Playlist playlist = Playlist.builder()
+                    .title("테스트 제목")
+                    .description("테스트 설명")
+                    .playlistItems(Collections.emptyList())
+                    .build();
+            PlaylistDto dto = new PlaylistDto(
+                    playlistId,
+                    userSummary,
+                    "테스트 제목",
+                    "테스트 설명",
+                    null,
+                    0,
+                    true,
+                    Collections.emptyList());
+            given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
+            given(playlistMapper.toPlaylistDto(playlist)).willReturn(dto);
+
+            //when
+            PlaylistDto result = playlistService.getPlaylist(playlistId);
+
+            //then
+            assertThat(result.contents()).isEmpty();
         }
     }
 }

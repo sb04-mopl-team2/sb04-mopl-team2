@@ -16,6 +16,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @Slf4j
 @RestController
 @Validated
@@ -41,6 +43,14 @@ public class PlaylistController {
         CursorResponsePlaylistDto response = playlistService.getAllPlaylists(request);
         log.info("[플레이리스트] 플레이리스트 목록 조회 응답 - totalCount={}, hasNext={}, nextCursor={}",
                 response.totalCount(), response.hasNext(), response.nextCursor());
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @GetMapping("/{playlistId}")
+    public ResponseEntity<PlaylistDto> getPlaylist(@PathVariable UUID playlistId) {
+        log.info("[플레이리스트] 플레이리스트 단건 조회 요청 - playlistId = {}", playlistId);
+        PlaylistDto response = playlistService.getPlaylist(playlistId);
+        log.info("[플레이리스트] 플레이리스트 단건 조회 응답 - playlistId = {}", response.id());
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

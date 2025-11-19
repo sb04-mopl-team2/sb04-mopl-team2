@@ -2,6 +2,7 @@
 language: ko-KR
 reviews:
   high_level_summary: false
+  collapse_walkthrough: true
   auto_review:
     drafts: true
     base_branches:

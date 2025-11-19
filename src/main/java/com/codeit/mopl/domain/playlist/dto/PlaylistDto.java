@@ -9,13 +9,13 @@ import java.util.List;
 import java.util.UUID;
 
 public record PlaylistDto (
-        UUID id,
-        UserSummary owner,
-        String title,
-        String description,
-        LocalDateTime updatedAt,
-        long subscriberCount,
-        boolean subscribedByMe,
-        List<ContentSummary> contents
+    UUID id,
+    UserSummary owner,
+    String title,
+    String description,
+    LocalDateTime updatedAt,
+    long subscriberCount,
+    boolean subscribedByMe,
+    List<ContentSummary> contents
 )
 { }

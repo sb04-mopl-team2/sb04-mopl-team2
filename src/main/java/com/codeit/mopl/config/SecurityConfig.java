@@ -89,6 +89,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/sign-in").permitAll()  // 로그인
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()  // 회원가입
                         .requestMatchers("/api/auth/refresh").permitAll()  // 토큰 재발급
+                        .requestMatchers("/api/auth/reset-password").permitAll()  // 비밀번호 초기화
                         .requestMatchers("/ws/**").permitAll()  // 웹소켓
                         .requestMatchers( "*","/actuator/**", "/swagger-resource/**"
                                 , "/swagger-ui.html", "/swagger-ui/**", "/v3/**",

@@ -62,9 +62,8 @@ public class FollowService {
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followDto: {}", followDto);
         User followee = getUserById(followDto.followeeId());
         UUID followeeId = followee.getId();
-        Long followerCount = userRepository.findFollowerCountById(followeeId);
         userRepository.increaseFollowerCount(followeeId);
-        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}, oldFollowerCount: {}, newFollowerCount: {}", followeeId, followerCount, followerCount+1);
+        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
     }
 
     private User getUserById(UUID userId) {

@@ -3,6 +3,8 @@ package com.codeit.mopl.domain.follow.controller;
 import com.codeit.mopl.domain.follow.dto.FollowDto;
 import com.codeit.mopl.domain.follow.dto.FollowRequest;
 import com.codeit.mopl.domain.follow.service.FollowService;
+import com.codeit.mopl.domain.notification.entity.Level;
+import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ import java.util.UUID;
 public class FollowController {
 
     private final FollowService followService;
+    private final NotificationService notificationService;
 
     @PostMapping
     public ResponseEntity<FollowDto> follow(@Valid @RequestBody FollowRequest request,
@@ -31,6 +34,11 @@ public class FollowController {
         log.info("[팔로우 관리] 팔로우 요청 시작 - followeeId: {}", request.followeeId());
         UUID followerId = follower.getUser().id();
         FollowDto dto = followService.createFollow(request, followerId);
+
+        // 알람 전송
+        UUID followeeId = dto.followeeId();
+        String title = followService.getFollowNotificationTitle(followeeId);
+        notificationService.createNotification(followeeId, title, null, Level.INFO);
         log.info("[팔로우 관리] 팔로우 요청 응답 - id: {}, followeeId: {}, followerId: {}", dto.id(), dto.followeeId(), dto.followerId());
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }

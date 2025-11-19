@@ -71,4 +71,9 @@ public class FollowService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
     }
+
+    public String getFollowNotificationTitle(UUID followeeId) {
+        User followee = getUserById(followeeId);
+        return followee.getName() + "님이 나를 팔로우했어요.";
+    }
 }

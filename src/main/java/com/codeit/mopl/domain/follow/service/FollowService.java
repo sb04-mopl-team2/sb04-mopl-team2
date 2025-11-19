@@ -38,7 +38,7 @@ public class FollowService {
         log.info("[팔로우 관리] 팔로우 생성 시작 - followerId: {}, followeeId: {}", followerId, followeeId);
 
         // 자기 자신 팔로우 금지
-        if (followerId == followeeId) {
+        if (followerId.equals(followeeId)) {
             throw FollowSelfProhibitedException.withFollowerIdAndFolloweeId(followerId, followeeId);
         }
 
@@ -72,8 +72,8 @@ public class FollowService {
                 .orElseThrow(() -> new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
     }
 
-    public String getFollowNotificationTitle(UUID followeeId) {
-        User followee = getUserById(followeeId);
-        return followee.getName() + "님이 나를 팔로우했어요.";
+    public String getFollowNotificationTitle(UUID followerId) {
+        User follower = getUserById(followerId);
+        return follower.getName() + "님이 나를 팔로우했어요.";
     }
 }

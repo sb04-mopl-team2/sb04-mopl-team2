@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.playlist.playlistItem;
 
+import com.codeit.mopl.domain.base.BaseEntity;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
@@ -8,6 +9,7 @@ import com.codeit.mopl.domain.playlist.playlistitem.repository.PlaylistItemRepos
 import com.codeit.mopl.domain.playlist.playlistitem.service.PlaylistItemService;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.playlist.service.PlaylistService;
+import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,6 +19,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,14 +49,24 @@ public class PlaylistItemServiceTest {
         void shouldCreatePlaylistItem() {
             UUID playlistId = UUID.randomUUID();
             UUID contentId = UUID.randomUUID();
-            Playlist playlist = new Playlist();
+            UUID ownerId = UUID.randomUUID();
+            User owner = new User();
+            setId(owner, ownerId);
+
+            Playlist playlist = Playlist.builder()
+                    .title("테스트 제목")
+                    .description("테스트 설명")
+                    .user(owner)
+                    .playlistItems(Collections.emptyList())
+                    .build();
+
             Content content = new Content();
             given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
             given(contentRepository.findById(contentId)).willReturn(Optional.ofNullable(content));
             PlaylistItem playlistItem = new PlaylistItem(playlist, content);
 
             //when
-            playlistItemService.addContent(playlistId, contentId);
+            playlistItemService.addContent(playlistId, contentId, ownerId);
 
             //then
             verify(playlistRepository).findById(playlistId);
@@ -66,14 +80,24 @@ public class PlaylistItemServiceTest {
             //given
             UUID nonExistentPlaylistId = UUID.randomUUID();
             UUID contentId = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
             Playlist playlist = new Playlist();
             given(playlistRepository.findById(nonExistentPlaylistId)).willReturn(Optional.empty());
 
             //when & then
             assertThrows(PlaylistNotFoundException.class,
-                    () -> playlistItemService.addContent(nonExistentPlaylistId, contentId));
+                    () -> playlistItemService.addContent(nonExistentPlaylistId, contentId, ownerId));
             verify(playlistRepository).findById(nonExistentPlaylistId);
             verify(playlistItemRepository,never()).save(any());
+        }
+    }
+    private static void setId(Object target, UUID id) {
+        try {
+            Field idField = BaseEntity.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(target, id);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set ID via reflection", e);
         }
     }
 }

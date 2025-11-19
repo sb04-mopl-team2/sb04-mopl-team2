@@ -8,6 +8,7 @@ import com.codeit.mopl.domain.playlist.playlistitem.mapper.PlaylistItemMapper;
 import com.codeit.mopl.domain.playlist.playlistitem.repository.PlaylistItemRepository;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
+import com.codeit.mopl.exception.playlist.PlaylistUpdateForbiddenException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ public class PlaylistItemService {
     private final PlaylistRepository playlistRepository;
     private final ContentRepository contentRepository;
 
-    public void addContent(UUID playlistId, UUID contentId) {
+    public void addContent(UUID playlistId, UUID contentId, UUID ownerId) {
         log.info("[플레이리스트] 플레이리스트에 콘텐츠 추가 시작 - playlistId = {}", playlistId);
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> {
@@ -36,9 +37,13 @@ public class PlaylistItemService {
                 });
         Content content = contentRepository.findById(contentId)
                 .orElseThrow(()-> new EntityNotFoundException("커스텀 예외 추가되면 대체 예정"));
+
+        if (!ownerId.equals(playlist.getUser().getId())) {
+            log.warn("[플레이리스트] 플레이리스트 콘텐츠 추가 실패 실패 - 플레이리스트 변경 권한 없음 - userId = {}", ownerId);
+            throw new PlaylistUpdateForbiddenException(playlistId);
+        }
         PlaylistItem playlistItem = new PlaylistItem(playlist, content);
         log.info("[플레이리스트] 플레이리스트에 콘텐츠 추가 완료 - playlistId = {}, contentId = {}", playlistId, contentId);
         playlistItemRepository.save(playlistItem);
     }
-
 }

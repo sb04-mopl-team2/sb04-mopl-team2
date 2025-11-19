@@ -74,9 +74,11 @@ public class PlaylistController {
 
     @PostMapping("/{playlistId}/contents/{contentId}")
     public ResponseEntity<Void> addContentToPlaylist(@PathVariable UUID playlistId,
-                                                     @PathVariable UUID contentId) {
-        log.info("[플레이리스트] 플레이리스트에 콘텐츠 추가 요청 - playlistId = {}, contentId = {}", playlistId, contentId);
-        playlistItemService.addContent(playlistId, contentId);
+                                                     @PathVariable UUID contentId,
+                                                     @AuthenticationPrincipal CustomUserDetails loginUser) {
+        log.info("[플레이리스트] 플레이리스트에 콘텐츠 추가 요청 - playlistId = {}, contentId = {}, userId = {}",
+                playlistId, contentId, loginUser.getUser().id());
+        playlistItemService.addContent(playlistId, contentId, loginUser.getUser().id());
         log.info("[플레이리스트] 플레이리스트 콘텐츠 추가 응답 - playlistId = {}, contentId = {}", playlistId, contentId);
         return ResponseEntity.ok().build();
     }

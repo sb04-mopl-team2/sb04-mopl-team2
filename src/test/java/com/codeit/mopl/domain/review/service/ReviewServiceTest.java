@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
-import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.review.dto.CursorResponseReviewDto;
 import com.codeit.mopl.domain.review.dto.ReviewDto;
 import com.codeit.mopl.domain.review.entity.Review;
@@ -23,6 +22,8 @@ import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.review.ReviewDuplicateException;
+import com.codeit.mopl.exception.review.ReviewNotFoundException;
+import com.codeit.mopl.exception.review.ReviewUnauthorizedException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -218,6 +219,8 @@ class ReviewServiceTest {
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(contentRepository.findById(contentId)).thenReturn(Optional.of(content));
+    when(reviewRepository.findByUserAndContent(user, content))
+    .thenReturn(Optional.empty());
     when(reviewRepository.save(any(Review.class))).thenReturn(review);
     when(reviewMapper.toDto(any(Review.class))).thenReturn(dto);
 
@@ -260,7 +263,6 @@ class ReviewServiceTest {
     double rating = 4.5;
     User user = new User();
     Content content = new Content();
-    Review review = new Review(user, content, text, rating, false);
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(contentRepository.findById(contentId)).thenReturn(Optional.of(content));
@@ -277,6 +279,114 @@ class ReviewServiceTest {
     // then
     assertThatThrownBy(act::run)
         .isInstanceOf(ReviewDuplicateException.class);
+  }
+
+  @Test
+  @DisplayName("리뷰 수정 성공 - 작성자 본인이면 수정된다")
+  void updateReview_success() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID reviewId = UUID.randomUUID();
+    String newText = "수정된 리뷰입니다.";
+    double newRating = 4.8;
+
+    User author = mock(User.class);
+    when(author.getId()).thenReturn(userId);
+
+    Review review = new Review(author, new Content(), "old", 3.0, false);
+
+    ReviewDto dto = new ReviewDto(
+        reviewId,
+        UUID.randomUUID(),
+        null,
+        newText,
+        newRating
+    );
+
+    when(reviewRepository.findById(reviewId))
+        .thenReturn(Optional.of(review));
+
+    when(reviewRepository.save(any(Review.class)))
+        .thenReturn(review);
+
+    when(reviewMapper.toDto(any(Review.class)))
+        .thenReturn(dto);
+
+    // -------------------- when --------------------
+    ReviewDto result = reviewService.updateReview(
+        userId, reviewId, newText, newRating
+    );
+
+    // -------------------- then --------------------
+    assertThat(review.getText()).isEqualTo(newText);
+    assertThat(review.getRating()).isEqualTo(newRating);
+
+    assertThat(result.text()).isEqualTo(newText);
+    assertThat(result.rating()).isEqualTo(newRating);
+
+    verify(reviewRepository).findById(reviewId);
+    verify(reviewRepository).save(review);
+    verify(reviewMapper).toDto(review);
+  }
+
+  @Test
+  @DisplayName("리뷰 수정 실패 - 작성자가 아니면 예외 발생")
+  void updateReview_fail_unauthorized() {
+    // given
+    UUID requestUserId = UUID.randomUUID();
+    UUID authorId = UUID.randomUUID();
+    UUID reviewId = UUID.randomUUID();
+
+    String newText = "수정된 리뷰입니다.";
+    double newRating = 4.8;
+
+    User author = mock(User.class);
+    when(author.getId()).thenReturn(authorId);
+
+    Review review = mock(Review.class);
+    when(review.getUser()).thenReturn(author);
+    when(review.getId()).thenReturn(reviewId);
+
+    when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
+
+    // when
+    Runnable act = () -> reviewService.updateReview(
+        requestUserId, reviewId, newText, newRating
+    );
+
+    // then
+    assertThatThrownBy(act::run)
+        .isInstanceOf(ReviewUnauthorizedException.class);
+
+    verify(reviewRepository).findById(reviewId);
+    verify(reviewRepository, never()).save(any());
+    verify(reviewMapper, never()).toDto(any());
+  }
+
+  @Test
+  @DisplayName("리뷰 수정 실패 - 리뷰가 없으면 예외 발생")
+  void updateReview_fail_reviewNotFound() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID reviewId = UUID.randomUUID();
+    String newText = "수정된 리뷰입니다.";
+    double newRating = 4.8;
+
+    when(reviewRepository.findById(reviewId))
+        .thenReturn(Optional.empty());
+
+    // when
+    Runnable act = () -> reviewService.updateReview(
+        userId, reviewId, newText, newRating
+    );
+
+    // then
+    assertThatThrownBy(act::run)
+        .isInstanceOf(ReviewNotFoundException.class);
+
+    verify(reviewRepository).findById(reviewId);
+    verify(reviewRepository, never()).save(any());
+    verify(reviewMapper, never()).toDto(any());
   }
 
   private Review createReview(UUID id, LocalDateTime createdAt) {

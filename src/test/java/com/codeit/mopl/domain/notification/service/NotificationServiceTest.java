@@ -25,11 +25,10 @@ import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
-import com.codeit.mopl.domain.notification.exception.NotificationNotAuthentication;
+import com.codeit.mopl.domain.notification.exception.NotificationForbidden;
 import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
-import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
@@ -253,7 +252,7 @@ class NotificationServiceTest {
 
     // then
     assertThatThrownBy(act::run)
-        .isInstanceOf(NotificationNotAuthentication.class);
+        .isInstanceOf(NotificationForbidden.class);
 
     verify(notification, never()).setStatus(any(Status.class));
     verify(notificationRepository, never()).save(any(Notification.class));

@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
-import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.review.dto.CursorResponseReviewDto;
 import com.codeit.mopl.domain.review.dto.ReviewDto;
 import com.codeit.mopl.domain.review.entity.Review;
@@ -24,7 +23,7 @@ import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.review.ReviewDuplicateException;
 import com.codeit.mopl.exception.review.ReviewNotFoundException;
-import com.codeit.mopl.exception.review.ReviewUnAuthorizeException;
+import com.codeit.mopl.exception.review.ReviewUnauthorizedException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -220,6 +219,8 @@ class ReviewServiceTest {
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(contentRepository.findById(contentId)).thenReturn(Optional.of(content));
+    when(reviewRepository.findByUserAndContent(user, content))
+    .thenReturn(Optional.empty());
     when(reviewRepository.save(any(Review.class))).thenReturn(review);
     when(reviewMapper.toDto(any(Review.class))).thenReturn(dto);
 
@@ -355,7 +356,7 @@ class ReviewServiceTest {
 
     // then
     assertThatThrownBy(act::run)
-        .isInstanceOf(ReviewUnAuthorizeException.class);
+        .isInstanceOf(ReviewUnauthorizedException.class);
 
     verify(reviewRepository).findById(reviewId);
     verify(reviewRepository, never()).save(any());

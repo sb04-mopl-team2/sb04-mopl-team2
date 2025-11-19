@@ -84,12 +84,11 @@ public class ReviewController {
   }
 
 
-  @DeleteMapping("/api/reviews/{reviewId}")
+  @DeleteMapping("/{reviewId}")
   public ResponseEntity<Void> deleteReview(
       @PathVariable("reviewId") UUID reviewId,
-      @AuthenticationPrincipal CustomUserDetails user // 너 프로젝트 UserDetails 타입 맞게
+      @AuthenticationPrincipal CustomUserDetails user
   ) {
-    // 현재 로그인한 사용자만 삭제 가능
     log.info("[리뷰] 리뷰 삭제 요청 시작, userId = {}, reviewId = {}", user.getUser().id(), reviewId);
     reviewService.deleteReview(user.getUser().id(), reviewId);
     log.info("[리뷰] 리뷰 삭제 요청 종료, userId = {}, reviewId = {}", user.getUser().id(), reviewId);

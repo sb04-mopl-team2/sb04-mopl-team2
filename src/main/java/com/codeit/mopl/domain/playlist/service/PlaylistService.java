@@ -12,7 +12,6 @@ import com.codeit.mopl.exception.playlist.PlaylistUpdateForbiddenException;
 import com.codeit.mopl.exception.user.ErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.security.CustomUserDetails;
-import com.codeit.mopl.security.util.SecurityUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

@@ -60,4 +60,13 @@ public class PlaylistController {
         log.info("[플레이리스트] 플레이리스트 정보 수정 응답 - playlistId = {}", response.id());
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
+
+    @DeleteMapping("/{playlistId}")
+    public ResponseEntity<Void> deletePlaylist(@PathVariable UUID playlistId,
+                               @AuthenticationPrincipal CustomUserDetails loginUser) {
+        log.info("[플레이리스트] 플레이리스트 삭제 요청 - playlistId = {}, userId = {}", playlistId, loginUser.getUser().id());
+        playlistService.deletePlaylist(playlistId, loginUser.getUser().id());
+        log.info("[플레이리스트] 플레이리스트 삭제 응답 - playlistId = {}", playlistId);
+        return ResponseEntity.ok().build();
+    }
 }

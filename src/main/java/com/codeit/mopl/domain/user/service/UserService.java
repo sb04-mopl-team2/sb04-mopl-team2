@@ -6,6 +6,7 @@ import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.user.NotImageContentException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserEmailAlreadyExistsException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
@@ -150,7 +151,7 @@ public class UserService {
         });
         Optional.ofNullable(profileImage).ifPresent(profile -> {
             log.debug("[사용자 관리] 프로필 이미지 생성");
-            if (!StringUtils.hasText(findUser.getProfileImageUrl())){
+            if (StringUtils.hasText(findUser.getProfileImageUrl())){
                 log.debug("[사용자 관리] 기존 프로필 삭제 imageKey = {}", profileImage.getOriginalFilename());
                 s3Storage.delete(findUser.getProfileImageUrl());
             }
@@ -192,6 +193,10 @@ public class UserService {
     }
 
     private String getFileExtension(String filename) {
-        return filename.substring(filename.lastIndexOf("."));
+        int dotIndex = filename.lastIndexOf(".");
+        if (dotIndex == -1 || dotIndex == filename.length() - 1) {
+            throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("filename", filename));
+        }
+        return filename.substring(dotIndex);
     }
 }

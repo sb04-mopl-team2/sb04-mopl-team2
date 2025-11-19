@@ -95,8 +95,8 @@ public class UserController {
     }
 
     private void validateImage(MultipartFile profileImage) {
-        if (profileImage == null) {
-            throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("contentType", "null"));
+        if (profileImage == null || profileImage.isEmpty()) {
+            return;
         }
         if (!ImageContentType.isImage(profileImage.getContentType())) {
             throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("contentType",profileImage.getContentType()));

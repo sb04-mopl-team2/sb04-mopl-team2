@@ -59,7 +59,6 @@ public class S3Storage {
         }
     }
 
-    @Transactional
     public void delete(String profileImageUrl) {
         DeleteObjectRequest delReq = DeleteObjectRequest.builder()
                 .bucket(bucket)

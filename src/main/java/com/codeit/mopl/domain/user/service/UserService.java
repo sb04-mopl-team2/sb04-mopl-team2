@@ -3,6 +3,7 @@ package com.codeit.mopl.domain.user.service;
 import com.codeit.mopl.domain.user.dto.request.*;
 import com.codeit.mopl.domain.user.dto.response.CursorResponseUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
+import com.codeit.mopl.domain.user.entity.ImageContentType;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
@@ -150,6 +151,7 @@ public class UserService {
             findUser.setName(name);
         });
         Optional.ofNullable(profileImage).ifPresent(profile -> {
+            validateImage(profileImage);
             log.debug("[사용자 관리] 프로필 이미지 생성");
             String extension = getFileExtension(profile.getOriginalFilename());
             String key = UUID.randomUUID() + extension;
@@ -201,5 +203,14 @@ public class UserService {
             throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("filename", filename));
         }
         return filename.substring(dotIndex);
+    }
+
+    private void validateImage(MultipartFile profileImage) {
+        if (profileImage.isEmpty()) {
+            throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("file", "empty"));
+        }
+        if (!ImageContentType.isImage(profileImage.getContentType())) {
+            throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("contentType",profileImage.getContentType()));
+        }
     }
 }

@@ -8,6 +8,7 @@ import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.user.UserEmailAlreadyExistsException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -73,9 +74,9 @@ public class UserServiceTest {
         given(userRepository.existsByEmail(request.email())).willReturn(true);
 
         // when & then
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> userService.create(request));
+        UserEmailAlreadyExistsException exception = assertThrows(UserEmailAlreadyExistsException.class, () -> userService.create(request));
 
-        assertEquals("Email already exists", exception.getMessage());
+        assertEquals("해당 이메일로 가입된 아이디가 이미 존재합니다.", exception.getErrorCode().getMessage());
     }
 
     @DisplayName("올바른 유저 아이디를 조회하면 정상적으로 해당 유저의 상세정보가 표시된다.")

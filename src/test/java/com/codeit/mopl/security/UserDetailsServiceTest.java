@@ -5,6 +5,8 @@ import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.user.UserLockedException;
+import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,14 +14,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 public class UserDetailsServiceTest {
@@ -37,10 +38,10 @@ public class UserDetailsServiceTest {
         // given
         User user = new User("test@example.com", "encodedPassword", "TEST");
         UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@example.com", "TEST", null, Role.USER, false);
-        when(userRepository.findByEmail("test@example.com"))
-                .thenReturn(Optional.of(user));
-        when(userMapper.toDto(user))
-                .thenReturn(userDto);
+        given(userRepository.findByEmail("test@example.com"))
+                .willReturn(Optional.of(user));
+        given(userMapper.toDto(user))
+                .willReturn(userDto);
 
         // when
         UserDetails userDetails = customUserDetailsService.loadUserByUsername("test@example.com");
@@ -56,9 +57,25 @@ public class UserDetailsServiceTest {
     @Test
     void loadUserByUsernameNotFound() {
         // when & then
-        Exception exception = assertThrows(UsernameNotFoundException.class,
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class,
                 () -> customUserDetailsService.loadUserByUsername("test@test.com"));
-        assertEquals("유저를 찾을 수 없습니다.",exception.getMessage());
+        assertEquals("유저를 찾을 수 없습니다.",exception.getErrorCode().getMessage());
+    }
+
+    @DisplayName("로그인에 사용된 계정이 잠금 상태일 경우 로그인할 수 없다.")
+    @Test
+    void loadUserByLocked() {
+        // given
+        User lockedUser = new User("test@example.com","encodedPassword", "TEST");
+        lockedUser.updateLock(true);
+        given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(lockedUser));
+
+        // when
+        UserLockedException exception = assertThrows(UserLockedException.class,
+                () -> customUserDetailsService.loadUserByUsername("test@example.com"));
+
+        // then
+        assertEquals("계정이 잠겨있습니다.",exception.getErrorCode().getMessage());
     }
 
 }

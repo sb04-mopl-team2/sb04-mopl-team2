@@ -22,7 +22,7 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        log.warn("접근 권한이 없음 msg = {}", exception.getMessage());
+        log.warn("[사용자 관리] 로그인 실패 - 접근 권한이 없음 msg = {}", exception.getMessage());
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
 

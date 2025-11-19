@@ -75,7 +75,8 @@ public class ReviewService {
       throw new ReviewForbiddenException(
           ReviewErrorCode.REVIEW_FORBIDDEN, Map.of("reviewId", reviewId));
     }
-    reviewRepository.delete(review);
+    review.setIsDeleted(true);
+    reviewRepository.save(review);
     log.info("[리뷰] 리뷰 삭제 종료, reviewId = {}", reviewId);
   }
 

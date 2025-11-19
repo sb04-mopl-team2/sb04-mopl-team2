@@ -387,10 +387,9 @@ class ReviewServiceTest {
     verify(reviewRepository, never()).save(any());
     verify(reviewMapper, never()).toDto(any());
   }
-
   @Test
-  @DisplayName("리뷰 삭제 - 작성자가 본인 리뷰를 삭제하면 정상 삭제된다")
-  void deleteReview_whenUserIsOwner_shouldDeleteReview()  {
+  @DisplayName("리뷰 삭제 - 작성자가 본인 리뷰를 삭제하면 isDeleted=true로 저장된다")
+  void deleteReview_whenUserIsOwner_shouldSoftDeleteReview()  {
     // given
     UUID userId = UUID.randomUUID();
     UUID reviewId = UUID.randomUUID();
@@ -407,15 +406,16 @@ class ReviewServiceTest {
     reviewService.deleteReview(userId, reviewId);
 
     // then
-    verify(reviewRepository).delete(review);
+    assertThat(review.getIsDeleted()).isTrue();
+    verify(reviewRepository).save(review);
   }
 
   @Test
-  @DisplayName("리뷰 삭제 - 작성자가 아닌 다른자가 리뷰를 삭제하고자 하면 예외를 발생시킨다.")
+  @DisplayName("리뷰 삭제 - 작성자가 아닌 사용자가 삭제 시도하면 예외를 발생시키고 저장하지 않는다")
   void deleteReview_notOwnerUser_shouldFailWithForbiddenException() {
     // given
-    UUID requestUserId = UUID.randomUUID();
-    UUID authorId = UUID.randomUUID();
+    UUID requestUserId = UUID.randomUUID(); // 요청한 유저
+    UUID authorId = UUID.randomUUID();      // 실제 작성자
     UUID reviewId = UUID.randomUUID();
 
     User author = mock(User.class);
@@ -433,14 +433,14 @@ class ReviewServiceTest {
     assertThatThrownBy(act::run)
         .isInstanceOf(ReviewForbiddenException.class);
 
-
     verify(reviewRepository).findById(reviewId);
-    verify(reviewRepository, never()).delete(any());
+    verify(reviewRepository, never()).save(any());
+    verify(review, never()).setIsDeleted(true);
   }
 
   @Test
-  @DisplayName("리뷰 삭제 - 리뷰가 없을 때 리뷰를 삭제하고자 하면 예외를 발생시킨다.")
-  void deleteReview_notOwnerUser_shouldFailWithNotFoundException() {
+  @DisplayName("리뷰 삭제 - 리뷰가 없으면 ReviewNotFoundException을 발생시키고 저장하지 않는다")
+  void deleteReview_whenReviewNotFound_shouldFailWithNotFoundException() {
     // given
     UUID requestUserId = UUID.randomUUID();
     UUID reviewId = UUID.randomUUID();
@@ -455,8 +455,9 @@ class ReviewServiceTest {
         .isInstanceOf(ReviewNotFoundException.class);
 
     verify(reviewRepository).findById(reviewId);
-    verify(reviewRepository, never()).delete(any());
+    verify(reviewRepository, never()).save(any());
   }
+
 
   private Review createReview(UUID id, LocalDateTime createdAt) {
     Review review = new Review();

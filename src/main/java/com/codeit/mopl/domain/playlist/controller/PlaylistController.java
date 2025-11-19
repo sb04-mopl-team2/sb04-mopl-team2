@@ -1,10 +1,7 @@
 package com.codeit.mopl.domain.playlist.controller;
 
 import co.elastic.clients.elasticsearch.security.get_token.AuthenticatedUser;
-import com.codeit.mopl.domain.playlist.dto.CursorResponsePlaylistDto;
-import com.codeit.mopl.domain.playlist.dto.PlaylistCreateRequest;
-import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
-import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
+import com.codeit.mopl.domain.playlist.dto.*;
 import com.codeit.mopl.domain.playlist.service.PlaylistService;
 import com.codeit.mopl.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -51,6 +48,16 @@ public class PlaylistController {
         log.info("[플레이리스트] 플레이리스트 단건 조회 요청 - playlistId = {}", playlistId);
         PlaylistDto response = playlistService.getPlaylist(playlistId);
         log.info("[플레이리스트] 플레이리스트 단건 조회 응답 - playlistId = {}", response.id());
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @PatchMapping("/{playlistId}")
+    public ResponseEntity<PlaylistDto> updatePlaylist(@PathVariable UUID playlistId,
+                                                      @AuthenticationPrincipal CustomUserDetails loginUser,
+                                                      @Valid @RequestBody PlaylistUpdateRequest request) {
+        log.info("[플레이리스트] 플레이리스트 정보 수정 요청 - playlistId = {}", playlistId);
+        PlaylistDto response = playlistService.updatePlaylist(playlistId, loginUser.getUser().id(), request);
+        log.info("[플레이리스트] 플레이리스트 정보 수정 응답 - playlistId = {}", response.id());
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

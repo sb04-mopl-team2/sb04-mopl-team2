@@ -8,7 +8,8 @@ import org.springframework.http.HttpStatus;
 @Getter
 @AllArgsConstructor
 public enum PlaylistErrorCode implements ErrorCodeInterface {
-    PLAYLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "플레이리스트가 존재하지 않습니다.");
+    PLAYLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "플레이리스트가 존재하지 않습니다."),
+    PLAYLIST_UPDATE_FORBIDDEN(HttpStatus.UNAUTHORIZED, "플레이리스트 수정 권한이 없는 유저입니다.");
 
     private final HttpStatus status;
     private final String message;

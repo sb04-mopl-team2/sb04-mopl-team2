@@ -37,4 +37,9 @@ public class Playlist extends UpdatableEntity {
 
     @Column(nullable = false)
     private boolean subscribedByMe;
+
+    public void update(String title, String description) {
+        this.title = title;
+        this.description = description;
+    }
 }

@@ -357,6 +357,65 @@ public class PlaylistServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("delete()")
+    class deletePlaylist {
+
+        @Test
+        @DisplayName("요청이 유효할 경우 플레이리스트를 삭제함")
+        void shouldDeletePlaylist() {
+            //given
+            UUID playlistId = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
+            User owner = new User();
+            setId(owner, ownerId);
+
+            Playlist playlist = Playlist.builder()
+                    .title("테스트 제목")
+                    .description("테스트 설명")
+                    .user(owner)
+                    .playlistItems(Collections.emptyList())
+                    .build();
+            given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
+
+            //when
+            playlistService.deletePlaylist(playlistId,ownerId);
+            //then
+            verify(playlistRepository).findById(playlistId);
+            verify(playlistMapper, never()).toPlaylistDto(any());
+            verify(playlistRepository).deleteById(playlistId);
+        }
+
+        @Test
+        @DisplayName("요청자가 플레이리스트 owner가 아닐 때 예외 발생 및 삭제 실패")
+        void shouldThrowExceptionWhenUserNotAuthorized() {
+            //given
+            UUID playlistId = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
+            User owner = new User();
+            setId(owner, ownerId);
+
+            UUID requestUserId = UUID.randomUUID();
+            User requester = new User();
+            setId(requester, requestUserId);
+
+            Playlist playlist = Playlist.builder()
+                    .title("테스트 제목")
+                    .description("테스트 설명")
+                    .user(owner)
+                    .playlistItems(Collections.emptyList())
+                    .build();
+            given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
+
+            //when & then
+            assertThrows(PlaylistUpdateForbiddenException.class,
+                    () -> playlistService.deletePlaylist(playlistId,requestUserId));
+            verify(playlistRepository).findById(playlistId);
+            verify(playlistMapper, never()).toPlaylistDto(any());
+            verify(playlistRepository, never()).deleteById(playlistId);
+        }
+    }
+
     //UpdatableEntity 상속 받 엔티티의 setId()를 가능하게 하는 헬퍼메서드
     private static void setId(Object target, UUID id) {
         try {

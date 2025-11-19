@@ -3,13 +3,14 @@ package com.codeit.mopl.exception.playlist;
 import com.codeit.mopl.exception.global.ErrorCode;
 import com.codeit.mopl.exception.global.MoplException;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public class PlaylistNotFoundException extends PlaylistException {
 
     private PlaylistNotFoundException() {
-        super(PlaylistErrorCode.PLAYLIST_NOT_FOUND, Map.of());
+        super(PlaylistErrorCode.PLAYLIST_NOT_FOUND, new HashMap<>());
     }
 
     public static PlaylistNotFoundException withId(UUID playlistId) {

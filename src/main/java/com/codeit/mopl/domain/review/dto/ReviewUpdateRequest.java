@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public record ReviewUpdateRequest(
 
-    @NotNull
+    @NotBlank
     String text,
 
     @DecimalMin(value = "0.0")

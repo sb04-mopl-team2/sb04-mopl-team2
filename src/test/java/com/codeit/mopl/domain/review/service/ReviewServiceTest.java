@@ -23,7 +23,7 @@ import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.review.ReviewDuplicateException;
 import com.codeit.mopl.exception.review.ReviewNotFoundException;
-import com.codeit.mopl.exception.review.ReviewUnauthorizedException;
+import com.codeit.mopl.exception.review.ReviewForbiddenException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -312,12 +312,12 @@ class ReviewServiceTest {
     when(reviewMapper.toDto(any(Review.class)))
         .thenReturn(dto);
 
-    // -------------------- when --------------------
+    // when
     ReviewDto result = reviewService.updateReview(
         userId, reviewId, newText, newRating
     );
 
-    // -------------------- then --------------------
+    // then
     assertThat(review.getText()).isEqualTo(newText);
     assertThat(review.getRating()).isEqualTo(newRating);
 
@@ -345,7 +345,6 @@ class ReviewServiceTest {
 
     Review review = mock(Review.class);
     when(review.getUser()).thenReturn(author);
-    when(review.getId()).thenReturn(reviewId);
 
     when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
@@ -356,7 +355,7 @@ class ReviewServiceTest {
 
     // then
     assertThatThrownBy(act::run)
-        .isInstanceOf(ReviewUnauthorizedException.class);
+        .isInstanceOf(ReviewForbiddenException.class);
 
     verify(reviewRepository).findById(reviewId);
     verify(reviewRepository, never()).save(any());
@@ -387,6 +386,76 @@ class ReviewServiceTest {
     verify(reviewRepository).findById(reviewId);
     verify(reviewRepository, never()).save(any());
     verify(reviewMapper, never()).toDto(any());
+  }
+
+  @Test
+  @DisplayName("리뷰 삭제 - 작성자가 본인 리뷰를 삭제하면 정상 삭제된다")
+  void deleteReview_whenUserIsOwner_shouldDeleteReview()  {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID reviewId = UUID.randomUUID();
+
+    User author = mock(User.class);
+    when(author.getId()).thenReturn(userId);
+
+    Review review = new Review(author, new Content(), "old", 3.0, false);
+
+    when(reviewRepository.findById(reviewId))
+        .thenReturn(Optional.of(review));
+
+    // when
+    reviewService.deleteReview(userId, reviewId);
+
+    // then
+    verify(reviewRepository).delete(review);
+  }
+
+  @Test
+  @DisplayName("리뷰 삭제 - 작성자가 아닌 다른자가 리뷰를 삭제하고자 하면 예외를 발생시킨다.")
+  void deleteReview_notOwnerUser_shouldFailWithForbiddenException() {
+    // given
+    UUID requestUserId = UUID.randomUUID();
+    UUID authorId = UUID.randomUUID();
+    UUID reviewId = UUID.randomUUID();
+
+    User author = mock(User.class);
+    when(author.getId()).thenReturn(authorId);
+
+    Review review = mock(Review.class);
+    when(review.getUser()).thenReturn(author);
+
+    when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
+
+    // when
+    Runnable act = () -> reviewService.deleteReview(requestUserId, reviewId);
+
+    // then
+    assertThatThrownBy(act::run)
+        .isInstanceOf(ReviewForbiddenException.class);
+
+
+    verify(reviewRepository).findById(reviewId);
+    verify(reviewRepository, never()).delete(any());
+  }
+
+  @Test
+  @DisplayName("리뷰 삭제 - 리뷰가 없을 때 리뷰를 삭제하고자 하면 예외를 발생시킨다.")
+  void deleteReview_notOwnerUser_shouldFailWithNotFoundException() {
+    // given
+    UUID requestUserId = UUID.randomUUID();
+    UUID reviewId = UUID.randomUUID();
+
+    when(reviewRepository.findById(reviewId)).thenReturn(Optional.empty());
+
+    // when
+    Runnable act = () -> reviewService.deleteReview(requestUserId, reviewId);
+
+    // then
+    assertThatThrownBy(act::run)
+        .isInstanceOf(ReviewNotFoundException.class);
+
+    verify(reviewRepository).findById(reviewId);
+    verify(reviewRepository, never()).delete(any());
   }
 
   private Review createReview(UUID id, LocalDateTime createdAt) {

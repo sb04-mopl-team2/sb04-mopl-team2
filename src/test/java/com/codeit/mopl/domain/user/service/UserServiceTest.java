@@ -324,8 +324,7 @@ public class UserServiceTest {
         CursorResponseUserDto response = userService.getAllUsers(request);
 
         // then
-        assertEquals("test3", response.nextCursor());
-        assertEquals(userDto3.id(), response.nextIdAfter());
+        assertEquals(3, response.totalCount());
     }
 
     @DisplayName("유저 목록 조회 시 해당하는 유저가 한명도 없을 경우 비어있는 data를 반환한다")

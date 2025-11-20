@@ -9,7 +9,7 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.playlist.PlaylistException;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
 import com.codeit.mopl.exception.playlist.PlaylistUpdateForbiddenException;
-import com.codeit.mopl.exception.user.ErrorCode;
+import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.security.CustomUserDetails;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +44,7 @@ public class PlaylistService {
         User user = userRepository.findById(ownerId)
                 .orElseThrow(() -> {
                     log.warn("[플레이리스트] 유저 검증 실패 - 유저 ID={}", ownerId);
-                    return new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId", ownerId));
+                    return new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", ownerId));
                 });
 
         Playlist playlist = Playlist.builder()

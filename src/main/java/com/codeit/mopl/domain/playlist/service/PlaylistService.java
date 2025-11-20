@@ -1,23 +1,20 @@
 package com.codeit.mopl.domain.playlist.service;
 
-import com.codeit.mopl.domain.notification.entity.SortDirection;
-import com.codeit.mopl.domain.playlist.dto.CursorResponsePlaylistDto;
-import com.codeit.mopl.domain.playlist.dto.PlaylistCreateRequest;
-import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
-import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
+import com.codeit.mopl.domain.playlist.dto.*;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.mapper.PlaylistMapper;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.playlist.PlaylistException;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
+import com.codeit.mopl.exception.playlist.PlaylistUpdateForbiddenException;
 import com.codeit.mopl.exception.user.ErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
-import jakarta.persistence.EntityNotFoundException;
+import com.codeit.mopl.security.CustomUserDetails;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -118,5 +115,38 @@ public class PlaylistService {
                 });
         log.info("[플레이리스트] 플레이리스트 단건 조회 완료 - playlistId = {}", playlistId);
         return playlistMapper.toPlaylistDto(playlist);
+    }
+
+    public PlaylistDto updatePlaylist(UUID requestUserId, UUID playlistId, PlaylistUpdateRequest request) {
+        log.info("[플레이리스트] 플레이리스트 정보 수정 시작 - playlistId = {}", playlistId);
+
+        Playlist playlist = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> {
+                    log.warn("[플레이리스트] 플레이리스트 정보 수정 중 조회 실패 - 플레이리스트가 존재하지 않음 - playlistId = {}", playlistId);
+                    return PlaylistNotFoundException.withId(playlistId);
+                });
+        if (!requestUserId.equals(playlist.getUser().getId())) {
+            log.warn("[플레이리스트] 플레이리스트 정보 수정 실패 - 권한 없음 - userId = {}", requestUserId);
+            throw new PlaylistUpdateForbiddenException(playlistId);
+        }
+
+        playlist.update(request.title(), request.description());
+        log.info("[플레이리스트] 플레이리스트 정보 수정 완료 - playlistId = {}", playlistId);
+        return playlistMapper.toPlaylistDto(playlist);
+    }
+
+    public void deletePlaylist(UUID playlistId, UUID requestUserId) {
+        log.info("[플레이리스트] 플레이리스트 삭제 시작 - playlistId = {}", playlistId);
+        Playlist playlist = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> {
+                    log.warn("[플레이리스트] 플레이리스트 삭제 중 조회 실패 - 플레이리스트가 존재하지 않음 - playlistId = {}", playlistId);
+                    return PlaylistNotFoundException.withId(playlistId);
+                });
+        if (!requestUserId.equals(playlist.getUser().getId())) {
+            log.warn("[플레이리스트] 플레이리스트 삭제 실패 - 권한 없음 - userId = {}", requestUserId);
+            throw new PlaylistUpdateForbiddenException(playlistId);
+        }
+        playlistRepository.deleteById(playlistId);
+        log.info("[플레이리스트] 플레이리스트 삭제 완료 - playlistId = {}", playlistId);
     }
 }

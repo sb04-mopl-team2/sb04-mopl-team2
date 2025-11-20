@@ -5,7 +5,7 @@ import com.codeit.mopl.domain.auth.dto.request.ResetPasswordRequest;
 import com.codeit.mopl.domain.auth.service.AuthService;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.service.UserService;
-import com.codeit.mopl.exception.auth.ErrorCode;
+import com.codeit.mopl.exception.auth.AuthErrorCode;
 import com.codeit.mopl.exception.auth.InvalidTokenException;
 import com.codeit.mopl.security.jwt.JwtInformation;
 import com.codeit.mopl.security.jwt.JwtRegistry;
@@ -48,7 +48,7 @@ public class AuthController {
 
         if (!jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
             log.warn("[JWT] RefreshToken이 만료 됨 refreshToken = {}", refreshToken);
-            throw new InvalidTokenException(ErrorCode.TOKEN_INVALID, Map.of("type", "refresh"));
+            throw new InvalidTokenException(AuthErrorCode.TOKEN_INVALID, Map.of("type", "refresh"));
         }
 
         String newAccessToken = authService.reissueAccessToken(claims,findUserDto);

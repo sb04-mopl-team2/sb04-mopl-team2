@@ -18,8 +18,7 @@ import org.hibernate.annotations.OnDeleteAction;
                         name = "uk_follower_followee",
                         columnNames = {"follower_id", "followee_id"}
                 )
-        },
-        indexes = {@Index(name = "idx_follower_followee", columnList = "followerId, followeeId")})
+        })
 @NoArgsConstructor
 public class Follow extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

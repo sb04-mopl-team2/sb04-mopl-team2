@@ -218,6 +218,19 @@ public class WatchingSessionRepositoryTest {
     em.flush();
     em.clear();
 
+    WatchingSession expectedFirst;
+    WatchingSession expectedSecond;
+
+    if (w3.getId().compareTo(w2.getId()) > 0) {
+      // w3 larger -> comes 1st in DESC
+      expectedFirst = w3;
+      expectedSecond = w2;
+    } else {
+      // w2 larger
+      expectedFirst = w2;
+      expectedSecond = w3;
+    }
+
     // get top 1
     List<WatchingSession> page1 = watchingSessionRepository.findWatchingSessions(
         null, content.getId(), null,
@@ -225,6 +238,7 @@ public class WatchingSessionRepositoryTest {
         SortDirection.DESCENDING, SortBy.createdAt
     );
     assertThat(page1).hasSize(1);
+    assertThat(page1.get(0).getId()).isEqualTo(expectedFirst.getId());
     WatchingSession first = page1.get(0);
 
     // use 1st item as cursor
@@ -238,8 +252,8 @@ public class WatchingSessionRepositoryTest {
     );
 
     assertThat(page2).hasSize(1);
-    assertThat(page2.get(0).getId()).isNotEqualTo(first.getId());
     assertThat(page2.get(0).getId()).isEqualTo(w2.getId());
+    assertThat(page2.get(0).getId()).isEqualTo(expectedSecond.getId());
   }
 
   /*

@@ -14,6 +14,9 @@ public enum ImageContentType {
     private final String mimeType;
 
     public static boolean isImage(String mimeType) {
+        if (mimeType == null) {
+            return false;
+        }
         for (ImageContentType type : values()) {
             if (type.getMimeType().equalsIgnoreCase(mimeType)) {
                 return true;

@@ -1,5 +1,6 @@
 package com.codeit.mopl.s3;
 
+import com.codeit.mopl.exception.user.ProfileDeleteFailException;
 import com.codeit.mopl.exception.user.ProfileUploadFailException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,9 +16,7 @@ import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
@@ -32,8 +31,7 @@ import java.util.UUID;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.*;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 
@@ -47,15 +45,6 @@ public class S3StorageTest {
 
     @InjectMocks
     private S3Storage s3Storage;
-
-
-    @BeforeEach
-    void setUp() throws Exception {
-        // @Value 주입 대신 리플렉션으로 bucket 값 세팅
-        Field bucketField = S3Storage.class.getDeclaredField("bucket");
-        bucketField.setAccessible(true);
-        bucketField.set(s3Storage, "test-bucket");
-    }
 
     @DisplayName("s3Client.putObject는 1번만 동작한다")
     @Test
@@ -105,5 +94,30 @@ public class S3StorageTest {
         String getPresignedUrl = s3Storage.getPresignedUrl(key);
 
         assertEquals(presignedUrl, getPresignedUrl);
+    }
+
+    @DisplayName("프로필 URL이 주어지면 삭제한다")
+    @Test
+    void deleteImageSucceed() throws Exception {
+        String key = UUID.randomUUID().toString();
+        DeleteObjectResponse res = Mockito.mock(DeleteObjectResponse.class);
+
+        given(s3Client.deleteObject(any(DeleteObjectRequest.class))).willReturn(res);
+
+        s3Storage.delete(key);
+
+        then(s3Client).should(times(1)).deleteObject(any(DeleteObjectRequest.class));
+    }
+
+    @DisplayName("프로필 이미지 삭제 중 오류가 발생하면 ProfileDeleteFailException을 반환한다")
+    @Test
+    void deleteImageFail()  throws Exception {
+        String key = UUID.randomUUID().toString();
+        doThrow(SdkClientException.class).when(s3Client).deleteObject(any(DeleteObjectRequest.class));
+        ProfileDeleteFailException exception = assertThrows(ProfileDeleteFailException.class, () ->{
+            s3Storage.delete(key);
+        });
+
+        assertEquals("프로필 삭제 실패", exception.getErrorCode().getMessage());
     }
 }

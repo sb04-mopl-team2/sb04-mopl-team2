@@ -4,6 +4,7 @@ import com.codeit.mopl.domain.auth.dto.request.ResetPasswordRequest;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.auth.AuthErrorCode;
 import com.codeit.mopl.exception.auth.InvalidTokenException;
 import com.codeit.mopl.mail.service.MailService;
 import com.codeit.mopl.mail.utils.PasswordUtils;
@@ -35,7 +36,7 @@ public class AuthService {
         Date expiredAt = (Date) claims.get("exp");
         if (expiredAt.before(new Date())) {
             log.warn("[JWT] RefreshToken 유효기간이 만료 됨");
-            throw new InvalidTokenException(com.codeit.mopl.exception.auth.ErrorCode.TOKEN_INVALID,Map.of("type","refresh","expiredAt",expiredAt));
+            throw new InvalidTokenException(AuthErrorCode.TOKEN_INVALID,Map.of("type","access","expiredAt",expiredAt));
         }
 
         return jwtTokenProvider.generateAccessToken(claims, userDto.email());
@@ -47,7 +48,7 @@ public class AuthService {
         Date expiredAt = (Date) claims.get("exp");
         if (expiredAt.before(new Date())) {
             log.warn("[JWt] RefreshToken 유효기간이 만료 됨");
-            throw new InvalidTokenException(com.codeit.mopl.exception.auth.ErrorCode.TOKEN_INVALID,Map.of("type","refresh","expiredAt",expiredAt));
+            throw new InvalidTokenException(AuthErrorCode.TOKEN_INVALID,Map.of("type","refresh","expiredAt",expiredAt));
         }
 
         return jwtTokenProvider.generateRefreshToken(claims, userDto.email());

@@ -58,7 +58,7 @@ public class FollowService {
         eventPublisher.publishEvent(new FollowerIncreaseEvent(dto));
 
         // 알람 발행
-        String title = getFollowNotificationTitle(followerId);
+        String title = getFollowNotificationTitle(follower.getName());
         notificationService.createNotification(followeeId, title, "", Level.INFO);
         log.info("[팔로우 관리] 팔로우 생성 완료 - id: {}", dto.id());
         return dto;
@@ -77,8 +77,7 @@ public class FollowService {
                 .orElseThrow(() -> new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
     }
 
-    public String getFollowNotificationTitle(UUID followerId) {
-        User follower = getUserById(followerId);
-        return follower.getName() + "님이 나를 팔로우했어요.";
+    private String getFollowNotificationTitle(String followerName) {
+        return followerName + "님이 나를 팔로우했어요.";
     }
 }

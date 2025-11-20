@@ -38,7 +38,7 @@ import static org.mockito.Mockito.*;
 public class PlaylistServiceTest {
 
     @Mock private PlaylistRepository playlistRepository;
-    @Mock private UserRepository    userRepository;
+    @Mock private UserRepository userRepository;
     @Mock private PlaylistMapper playlistMapper;
     @InjectMocks private PlaylistService playlistService;
 

@@ -66,8 +66,14 @@ public class FollowService {
 
     @Transactional
     public void increaseFollowerCount(FollowDto followDto) {
-        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followDto: {}", followDto);
+        if (followDto == null) {
+            throw new IllegalArgumentException("FollowDto must not be null");
+        }
         UUID followeeId = followDto.followeeId();
+        if (followeeId == null) {
+            throw new IllegalArgumentException("FolloweeId must not be null or blank");
+        }
+        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followDto: {}", followDto);
         userRepository.increaseFollowerCountByUserId(followeeId);
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
     }

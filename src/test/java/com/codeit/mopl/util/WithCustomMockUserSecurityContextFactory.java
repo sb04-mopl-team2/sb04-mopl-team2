@@ -22,7 +22,7 @@ public class WithCustomMockUserSecurityContextFactory implements WithSecurityCon
 
     CustomUserDetails customUserDetails = new CustomUserDetails(
         new UserDto(
-            UUID.randomUUID(),
+            UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
             LocalDateTime.now(),
             email, name,null,
             Role.USER,false

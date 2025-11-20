@@ -8,14 +8,13 @@ import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
 import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
-import com.codeit.mopl.exception.watchingsession.ErrorCode;
+import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.exception.watchingsession.ContentNotFoundException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.codeit.mopl.exception.user.UserNotFoundException;
@@ -39,7 +38,7 @@ public class WatchingSessionService {
         .orElseThrow(() -> {
           log.warn("해당 유저를 찾을 수 없음 userId = {}", userId);
           return new UserNotFoundException(
-              com.codeit.mopl.exception.user.ErrorCode.USER_NOT_FOUND,
+              com.codeit.mopl.exception.user.UserErrorCode.USER_NOT_FOUND,
               Map.of("userId",userId)
           );
         });
@@ -64,7 +63,8 @@ public class WatchingSessionService {
         contentId, userId
     );
     if (!contentRepository.existsById(contentId)) {
-      throw new ContentNotFoundException(ErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId));
+      throw new ContentNotFoundException(
+          WatchingSessionErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId));
     }
     int internalLimit = limit + 1;
     List<WatchingSession> watchingSessions = watchingSessionRepository.findWatchingSessions(

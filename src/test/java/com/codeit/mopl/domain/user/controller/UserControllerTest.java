@@ -4,6 +4,7 @@ import com.codeit.mopl.domain.user.dto.request.*;
 import com.codeit.mopl.domain.user.dto.response.CursorResponseUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
+import com.codeit.mopl.domain.user.fixture.UserFixture;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.user.service.UserService;
@@ -365,10 +366,10 @@ public class UserControllerTest {
                 "name"
         );
         String content = om.writeValueAsString(request);
-        UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test1@test.com", "test1", null, Role.USER, false);
-        UserDto userDto2 = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test2@test.com", "test2", null, Role.USER, false);
-        UserDto userDto3 = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test3@test.com", "test3", null, Role.USER, false);
-        List<UserDto> users = List.of(userDto, userDto2, userDto3);
+        UserDto userDto1 = UserFixture.createUserDto1();
+        UserDto userDto2 = UserFixture.createUserDto2();
+        UserDto userDto3 = UserFixture.createUserDto3();
+        List<UserDto> users = List.of(userDto1, userDto2, userDto3);
         CursorResponseUserDto response = new CursorResponseUserDto(
                 users,
                 userDto3.name(),
@@ -395,7 +396,7 @@ public class UserControllerTest {
         // then
         resultActions.andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.size()").value(users.size()))
-                .andExpect(jsonPath("$.data[0].id").value(userDto.id().toString()))
+                .andExpect(jsonPath("$.data[0].id").value(userDto1.id().toString()))
                 .andExpect(jsonPath("$.totalCount").value(users.size()));
     }
 

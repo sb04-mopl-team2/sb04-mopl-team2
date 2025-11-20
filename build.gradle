@@ -64,6 +64,10 @@ dependencies {
 
     // greenmail - mailTest
     testImplementation 'com.icegreen:greenmail-junit5:2.0.0'
+
+    // for security test
+    testImplementation 'org.springframework.security:spring-security-test'
+
 }
 
 tasks.named('test') {

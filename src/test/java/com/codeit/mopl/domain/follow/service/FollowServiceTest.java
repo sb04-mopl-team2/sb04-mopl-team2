@@ -83,6 +83,7 @@ class FollowServiceTest {
         });
 
         ArgumentCaptor<Follow> followCaptor = ArgumentCaptor.forClass(Follow.class);
+        ArgumentCaptor<FollowerIncreaseEvent> eventCaptor = ArgumentCaptor.forClass(FollowerIncreaseEvent.class);
 
         // when
         FollowDto result = followService.createFollow(request, followerId);
@@ -96,6 +97,10 @@ class FollowServiceTest {
         assertThat(result.followerId()).isEqualTo(followerId);
         assertThat(result.followeeId()).isEqualTo(followeeId);
         assertThat(result.id()).isNotNull();
+
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        FollowerIncreaseEvent event = eventCaptor.getValue();
+        assertThat(event.followDto()).isEqualTo(result);
 
         verify(eventPublisher).publishEvent(any(FollowerIncreaseEvent.class));
         verify(notificationService).createNotification(eq(followeeId), any(String.class), eq(""), eq(Level.INFO));
@@ -159,15 +164,16 @@ class FollowServiceTest {
 
         User followee = new User();
         ReflectionTestUtils.setField(followee, "id", followeeId);
+        followee.setFollowerCount(0L);
 
-        given(userRepository.findById(any(UUID.class))).willReturn(Optional.of(followee));
+        given(userRepository.findById(eq(followeeId))).willReturn(Optional.of(followee));
 
         // when
         followService.increaseFollowerCount(followDto);
 
         // then
         verify(userRepository, times(1)).findById(eq(followeeId));
-        assertThat(followee.getFollowerCount()).isEqualTo(1);
+        assertThat(followee.getFollowerCount()).isEqualTo(1L);
     }
 
     @Test

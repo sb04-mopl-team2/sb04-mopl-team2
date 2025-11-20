@@ -52,7 +52,7 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
     if (cursor == null || idAfter == null) return null;
 
     // only return according to the directions
-    DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;;
+    DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     LocalDateTime lastCreatedAt = LocalDateTime.parse(cursor, formatter);
 
     if (sortDirection == SortDirection.ASCENDING) {
@@ -80,7 +80,7 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
 
   // returns watcherCount == totalCount
   @Override
-  public long getWatcherCount(UUID contentId, UUID userId, String watcherNameLike) {
+  public long getWatcherCount(UUID userId, UUID contentId, String watcherNameLike) {
     Long count = jpaQueryFactory
         .select(watchingSession.count())
         .from(watchingSession)

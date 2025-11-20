@@ -12,7 +12,7 @@ public record WatchingSessionRequest(
     String cursor,
     UUID idAfter,
     @Min(1) @Max(100)
-    int limit,
+    Integer limit,
     @NotNull
     SortDirection sortDirection,
     @NotNull

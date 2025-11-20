@@ -10,6 +10,7 @@ import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.exception.watchingsession.ContentNotFoundException;
+import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,9 +37,9 @@ public class WatchingSessionService {
     log.info("[실시간 세션] 서비스: 사용자 ID로 시청 세션 조회 시작. userId = {}", userId);
     WatchingSession watchingSession = watchingSessionRepository.findByUserId(userId)
         .orElseThrow(() -> {
-          log.warn("해당 유저를 찾을 수 없음 userId = {}", userId);
-          return new UserNotFoundException(
-              com.codeit.mopl.exception.user.UserErrorCode.USER_NOT_FOUND,
+          log.warn("해당 userId의 실시간 세션을 찾을 수 없음 userId = {}", userId);
+          return new WatchingSessionNotFoundException(
+              WatchingSessionErrorCode.WATCHING_SESSION_NOT_FOUND,
               Map.of("userId",userId)
           );
         });
@@ -77,8 +78,8 @@ public class WatchingSessionService {
         sortDirection,
         sortBy);
     long totalCount = watchingSessionRepository.getWatcherCount(
-        contentId,
         userId,
+        contentId,
         watcherNameLike
     );
 

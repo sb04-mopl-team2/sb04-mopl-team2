@@ -9,15 +9,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.entity.Level;
@@ -29,7 +20,6 @@ import com.codeit.mopl.domain.notification.exception.NotificationForbidden;
 import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
-import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
@@ -85,7 +75,7 @@ class NotificationServiceTest {
     this.idAfter = null;
     this.limit = 3;
     this.sortDirection = SortDirection.DESCENDING;
-    this.sortBy = SortBy.createdAt;
+    this.sortBy = SortBy.CREATED_AT;
   }
 
   @Test
@@ -107,7 +97,7 @@ class NotificationServiceTest {
     assertThat(result.nextIdAfter()).isNull();
     assertThat(result.hasNext()).isFalse();
     assertThat(result.totalCount()).isZero();
-    assertThat(result.sortBy()).isEqualTo(SortBy.createdAt);
+    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT);
     assertThat(result.sortDirection()).isEqualTo(SortDirection.DESCENDING);
 
     verify(notificationRepository, never())

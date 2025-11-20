@@ -3,7 +3,7 @@ package com.codeit.mopl.exception.user;
 import java.util.Map;
 
 public class UserEmailAlreadyExistsException extends UserException{
-    public UserEmailAlreadyExistsException(ErrorCode errorCode, Map<String, Object> details){
-        super(errorCode, details);
+    public UserEmailAlreadyExistsException(UserErrorCode userErrorCode, Map<String, Object> details){
+        super(userErrorCode, details);
     }
 }

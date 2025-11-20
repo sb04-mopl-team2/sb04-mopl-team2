@@ -71,4 +71,8 @@ public class User extends UpdatableEntity {
     public int hashCode() {
         return Objects.hashCode(getId());
     }
+
+    public void increaseFollowerCount() {
+        this.followerCount++;
+    }
 }

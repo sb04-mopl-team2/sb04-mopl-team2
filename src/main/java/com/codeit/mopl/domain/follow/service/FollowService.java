@@ -12,7 +12,7 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.exception.follow.FollowDuplicateException;
 import com.codeit.mopl.exception.follow.FollowSelfProhibitedException;
-import com.codeit.mopl.exception.user.ErrorCode;
+import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +58,7 @@ public class FollowService {
         eventPublisher.publishEvent(new FollowerIncreaseEvent(dto));
 
         // 알람 발행
-        String title = getFollowNotificationTitle(followerId);
+        String title = getFollowNotificationTitle(follower.getName());
         notificationService.createNotification(followeeId, title, "", Level.INFO);
         log.info("[팔로우 관리] 팔로우 생성 완료 - id: {}", dto.id());
         return dto;
@@ -66,9 +66,16 @@ public class FollowService {
 
     @Transactional
     public void increaseFollowerCount(FollowDto followDto) {
-        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followDto: {}", followDto);
+        if (followDto == null) {
+            throw new IllegalArgumentException("FollowDto must not be null");
+        }
         UUID followeeId = followDto.followeeId();
-        userRepository.increaseFollowerCountByUserId(followeeId);
+        if (followeeId == null) {
+            throw new IllegalArgumentException("FolloweeId must not be null or blank");
+        }
+        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followDto: {}", followDto);
+        User followee = getUserById(followeeId);
+        followee.increaseFollowerCount();
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
     }
 
@@ -85,11 +92,10 @@ public class FollowService {
 
     private User getUserById(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
+                .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
     }
 
-    public String getFollowNotificationTitle(UUID followerId) {
-        User follower = getUserById(followerId);
-        return follower.getName() + "님이 나를 팔로우했어요.";
+    private String getFollowNotificationTitle(String followerName) {
+        return followerName + "님이 나를 팔로우했어요.";
     }
 }

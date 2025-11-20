@@ -10,7 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.codeit.mopl.domain.content.dto.response.contentSummary;
+import com.codeit.mopl.domain.content.dto.response.ContentSummary;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.user.service.UserService;
@@ -143,7 +143,7 @@ public class WatchingSessionControllerTest {
         UUID.randomUUID(),
         LocalDateTime.now(),
         new UserSummary(userId,"test",null),
-        new contentSummary(contentId,null,null,
+        new ContentSummary(contentId,null,null,
             null, null,null,null,null
         )
     );

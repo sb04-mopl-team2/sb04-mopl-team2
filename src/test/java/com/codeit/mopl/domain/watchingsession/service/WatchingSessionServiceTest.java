@@ -1,5 +1,154 @@
 package com.codeit.mopl.domain.watchingsession.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import com.codeit.mopl.domain.content.entity.Content;
+import com.codeit.mopl.domain.content.repository.ContentRepository;
+import com.codeit.mopl.domain.user.entity.User;
+import com.codeit.mopl.domain.watchingsession.dto.CursorResponseWatchingSessionDto;
+import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
+import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
+import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
+import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
+import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
+import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
+import com.codeit.mopl.exception.user.UserNotFoundException;
+import com.codeit.mopl.exception.watchingsession.ContentNotFoundException;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
 public class WatchingSessionServiceTest {
 
+  @Mock
+  private WatchingSessionRepository watchingSessionRepository;
+
+  @Mock
+  private WatchingSessionMapper watchingSessionMapper;
+
+  @Mock
+  private ContentRepository contentRepository;
+
+
+  @InjectMocks
+  private WatchingSessionService watchingSessionService;
+
+  private User user;
+  private Content content;
+  private WatchingSession entity;
+
+  @BeforeEach
+  void init() {
+    user = new User("test@test.com", "pw", "test");
+    content = new Content();
+    content.setTitle("testTitleContent");
+
+    entity = new WatchingSession();
+    entity.setUser(user);
+    entity.setContent(content);
+  }
+
+  /*
+    public WatchingSessionDto getByUserId(UUID userId)
+   */
+  @Test
+  @DisplayName("UserId로 조회 성공")
+  void getByUserIdSuccess() {
+    // given
+    UUID userId = UUID.randomUUID();
+    when(watchingSessionRepository.findByUserId(userId)).thenReturn(Optional.of(entity));
+    WatchingSessionDto expectedDto = mock(WatchingSessionDto.class);
+    when(watchingSessionMapper.toDto(entity)).thenReturn(expectedDto);
+
+    // when
+    WatchingSessionDto result = watchingSessionService.getByUserId(userId);
+
+    // then
+    assertEquals(expectedDto, result);
+    verify(watchingSessionMapper).toDto(entity);
+    verify(watchingSessionRepository).findByUserId(userId);
+  }
+
+  @Test
+  @DisplayName("존재하지 않는 UserId면 실패")
+  void getByNonExistentUserIdFailure() {
+    // given
+    UUID userId = UUID.randomUUID();
+
+    // when & then
+    assertThrows(UserNotFoundException.class, () -> {
+      watchingSessionService.getByUserId(userId);
+    });
+    verify(watchingSessionRepository, times(1)).findByUserId(userId);
+    verify(watchingSessionMapper, times(0)).toDto(any());
+  }
+
+  /*
+    public CursorResponseWatchingSessionDto getWatchingSessions(..)
+   */
+  @Test
+  @DisplayName("특정 콘텐츠의 시청 세션 목록 조회 성공")
+  void getByContentIdSuccess() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID contentId = UUID.randomUUID();
+    WatchingSessionDto watchingSessionDto = mock(WatchingSessionDto.class);
+    when(watchingSessionRepository.findWatchingSessions(
+        any(), any(), any(), any(), any(),
+        eq(11), // internal limit
+        any(), any()
+    )).thenReturn(List.of(entity));
+    CursorResponseWatchingSessionDto expectedDto = new CursorResponseWatchingSessionDto(
+        List.of(watchingSessionDto),
+        null, null, false,
+        1L, SortBy.createdAt, SortDirection.ASCENDING
+    );
+    when(contentRepository.existsById(contentId)).thenReturn(true);
+    when(watchingSessionMapper.toDto(entity)).thenReturn(watchingSessionDto);
+    when(watchingSessionRepository.getWatcherCount(contentId, userId, null)).thenReturn(1L);
+
+    // when
+    CursorResponseWatchingSessionDto result = watchingSessionService.getWatchingSessions(userId, contentId,
+        null, null, null,
+        10, SortDirection.ASCENDING, SortBy.createdAt);
+
+    // then
+    assertEquals(expectedDto, result);
+    verify(watchingSessionRepository, times(1)).getWatcherCount(contentId, userId, null);
+    verify(watchingSessionMapper, times(1)).toDto(any());
+  }
+
+  @Test
+  @DisplayName("존재하지 않는 ContentId면 실패")
+  void getByNonExistentContentIdFailure() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID contentId = UUID.randomUUID();
+
+    // when & then
+    assertThrows(ContentNotFoundException.class, () -> {
+      watchingSessionService.getWatchingSessions(
+          userId, contentId,
+          null, null, null,
+          10, SortDirection.ASCENDING, SortBy.createdAt
+      );
+    });
+    verify(contentRepository, times(1)).existsById(contentId);
+    verify(watchingSessionRepository, times(0)).getWatcherCount(contentId, userId, null);
+    verify(watchingSessionMapper, times(0)).toDto(any());
+  }
 }

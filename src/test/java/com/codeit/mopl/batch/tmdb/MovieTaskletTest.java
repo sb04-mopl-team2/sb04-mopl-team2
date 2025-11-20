@@ -1,6 +1,5 @@
 package com.codeit.mopl.batch.tmdb;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.batch.repeat.RepeatStatus;
 import reactor.core.publisher.Mono;
 
-class MovieTaskletTest {
+public class MovieTaskletTest {
 
   private TmdbApiService tmdbApiService;
   private MovieStepConfig stepConfig;

@@ -56,7 +56,7 @@ public class NotificationService {
     if (notificationList.isEmpty()) {
       log.debug("[알림] 알림 리스트가 비었음, userId = {}", userId);
       CursorResponseNotificationDto cursorResponseNotificationDto = new CursorResponseNotificationDto(
-          null, null, null, false, 0L, SortBy.createdAt, SortDirection.DESCENDING);
+          null, null, null, false, 0L, SortBy.CREATED_AT, SortDirection.DESCENDING);
 
       log.info("[알림] 알림 조회 종료, userId = {}, notificationListSize = {}, hasNext = {}, totalCount = {}",
           userId, 0L, cursorResponseNotificationDto.hasNext(), cursorResponseNotificationDto.totalCount());

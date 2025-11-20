@@ -20,7 +20,6 @@ import com.codeit.mopl.domain.notification.exception.NotificationForbidden;
 import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
-import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
@@ -76,7 +75,7 @@ class NotificationServiceTest {
     this.idAfter = null;
     this.limit = 3;
     this.sortDirection = SortDirection.DESCENDING;
-    this.sortBy = SortBy.createdAt;
+    this.sortBy = SortBy.CREATED_AT;
   }
 
   @Test
@@ -98,7 +97,7 @@ class NotificationServiceTest {
     assertThat(result.nextIdAfter()).isNull();
     assertThat(result.hasNext()).isFalse();
     assertThat(result.totalCount()).isZero();
-    assertThat(result.sortBy()).isEqualTo(SortBy.createdAt);
+    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT);
     assertThat(result.sortDirection()).isEqualTo(SortDirection.DESCENDING);
 
     verify(notificationRepository, never())

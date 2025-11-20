@@ -53,11 +53,11 @@ public class S3Storage {
             s3Client.putObject(putReq, RequestBody.fromBytes(file.getBytes()));
             log.info("S3 업로드 성공");
         } catch (AwsServiceException e) {
-            throw new ProfileUploadFailException(UserErrorCode.PROFILE_UPLOAD_FAIL, Map.of("key", key,"exceptionName",e.getClass().getSimpleName(),"exception",e));
+            throw new ProfileUploadFailException(UserErrorCode.PROFILE_UPLOAD_FAIL, Map.of("key", key,"exceptionName",e.getClass().getSimpleName()));
         } catch (SdkClientException e) {
-            throw new ProfileUploadFailException(UserErrorCode.PROFILE_UPLOAD_FAIL, Map.of("key", key,"exceptionName",e.getClass().getSimpleName(),"exception",e));
+            throw new ProfileUploadFailException(UserErrorCode.PROFILE_UPLOAD_FAIL, Map.of("key", key,"exceptionName",e.getClass().getSimpleName()));
         } catch (Exception e) {
-            throw new ProfileUploadFailException(UserErrorCode.PROFILE_UPLOAD_FAIL, Map.of("key", key,"exceptionName",e.getClass().getSimpleName(),"exception",e));
+            throw new ProfileUploadFailException(UserErrorCode.PROFILE_UPLOAD_FAIL, Map.of("key", key,"exceptionName",e.getClass().getSimpleName()));
         }
     }
 

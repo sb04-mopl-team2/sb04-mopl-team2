@@ -1,6 +1,6 @@
 package com.codeit.mopl.security.jwt.handler;
 
-import com.codeit.mopl.exception.auth.ErrorCode;
+import com.codeit.mopl.exception.auth.AuthErrorCode;
 import com.codeit.mopl.exception.auth.InvalidTokenException;
 import com.codeit.mopl.exception.global.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +27,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        InvalidTokenException e = new InvalidTokenException(ErrorCode.TOKEN_INVALID, null);
+        InvalidTokenException e = new InvalidTokenException(AuthErrorCode.TOKEN_INVALID, null);
         ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode().getName(), e.getErrorCode().getMessage(), e.getDetails(), e.getTimestamp());
         objectMapper.writeValue(response.getWriter(), errorResponse);
     }

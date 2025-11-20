@@ -11,6 +11,7 @@ import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.playlist.service.PlaylistService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
+import com.codeit.mopl.exception.playlist.PlaylistUpdateForbiddenException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -91,6 +92,68 @@ public class PlaylistItemServiceTest {
             verify(playlistItemRepository,never()).save(any());
         }
     }
+
+    @Nested
+    @DisplayName("delete()")
+    class deletePlaylistItem {
+
+        @Test
+        @DisplayName("정상 요청일 경우 플레이리스트에 추가된 콘텐츠를 삭제함")
+        void shouldDeleteContentFromPlaylistItem() {
+            //given
+            UUID playlistId = UUID.randomUUID();
+            UUID contentId = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
+
+            User owner = new User();
+            setId(owner, ownerId);
+
+            Playlist playlist = Playlist.builder()
+                    .user(owner)
+                    .build();
+            given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
+
+            PlaylistItem playlistItem = PlaylistItem.builder()
+                    .playlist(playlist)
+                    .build();
+            given(playlistItemRepository.findByPlaylistIdAndContentId(playlistId,contentId)).willReturn(Optional.ofNullable(playlistItem));
+
+            //when
+            playlistItemService.deleteContent(playlistId, contentId, ownerId);
+
+            // then
+            verify(playlistRepository).findById(playlistId);
+            verify(playlistItemRepository).findByPlaylistIdAndContentId(playlistId,contentId);
+            verify(playlistItemRepository).delete(any(PlaylistItem.class));
+        }
+
+        @Test
+        @DisplayName("요청자가 플레이리스트 owner가 아닐 때 예외 발생 및 플레이리스트에서 콘텐츠 삭제 실패")
+        void shouldThrowExceptionWhenUserUnauthorized() {
+            //given
+            UUID playlistId = UUID.randomUUID();
+            UUID contentId = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
+            User owner = new User();
+            setId(owner, ownerId);
+
+            UUID realOwnerId = UUID.randomUUID();
+            User requester = new User();
+            setId(requester, realOwnerId);
+
+            Playlist playlist = Playlist.builder()
+                    .user(owner)
+                    .build();
+            given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
+
+            //when & then
+            assertThrows(PlaylistUpdateForbiddenException.class,
+                    () -> playlistItemService.deleteContent(playlistId, contentId, realOwnerId));
+            verify(playlistRepository).findById(playlistId);
+            verify(playlistItemRepository,never()).delete(any());
+        }
+    }
+
     private static void setId(Object target, UUID id) {
         try {
             Field idField = BaseEntity.class.getDeclaredField("id");

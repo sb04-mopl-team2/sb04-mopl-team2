@@ -15,6 +15,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "playlist_item")
+@Builder
 public class PlaylistItem extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     private Playlist playlist;

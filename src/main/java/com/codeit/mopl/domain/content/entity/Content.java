@@ -8,8 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,8 @@ public class Content extends UpdatableEntity {
   @Column(nullable = false)
   private String title;
 
-  @NotBlank
+  @NotNull
+  @Lob
   @Column(nullable = false)
   private String description;
 

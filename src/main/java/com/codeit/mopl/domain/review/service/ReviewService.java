@@ -13,9 +13,9 @@ import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.review.ReviewDuplicateException;
 import com.codeit.mopl.exception.review.ReviewErrorCode;
-import com.codeit.mopl.exception.review.ReviewNotFoundException;
 import com.codeit.mopl.exception.review.ReviewForbiddenException;
-import com.codeit.mopl.exception.user.ErrorCode;
+import com.codeit.mopl.exception.review.ReviewNotFoundException;
+import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -65,7 +65,7 @@ public class ReviewService {
     log.info("[리뷰] 리뷰 수정 종료, reviewId = {}", reviewId);
     return reviewMapper.toDto(review);
   }
-  
+
   @Transactional
   public void deleteReview(UUID userId, UUID reviewId) {
     log.info("[리뷰] 리뷰 삭제 시작, userId = {}, reviewId = {}", userId, reviewId);
@@ -148,7 +148,7 @@ public class ReviewService {
     return userRepository.findById(userId)
         .orElseThrow(() -> {
           log.warn("[리뷰] 해당 유저를 찾을 수 없음 userId = {}", userId);
-          return new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId", userId));
+          return new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId));
         });
   }
   

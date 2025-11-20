@@ -11,6 +11,7 @@ public record WatchingSessionRequest(
     String watcherNameLike,
     String cursor,
     UUID idAfter,
+    @NotNull
     @Min(1) @Max(100)
     Integer limit,
     @NotNull

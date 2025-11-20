@@ -55,7 +55,7 @@ public class WatchingSessionService {
       String watcherNameLike,
       String cursor,
       UUID idAfter,
-      int limit,
+      Integer limit,
       SortDirection sortDirection,
       SortBy sortBy
   ) {

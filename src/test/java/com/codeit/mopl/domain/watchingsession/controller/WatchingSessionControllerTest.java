@@ -14,6 +14,7 @@ import com.codeit.mopl.domain.content.dto.response.ContentSummary;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.user.service.UserService;
+import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.util.WithCustomMockUser;
 import com.codeit.mopl.domain.watchingsession.dto.CursorResponseWatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
@@ -117,7 +118,7 @@ public class WatchingSessionControllerTest {
     // given
     UUID userId = UUID.randomUUID();
     given(watchingSessionService.getByUserId(any(UUID.class)))
-        .willThrow(new UserNotFoundException(com.codeit.mopl.exception.user.ErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
+        .willThrow(new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
 
     // when & then
     ResultActions resultActions = mockMvc.perform(

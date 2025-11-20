@@ -239,7 +239,7 @@ public class WatchingSessionRepositoryTest {
 
     assertThat(page2).hasSize(1);
     assertThat(page2.get(0).getId()).isNotEqualTo(first.getId());
-//    assertThat(page2.get(0).getId()).isNotEqualTo(w3.getId());
+    assertThat(page2.get(0).getId()).isEqualTo(w2.getId());
   }
 
   /*
@@ -262,6 +262,7 @@ public class WatchingSessionRepositoryTest {
         user1.getId(),
         null
     );
+    assertThat(result2).isEqualTo(1L);
 
     // when & then - non existing name
     Long result3 = watchingSessionRepository.getWatcherCount(

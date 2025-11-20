@@ -93,6 +93,7 @@ public class WatchingSessionServiceTest {
   void getByNonExistentUserIdFailure() {
     // given
     UUID userId = UUID.randomUUID();
+    when(watchingSessionRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
     // when & then
     assertThrows(UserNotFoundException.class, () -> {
@@ -120,7 +121,7 @@ public class WatchingSessionServiceTest {
     CursorResponseWatchingSessionDto expectedDto = new CursorResponseWatchingSessionDto(
         List.of(watchingSessionDto),
         null, null, false,
-        1L, SortBy.createdAt, SortDirection.ASCENDING
+        1L, SortBy.CREATED_AT, SortDirection.ASCENDING
     );
     when(contentRepository.existsById(contentId)).thenReturn(true);
     when(watchingSessionMapper.toDto(entity)).thenReturn(watchingSessionDto);
@@ -129,7 +130,7 @@ public class WatchingSessionServiceTest {
     // when
     CursorResponseWatchingSessionDto result = watchingSessionService.getWatchingSessions(userId, contentId,
         null, null, null,
-        10, SortDirection.ASCENDING, SortBy.createdAt);
+        10, SortDirection.ASCENDING, SortBy.CREATED_AT);
 
     // then
     assertEquals(expectedDto, result);
@@ -149,7 +150,7 @@ public class WatchingSessionServiceTest {
       watchingSessionService.getWatchingSessions(
           userId, contentId,
           null, null, null,
-          10, SortDirection.ASCENDING, SortBy.createdAt
+          10, SortDirection.ASCENDING, SortBy.CREATED_AT
       );
     });
     verify(contentRepository, times(1)).existsById(contentId);
@@ -195,7 +196,7 @@ public class WatchingSessionServiceTest {
         entity2Time.toString(),
         entity2Id,
         true,
-        2L, SortBy.createdAt, SortDirection.ASCENDING
+        2L, SortBy.CREATED_AT, SortDirection.ASCENDING
     );
 
     // when
@@ -203,7 +204,7 @@ public class WatchingSessionServiceTest {
         userId, contentId,
         null, null, null,
         1,
-        SortDirection.ASCENDING, SortBy.createdAt
+        SortDirection.ASCENDING, SortBy.CREATED_AT
     );
 
     // then

@@ -52,19 +52,24 @@ public class WatchingSessionRepositoryTest {
     em.persistAndFlush(content);
 
     LocalDateTime localDateTime1 = LocalDateTime.now();
-    LocalDateTime localDateTime2 = localDateTime1.plusSeconds(2);
+    LocalDateTime localDateTime2 = localDateTime1.plusHours(5);
 
     this.w1 = new WatchingSession();
     w1.setUser(user1);
     w1.setContent(content);
+    em.persist(w1);
     ReflectionTestUtils.setField(w1, "createdAt", localDateTime1);
-    em.persistAndFlush(w1);
+    em.flush();
 
     this.w2 = new WatchingSession();
     w2.setUser(user2);
     w2.setContent(content);
+    em.persist(w2);
     ReflectionTestUtils.setField(w2, "createdAt", localDateTime2);
-    em.persistAndFlush(w2);
+    em.flush();
+
+    // clear cache
+    em.clear();
   }
 
   /*
@@ -82,7 +87,7 @@ public class WatchingSessionRepositoryTest {
         null,               // idAfter
         10,                 // limit
         SortDirection.DESCENDING,
-        SortBy.createdAt
+        SortBy.CREATED_AT
     );
     //then
     assertThat(nameResults).hasSize(1);
@@ -101,7 +106,7 @@ public class WatchingSessionRepositoryTest {
         null,               // idAfter
         10,                 // limit
         SortDirection.DESCENDING,
-        SortBy.createdAt
+        SortBy.CREATED_AT
     );
     // then
     assertThat(nameResults).isEmpty();
@@ -119,7 +124,7 @@ public class WatchingSessionRepositoryTest {
         null,               // idAfter
         10,                 // limit
         SortDirection.DESCENDING,
-        SortBy.createdAt
+        SortBy.CREATED_AT
     );
     // then
     assertThat(results).hasSize(1);
@@ -139,7 +144,7 @@ public class WatchingSessionRepositoryTest {
         null,               // idAfter
         10,                 // limit
         SortDirection.ASCENDING,
-        SortBy.createdAt
+        SortBy.CREATED_AT
     );
     // then
     assertThat(results).hasSize(2);
@@ -159,7 +164,7 @@ public class WatchingSessionRepositoryTest {
         null,               // idAfter
         10,                 // limit
         SortDirection.DESCENDING,
-        SortBy.createdAt
+        SortBy.CREATED_AT
     );
     // then
     assertThat(results).hasSize(2);
@@ -179,7 +184,7 @@ public class WatchingSessionRepositoryTest {
         null,
         1,
         SortDirection.DESCENDING,
-        SortBy.createdAt
+        SortBy.CREATED_AT
     );
     assertThat(page1).hasSize(1);
     WatchingSession firstResult = page1.get(0);
@@ -196,7 +201,7 @@ public class WatchingSessionRepositoryTest {
         cursorId,        // last elem id
         1,
         SortDirection.DESCENDING,
-        SortBy.createdAt
+        SortBy.CREATED_AT
     );
 
     assertThat(page2).hasSize(1);
@@ -209,12 +214,13 @@ public class WatchingSessionRepositoryTest {
 
     User user3 = new User("test3@test.com", "pw", "test3Name");
     em.persistAndFlush(user3);
+
     WatchingSession w3 = new WatchingSession();
     w3.setUser(user3);
     w3.setContent(content);
+    em.persist(w3);
     // same time as w2
     ReflectionTestUtils.setField(w3, "createdAt", w2.getCreatedAt());
-    em.persist(w3);
     em.flush();
     em.clear();
 
@@ -235,7 +241,7 @@ public class WatchingSessionRepositoryTest {
     List<WatchingSession> page1 = watchingSessionRepository.findWatchingSessions(
         null, content.getId(), null,
         null, null, 1,
-        SortDirection.DESCENDING, SortBy.createdAt
+        SortDirection.DESCENDING, SortBy.CREATED_AT
     );
     assertThat(page1).hasSize(1);
     assertThat(page1.get(0).getId()).isEqualTo(expectedFirst.getId());
@@ -248,11 +254,10 @@ public class WatchingSessionRepositoryTest {
         cursorTime, // <
         first.getId(), // <
         1,
-        SortDirection.DESCENDING, SortBy.createdAt
+        SortDirection.DESCENDING, SortBy.CREATED_AT
     );
 
     assertThat(page2).hasSize(1);
-    assertThat(page2.get(0).getId()).isEqualTo(w2.getId());
     assertThat(page2.get(0).getId()).isEqualTo(expectedSecond.getId());
   }
 

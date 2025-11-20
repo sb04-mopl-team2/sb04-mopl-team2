@@ -5,16 +5,15 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.codeit.mopl.domain.content.dto.response.ContentSummary;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.user.service.UserService;
 import com.codeit.mopl.exception.user.UserErrorCode;
+import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.util.WithCustomMockUser;
 import com.codeit.mopl.domain.watchingsession.dto.CursorResponseWatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
@@ -22,10 +21,8 @@ import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
 import com.codeit.mopl.domain.watchingsession.service.WatchingSessionService;
-import com.codeit.mopl.exception.watchingsession.ErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.exception.watchingsession.ContentNotFoundException;
-import com.codeit.mopl.security.CustomUserDetails;
 import com.codeit.mopl.security.CustomUserDetailsService;
 import com.codeit.mopl.security.config.TestSecurityConfig;
 import com.codeit.mopl.security.jwt.JwtRegistry;
@@ -152,7 +149,7 @@ public class WatchingSessionControllerTest {
         List.of(watchingSessionDto),
         "nextCursor_123",
         userId,true,1L,
-        SortBy.createdAt, SortDirection.ASCENDING
+        SortBy.CREATED_AT, SortDirection.ASCENDING
     );
     when(watchingSessionService.getWatchingSessions(
         any(UUID.class), eq(contentId),
@@ -199,7 +196,7 @@ public class WatchingSessionControllerTest {
         anyInt(), any(), any()
         ))
         .willThrow(new ContentNotFoundException(
-            ErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId))
+            WatchingSessionErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId))
         );
 
     // when & then

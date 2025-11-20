@@ -15,6 +15,7 @@ public interface WatchingSessionMapper {
   @Mapping(source = "content", target = "contentSummary")
   WatchingSessionDto toDto(WatchingSession watchingSession);
 
+  @Mapping(target = "userId", source = "id")
   UserSummary userToUserSummary(User user);
 
   @Mapping(source = "contentType.type", target = "type")

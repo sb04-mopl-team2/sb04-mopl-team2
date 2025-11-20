@@ -218,6 +218,16 @@ class FollowServiceTest {
     }
 
     @Test
+    @DisplayName("특정 유저의 팔로워 수 조회 실패 - followeeId가 null이 될 수 없음")
+    void getFollowerCount_FolloweeIdNull_ThrowsException() {
+        // given
+
+        // when & then
+        assertThatThrownBy(() -> followService.getFollowerCount(null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     @DisplayName("특정 유저의 팔로워 수 조회 실패 - followee가 존재하지 않는 유저")
     void getFollowerCount_FolloweeNotExists_ThrowsException() {
         // given

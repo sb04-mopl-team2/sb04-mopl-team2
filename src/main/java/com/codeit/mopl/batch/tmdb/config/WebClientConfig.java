@@ -22,7 +22,7 @@ public class WebClientConfig {
   public WebClient webClient(WebClient.Builder builder) {
     return builder
         .baseUrl(BASE_URL)
-        .defaultHeader(HttpHeaders.AUTHORIZATION, TOKEN)
+        .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer "+TOKEN)
         .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
         .build();
   }

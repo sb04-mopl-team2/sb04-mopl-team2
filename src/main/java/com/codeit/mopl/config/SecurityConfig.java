@@ -85,7 +85,6 @@ public class SecurityConfig {
                                 .accessDeniedHandler(new AccessDeniedHandlerImpl())
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                    .requestMatchers("/api/test/tmdb").permitAll()
                         .requestMatchers("/api/auth/csrf-token").permitAll()  // csrf-token 조회
                         .requestMatchers("/api/auth/sign-in").permitAll()  // 로그인
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()  // 회원가입

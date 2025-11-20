@@ -21,6 +21,7 @@ public interface TmdbMovieMapper {
   @Mapping(target = "contentType", expression = "java(com.codeit.mopl.domain.content.entity.ContentType.MOVIE)")
   @Mapping(target = "averageRating", ignore = true)
   @Mapping(target = "reviewCount", ignore = true)
+  @Mapping(target = "updatedAt", ignore = true)
   Content toContent(TmdbDiscoverMovieResponse.Movie movie);
 
   @Named("mapGenresToTags")

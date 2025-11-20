@@ -46,10 +46,12 @@ public class TmdbApiService {
         .bodyToMono(TmdbDiscoverMovieResponse.class);
 
     return tmdbDiscoverMovieResponseMono
-        .flatMapMany(response -> Flux.fromIterable(response.getResults()))
+        .flatMapMany(response ->
+            Flux.fromIterable(response.getResults() != null ? response.getResults() : List.of())
+        )
         .map(tmdbMovieMapper::toContent)
         .publishOn(Schedulers.boundedElastic())
-        .doOnNext(contentRepository::save)
+        .map(contentRepository::save)
         .collectList();
   }
 

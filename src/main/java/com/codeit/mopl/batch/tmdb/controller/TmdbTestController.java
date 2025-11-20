@@ -2,6 +2,7 @@ package com.codeit.mopl.batch.tmdb.controller;
 
 import com.codeit.mopl.batch.tmdb.service.TmdbApiService;
 import com.codeit.mopl.domain.content.entity.Content;
+import jakarta.validation.constraints.Min;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class TmdbTestController {
   @GetMapping
   public Mono<List<Content>> discoverMovies(
       @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-      @RequestParam(value = "page", defaultValue = "1") int page
+      @RequestParam(value = "page", defaultValue = "1") @Min(1) int page
   ) {
     return tmdbApiService.discoverMoviesFromDate(from, page);
   }

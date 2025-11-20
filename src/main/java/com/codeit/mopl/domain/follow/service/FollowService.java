@@ -69,11 +69,8 @@ public class FollowService {
         if (followDto == null) {
             throw new IllegalArgumentException("FollowDto must not be null");
         }
-        UUID followeeId = followDto.followeeId();
-        if (followeeId == null) {
-            throw new IllegalArgumentException("FolloweeId must not be null or blank");
-        }
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followDto: {}", followDto);
+        UUID followeeId = followDto.followeeId();
         User followee = getUserById(followeeId);
         followee.increaseFollowerCount();
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
@@ -89,6 +86,9 @@ public class FollowService {
     }
 
     private User getUserById(UUID userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("FolloweeId must not be null");
+        }
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
     }

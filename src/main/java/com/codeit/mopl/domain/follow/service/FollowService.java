@@ -12,7 +12,7 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.exception.follow.FollowDuplicateException;
 import com.codeit.mopl.exception.follow.FollowSelfProhibitedException;
-import com.codeit.mopl.exception.user.ErrorCode;
+import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,7 +81,7 @@ public class FollowService {
 
     private User getUserById(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
+                .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
     }
 
     private String getFollowNotificationTitle(String followerName) {

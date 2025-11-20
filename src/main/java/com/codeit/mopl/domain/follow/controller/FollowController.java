@@ -33,7 +33,8 @@ public class FollowController {
     }
 
     @GetMapping("/count")
-    public ResponseEntity<Long> getFollowerCount(@RequestParam("followeeId") UUID followeeId) {
+    public ResponseEntity<Long> getFollowerCount(@RequestParam("followeeId") UUID followeeId,
+                                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("[팔로우 관리] 팔로워 수 조회 요청 시작 - followeeId: {}", followeeId);
         long followerCount = followService.getFollowerCount(followeeId);
         log.info("[팔로우 관리] 팔로워 수 조회 요청 응답 - followeeId: {}, followerCount: {}", followeeId, followerCount);

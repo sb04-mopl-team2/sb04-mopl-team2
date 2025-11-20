@@ -84,7 +84,7 @@ public class FollowService {
         log.info("[팔로우 관리] 팔로워 수 조회 시작 - followeeId: {}", followeeId);
         User followee = getUserById(followeeId);
         long followerCount = followee.getFollowerCount();
-        log.info("[팔로우 관리] 팔로워 수 조회 완료 - followeeId: {}, followCount: {}", followeeId, followerCount);
+        log.info("[팔로우 관리] 팔로워 수 조회 완료 - followeeId: {}, followerCount: {}", followeeId, followerCount);
         return followerCount;
     }
 

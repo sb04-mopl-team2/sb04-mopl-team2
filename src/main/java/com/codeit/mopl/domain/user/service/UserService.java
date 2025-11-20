@@ -6,9 +6,11 @@ import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
-import com.codeit.mopl.exception.user.ErrorCode;
+import com.codeit.mopl.exception.user.NotImageContentException;
+import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserEmailAlreadyExistsException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import com.codeit.mopl.s3.S3Storage;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,9 +23,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -35,6 +39,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher publisher;
     private final JwtRegistry jwtRegistry;
+    private final S3Storage s3Storage;
 
     @Transactional
     public UserDto create(UserCreateRequest request) {
@@ -136,10 +141,33 @@ public class UserService {
         return response;
     }
 
+    @Transactional
+    public UserDto updateProfile(UUID userId, UserUpdateRequest request, MultipartFile profileImage) {
+        log.info("[사용자 관리] 유저 프로필 업데이트 실행 userId = {}", userId);
+        User findUser = getValidUserByUserId(userId);
+        Optional.ofNullable(request.name()).ifPresent(name -> {
+            log.debug("[사용자 관리] 닉네임 변경 {} -> {}", findUser.getName(), request.name());
+            findUser.setName(name);
+        });
+        Optional.ofNullable(profileImage).ifPresent(profile -> {
+            log.debug("[사용자 관리] 프로필 이미지 생성");
+            String extension = getFileExtension(profile.getOriginalFilename());
+            String key = UUID.randomUUID() + extension;
+            s3Storage.upload(profile,key);
+            if (StringUtils.hasText(findUser.getProfileImageUrl())){
+                log.debug("[사용자 관리] 기존 프로필 삭제 imageKey = {}", profileImage.getOriginalFilename());
+                s3Storage.delete(findUser.getProfileImageUrl());
+            }
+            findUser.setProfileImageUrl(key);
+        });
+        userRepository.save(findUser);
+        return userMapper.toDto(findUser);
+    }
+
     private void validateEmail(String email) {
         if (userRepository.existsByEmail(email)) {
             log.warn("[사용자 관리] 이메일 중복 가입 email = {}", email);
-            throw new UserEmailAlreadyExistsException(ErrorCode.EMAIL_ALREADY_EXISTS, Map.of("email", email));
+            throw new UserEmailAlreadyExistsException(UserErrorCode.EMAIL_ALREADY_EXISTS, Map.of("email", email));
         }
     }
 
@@ -147,7 +175,7 @@ public class UserService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> {
                     log.info("[사용자 관리] 해당 유저를 찾을 수 없음 email = {}", email);
-                    throw new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("email", email));
+                    throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("email", email));
                 });
     }
 
@@ -155,12 +183,23 @@ public class UserService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.warn("[사용자 관리] 해당 유저를 찾을 수 없음 userId = {}", userId);
-                    throw new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId",userId));
+                    throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId",userId));
                 });
     }
 
     private void removeToken(UUID userId) {
         log.info("[사용자 관리] 강제 로그아웃 - token 삭제 userId = {}", userId);
         jwtRegistry.invalidateJwtInformationByUserId(userId);
+    }
+
+    private String getFileExtension(String filename) {
+        if (!StringUtils.hasText(filename)) {
+            throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("filename", filename));
+        }
+        int dotIndex = filename.lastIndexOf(".");
+        if (dotIndex == -1 || dotIndex == filename.length() - 1) {
+            throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("filename", filename));
+        }
+        return filename.substring(dotIndex);
     }
 }

@@ -1,7 +1,7 @@
 package com.codeit.mopl.domain.notification.repository;
 
 import com.codeit.mopl.domain.notification.entity.Notification;
-import com.codeit.mopl.domain.notification.entity.SortBy;
+import com.codeit.mopl.domain.notification.entity.NotificationSortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import java.util.List;
 import java.util.UUID;
@@ -14,5 +14,5 @@ public interface CustomNotificationRepository {
       UUID idAfter,
       int limit,
       SortDirection sortDirection,
-      SortBy sortBy);
+      NotificationSortBy notificationSortBy);
 }

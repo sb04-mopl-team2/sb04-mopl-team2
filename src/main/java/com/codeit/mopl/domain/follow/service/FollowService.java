@@ -74,7 +74,8 @@ public class FollowService {
             throw new IllegalArgumentException("FolloweeId must not be null or blank");
         }
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followDto: {}", followDto);
-        userRepository.increaseFollowerCountByUserId(followeeId);
+        User followee = getUserById(followeeId);
+        followee.increaseFollowerCount();
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
     }
 

@@ -205,8 +205,8 @@ class FollowServiceTest {
         UUID followerId = UUID.randomUUID();
         UUID followeeId = UUID.randomUUID();
 
-        given(userRepository.existsById(any(UUID.class))).willReturn(true);
-        given(followRepository.existsByFollowerIdAndFolloweeId(any(UUID.class), any(UUID.class))).willReturn(true);
+        given(userRepository.existsById(eq(followeeId))).willReturn(true);
+        given(followRepository.existsByFollowerIdAndFolloweeId(eq(followerId), eq(followeeId))).willReturn(true);
 
         // when
         Boolean isFollowed = followService.isFollowedByMe(followerId, followeeId);
@@ -224,8 +224,8 @@ class FollowServiceTest {
         UUID followerId = UUID.randomUUID();
         UUID followeeId = UUID.randomUUID();
 
-        given(userRepository.existsById(any(UUID.class))).willReturn(true);
-        given(followRepository.existsByFollowerIdAndFolloweeId(any(UUID.class), any(UUID.class))).willReturn(false);
+        given(userRepository.existsById(eq(followeeId))).willReturn(true);
+        given(followRepository.existsByFollowerIdAndFolloweeId(eq(followerId), eq(followeeId))).willReturn(false);
 
         // when
         Boolean isFollowed = followService.isFollowedByMe(followerId, followeeId);
@@ -242,7 +242,7 @@ class FollowServiceTest {
         // given
         UUID followerId = UUID.randomUUID();
         UUID followeeId = UUID.randomUUID();
-        given(userRepository.existsById(any(UUID.class))).willReturn(false);
+        given(userRepository.existsById(eq(followeeId))).willReturn(false);
 
         // when & then
         assertThatThrownBy(() -> followService.isFollowedByMe(followerId, followeeId))

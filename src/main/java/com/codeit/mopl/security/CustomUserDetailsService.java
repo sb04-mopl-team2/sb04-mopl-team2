@@ -4,7 +4,7 @@ import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
-import com.codeit.mopl.exception.user.ErrorCode;
+import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserLockedException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +30,8 @@ public class CustomUserDetailsService implements UserDetailsService {
     private User findUserByEmail(String email) {
         User user = userRepository.findByEmail((email))
                 .orElseThrow(() ->
-                        new UserNotFoundException(ErrorCode.USER_NOT_FOUND,Map.of("email", email)));
-        if (user.isLocked()) throw new UserLockedException(ErrorCode.USER_LOCKED, Map.of("email",user.getEmail()));
+                        new UserNotFoundException(UserErrorCode.USER_NOT_FOUND,Map.of("email", email)));
+        if (user.isLocked()) throw new UserLockedException(UserErrorCode.USER_LOCKED, Map.of("email",user.getEmail()));
         return user;
     }
 }

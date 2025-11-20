@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
 @RequiredArgsConstructor
-public enum ErrorCode implements ErrorCodeInterface {
+public enum AuthErrorCode implements ErrorCodeInterface {
     TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "검증되지 않은 토큰입니다.");
 
     private final HttpStatus status;

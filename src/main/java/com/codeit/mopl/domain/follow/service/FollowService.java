@@ -79,6 +79,15 @@ public class FollowService {
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
     }
 
+    @Transactional(readOnly = true)
+    public long getFollowerCount(UUID followeeId) {
+        log.info("[팔로우 관리] 팔로워 수 조회 시작 - followeeId: {}", followeeId);
+        User followee = getUserById(followeeId);
+        long followerCount = followee.getFollowerCount();
+        log.info("[팔로우 관리] 팔로워 수 조회 완료 - followeeId: {}, followCount: {}", followeeId, followerCount);
+        return followerCount;
+    }
+
     private User getUserById(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));

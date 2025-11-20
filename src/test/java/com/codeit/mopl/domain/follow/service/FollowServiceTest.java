@@ -21,6 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -63,8 +64,10 @@ class FollowServiceTest {
 
         User follower = new User();
         follower.setName("testFollower");
+        ReflectionTestUtils.setField(follower, "id", followerId);
 
         User followee = new User();
+        ReflectionTestUtils.setField(followee, "id", followeeId);
 
         Follow follow = new Follow(follower, followee);
 

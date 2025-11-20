@@ -1,9 +1,8 @@
 package com.codeit.mopl.domain.watchingsession.mapper;
 
-import com.codeit.mopl.domain.content.dto.response.contentSummary;
+import com.codeit.mopl.domain.content.dto.response.ContentSummary;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.user.entity.User;
-import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
@@ -19,5 +18,5 @@ public interface WatchingSessionMapper {
   UserSummary userToUserSummary(User user);
 
   @Mapping(source = "contentType.type", target = "type")
-  contentSummary contentToContentSummary(Content content);
+  ContentSummary contentToContentSummary(Content content);
 }

@@ -3,6 +3,7 @@ package com.codeit.mopl.domain.user.service;
 import com.codeit.mopl.domain.user.dto.request.UserCreateRequest;
 import com.codeit.mopl.domain.user.dto.request.UserLockUpdateRequest;
 import com.codeit.mopl.domain.user.dto.request.UserRoleUpdateRequest;
+import com.codeit.mopl.domain.user.dto.request.UserUpdateRequest;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
@@ -10,6 +11,8 @@ import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.user.UserEmailAlreadyExistsException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import com.codeit.mopl.s3.S3Storage;
+import com.codeit.mopl.security.jwt.JwtRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,17 +20,21 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
@@ -41,7 +48,10 @@ public class UserServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private SessionRegistry sessionRegistry;
+    private S3Storage s3Storage;
+
+    @Mock
+    private JwtRegistry jwtRegistry;
 
     @InjectMocks
     private UserService userService;
@@ -122,7 +132,7 @@ public class UserServiceTest {
         UUID userId = UUID.randomUUID();
         UserRoleUpdateRequest request = new UserRoleUpdateRequest(Role.ADMIN);
         User findUser = new User("test@example.com","password","test");  // new User는 Default Role.USER
-        given(userRepository.findById(any(UUID.class))).willReturn(Optional.of(findUser));
+        given(userRepository.findById(userId)).willReturn(Optional.of(findUser));
 
         // when
         userService.updateRole(userId, request);
@@ -145,5 +155,37 @@ public class UserServiceTest {
 
         // then
         assertEquals(true, findUser.isLocked());
+    }
+
+    @DisplayName("유저의 이름 혹은 프로필 이미지가 주어졌을때 null이 아닌 값을 추가하거나 변경한다.")
+    @Test
+    void updateUserProfileShouldSucceedWithUsernameOrProfileImage() {
+        UUID userId = UUID.randomUUID();
+        UserUpdateRequest request = new UserUpdateRequest("changeName");
+        User user = new User("test@test.com","password","beforeName");
+        MockMultipartFile profile = new MockMultipartFile("image","originalName.jpg",MediaType.IMAGE_JPEG_VALUE,"image".getBytes(StandardCharsets.UTF_8));
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+        userService.updateProfile(userId,request,profile);
+
+        verify(s3Storage).upload(any(MultipartFile.class),anyString());
+        assertEquals("changeName",user.getName());
+        assertNotNull(user.getProfileImageUrl());
+    }
+
+    @DisplayName("존재하지 않는 유저 ID가 주어지면 404 NOT_FOUND가 발생한다.")
+    @Test
+    void updateUserProfileShouldFailWhenUserIdNotFound() {
+        UUID userId = UUID.randomUUID();
+        UserUpdateRequest request = new UserUpdateRequest("changeName");
+        MockMultipartFile profile = new MockMultipartFile("image","originalName",MediaType.IMAGE_JPEG_VALUE,"image".getBytes(StandardCharsets.UTF_8));
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
+
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> {
+            userService.updateProfile(userId,request,profile);
+        });
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getErrorCode().getStatus());
     }
 }

@@ -3,17 +3,23 @@ package com.codeit.mopl.domain.user.controller;
 import com.codeit.mopl.domain.user.dto.request.*;
 import com.codeit.mopl.domain.user.dto.response.CursorResponseUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
+import com.codeit.mopl.domain.user.entity.ImageContentType;
 import com.codeit.mopl.domain.user.service.UserService;
+import com.codeit.mopl.exception.user.NotImageContentException;
+import com.codeit.mopl.exception.user.UserErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -74,5 +80,26 @@ public class UserController {
         CursorResponseUserDto response = userService.getAllUsers(request);
         log.info("[사용자 관리] 유저 목록 조회 응답 totalCount = {}", response.totalCount());
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping(value = "/{userId}",consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PreAuthorize("#userId == authentication.principal.user.id")
+    public ResponseEntity updateProfile(@PathVariable UUID userId,
+                                        @RequestPart(value = "request") UserUpdateRequest request,
+                                        @RequestPart(value = "image", required = false) MultipartFile profileImage) {
+        validateImage(profileImage);
+        log.info("[사용자 관리] 유저 프로필 변경 호출 userId = {}", userId);
+        UserDto response = userService.updateProfile(userId, request, profileImage);
+        log.info("[사용자 관리] 유저 프로필 변경 응답 userId = {}", response.id());
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    private void validateImage(MultipartFile profileImage) {
+        if (profileImage == null || profileImage.isEmpty()) {
+            return;
+        }
+        if (!ImageContentType.isImage(profileImage.getContentType())) {
+            throw new NotImageContentException(UserErrorCode.NOT_IMAGE, Map.of("contentType",profileImage.getContentType()));
+        }
     }
 }

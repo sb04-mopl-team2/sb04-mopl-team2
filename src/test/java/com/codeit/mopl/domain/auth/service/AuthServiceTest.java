@@ -21,8 +21,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -58,21 +58,23 @@ public class AuthServiceTest {
         // when
         authService.resetPassword(request);
 
+        // then
         verify(mailService).sendMail("test@test.com",tempPw);
     }
 
-    @DisplayName("email이 주어졌는데 존재하지 않는 유저라면 UserNotFoundException이 발생한다")
+    @DisplayName("email이 주어졌는데 존재하지 않는 유저라면 아무 행동도 하지 않는다")
     @Test
     void resetPasswordShouldFailWhenUserNotFoundByEmail() throws MessagingException {
         // given
         ResetPasswordRequest request = new ResetPasswordRequest("test@test.com");
+        String tempPw = "TempPW1234";
         given(userRepository.findByEmail(request.email())).willReturn(Optional.empty());
 
         // when
-        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> authService.resetPassword(request));
+        authService.resetPassword(request);
 
         // then
-        assertEquals("유저를 찾을 수 없습니다.",exception.getErrorCode().getMessage());
+        then(mailService).should(times(0)).sendMail(request.email(), tempPw);
     }
 
 }

@@ -197,4 +197,35 @@ class FollowServiceTest {
         assertThatThrownBy(() -> followService.increaseFollowerCount(followDto))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    @DisplayName("특정 유저의 팔로워 수 조회 성공 테스트")
+    void getFollowerCount_Success() {
+        // given
+        UUID followeeId = UUID.randomUUID();
+        User followee = new User();
+        ReflectionTestUtils.setField(followee, "id", followeeId);
+        followee.setFollowerCount(1L);
+
+        given(userRepository.findById(eq(followeeId))).willReturn(Optional.of(followee));
+
+        // when
+        long result = followService.getFollowerCount(followeeId);
+
+        // then
+        assertThat(result).isEqualTo(1L);
+        verify(userRepository, times(1)).findById(eq(followeeId));
+    }
+
+    @Test
+    @DisplayName("특정 유저의 팔로워 수 조회 실패 - followee가 존재하지 않는 유저")
+    void getFollowerCount_FolloweeNotExists_ThrowsException() {
+        // given
+        UUID followeeId = UUID.randomUUID();
+        given(userRepository.findById(eq(followeeId))).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> followService.getFollowerCount(followeeId))
+                .isInstanceOf(UserNotFoundException.class);
+    }
 }

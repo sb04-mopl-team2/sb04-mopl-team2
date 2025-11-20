@@ -3,7 +3,7 @@ package com.codeit.mopl.domain.content.dto.response;
 import java.util.List;
 import java.util.UUID;
 
-public record contentSummary(
+public record ContentSummary(
     UUID id,
     String type,
     String title,

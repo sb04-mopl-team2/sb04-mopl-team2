@@ -7,7 +7,7 @@ import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
-import com.codeit.mopl.domain.notification.exception.NotificationNotAuthentication;
+import com.codeit.mopl.domain.notification.exception.NotificationForbidden;
 import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
@@ -56,9 +56,9 @@ public class NotificationService {
     if (notificationList.isEmpty()) {
       log.debug("[알림] 알림 리스트가 비었음, userId = {}", userId);
       CursorResponseNotificationDto cursorResponseNotificationDto = new CursorResponseNotificationDto(
-          null, null, null, false, 0L, SortBy.createdAt, SortDirection.DESCENDING);
+          null, null, null, false, 0L, SortBy.CREATED_AT, SortDirection.DESCENDING);
 
-      log.info("[알림] 알림 조회 종료, userId={}, resultSize={}, hasNext={}, totalCount={}",
+      log.info("[알림] 알림 조회 종료, userId = {}, notificationListSize = {}, hasNext = {}, totalCount = {}",
           userId, 0L, cursorResponseNotificationDto.hasNext(), cursorResponseNotificationDto.totalCount());
       return cursorResponseNotificationDto;
     }
@@ -77,7 +77,7 @@ public class NotificationService {
 
     long totalCount = getTotalCount(userId);
 
-    log.info("[알림] 알림 조회 종료, userId={}, resultSize={}, hasNext={}, totalCount={}",
+    log.info("[알림] 알림 조회 종료, userId = {}, notificationListSize = {}, hasNext = {}, totalCount = {}",
         userId, data.size(), hasNext, totalCount);
 
     CursorResponseNotificationDto cursorResponseNotificationDto = new CursorResponseNotificationDto(
@@ -104,7 +104,7 @@ public class NotificationService {
     if (!ownerId.equals(userId)) {
       log.warn("[알림] 알림 삭제 실패, 알림을 삭제할 권한이 없음, userId = {}, notificationId = {}, ownerId = {}",
           userId, notificationId, ownerId);
-      throw new NotificationNotAuthentication();
+      throw new NotificationForbidden();
     }
 
     notification.setStatus(Status.READ);

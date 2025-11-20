@@ -1,8 +1,9 @@
-package com.codeit.mopl.notification;
+package com.codeit.mopl.domain.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -15,11 +16,10 @@ import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
-import com.codeit.mopl.domain.notification.exception.NotificationNotAuthentication;
+import com.codeit.mopl.domain.notification.exception.NotificationForbidden;
 import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
-import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
@@ -75,7 +75,7 @@ class NotificationServiceTest {
     this.idAfter = null;
     this.limit = 3;
     this.sortDirection = SortDirection.DESCENDING;
-    this.sortBy = SortBy.createdAt;
+    this.sortBy = SortBy.CREATED_AT;
   }
 
   @Test
@@ -97,7 +97,7 @@ class NotificationServiceTest {
     assertThat(result.nextIdAfter()).isNull();
     assertThat(result.hasNext()).isFalse();
     assertThat(result.totalCount()).isZero();
-    assertThat(result.sortBy()).isEqualTo(SortBy.createdAt);
+    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT);
     assertThat(result.sortDirection()).isEqualTo(SortDirection.DESCENDING);
 
     verify(notificationRepository, never())
@@ -243,7 +243,7 @@ class NotificationServiceTest {
 
     // then
     assertThatThrownBy(act::run)
-        .isInstanceOf(NotificationNotAuthentication.class);
+        .isInstanceOf(NotificationForbidden.class);
 
     verify(notification, never()).setStatus(any(Status.class));
     verify(notificationRepository, never()).save(any(Notification.class));
@@ -291,7 +291,7 @@ class NotificationServiceTest {
     String title = "테스트 제목";
 
     Notification notification = createNotification(title, LocalDateTime.now());
-    NotificationDto notificationDto = createDtoFrom(notification);
+    NotificationDto notificationDto = createDtoFrom(notification, receiverId);
 
     // when
     notificationService.sendNotification(notificationDto);
@@ -312,6 +312,17 @@ class NotificationServiceTest {
         notification.getId(),
         notification.getCreatedAt(),
         null,
+        notification.getTitle(),
+        notification.getContent(),
+        notification.getLevel()
+    );
+  }
+
+  private NotificationDto createDtoFrom(Notification notification, UUID receiverId) {
+    return new NotificationDto(
+        notification.getId(),
+        notification.getCreatedAt(),
+        receiverId,
         notification.getTitle(),
         notification.getContent(),
         notification.getLevel()

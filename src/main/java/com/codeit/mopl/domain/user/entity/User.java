@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
@@ -77,5 +76,9 @@ public class User extends UpdatableEntity {
     public User(String email, String password, String name, LocalDateTime createdAt) {
         this(email,password,name);
         this.createdAt = createdAt;
+    }
+
+    public void increaseFollowerCount() {
+        this.followerCount++;
     }
 }

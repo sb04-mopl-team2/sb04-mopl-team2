@@ -7,6 +7,7 @@ import com.codeit.mopl.domain.playlist.subscription.repository.SubscriptionRepos
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
+import com.codeit.mopl.exception.playlist.subscription.SubscriptionNotFoundException;
 import com.codeit.mopl.exception.playlist.subscription.SubscriptionSelfProhibitedException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
@@ -58,5 +59,17 @@ public class SubscriptionService {
         Subscription subscription = new Subscription(playlist, subscriber, subscribedAt);
         log.info("[플레이리스트] 플레이리스트 구독 처리 완료 - playlistId = {}, subscriberId = {}", playlistId, subscriberId);
         subscriptionRepository.save(subscription);
+    }
+
+    public void unsubscribe(UUID playlistId, UUID subscriberId) {
+        log.info("[플레이리스트] 플레이리스트 구독 취소 처리 시작 - playlistId = {}, subscriberId = {}", playlistId, subscriberId);
+
+        Subscription subscription = subscriptionRepository.findBySubscriberIdAndPlaylistId(subscriberId,playlistId)
+                        .orElseThrow(()-> {
+                            log.warn("[플레이리스트] 플레이리스트 구독 취소 처리 실패 - 구독 내역이 존재하지 않음 - playlistId = {}", playlistId);
+                            return SubscriptionNotFoundException.withId(subscriberId, playlistId);
+                        });
+        log.info("[플레이리스트] 플레이리스트 구독 취소 처리 완료 - playlistId = {}, subscriberId = {}", playlistId, subscriberId);
+        subscriptionRepository.delete(subscription);
     }
 }

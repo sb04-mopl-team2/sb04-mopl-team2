@@ -1,6 +1,6 @@
 package com.codeit.mopl.security.jwt;
 
-import com.codeit.mopl.exception.auth.ErrorCode;
+import com.codeit.mopl.exception.auth.AuthErrorCode;
 import com.codeit.mopl.exception.auth.InvalidTokenException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -77,7 +77,7 @@ public class JwtRegistry {
                 .findFirst()
                 .orElseThrow(() -> {
                     log.warn("[JWT] JwtInformation 내 찾을 수 없음 refreshToken = {}", refreshToken);
-                    throw new InvalidTokenException(ErrorCode.TOKEN_INVALID,Map.of("type","refresh token"));
+                    throw new InvalidTokenException(AuthErrorCode.TOKEN_INVALID,Map.of("type","refresh token"));
                 })
                 .getUserDto().id();
         Queue<JwtInformation> queue = origin.get(userId);

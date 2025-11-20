@@ -58,7 +58,7 @@ public class PlaylistController {
                                                       @AuthenticationPrincipal CustomUserDetails loginUser,
                                                       @Valid @RequestBody PlaylistUpdateRequest request) {
         log.info("[플레이리스트] 플레이리스트 정보 수정 요청 - playlistId = {}", playlistId);
-        PlaylistDto response = playlistService.updatePlaylist(playlistId, loginUser.getUser().id(), request);
+        PlaylistDto response = playlistService.updatePlaylist(loginUser.getUser().id(),playlistId, request);
         log.info("[플레이리스트] 플레이리스트 정보 수정 응답 - playlistId = {}", response.id());
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

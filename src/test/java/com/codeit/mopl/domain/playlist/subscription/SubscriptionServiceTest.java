@@ -8,6 +8,8 @@ import com.codeit.mopl.domain.playlist.subscription.service.SubscriptionService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
+import com.codeit.mopl.exception.playlist.subscription.SubscriptionNotFoundException;
+import com.codeit.mopl.exception.playlist.subscription.SubscriptionSelfProhibitedException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -43,12 +45,19 @@ public class SubscriptionServiceTest {
         @DisplayName("정상 요청일 경우 해당 플레이리스트를 구독함")
         void shouldCreateSubscription() {
             //given
+            LocalDateTime subscribedAt = LocalDateTime.now();
+            UUID subscriberId = UUID.randomUUID();
+            User subscriber = new User();
+            setId(subscriber, subscriberId);
+
+            UUID ownerId = UUID.randomUUID();
+            User owner = new User();
+            setId(owner, ownerId);
 
             UUID playlistId = UUID.randomUUID();
-            UUID subscriberId = UUID.randomUUID();
-            Playlist playlist = new Playlist();
-            User subscriber = new User();
-            LocalDateTime subscribedAt = LocalDateTime.now();
+            Playlist playlist = Playlist.builder()
+                    .user(owner)
+                    .build();
 
             given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
             given(userRepository.findById(subscriberId)).willReturn(Optional.ofNullable(subscriber));
@@ -75,15 +84,12 @@ public class SubscriptionServiceTest {
             //given
             UUID nonExistentPlaylistId = UUID.randomUUID();
             UUID subscriberId = UUID.randomUUID();
-            User subscriber = new User();
             given(playlistRepository.findById(nonExistentPlaylistId)).willReturn(Optional.empty());
-            given(userRepository.findById(subscriberId)).willReturn(Optional.ofNullable(subscriber));
 
             //when & then
             assertThrows(PlaylistNotFoundException.class,
                     () -> subscriptionService.subscribe(nonExistentPlaylistId, subscriberId));
             verify(playlistRepository).findById(nonExistentPlaylistId);
-            verify(userRepository).findById(subscriberId);
             verify(subscriptionRepository,never()).save(any());
         }
 
@@ -91,24 +97,82 @@ public class SubscriptionServiceTest {
         @DisplayName("이미 구독한 플레이리스트일 경우 구독 생성하지 않음")
         void shouldNotSubscribeWhenAlreadySubscribed() {
             // given
-            UUID playlistId = UUID.randomUUID();
             UUID subscriberId = UUID.randomUUID();
-
-            Playlist playlist = new Playlist();
             User subscriber = new User();
+            setId(subscriber, subscriberId);
+
+            UUID ownerId = UUID.randomUUID();
+            User owner = new User();
+            setId(owner, ownerId);
+
+            UUID playlistId = UUID.randomUUID();
+            Playlist playlist = Playlist.builder()
+                    .user(owner)
+                    .build();
 
             given(playlistRepository.findById(playlistId)).willReturn(Optional.of(playlist));
             given(userRepository.findById(subscriberId)).willReturn(Optional.of(subscriber));
             given(subscriptionRepository.existsBySubscriberIdAndPlaylistId(subscriberId, playlistId))
                     .willReturn(true);
-
-            // when
-            subscriptionService.subscribe(playlistId, subscriberId);
-
-            // then — 이미 구독 중이면 save가 호출되면 안 됨
+            // when & then
+            assertThrows(SubscriptionSelfProhibitedException.class,
+                    () -> subscriptionService.subscribe(playlistId, subscriberId));
+            verify(playlistRepository).findById(playlistId);
+            verify(userRepository).findById(subscriberId);
             verify(subscriptionRepository, never()).save(any());
         }
     }
+
+    @Nested
+    @DisplayName("delete()")
+    class deleteSubscription {
+
+        @Test
+        @DisplayName("정상 요청일 경우 플레이리스트 구독을 취소함")
+        void shouldDeleteSubscription() {
+            UUID playlistId = UUID.randomUUID();
+            Playlist playlist = new Playlist();
+            setId(playlist, playlistId);
+            playlist.setUser(new User());
+
+            UUID subscriberId = UUID.randomUUID();
+            User subscriber = new User();
+            setId(subscriber, subscriberId);
+
+            LocalDateTime subscribedAt = LocalDateTime.now();
+            Subscription subscription = Subscription.builder()
+                    .playlist(playlist)
+                    .subscriber(subscriber)
+                    .subscribedAt(subscribedAt)
+                    .build();
+            given(subscriptionRepository.findBySubscriberIdAndPlaylistId(subscriberId, playlistId))
+                    .willReturn(Optional.of(subscription));
+
+            //when
+            subscriptionService.unsubscribe(playlistId, subscriberId);
+
+            //then
+            verify(subscriptionRepository).findBySubscriberIdAndPlaylistId(subscriberId, playlistId);
+            verify(subscriptionRepository).delete(subscription);
+            verify(subscriptionRepository, never()).save(any(Subscription.class));
+        }
+
+        @Test
+        @DisplayName("구독 내역이 존재하지 않을 경우 예외발생")
+        void shouldThrowExceptionWhenSubscriptionNotFound() {
+            //given
+            UUID playlistId = UUID.randomUUID();
+            UUID subscriberId = UUID.randomUUID();
+
+            //when & then
+            assertThrows(SubscriptionNotFoundException.class,
+                    () -> subscriptionService.unsubscribe(playlistId, subscriberId));
+            verify(subscriptionRepository).findBySubscriberIdAndPlaylistId(subscriberId, playlistId);
+            verify(subscriptionRepository, never()).delete(any());
+            verify(subscriptionRepository, never()).save(any());
+        }
+    }
+
     private static void setId(Object target, UUID id) {
         try {
             Field idField = BaseEntity.class.getDeclaredField("id");

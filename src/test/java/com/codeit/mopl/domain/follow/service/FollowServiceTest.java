@@ -157,13 +157,17 @@ class FollowServiceTest {
         UUID followeeId = UUID.randomUUID();
         FollowDto followDto = new FollowDto(followId, followerId, followeeId);
 
+        User followee = new User();
+        ReflectionTestUtils.setField(followee, "id", followeeId);
+
+        given(userRepository.findById(any(UUID.class))).willReturn(Optional.of(followee));
+
         // when
         followService.increaseFollowerCount(followDto);
 
         // then
-        // repository 호출 여부만 검증
-        verify(userRepository, times(1))
-                .increaseFollowerCountByUserId(eq(followeeId));
+        verify(userRepository, times(1)).findById(eq(followeeId));
+        assertThat(followee.getFollowerCount()).isEqualTo(1);
     }
 
     @Test

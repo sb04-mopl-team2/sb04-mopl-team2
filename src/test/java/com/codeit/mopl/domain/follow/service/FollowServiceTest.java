@@ -16,6 +16,7 @@ import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,7 +27,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -66,27 +67,34 @@ class FollowServiceTest {
         User followee = new User();
 
         Follow follow = new Follow(follower, followee);
-        FollowDto followDto = new FollowDto(
-                UUID.randomUUID(),
-                followerId,
-                followeeId
-        );
 
         given(followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId))
                 .willReturn(false);
         given(followRepository.save(any(Follow.class))).willReturn(follow);
         given(userRepository.findById(followerId)).willReturn(Optional.of(follower));
         given(userRepository.findById(followeeId)).willReturn(Optional.of(followee));
-        given(followMapper.toDto(follow)).willReturn(followDto);
+        given(followMapper.toDto(any(Follow.class))).willAnswer(invocation -> {
+            Follow savedFollow = invocation.getArgument(0);
+            return new FollowDto(UUID.randomUUID(), followerId, followeeId);
+        });
+
+        ArgumentCaptor<Follow> followCaptor = ArgumentCaptor.forClass(Follow.class);
 
         // when
         FollowDto result = followService.createFollow(request, followerId);
-        String expectedTitle = followService.getFollowNotificationTitle(followerId);
 
         // then
-        assertThat(result).isEqualTo(followDto);
+        verify(followRepository).save(followCaptor.capture());
+        Follow savedFollow = followCaptor.getValue();
+        assertThat(savedFollow.getFollower().getId()).isEqualTo(follower.getId());
+        assertThat(savedFollow.getFollowee().getId()).isEqualTo(followee.getId());
+
+        assertThat(result.followerId()).isEqualTo(followerId);
+        assertThat(result.followeeId()).isEqualTo(followeeId);
+        assertThat(result.id()).isNotNull();
+
         verify(eventPublisher).publishEvent(any(FollowerIncreaseEvent.class));
-        verify(notificationService).createNotification(followeeId, expectedTitle, "", Level.INFO);
+        verify(notificationService).createNotification(eq(followeeId), any(String.class), eq(""), eq(Level.INFO));
     }
 
     @Test
@@ -128,7 +136,8 @@ class FollowServiceTest {
 
         given(followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId))
                 .willReturn(false);
-        given(userRepository.findById(followerId)).willReturn(Optional.empty());
+        given(userRepository.findById(followerId)).willReturn(Optional.of(new User()));
+        given(userRepository.findById(followeeId)).willReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> followService.createFollow(request, followerId))

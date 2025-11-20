@@ -1,12 +1,10 @@
 package com.codeit.mopl.domain.notification.dto;
 
-import com.codeit.mopl.domain.notification.entity.SortBy;
+import com.codeit.mopl.domain.notification.entity.NotificationSortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
-import lombok.Getter;
-import lombok.Setter;
 
 public record NotificationSearchRequest(
     String cursor,
@@ -19,5 +17,5 @@ public record NotificationSearchRequest(
     SortDirection sortDirection,
 
     @NotNull
-    SortBy sortBy
+    NotificationSortBy notificationSortBy
 ) { }

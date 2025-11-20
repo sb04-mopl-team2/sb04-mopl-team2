@@ -21,14 +21,4 @@ public enum FollowErrorCode implements ErrorCodeInterface {
     public String getName() {
         return this.name();
     }
-
-    @Override
-    public String getMessage() {
-        return message;
-    }
-
-    @Override
-    public HttpStatus getStatus() {
-        return status;
-    }
 }

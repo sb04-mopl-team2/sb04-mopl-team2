@@ -41,7 +41,7 @@ public class KafkaEventListener {
   public void on(FollowerIncreaseEvent event) {
     String key = Optional.ofNullable(event.followDto().followeeId())
             .map(Object::toString)
-            .orElseThrow(() -> new RuntimeException("FollowerIncreaseEvent must have followeeId"));
+            .orElseThrow(() -> new IllegalArgumentException("FollowerIncreaseEvent must have followeeId"));
     send("mopl-follower-increase", key, event);
   }
 

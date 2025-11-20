@@ -80,12 +80,12 @@ public class FollowService {
     }
 
     @Transactional(readOnly = true)
-    public Boolean isFollowedByMe(UUID followerId, UUID followeeId) {
+    public boolean isFollowedByMe(UUID followerId, UUID followeeId) {
         log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 시작 - followerId: {}, followeeId: {}", followerId, followeeId);
         if (!userRepository.existsById(followeeId)) {
-            throw new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId", followeeId));
+            throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", followeeId));
         }
-        Boolean isFollowed = followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
+        boolean isFollowed = followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
         log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 완료 - followerId: {}, followeeId: {}, isFollowed: {}", followerId, followeeId, isFollowed);
         return isFollowed;
     }

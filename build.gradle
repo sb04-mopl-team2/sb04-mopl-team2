@@ -55,6 +55,11 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'com.h2database:h2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
 
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'  // ✅ JPA용 Querydsl
     annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta' // ✅ Q클래스 생성기

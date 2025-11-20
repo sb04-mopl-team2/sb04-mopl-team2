@@ -1,4 +1,4 @@
-package com.codeit.mopl.notification;
+package com.codeit.mopl.domain.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

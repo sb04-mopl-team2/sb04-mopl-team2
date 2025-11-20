@@ -1,17 +1,18 @@
-package com.codeit.mopl.exception.review;
+package com.codeit.mopl.exception.follow;
 
 import com.codeit.mopl.exception.global.ErrorCodeInterface;
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-public enum ReviewErrorCode implements ErrorCodeInterface {
-    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
-    REVIEW_FORBIDDEN(HttpStatus.FORBIDDEN, "리뷰에 대한 권한이 없습니다."),
-    REVIEW_DUPLICATED(HttpStatus.FORBIDDEN, "리뷰는 한 사람당 한 개만 작성할 수 있습니다.");
+@Getter
+public enum FollowErrorCode implements ErrorCodeInterface {
+    FOLLOW_SELF_PROHIBITED(HttpStatus.BAD_REQUEST, "자기 자신을 팔로우할 수 없습니다."),
+    FOLLOW_DUPLICATE(HttpStatus.BAD_REQUEST, "같은 사용자를 중복해서 팔로우할 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;
 
-    ReviewErrorCode(HttpStatus status, String message) {
+    FollowErrorCode(HttpStatus status, String message) {
         this.status = status;
         this.message = message;
     }

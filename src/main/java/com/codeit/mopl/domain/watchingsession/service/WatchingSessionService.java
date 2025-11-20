@@ -47,7 +47,6 @@ public class WatchingSessionService {
     return watchingSessionMapper.toDto(watchingSession);
   }
 
-  // TODO : contentSummary 관련 코드 수정 (대문자)
   @Transactional(readOnly = true)
   public CursorResponseWatchingSessionDto getWatchingSessions(
       UUID userId,
@@ -67,7 +66,8 @@ public class WatchingSessionService {
       throw new ContentNotFoundException(
           WatchingSessionErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId));
     }
-    int internalLimit = limit + 1;
+    int effectiveLimit = (limit != null) ? limit : 20;
+    int internalLimit = effectiveLimit + 1;
     List<WatchingSession> watchingSessions = watchingSessionRepository.findWatchingSessions(
         userId,
         contentId,
@@ -85,14 +85,14 @@ public class WatchingSessionService {
 
     String nextCursor = null;
     UUID nextIdAfter = null;
-    boolean hasNext = watchingSessions.size() > limit;
+    boolean hasNext = watchingSessions.size() > effectiveLimit;
     if (hasNext) {
       // get extra & get nextCursor, nextIdAfter
-      WatchingSession lastWatchingSession = watchingSessions.get(limit);
+      WatchingSession lastWatchingSession = watchingSessions.get(effectiveLimit);
       nextCursor = lastWatchingSession.getCreatedAt().toString();
       nextIdAfter = lastWatchingSession.getId();
       // remove the extra
-      watchingSessions.remove(limit);
+      watchingSessions.remove(effectiveLimit);
     }
 
     log.info(

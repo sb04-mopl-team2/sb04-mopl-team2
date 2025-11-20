@@ -21,8 +21,8 @@ public interface CustomWatchingSessionRepository {
   );
 
   long getWatcherCount(
-      UUID contentId,
       UUID userId,
+      UUID contentId,
       String watcherNameLike
   );
 

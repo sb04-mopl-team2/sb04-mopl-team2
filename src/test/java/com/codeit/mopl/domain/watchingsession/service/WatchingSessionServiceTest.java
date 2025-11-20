@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.watchingsession.service;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,6 +21,9 @@ import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.exception.watchingsession.ContentNotFoundException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,6 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 public class WatchingSessionServiceTest {
@@ -150,5 +155,61 @@ public class WatchingSessionServiceTest {
     verify(contentRepository, times(1)).existsById(contentId);
     verify(watchingSessionRepository, times(0)).getWatcherCount(contentId, userId, null);
     verify(watchingSessionMapper, times(0)).toDto(any());
+  }
+
+  @Test
+  @DisplayName("hasNext를 가진 특정 콘텐츠의 시청 세션 목록 조회 성공")
+  void getWithHasNextWatchingSessionSuccess() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID contentId = UUID.randomUUID();
+    User user2 = new User("test2@test.com", "pw", "test2");
+    // entity2 setup
+    WatchingSession entity2 = new WatchingSession();
+    entity2.setUser(user2);
+    entity2.setContent(content);
+    UUID entity2Id = UUID.randomUUID();
+    LocalDateTime entity2Time = LocalDateTime.now();
+    ReflectionTestUtils.setField(entity2, "id", entity2Id);
+    ReflectionTestUtils.setField(entity2, "createdAt", entity2Time);
+
+    List<WatchingSession> mutableList = new ArrayList<>();
+    mutableList.add(entity);
+    mutableList.add(entity2);
+
+    when(watchingSessionRepository.findWatchingSessions(
+        any(), any(), any(), any(), any(),
+        eq(2), // internal limit (1 + 1)
+        any(), any()
+    )).thenReturn(mutableList);
+
+    // mapper, count
+    WatchingSessionDto watchingSessionDto = mock(WatchingSessionDto.class);
+    when(contentRepository.existsById(contentId)).thenReturn(true);
+    when(watchingSessionMapper.toDto(entity)).thenReturn(watchingSessionDto);
+    when(watchingSessionRepository.getWatcherCount(contentId, userId, null)).thenReturn(2L);
+
+    // expected response
+    CursorResponseWatchingSessionDto expectedDto = new CursorResponseWatchingSessionDto(
+        List.of(watchingSessionDto),
+        entity2Time.toString(),
+        entity2Id,
+        true,
+        2L, SortBy.createdAt, SortDirection.ASCENDING
+    );
+
+    // when
+    CursorResponseWatchingSessionDto result = watchingSessionService.getWatchingSessions(
+        userId, contentId,
+        null, null, null,
+        1,
+        SortDirection.ASCENDING, SortBy.createdAt
+    );
+
+    // then
+    assertThat(result).usingRecursiveComparison().isEqualTo(expectedDto);
+    verify(watchingSessionRepository, times(1)).getWatcherCount(
+        contentId, userId, null);
+    verify(watchingSessionMapper, times(1)).toDto(any());
   }
 }

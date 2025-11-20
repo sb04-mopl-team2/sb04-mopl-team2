@@ -58,8 +58,8 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
 
     if (sortBy != null && sortDirection != null) {
       Order order = sortDirection.equals(SortDirection.DESCENDING) ? Order.DESC : Order.ASC;
-      switch (sortBy.toString()) {
-        case "createdAt":
+      switch (sortBy) {
+        case CREATED_AT:
           orders.add(new OrderSpecifier<>(order, qnotification.createdAt));
           break;
       }
@@ -79,8 +79,8 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
 
     BooleanExpression condition  = null;
 
-    switch (sortBy.toString()) {
-      case "createdAt": {
+    switch (sortBy) {
+      case CREATED_AT: {
         if (sortDirection == SortDirection.DESCENDING) {
           condition = qnotification.createdAt.lt(cursorTime);
         }

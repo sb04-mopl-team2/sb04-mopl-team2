@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 
@@ -145,5 +146,46 @@ class FollowServiceTest {
         // when & then
         assertThatThrownBy(() -> followService.createFollow(request, followerId))
                 .isInstanceOf(UserNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("팔로워 증가 이벤트 처리 성공 테스트")
+    void increaseFollowerCount_Success() {
+        // given
+        UUID followId = UUID.randomUUID();
+        UUID followerId = UUID.randomUUID();
+        UUID followeeId = UUID.randomUUID();
+        FollowDto followDto = new FollowDto(followId, followerId, followeeId);
+
+        // when
+        followService.increaseFollowerCount(followDto);
+
+        // then
+        // repository 호출 여부만 검증
+        verify(userRepository, times(1))
+                .increaseFollowerCountByUserId(eq(followeeId));
+    }
+
+    @Test
+    @DisplayName("팔로워 증가 이벤트 처리 실패 - followDto가 null이 될 수 없음")
+    void increaseFollowerCount_FollowDtoNull_ThrowsException() {
+        // given
+
+        // when & then
+        assertThatThrownBy(() -> followService.increaseFollowerCount(null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("팔로워 증가 이벤트 처리 실패 - followeeId가 null이 될 수 없음")
+    void increaseFollowerCount_FolloweeIdNull_ThrowsException() {
+        // given
+        UUID followId = UUID.randomUUID();
+        UUID followerId = UUID.randomUUID();
+        FollowDto followDto = new FollowDto(followId, followerId, null);
+
+        // when & then
+        assertThatThrownBy(() -> followService.increaseFollowerCount(followDto))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

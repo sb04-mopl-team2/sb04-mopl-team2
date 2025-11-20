@@ -39,7 +39,7 @@ public class PlaylistService {
         log.info("[플레이리스트] 플레이리스트 생성 시작");
         User user = userRepository.findById(ownerId)
                 .orElseThrow(() -> {
-                    log.warn("[플레이리스트] 유저 검증 실패 - 유저 ID={}", ownerId);
+                    log.warn("[플레이리스트] 유저 검증 실패 - userId = {}", ownerId);
                     return new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", ownerId));
                 });
 

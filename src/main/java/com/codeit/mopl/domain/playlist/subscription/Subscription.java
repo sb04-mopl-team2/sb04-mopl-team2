@@ -7,17 +7,17 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "playlist_subscriptions",
         uniqueConstraints = @UniqueConstraint(columnNames = {"playlist_id", "subscriber_id"}))
+@Builder
 public class Subscription extends UpdatableEntity {
 
     @ManyToOne

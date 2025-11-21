@@ -10,8 +10,10 @@ import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
+import com.codeit.mopl.exception.follow.FollowDtoIsNullException;
 import com.codeit.mopl.exception.follow.FollowDuplicateException;
 import com.codeit.mopl.exception.follow.FollowSelfProhibitedException;
+import com.codeit.mopl.exception.user.UserIdIsNullException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,10 +30,10 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -182,7 +184,7 @@ class FollowServiceTest {
 
         // when & then
         assertThatThrownBy(() -> followService.increaseFollowerCount(null))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(FollowDtoIsNullException.class);
     }
 
     @Test

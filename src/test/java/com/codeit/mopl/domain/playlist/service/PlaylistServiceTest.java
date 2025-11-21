@@ -12,7 +12,6 @@ import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
-import com.codeit.mopl.exception.playlist.PlaylistException;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
 import com.codeit.mopl.exception.playlist.PlaylistUpdateForbiddenException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
@@ -388,7 +387,7 @@ public class PlaylistServiceTest {
 
         @Test
         @DisplayName("요청자가 플레이리스트 owner가 아닐 때 예외 발생 및 삭제 실패")
-        void shouldThrowExceptionWhenUserNotAuthorized() {
+        void shouldThrowExceptionWhenUserUnauthorized() {
             //given
             UUID playlistId = UUID.randomUUID();
             UUID ownerId = UUID.randomUUID();

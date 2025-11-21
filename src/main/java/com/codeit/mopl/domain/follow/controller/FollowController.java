@@ -32,6 +32,16 @@ public class FollowController {
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
+    @GetMapping("/followed-by-me")
+    public ResponseEntity<Boolean> isFollowedByMe(@RequestParam("followeeId") UUID followeeId,
+                                                  @AuthenticationPrincipal CustomUserDetails follower) {
+        UUID followerId = follower.getUser().id();
+        log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 요청 시작 - followerId: {}, followeeId: {} ", followerId, followeeId);
+        boolean isFollowed = followService.isFollowedByMe(followerId, followeeId);
+        log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 요청 응답 - followerId: {}, followeeId: {}, isFollowed: {}", followerId, followeeId, isFollowed);
+        return ResponseEntity.status(HttpStatus.OK).body(isFollowed);
+    }
+
     @GetMapping("/count")
     public ResponseEntity<Long> getFollowerCount(@RequestParam("followeeId") UUID followeeId,
                                                  @AuthenticationPrincipal CustomUserDetails userDetails) {

@@ -1,5 +1,7 @@
 package com.codeit.mopl.domain.playlist.subscription.service;
 
+import com.codeit.mopl.domain.notification.entity.Level;
+import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.playlist.subscription.Subscription;
@@ -29,6 +31,7 @@ public class SubscriptionService {
     private final SubscriptionRepository subscriptionRepository;
     private final PlaylistRepository playlistRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public void subscribe(UUID playlistId, UUID subscriberId) {
         LocalDateTime subscribedAt = LocalDateTime.now();
@@ -46,7 +49,9 @@ public class SubscriptionService {
                     return new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", subscriberId));
                 });
 
-        if (playlist.getUser().getId().equals(subscriberId)) {
+        UUID ownerId = playlist.getUser().getId();
+
+        if (ownerId == subscriberId) {
             log.warn("[플레이리스트] 플레이리스트 구독 처리 실패 - 본인의 플레이리스트는 구독할 수 없음 - playlistId = {}", playlistId);
             throw SubscriptionSelfProhibitedException.withId(playlistId,subscriberId);
         }
@@ -59,6 +64,13 @@ public class SubscriptionService {
         Subscription subscription = new Subscription(playlist, subscriber, subscribedAt);
         log.info("[플레이리스트] 플레이리스트 구독 처리 완료 - playlistId = {}, subscriberId = {}", playlistId, subscriberId);
         subscriptionRepository.save(subscription);
+
+        // 플레이리스트 소유자에게 알림을 생성함(동기 처리)
+        String title = "플레이리스트에 새로운 구독자 알림";
+        String content = String.format("%s님이 '%s' 플레이리스트를 구독했어요.",
+                subscriber.getName(), playlist.getTitle());
+        notificationService.createNotification(ownerId, title, content, Level.INFO);
+        log.info("[플레이리스트] 플레이리스트 구독 알림 생성 - playlistId = {}, subscriberId = {}", playlistId, subscriberId);
     }
 
     public void unsubscribe(UUID playlistId, UUID subscriberId) {

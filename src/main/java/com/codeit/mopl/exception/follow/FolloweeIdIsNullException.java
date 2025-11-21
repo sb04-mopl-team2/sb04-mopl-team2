@@ -8,7 +8,7 @@ public class FolloweeIdIsNullException extends FollowException {
     }
 
     public static FolloweeIdIsNullException withClassName(String className) {
-        Map<String, Object> details = Map.of("eventType", className);
+        Map<String, Object> details = Map.of("className", className);
         return new FolloweeIdIsNullException(details);
     }
 }

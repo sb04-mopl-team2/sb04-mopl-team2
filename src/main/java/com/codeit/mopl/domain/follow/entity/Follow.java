@@ -35,5 +35,4 @@ public class Follow extends BaseEntity {
         this.follower = follower;
         this.followee = followee;
     }
-
 }

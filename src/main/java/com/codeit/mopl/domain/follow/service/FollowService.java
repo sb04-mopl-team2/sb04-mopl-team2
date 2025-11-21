@@ -79,6 +79,17 @@ public class FollowService {
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
     }
 
+    @Transactional(readOnly = true)
+    public boolean isFollowedByMe(UUID followerId, UUID followeeId) {
+        log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 시작 - followerId: {}, followeeId: {}", followerId, followeeId);
+        if (!userRepository.existsById(followeeId)) {
+            throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", followeeId));
+        }
+        boolean isFollowed = followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
+        log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 완료 - followerId: {}, followeeId: {}, isFollowed: {}", followerId, followeeId, isFollowed);
+        return isFollowed;
+    }
+
     private User getUserById(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));

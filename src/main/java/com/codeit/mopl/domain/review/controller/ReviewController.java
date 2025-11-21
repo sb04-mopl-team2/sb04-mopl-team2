@@ -69,7 +69,6 @@ public class ReviewController {
     return ResponseEntity.ok(reviewDto);
   }
 
-
   @PatchMapping("/{reviewId}")
   public ResponseEntity<ReviewDto> updateReview(
       @PathVariable("reviewId") UUID reviewId,

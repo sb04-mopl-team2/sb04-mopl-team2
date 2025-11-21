@@ -123,6 +123,11 @@ public class FollowService {
     public void decreaseFollowerCount(UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 시작 - followeeId: {}", followeeId);
         User followee = getUserById(followeeId);
+        long followerCount = followee.getFollowerCount();
+        if (followerCount <= 0) {
+            log.error("[팔로우 관리] 팔로우 감소 이벤트 처리 중단 - 팔로워 수가 0이하 입니다. followeeId: {}, followerCount: {}", followeeId, followerCount);
+            throw new FollowerCountCannotBeNegativeException(Map.of("followeeId", followeeId, "followerCount", followerCount));
+        }
         followee.decreaseFollowerCount();
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 완료 - followeeId: {}", followeeId);
     }

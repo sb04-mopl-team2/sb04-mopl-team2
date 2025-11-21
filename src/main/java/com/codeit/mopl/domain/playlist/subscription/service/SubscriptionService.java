@@ -9,6 +9,7 @@ import com.codeit.mopl.domain.playlist.subscription.repository.SubscriptionRepos
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
+import com.codeit.mopl.exception.playlist.subscription.SubscriptionDuplicateException;
 import com.codeit.mopl.exception.playlist.subscription.SubscriptionNotFoundException;
 import com.codeit.mopl.exception.playlist.subscription.SubscriptionSelfProhibitedException;
 import com.codeit.mopl.exception.user.UserErrorCode;
@@ -51,14 +52,14 @@ public class SubscriptionService {
 
         UUID ownerId = playlist.getUser().getId();
 
-        if (ownerId == subscriberId) {
+        if (ownerId.equals(subscriberId)) {
             log.warn("[플레이리스트] 플레이리스트 구독 처리 실패 - 본인의 플레이리스트는 구독할 수 없음 - playlistId = {}", playlistId);
             throw SubscriptionSelfProhibitedException.withId(playlistId,subscriberId);
         }
 
         if (subscriptionRepository.existsBySubscriberIdAndPlaylistId(subscriberId,playlistId)) {
             log.warn("[플레이리스트] 플레이리스트 구독 처리 실패 - 이미 구독 내역이 존재함 - playlistId = {}, subscriberId = {}", playlistId, subscriberId);
-            throw SubscriptionSelfProhibitedException.withId(playlistId,subscriberId);
+            throw SubscriptionDuplicateException.withId(playlistId,subscriberId);
         }
 
         Subscription subscription = new Subscription(playlist, subscriber, subscribedAt);

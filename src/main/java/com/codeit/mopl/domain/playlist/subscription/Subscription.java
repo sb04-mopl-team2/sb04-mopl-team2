@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "playlist_subscriptions",
         uniqueConstraints = @UniqueConstraint(columnNames = {"playlist_id", "subscriber_id"}))

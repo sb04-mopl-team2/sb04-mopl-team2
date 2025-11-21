@@ -1,6 +1,8 @@
 package com.codeit.mopl.domain.playlist.subscription;
 
 import com.codeit.mopl.domain.base.BaseEntity;
+import com.codeit.mopl.domain.notification.entity.Level;
+import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.playlist.subscription.repository.SubscriptionRepository;
@@ -8,8 +10,8 @@ import com.codeit.mopl.domain.playlist.subscription.service.SubscriptionService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
+import com.codeit.mopl.exception.playlist.subscription.SubscriptionDuplicateException;
 import com.codeit.mopl.exception.playlist.subscription.SubscriptionNotFoundException;
-import com.codeit.mopl.exception.playlist.subscription.SubscriptionSelfProhibitedException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -35,6 +38,7 @@ public class SubscriptionServiceTest {
     @Mock private SubscriptionRepository subscriptionRepository;
     @Mock private PlaylistRepository playlistRepository;
     @Mock private UserRepository userRepository;
+    @Mock private NotificationService notificationService;
     @InjectMocks private SubscriptionService subscriptionService;
 
     @Nested
@@ -49,6 +53,7 @@ public class SubscriptionServiceTest {
             UUID subscriberId = UUID.randomUUID();
             User subscriber = new User();
             setId(subscriber, subscriberId);
+            subscriber.setName("구독자");
 
             UUID ownerId = UUID.randomUUID();
             User owner = new User();
@@ -57,10 +62,14 @@ public class SubscriptionServiceTest {
             UUID playlistId = UUID.randomUUID();
             Playlist playlist = Playlist.builder()
                     .user(owner)
+                    .title("테스트 플레이리스트")
+                    .subscriberCount(0)
                     .build();
 
             given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
             given(userRepository.findById(subscriberId)).willReturn(Optional.ofNullable(subscriber));
+            given(subscriptionRepository.existsBySubscriberIdAndPlaylistId(subscriberId,playlistId))
+                    .willReturn(false);
 
             Subscription saved = Subscription.builder()
                     .playlist(playlist)
@@ -75,7 +84,15 @@ public class SubscriptionServiceTest {
             //then
             verify(playlistRepository).findById(playlistId);
             verify(userRepository).findById(subscriberId);
+            verify(subscriptionRepository).existsBySubscriberIdAndPlaylistId(subscriberId,playlistId);
             verify(subscriptionRepository).save(any(Subscription.class));
+            playlistRepository.save(playlist);
+            verify(notificationService).createNotification( // 추가: 알림 생성
+                    eq(ownerId),
+                    eq("플레이리스트에 새로운 구독자 알림"),
+                    any(String.class),
+                    eq(Level.INFO)
+            );
         }
 
         @Test
@@ -91,6 +108,8 @@ public class SubscriptionServiceTest {
                     () -> subscriptionService.subscribe(nonExistentPlaylistId, subscriberId));
             verify(playlistRepository).findById(nonExistentPlaylistId);
             verify(subscriptionRepository,never()).save(any());
+            verify(playlistRepository,never()).save(any(Playlist.class));
+            verify(notificationService,never()).createNotification(any(), any(), any(), any());
         }
 
         @Test
@@ -115,11 +134,13 @@ public class SubscriptionServiceTest {
             given(subscriptionRepository.existsBySubscriberIdAndPlaylistId(subscriberId, playlistId))
                     .willReturn(true);
             // when & then
-            assertThrows(SubscriptionSelfProhibitedException.class,
+            assertThrows(SubscriptionDuplicateException.class,
                     () -> subscriptionService.subscribe(playlistId, subscriberId));
             verify(playlistRepository).findById(playlistId);
             verify(userRepository).findById(subscriberId);
             verify(subscriptionRepository, never()).save(any());
+            verify(playlistRepository, never()).save(any(Playlist.class));
+            verify(notificationService, never()).createNotification(any(), any(), any(), any());
         }
     }
 
@@ -134,6 +155,7 @@ public class SubscriptionServiceTest {
             Playlist playlist = new Playlist();
             setId(playlist, playlistId);
             playlist.setUser(new User());
+            playlist.setSubscriberCount(1);
 
             UUID subscriberId = UUID.randomUUID();
             User subscriber = new User();
@@ -154,6 +176,7 @@ public class SubscriptionServiceTest {
             //then
             verify(subscriptionRepository).findBySubscriberIdAndPlaylistId(subscriberId, playlistId);
             verify(subscriptionRepository).delete(subscription);
+            verify(playlistRepository).save(playlist);
             verify(subscriptionRepository, never()).save(any(Subscription.class));
         }
 
@@ -163,6 +186,8 @@ public class SubscriptionServiceTest {
             //given
             UUID playlistId = UUID.randomUUID();
             UUID subscriberId = UUID.randomUUID();
+            given(subscriptionRepository.findBySubscriberIdAndPlaylistId(subscriberId, playlistId))
+                    .willReturn(Optional.empty());
 
             //when & then
             assertThrows(SubscriptionNotFoundException.class,

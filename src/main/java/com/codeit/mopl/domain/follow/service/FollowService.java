@@ -10,6 +10,7 @@ import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
+import com.codeit.mopl.exception.follow.FollowDtoIsNullException;
 import com.codeit.mopl.exception.follow.FollowDuplicateException;
 import com.codeit.mopl.exception.follow.FollowSelfProhibitedException;
 import com.codeit.mopl.exception.user.UserErrorCode;
@@ -68,7 +69,7 @@ public class FollowService {
     @Transactional
     public void increaseFollowerCount(FollowDto followDto) {
         if (followDto == null) {
-            throw new IllegalArgumentException("FollowDto must not be null");
+            throw FollowDtoIsNullException.withDetails();
         }
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followDto: {}", followDto);
         UUID followeeId = followDto.followeeId();
@@ -99,7 +100,7 @@ public class FollowService {
 
     private User getUserById(UUID userId) {
         if (userId == null) {
-            throw new UserIdIsNullException(UserErrorCode.USER_ID_IS_NULL, Map.of());
+            throw new UserIdIsNullException(UserErrorCode.USER_ID_IS_NULL, Map.of("userId", "null"));
         }
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));

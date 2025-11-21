@@ -5,6 +5,8 @@ import com.codeit.mopl.domain.watchingsession.dto.ContentChatDto;
 import com.codeit.mopl.domain.watchingsession.entity.ContentChatSendRequest;
 import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
 import com.codeit.mopl.security.CustomUserDetails;
+import jakarta.validation.Valid;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -27,8 +29,8 @@ public class ChatController {
   // (adds /pub) client -> server
   // 엔드포인트: SEND /pub/contents/{contentId}/chat
   @MessageMapping("/contents/{contentId}/chat")
-  public void sendChat(@DestinationVariable String contentId,
-                       @Payload ContentChatSendRequest contentChatSendRequest,
+  public void sendChat(@DestinationVariable UUID contentId,
+                       @Valid @Payload ContentChatSendRequest contentChatSendRequest,
                        @AuthenticationPrincipal CustomUserDetails principal
   ) {
     UserDto userDto = principal.getUser();

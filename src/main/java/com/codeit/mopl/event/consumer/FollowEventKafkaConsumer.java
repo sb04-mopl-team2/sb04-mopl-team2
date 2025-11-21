@@ -34,7 +34,7 @@ public class FollowEventKafkaConsumer {
             FollowDto followDto = event.followDto();
 
             try {
-                processedEventRepository.save(new ProcessedEvent(followDto.id(), EventType.NOTIFICATION_CREATED));
+                processedEventRepository.save(new ProcessedEvent(followDto.id(), EventType.FOLLOWER_INCREASE));
             } catch (DataIntegrityViolationException e) {
                 log.warn("[Kafka] 이미 처리된 팔로워 증가 이벤트입니다. eventId={}", followDto.id());
                 ack.acknowledge();

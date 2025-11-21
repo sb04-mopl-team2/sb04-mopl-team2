@@ -1,0 +1,32 @@
+package com.codeit.mopl.exception.content;
+
+import com.codeit.mopl.exception.global.ErrorCodeInterface;
+import org.springframework.http.HttpStatus;
+
+public enum ContentErrorCode implements ErrorCodeInterface {
+  CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "콘텐츠를 찾을 수 없습니다."),
+  INVALID_CONTENT_ID(HttpStatus.BAD_REQUEST, "유효하지 않은 콘텐츠 ID입니다.");
+
+  private final HttpStatus status;
+  private final String message;
+
+  ContentErrorCode(HttpStatus status, String message) {
+    this.status = status;
+    this.message = message;
+  }
+
+  @Override
+  public String getName() {
+    return this.name();
+  }
+
+  @Override
+  public String getMessage() {
+    return message;
+  }
+
+  @Override
+  public HttpStatus getStatus() {
+    return status;
+  }
+}

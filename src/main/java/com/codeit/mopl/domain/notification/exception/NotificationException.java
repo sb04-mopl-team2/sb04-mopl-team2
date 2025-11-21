@@ -1,7 +1,7 @@
 package com.codeit.mopl.domain.notification.exception;
 
 
-import com.codeit.mopl.exception.notification.ErrorCode;
+import com.codeit.mopl.exception.notification.NotificationErrorCode;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,20 +11,20 @@ import lombok.Getter;
 public class NotificationException extends RuntimeException {
 
     private final Instant timestamp;
-    private final ErrorCode errorCode;
+    private final NotificationErrorCode notificationErrorCode;
     private final Map<String, Object> details;
 
-    public NotificationException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
+    public NotificationException(NotificationErrorCode notificationErrorCode) {
+        super(notificationErrorCode.getMessage());
         this.timestamp = Instant.now();
-        this.errorCode = errorCode;
+        this.notificationErrorCode = notificationErrorCode;
         this.details = new HashMap<>();
     }
 
-    public NotificationException(ErrorCode errorCode, Throwable cause) {
-        super(errorCode.getMessage(), cause);
+    public NotificationException(NotificationErrorCode notificationErrorCode, Throwable cause) {
+        super(notificationErrorCode.getMessage(), cause);
         this.timestamp = Instant.now();
-        this.errorCode = errorCode;
+        this.notificationErrorCode = notificationErrorCode;
         this.details = new HashMap<>();
     }
 

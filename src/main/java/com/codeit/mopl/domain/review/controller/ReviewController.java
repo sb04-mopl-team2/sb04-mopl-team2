@@ -11,9 +11,12 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -75,10 +78,23 @@ public class ReviewController {
   ) {
     log.info("[리뷰] 리뷰 수정 요청 시작, userId = {}, reviewId = {}", user.getUser().id(), reviewId);
 
-    UUID userId = user.getUser().id();
-    ReviewDto reviewDto = reviewService.updateReview(userId, reviewId, request.text(), request.rating());
+    ReviewDto reviewDto = reviewService.updateReview(user.getUser().id(), reviewId, request.text(), request.rating());
 
     log.info("[리뷰] 리뷰 수정 요청 종료, userId = {}, reviewId = {}", user.getUser().id(), reviewId);
     return ResponseEntity.ok(reviewDto);
+  }
+
+
+  @DeleteMapping("/{reviewId}")
+  public ResponseEntity<Void> deleteReview(
+      @PathVariable("reviewId") UUID reviewId,
+      @AuthenticationPrincipal CustomUserDetails user
+  ) {
+    log.info("[리뷰] 리뷰 삭제 요청 시작, userId = {}, reviewId = {}", user.getUser().id(), reviewId);
+    reviewService.deleteReview(user.getUser().id(), reviewId);
+    log.info("[리뷰] 리뷰 삭제 요청 종료, userId = {}, reviewId = {}", user.getUser().id(), reviewId);
+    return ResponseEntity
+        .status(HttpStatus.NO_CONTENT)
+        .build();
   }
 }

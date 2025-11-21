@@ -1,21 +1,24 @@
 package com.codeit.mopl.event.listener;
 
+import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
+import com.codeit.mopl.exception.follow.FolloweeIdIsNullException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.slf4j.MDC;
-import org.springframework.context.event.EventListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -33,6 +36,16 @@ public class KafkaEventListener {
         .orElse(null);
 
     send("mopl-notification-create", key, event);
+  }
+
+  @Async("taskExecutor")
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void on(FollowerIncreaseEvent event) {
+    UUID followeeId = event.followDto().followeeId();
+    String key = Optional.ofNullable(followeeId)
+            .map(Object::toString)
+            .orElseThrow(() -> FolloweeIdIsNullException.withClassName(this.getClass().getSimpleName()));
+    send("mopl-follower-increase", key, event);
   }
 
   private void send(String topic, String key, Object payload) {

@@ -16,6 +16,7 @@ import com.codeit.mopl.exception.review.ReviewErrorCode;
 import com.codeit.mopl.exception.review.ReviewNotFoundException;
 import com.codeit.mopl.exception.review.ReviewUnauthorizedException;
 import com.codeit.mopl.exception.user.UserErrorCode;
+import com.codeit.mopl.exception.review.ReviewForbiddenException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -54,9 +55,9 @@ public class ReviewService {
 
     Review review = getValidReviewByReviewId(reviewId);
     if (!review.getUser().getId().equals(userId)) {
-      log.warn("[리뷰] 리뷰를 수정할 권한이 없습니다. reviewId = {}", review.getId());
-      throw new ReviewUnauthorizedException(
-          ReviewErrorCode.REVIEW_UNAUTHORIZED, Map.of("reviewId", review.getId()));
+      log.warn("[리뷰] 리뷰를 수정할 권한이 없습니다. reviewId = {}", reviewId);
+      throw new ReviewForbiddenException(
+          ReviewErrorCode.REVIEW_FORBIDDEN, Map.of("reviewId", reviewId));
     }
     review.setText(text);
     review.setRating(rating);
@@ -64,6 +65,20 @@ public class ReviewService {
 
     log.info("[리뷰] 리뷰 수정 종료, reviewId = {}", reviewId);
     return reviewMapper.toDto(review);
+  }
+  
+  @Transactional
+  public void deleteReview(UUID userId, UUID reviewId) {
+    log.info("[리뷰] 리뷰 삭제 시작, userId = {}, reviewId = {}", userId, reviewId);
+    Review review = getValidReviewByReviewId(reviewId);
+    if (!review.getUser().getId().equals(userId)) {
+      log.warn("[리뷰] 리뷰를 삭제할 권한이 없습니다. reviewId = {}", reviewId);
+      throw new ReviewForbiddenException(
+          ReviewErrorCode.REVIEW_FORBIDDEN, Map.of("reviewId", reviewId));
+    }
+    review.setIsDeleted(true);
+    reviewRepository.save(review);
+    log.info("[리뷰] 리뷰 삭제 종료, reviewId = {}", reviewId);
   }
 
   public CursorResponseReviewDto findReviews(

@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.playlist.controller;
 
 import co.elastic.clients.elasticsearch.security.get_token.AuthenticatedUser;
 import com.codeit.mopl.domain.playlist.dto.*;
+import com.codeit.mopl.domain.playlist.playlistitem.service.PlaylistItemService;
 import com.codeit.mopl.domain.playlist.service.PlaylistService;
 import com.codeit.mopl.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import java.util.UUID;
 @RequestMapping("/api/playlists")
 public class PlaylistController {
     private final PlaylistService playlistService;
+    private final PlaylistItemService playlistItemService;
 
     @PostMapping
     public ResponseEntity<PlaylistDto> createPlaylist(
@@ -67,6 +69,27 @@ public class PlaylistController {
         log.info("[플레이리스트] 플레이리스트 삭제 요청 - playlistId = {}, userId = {}", playlistId, loginUser.getUser().id());
         playlistService.deletePlaylist(playlistId, loginUser.getUser().id());
         log.info("[플레이리스트] 플레이리스트 삭제 응답 - playlistId = {}", playlistId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{playlistId}/contents/{contentId}")
+    public ResponseEntity<Void> addContentToPlaylist(@PathVariable UUID playlistId,
+                                                     @PathVariable UUID contentId,
+                                                     @AuthenticationPrincipal CustomUserDetails loginUser) {
+        log.info("[플레이리스트] 플레이리스트에 콘텐츠 추가 요청 - playlistId = {}, contentId = {}, userId = {}",
+                playlistId, contentId, loginUser.getUser().id());
+        playlistItemService.addContent(playlistId, contentId, loginUser.getUser().id());
+        log.info("[플레이리스트] 플레이리스트 콘텐츠 추가 응답 - playlistId = {}, contentId = {}", playlistId, contentId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{playlistId}/contents/{contentId}")
+    public ResponseEntity<Void> deleteContentFromPlaylist(@PathVariable UUID playlistId,
+                                                          @PathVariable UUID contentId,
+                                                          @AuthenticationPrincipal CustomUserDetails loginUser) {
+        log.info("[플레이리스트] 플레이리스트에서 콘텐츠 삭제 요청 - playlistId = {}, contentId = {}, userId = {}", playlistId, contentId, loginUser.getUser().id());
+        playlistItemService.deleteContent(playlistId, contentId, loginUser.getUser().id());
+        log.info("[플레이리스트] 플레이리스트에서 콘텐츠 삭제 응답 - playlistId = {}, contentId = {}", playlistId, contentId);
         return ResponseEntity.ok().build();
     }
 }

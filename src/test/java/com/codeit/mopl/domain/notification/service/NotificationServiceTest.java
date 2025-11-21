@@ -1,13 +1,4 @@
-package com.codeit.mopl.notification;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+package com.codeit.mopl.domain.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -84,7 +75,7 @@ class NotificationServiceTest {
     this.idAfter = null;
     this.limit = 3;
     this.sortDirection = SortDirection.DESCENDING;
-    this.sortBy = SortBy.createdAt;
+    this.sortBy = SortBy.CREATED_AT;
   }
 
   @Test
@@ -106,7 +97,7 @@ class NotificationServiceTest {
     assertThat(result.nextIdAfter()).isNull();
     assertThat(result.hasNext()).isFalse();
     assertThat(result.totalCount()).isZero();
-    assertThat(result.sortBy()).isEqualTo(SortBy.createdAt);
+    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT);
     assertThat(result.sortDirection()).isEqualTo(SortDirection.DESCENDING);
 
     verify(notificationRepository, never())

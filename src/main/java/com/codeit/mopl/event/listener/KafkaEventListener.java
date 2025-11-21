@@ -17,6 +17,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,7 +45,7 @@ public class KafkaEventListener {
     UUID followeeId = event.followDto().followeeId();
     String key = Optional.ofNullable(followeeId)
             .map(Object::toString)
-            .orElseThrow(() -> FollowEventMissingFolloweeIdException.withId(followeeId));
+            .orElseThrow(() -> new FollowEventMissingFolloweeIdException(Map.of()));
     send("mopl-follower-increase", key, event);
   }
 

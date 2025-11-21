@@ -66,7 +66,7 @@ public class ReviewService {
     log.info("[리뷰] 리뷰 수정 종료, reviewId = {}", reviewId);
     return reviewMapper.toDto(review);
   }
-  
+
   @Transactional
   public void deleteReview(UUID userId, UUID reviewId) {
     log.info("[리뷰] 리뷰 삭제 시작, userId = {}, reviewId = {}", userId, reviewId);
@@ -92,8 +92,6 @@ public class ReviewService {
     List<Review> reviewList =
         reviewRepository.searchReview(contentId, cursor, idAfter, limit, sortDirection, sortBy);
 
-    String sortByValue = (sortBy != null) ? sortBy.toString() : null;
-
     if (reviewList.isEmpty()) {
       CursorResponseReviewDto dto = new CursorResponseReviewDto(
           List.of(),
@@ -101,8 +99,8 @@ public class ReviewService {
           null,
           false,
           0L,
-          sortByValue,
-          sortDirection
+          sortBy.toString(),
+          sortDirection.toString()
       );
 
       log.info("[리뷰] 리뷰 조회 종료, contentId = {}, reviewListSize = {}, hasNext = {}, totalCount = {}",
@@ -135,8 +133,8 @@ public class ReviewService {
         nextIdAfter,
         hasNext,
         totalCount,
-        sortByValue,
-        sortDirection
+        sortBy.toString(),
+        sortDirection.toString()
     );
 
     log.info("[리뷰] 리뷰 조회 종료, contentId = {}, reviewListSize = {}, hasNext = {}, totalCount = {}",
@@ -144,7 +142,7 @@ public class ReviewService {
 
     return dto;
   }
-  
+
   private User getValidUserByUserId(UUID userId) {
     return userRepository.findById(userId)
         .orElseThrow(() -> {

@@ -98,12 +98,7 @@ public class FollowService {
         }
 
         followRepository.delete(follow);
-
-        // followerCount는 음수가 될 수 없음
-        User followee = follow.getFollowee();
         UUID followeeId = follow.getFollowee().getId();
-        long followerCount = followee.getFollowerCount();
-        detectFollowerCountIsNegative(followeeId, followerCount);
         eventPublisher.publishEvent(new FollowerDecreaseEvent(followeeId));
         log.info("[팔로우 관리] 팔로우 삭제 완료 - followId: {}", followId);
     }

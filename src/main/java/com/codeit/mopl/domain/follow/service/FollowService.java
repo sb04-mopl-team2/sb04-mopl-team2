@@ -9,9 +9,10 @@ import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
-import com.codeit.mopl.exception.follow.FollowDtoIsNullException;
 import com.codeit.mopl.exception.follow.FollowDuplicateException;
+import com.codeit.mopl.exception.follow.FollowNotFoundException;
 import com.codeit.mopl.exception.follow.FollowSelfProhibitedException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserIdIsNullException;
@@ -57,25 +58,13 @@ public class FollowService {
 
         Follow follow = new Follow(follower, followee);
         FollowDto dto = followMapper.toDto(followRepository.save(follow));
-        eventPublisher.publishEvent(new FollowerIncreaseEvent(dto));
+        eventPublisher.publishEvent(new FollowerIncreaseEvent(followeeId));
 
         // 알람 발행
         String title = getFollowNotificationTitle(follower.getName());
         notificationService.createNotification(followeeId, title, "", Level.INFO);
         log.info("[팔로우 관리] 팔로우 생성 완료 - id: {}", dto.id());
         return dto;
-    }
-
-    @Transactional
-    public void increaseFollowerCount(FollowDto followDto) {
-        if (followDto == null) {
-            throw FollowDtoIsNullException.withDetails();
-        }
-        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followDto: {}", followDto);
-        UUID followeeId = followDto.followeeId();
-        User followee = getUserById(followeeId);
-        followee.increaseFollowerCount();
-        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
     }
 
     @Transactional(readOnly = true)
@@ -96,6 +85,34 @@ public class FollowService {
         long followerCount = followee.getFollowerCount();
         log.info("[팔로우 관리] 팔로워 수 조회 완료 - followeeId: {}, followerCount: {}", followeeId, followerCount);
         return followerCount;
+    }
+
+    @Transactional
+    public void deleteFollow(UUID followId) {
+        log.info("[팔로우 관리] 팔로우 삭제 시작 - followId: {}", followId);
+        Follow follow = followRepository.findById(followId)
+                .orElseThrow(() -> FollowNotFoundException.withId(followId));
+        UUID followeeId = follow.getFollowee().getId();
+
+        followRepository.deleteById(followId);
+        eventPublisher.publishEvent(new FollowerDecreaseEvent(followeeId));
+        log.info("[팔로우 관리] 팔로우 삭제 완료 - followId: {}", followId);
+    }
+
+    @Transactional
+    public void increaseFollowerCount(UUID followeeId) {
+        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followeeId: {}", followeeId);
+        User followee = getUserById(followeeId);
+        followee.increaseFollowerCount();
+        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
+    }
+
+    @Transactional
+    public void decreaseFollowerCount(UUID followeeId) {
+        log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 시작 - followeeId: {}", followeeId);
+        User followee = getUserById(followeeId);
+        followee.decreaseFollowerCount();
+        log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 완료 - followeeId: {}", followeeId);
     }
 
     private User getUserById(UUID userId) {

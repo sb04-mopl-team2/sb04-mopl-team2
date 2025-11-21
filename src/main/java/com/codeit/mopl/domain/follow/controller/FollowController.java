@@ -51,4 +51,14 @@ public class FollowController {
         log.info("[팔로우 관리] 팔로워 수 조회 요청 응답 - userId: {}, followeeId: {}, followerCount: {}", userId, followeeId, followerCount);
         return ResponseEntity.status(HttpStatus.OK).body(followerCount);
     }
+
+    @DeleteMapping("/{followId}")
+    public ResponseEntity<Void> deleteFollow(@PathVariable("followId") UUID followId,
+                                             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        UUID userId = userDetails.getUser().id();
+        log.info("[팔로우 관리] 팔로우 삭제 요청 시작 - userId: {}, followId: {}", userId, followId);
+        followService.deleteFollow(followId);
+        log.info("[팔로우 관리] 팔로우 삭제 요청 응답 - userId: {}, followId: {}", userId, followId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 }

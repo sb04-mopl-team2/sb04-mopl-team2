@@ -66,7 +66,7 @@ public class UserControllerTest {
     private JpaMetamodelMappingContext jpaMappingContext;
 
     private static final UUID TEST_UUID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-    private static final UserDto USER_DTO = new UserDto(TEST_UUID,LocalDateTime.now(),"test@test.com","testName",null,Role.USER,null);
+    private static final UserDto USER_DTO = new UserDto(TEST_UUID,LocalDateTime.now(),"test@test.com","testName",null,Role.USER,false);
 
     @DisplayName("이메일, 비밀번호, 이름이 정상적으로 들어오면 회원가입을 시도한다.")
     @Test
@@ -359,7 +359,6 @@ public class UserControllerTest {
                 "ASCENDING",
                 "name"
         );
-        String content = om.writeValueAsString(request);
         UserDto userDto1 = UserFixture.createUserDto1();
         UserDto userDto2 = UserFixture.createUserDto2();
         UserDto userDto3 = UserFixture.createUserDto3();

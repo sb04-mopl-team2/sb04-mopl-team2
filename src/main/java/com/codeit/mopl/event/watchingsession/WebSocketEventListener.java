@@ -1,11 +1,12 @@
 package com.codeit.mopl.event.watchingsession;
 
+import com.codeit.mopl.domain.content.dto.response.ContentSummary;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
-import com.codeit.mopl.domain.watchingsession.entity.ChangeType;
+import com.codeit.mopl.domain.watchingsession.entity.enums.ChangeType;
 import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSessionChange;
@@ -115,7 +116,7 @@ public class WebSocketEventListener {
     messagingTemplate.convertAndSend(payloadDestination, watchingSessionChange);
   }
 
-  // ==================== helper methods
+  // ==================== helper methods ====================
   private User getUser(StompHeaderAccessor accessor, String sessionId) {
     Authentication authentication = (Authentication) accessor.getUser();
     if (authentication == null) {
@@ -143,6 +144,8 @@ public class WebSocketEventListener {
 
   private static WatchingSessionChange getWatchingSessionChange(
       WatchingSession savedWatchingSession, User user, ChangeType changeType, Long watcherCount) {
+    Content content = savedWatchingSession.getContent();
+
     return new WatchingSessionChange(
         changeType,
         new WatchingSessionDto(
@@ -152,6 +155,16 @@ public class WebSocketEventListener {
                 user.getId(),
                 user.getEmail(),
                 user.getProfileImageUrl()
+            ),
+            new ContentSummary(
+                content.getId(),
+                content.getContentType().getType(),
+                content.getTitle(),
+                content.getDescription(),
+                content.getThumbnailUrl(),
+                content.getTags(),
+                content.getAverageRating(),
+                content.getReviewCount()
             )
         ),
         watcherCount

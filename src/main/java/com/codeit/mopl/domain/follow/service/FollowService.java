@@ -97,16 +97,13 @@ public class FollowService {
             throw FollowDeleteForbiddenException.withIds(followId, followerId, requesterId);
         }
 
-        followRepository.deleteById(followId);
+        followRepository.delete(follow);
 
         // followerCount는 음수가 될 수 없음
         User followee = follow.getFollowee();
         UUID followeeId = follow.getFollowee().getId();
         long followerCount = followee.getFollowerCount();
-        if (followerCount <= 0) {
-            log.error("[팔로우 관리] 팔로우 감소 이벤트 발행 중단 - 팔로워 수가 0이하 입니다. followId: {}, followeeId: {}, followerCount: {}", followId, followeeId, followerCount);
-            throw FollowerCountCannotBeNegativeException.withFolloweeIdAndFollowerCount(followeeId, followerCount);
-        }
+        detectFollowerCountIsNegative(followeeId, followerCount);
         eventPublisher.publishEvent(new FollowerDecreaseEvent(followeeId));
         log.info("[팔로우 관리] 팔로우 삭제 완료 - followId: {}", followId);
     }
@@ -124,12 +121,16 @@ public class FollowService {
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 시작 - followeeId: {}", followeeId);
         User followee = getUserById(followeeId);
         long followerCount = followee.getFollowerCount();
-        if (followerCount <= 0) {
-            log.error("[팔로우 관리] 팔로우 감소 이벤트 처리 중단 - 팔로워 수가 0이하 입니다. followeeId: {}, followerCount: {}", followeeId, followerCount);
-            throw FollowerCountCannotBeNegativeException.withFolloweeIdAndFollowerCount(followeeId, followerCount);
-        }
+        detectFollowerCountIsNegative(followeeId, followerCount);
         followee.decreaseFollowerCount();
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 완료 - followeeId: {}", followeeId);
+    }
+
+    private void detectFollowerCountIsNegative(UUID followeeId, long followerCount) {
+        if (followerCount <= 0) {
+            log.error("[팔로우 관리] 팔로우 감소 중단 - 팔로워 수가 0이하 입니다. followeeId: {}, followerCount: {}", followeeId, followerCount);
+            throw FollowerCountCannotBeNegativeException.withFolloweeIdAndFollowerCount(followeeId, followerCount);
+        }
     }
 
     private User getUserById(UUID userId) {

@@ -1,7 +1,9 @@
 package com.codeit.mopl.domain.content.service;
 
-import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.request.ContentCreateRequest;
+import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
+import com.codeit.mopl.domain.content.dto.response.ContentDto;
+import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
@@ -29,6 +31,10 @@ public class ContentService {
     Content saveContent = contentRepository.save(content);
     Long watcherCount = getWatcherCount();
     return contentMapper.toDto(saveContent, watcherCount);
+  }
+
+  public CursorResponseContentDto findContents(ContentSearchRequest request) {
+    return contentRepository.findContents(request.toCondition());
   }
 
   //redis로 실시간 세션 관리 매서드 기능 완성후 추가 구현예정

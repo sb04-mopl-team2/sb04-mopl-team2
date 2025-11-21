@@ -48,4 +48,7 @@ public class Content extends UpdatableEntity {
 
   @Column(columnDefinition = "INTEGER DEFAULT 0")
   private Integer reviewCount = 0;
+
+  @Column(columnDefinition = "INTEGER DEFAULT 0")
+  private Integer watcherCount = 0;
 }

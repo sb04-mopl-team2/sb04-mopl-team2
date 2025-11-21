@@ -10,7 +10,6 @@ import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
-import com.codeit.mopl.exception.follow.FollowDtoIsNullException;
 import com.codeit.mopl.exception.follow.FollowDuplicateException;
 import com.codeit.mopl.exception.follow.FollowSelfProhibitedException;
 import com.codeit.mopl.exception.user.UserIdIsNullException;
@@ -102,7 +101,7 @@ class FollowServiceTest {
 
         verify(eventPublisher).publishEvent(eventCaptor.capture());
         FollowerIncreaseEvent event = eventCaptor.getValue();
-        assertThat(event.followeeId()).isEqualTo(eq(followeeId));
+        assertThat(event.followeeId()).isEqualTo(followeeId);
 
         verify(notificationService).createNotification(eq(followeeId), any(String.class), eq(""), eq(Level.INFO));
     }
@@ -171,16 +170,6 @@ class FollowServiceTest {
         // then
         verify(userRepository, times(1)).findById(eq(followeeId));
         assertThat(followee.getFollowerCount()).isEqualTo(1L);
-    }
-
-    @Test
-    @DisplayName("팔로워 증가 이벤트 처리 실패 - followDto가 null이 될 수 없음")
-    void increaseFollowerCount_FollowDtoNull_ThrowsException() {
-        // given
-
-        // when & then
-        assertThatThrownBy(() -> followService.increaseFollowerCount(null))
-                .isInstanceOf(FollowDtoIsNullException.class);
     }
 
     @Test

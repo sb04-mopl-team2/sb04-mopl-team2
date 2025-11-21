@@ -13,7 +13,7 @@ import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.entity.Notification;
-import com.codeit.mopl.domain.notification.entity.SortBy;
+import com.codeit.mopl.domain.notification.entity.NotificationSortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
 import com.codeit.mopl.domain.notification.exception.NotificationForbidden;
@@ -41,7 +41,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
-class NotificationServiceTest {
+class NotificationServiceUnitTest {
 
   @Mock
   private NotificationRepository notificationRepository;
@@ -66,7 +66,7 @@ class NotificationServiceTest {
   private UUID idAfter;
   private int limit;
   private SortDirection sortDirection;
-  private SortBy sortBy;
+  private NotificationSortBy notificationSortBy;
 
   @BeforeEach
   void setUpParams() {
@@ -75,7 +75,7 @@ class NotificationServiceTest {
     this.idAfter = null;
     this.limit = 3;
     this.sortDirection = SortDirection.DESCENDING;
-    this.sortBy = SortBy.CREATED_AT;
+    this.notificationSortBy = NotificationSortBy.CREATED_AT;
   }
 
   @Test
@@ -83,12 +83,12 @@ class NotificationServiceTest {
   void getNotifications_whenEmpty_shouldReturnEmptyResponse() {
     // given
     when(notificationRepository.searchNotifications(
-        userId, cursor, idAfter, limit, sortDirection, sortBy
+        userId, cursor, idAfter, limit, sortDirection, notificationSortBy
     )).thenReturn(Collections.emptyList());
 
     // when
     CursorResponseNotificationDto result = notificationService.getNotifications(
-        userId, cursor, idAfter, limit, sortDirection, sortBy
+        userId, cursor, idAfter, limit, sortDirection, notificationSortBy
     );
 
     // then
@@ -97,7 +97,7 @@ class NotificationServiceTest {
     assertThat(result.nextIdAfter()).isNull();
     assertThat(result.hasNext()).isFalse();
     assertThat(result.totalCount()).isZero();
-    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT);
+    assertThat(result.notificationSortBy()).isEqualTo(NotificationSortBy.CREATED_AT);
     assertThat(result.sortDirection()).isEqualTo(SortDirection.DESCENDING);
 
     verify(notificationRepository, never())
@@ -114,7 +114,7 @@ class NotificationServiceTest {
     List<Notification> notifications = Arrays.asList(n1, n2);
 
     when(notificationRepository.searchNotifications(
-        userId, cursor, idAfter, limit, sortDirection, sortBy
+        userId, cursor, idAfter, limit, sortDirection, notificationSortBy
     )).thenReturn(notifications);
 
     when(notificationMapper.toDto(n1)).thenReturn(createDtoFrom(n1));
@@ -126,7 +126,7 @@ class NotificationServiceTest {
 
     // when
     CursorResponseNotificationDto result = notificationService.getNotifications(
-        userId, cursor, idAfter, limit, sortDirection, sortBy
+        userId, cursor, idAfter, limit, sortDirection, notificationSortBy
     );
 
     // then
@@ -135,7 +135,7 @@ class NotificationServiceTest {
     assertThat(result.nextCursor()).isNull();
     assertThat(result.nextIdAfter()).isNull();
     assertThat(result.totalCount()).isEqualTo(totalCount);
-    assertThat(result.sortBy()).isEqualTo(sortBy);
+    assertThat(result.notificationSortBy()).isEqualTo(notificationSortBy);
     assertThat(result.sortDirection()).isEqualTo(sortDirection);
   }
 
@@ -150,7 +150,7 @@ class NotificationServiceTest {
     List<Notification> notifications = Arrays.asList(n4, n3, n2, n1);
 
     when(notificationRepository.searchNotifications(
-        userId, cursor, idAfter, limit, sortDirection, sortBy
+        userId, cursor, idAfter, limit, sortDirection, notificationSortBy
     )).thenReturn(notifications);
 
     when(notificationMapper.toDto(n4)).thenReturn(createDtoFrom(n4));
@@ -163,7 +163,7 @@ class NotificationServiceTest {
 
     // when
     CursorResponseNotificationDto result = notificationService.getNotifications(
-        userId, cursor, idAfter, limit, sortDirection, sortBy
+        userId, cursor, idAfter, limit, sortDirection, notificationSortBy
     );
 
     // then
@@ -171,7 +171,7 @@ class NotificationServiceTest {
     assertThat(result.nextCursor()).isEqualTo(n2.getCreatedAt().toString());
     assertThat(result.hasNext()).isTrue();
     assertThat(result.totalCount()).isEqualTo(totalCount);
-    assertThat(result.sortBy()).isEqualTo(sortBy);
+    assertThat(result.notificationSortBy()).isEqualTo(notificationSortBy);
     assertThat(result.sortDirection()).isEqualTo(sortDirection);
 
     verify(notificationRepository).countByUserIdAndStatus(userId, Status.UNREAD);

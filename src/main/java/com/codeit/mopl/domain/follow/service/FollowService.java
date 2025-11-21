@@ -11,6 +11,7 @@ import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
+import com.codeit.mopl.exception.follow.FollowDeleteForbiddenException;
 import com.codeit.mopl.exception.follow.FollowDuplicateException;
 import com.codeit.mopl.exception.follow.FollowNotFoundException;
 import com.codeit.mopl.exception.follow.FollowSelfProhibitedException;
@@ -88,10 +89,17 @@ public class FollowService {
     }
 
     @Transactional
-    public void deleteFollow(UUID followId) {
+    public void deleteFollow(UUID followId, UUID requesterId) {
         log.info("[팔로우 관리] 팔로우 삭제 시작 - followId: {}", followId);
         Follow follow = followRepository.findById(followId)
                 .orElseThrow(() -> FollowNotFoundException.withId(followId));
+        UUID followerId = follow.getFollower().getId();
+        
+        // 팔로우한 본인이 아니면 팔로우 삭제 불가능
+        if (!followerId.equals(requesterId)) {
+            throw FollowDeleteForbiddenException.withIds(followId, followerId, requesterId);
+        }
+
         UUID followeeId = follow.getFollowee().getId();
 
         followRepository.deleteById(followId);

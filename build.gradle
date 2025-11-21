@@ -40,6 +40,8 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
 
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'org.postgresql:postgresql'
@@ -67,6 +69,9 @@ dependencies {
 
     // s3
     implementation 'software.amazon.awssdk:s3:2.31.7'
+
+    // for security test
+    testImplementation 'org.springframework.security:spring-security-test'
 
 }
 

@@ -8,8 +8,8 @@ public class FollowerCountCannotBeNegativeException extends FollowException {
         super(FollowErrorCode.FOLLOWER_COUNT_CANNOT_BE_NEGATIVE, details);
     }
 
-    public static FollowerCountCannotBeNegativeException withId(UUID followId) {
-        Map<String, Object> details = Map.of("followId", followId);
+    public static FollowerCountCannotBeNegativeException withFolloweeIdAndFollowerCount(UUID followerId, long followerCount) {
+        Map<String, Object> details = Map.of("followerId", followerId, "followerCount", followerCount);
         return new FollowerCountCannotBeNegativeException(details);
     }
 }

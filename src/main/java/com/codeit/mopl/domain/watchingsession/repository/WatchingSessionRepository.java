@@ -5,9 +5,9 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface WatchingSessionRepository extends JpaRepository<WatchingSession, UUID> {
+public interface WatchingSessionRepository extends JpaRepository<WatchingSession, UUID>, CustomWatchingSessionRepository {
 
-  Optional<WatchingSession> getByUserId(UUID userId);
+  Optional<WatchingSession> findByUserId(UUID userId);
 
   Long countByContentId(UUID contentId);
 

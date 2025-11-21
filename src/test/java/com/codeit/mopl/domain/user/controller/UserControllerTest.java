@@ -394,7 +394,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.totalCount").value(users.size()));
     }
 
-    @DisplayName("test")
+    @DisplayName("ADMIN 권한이 없는 유저는 유저 목록 조회에 실패한다")
     @WithMockUser(roles = {"USER"})
     @Test
     void getAllUsersShouldFailWhenRequesterIsNotAdmin() throws Exception {

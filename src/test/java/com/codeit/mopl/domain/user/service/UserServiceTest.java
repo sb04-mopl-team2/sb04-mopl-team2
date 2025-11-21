@@ -324,6 +324,9 @@ public class UserServiceTest {
         CursorResponseUserDto response = userService.getAllUsers(request);
 
         // then
+        assertEquals(null, response.nextCursor());
+        assertEquals(null, response.nextIdAfter());
+        assertFalse(response.hasNext());
         assertEquals(3, response.totalCount());
     }
 

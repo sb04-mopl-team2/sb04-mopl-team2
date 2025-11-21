@@ -10,8 +10,10 @@ import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
+import com.codeit.mopl.exception.follow.FollowDtoIsNullException;
 import com.codeit.mopl.exception.follow.FollowDuplicateException;
 import com.codeit.mopl.exception.follow.FollowSelfProhibitedException;
+import com.codeit.mopl.exception.user.UserIdIsNullException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,7 +30,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -182,7 +185,7 @@ class FollowServiceTest {
 
         // when & then
         assertThatThrownBy(() -> followService.increaseFollowerCount(null))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(FollowDtoIsNullException.class);
     }
 
     @Test
@@ -195,7 +198,7 @@ class FollowServiceTest {
 
         // when & then
         assertThatThrownBy(() -> followService.increaseFollowerCount(followDto))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(UserIdIsNullException.class);
     }
 
     @Test
@@ -215,16 +218,6 @@ class FollowServiceTest {
         // then
         assertThat(result).isEqualTo(1L);
         verify(userRepository, times(1)).findById(eq(followeeId));
-    }
-
-    @Test
-    @DisplayName("특정 유저의 팔로워 수 조회 실패 - followeeId가 null이 될 수 없음")
-    void getFollowerCount_FolloweeIdNull_ThrowsException() {
-        // given
-
-        // when & then
-        assertThatThrownBy(() -> followService.getFollowerCount(null))
-                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

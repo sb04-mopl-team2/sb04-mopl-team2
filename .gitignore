@@ -42,3 +42,6 @@ out/
 *.env
 *.env.DS_Store
 .logs
+
+### dev 프로필 ###
+application-dev.yml

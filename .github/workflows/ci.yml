@@ -1,0 +1,44 @@
+name: ci.yml
+on:
+  pull_request:
+    branches:
+      - "develop"
+      - "main"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: JDK 17S
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'temurin'
+
+      - name: 테스트 권한 부여
+        run: chmod +x ./gradlew
+
+      - name: 빌드 (테스트 생략)
+        env:
+          AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_S3_PRESIGNED_URL_EXPIRATION: ${{ secrets.AWS_S3_PRESIGNED_URL_EXPIRATION }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_NAME: ${{ secrets.ADMIN_NAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+          ACCESS_TOKEN_EXPIRATION_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRATION_MINUTES }}
+          REFRESH_TOKEN_EXPIRATION_MINUTES: ${{ secrets.REFRESH_TOKEN_EXPIRATION_MINUTES }}
+        run: ./gradlew clean test -Dspring.profiles.active=test jacocoTestReport
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: build/reports/jacoco/test/jacocoTestReport.xml
+          fail_ci_if_error: true
+          verbose: true

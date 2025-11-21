@@ -1,12 +1,12 @@
 package com.codeit.mopl.domain.user.entity;
 
 import com.codeit.mopl.domain.base.UpdatableEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.Objects;
 
 @Entity
 @Table(name = "users")
@@ -14,5 +14,65 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class User extends UpdatableEntity {
+    @Column(nullable = false)
+    private String name;
 
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column
+    private String profileImageUrl;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    @Column
+    private boolean locked;
+
+    @Column(nullable = false, columnDefinition = "BIGINT DEFAULT 0")
+    private long followerCount = 0L;
+
+    public User(String email, String password, String name) {
+        this.email = email;
+        this.password = password;
+        this.name = name;
+        this.profileImageUrl = null;
+        this.role = Role.USER;
+        this.locked = false;
+    }
+
+    public void updateRole(Role role) {
+        this.role = role;
+    }
+
+    public void updateProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void updatePassword(String password) {
+        this.password = password;
+    }
+
+    public void updateLock(boolean locked) {
+        this.locked = locked;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof User user)) return false;
+        return getId() == user.getId();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
+    }
+
+    public void increaseFollowerCount() {
+        this.followerCount++;
+    }
 }

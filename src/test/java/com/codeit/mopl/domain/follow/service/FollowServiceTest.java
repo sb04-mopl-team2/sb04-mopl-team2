@@ -10,8 +10,10 @@ import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
+import com.codeit.mopl.exception.follow.FollowDtoIsNullException;
 import com.codeit.mopl.exception.follow.FollowDuplicateException;
 import com.codeit.mopl.exception.follow.FollowSelfProhibitedException;
+import com.codeit.mopl.exception.user.UserIdIsNullException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -182,7 +184,7 @@ class FollowServiceTest {
 
         // when & then
         assertThatThrownBy(() -> followService.increaseFollowerCount(null))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(FollowDtoIsNullException.class);
     }
 
     @Test
@@ -195,7 +197,7 @@ class FollowServiceTest {
 
         // when & then
         assertThatThrownBy(() -> followService.increaseFollowerCount(followDto))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(UserIdIsNullException.class);
     }
 
     @Test

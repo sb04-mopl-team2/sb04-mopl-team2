@@ -1,6 +1,5 @@
 package com.codeit.mopl.domain.playlist.controller;
 
-import co.elastic.clients.elasticsearch.security.get_token.AuthenticatedUser;
 import com.codeit.mopl.domain.playlist.dto.*;
 import com.codeit.mopl.domain.playlist.playlistitem.service.PlaylistItemService;
 import com.codeit.mopl.domain.playlist.service.PlaylistService;
@@ -101,6 +100,15 @@ public class PlaylistController {
         log.info("[플레이리스트] 플레이리스트 구독 처리 요청 - playlistId = {}, userId = {}", playlistId, loginUser.getUser().id());
         subscriptionService.subscribe(playlistId, loginUser.getUser().id());
         log.info("[플레이리스트] 플레이리스트 구독 처리 응답 - playlistId = {}, userId = {}", playlistId, loginUser.getUser().id());
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{playlistId}/subscription")
+    public ResponseEntity<Void> unsubscribePlaylist(@PathVariable UUID playlistId,
+                                                    @AuthenticationPrincipal CustomUserDetails loginUser) {
+        log.info("[플레이리스트] 플레이리스트 구독 취소 처리 요청 - playlistId = {}, userId = {}", playlistId, loginUser.getUser().id());
+        subscriptionService.unsubscribe(playlistId, loginUser.getUser().id());
+        log.info("[플레이리스트] 플레이리스트 구독 취소 처리 응답 - playlistId = {}", playlistId);
         return ResponseEntity.ok().build();
     }
 }

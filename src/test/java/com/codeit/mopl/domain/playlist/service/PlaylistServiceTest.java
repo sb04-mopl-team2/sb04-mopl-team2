@@ -1,7 +1,6 @@
 package com.codeit.mopl.domain.playlist.service;
 
 import com.codeit.mopl.domain.base.BaseEntity;
-import com.codeit.mopl.domain.base.UpdatableEntity;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.playlist.dto.*;
 import com.codeit.mopl.domain.playlist.entity.Playlist;

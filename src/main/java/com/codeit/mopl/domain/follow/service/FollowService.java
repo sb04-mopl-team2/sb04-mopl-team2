@@ -87,7 +87,7 @@ public class FollowService {
 
     @Transactional
     public void deleteFollow(UUID followId, UUID requesterId) {
-        log.info("[팔로우 관리] 팔로우 삭제 시작 - followId: {}", followId);
+        log.info("[팔로우 관리] 팔로우 삭제 시작 - followId: {}, requesterId: {}", followId, requesterId);
         Follow follow = followRepository.findById(followId)
                 .orElseThrow(() -> FollowNotFoundException.withId(followId));
 

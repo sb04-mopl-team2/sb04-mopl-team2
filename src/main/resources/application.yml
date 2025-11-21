@@ -9,6 +9,26 @@ spring:
    multipart:
      maxFileSize: 10MB
      maxRequestSize: 30MB
+  kafka:
+    bootstrap-servers: ${CONFLUENT_BOOTSTRAP_SERVERS}
+
+    properties:
+      security.protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
+      sasl.mechanism: ${KAFKA_SASL_MECHANISM:PLAIN}
+      sasl.jaas.config: >
+        org.apache.kafka.common.security.plain.PlainLoginModule required
+        username="${CONFLUENT_API_KEY}"
+        password="${CONFLUENT_API_SECRET}";
+
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:mopl-notification}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
 management:
   endpoints:
     web:
@@ -59,3 +79,16 @@ jwt:
   key: ${JWT_KEY}
   access-token-expiration-minutes: ${ACCESS_TOKEN_EXPIRATION_MINUTES}
   refresh-token-expiration-minutes: ${REFRESH_TOKEN_EXPIRATION_MINUTES}
+
+mail:
+  host: smtp.gmail.com
+  port: 587
+  username: ${MAIL_USERNAME}
+  password: ${MAIL_PASSWORD}
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+      debug: true

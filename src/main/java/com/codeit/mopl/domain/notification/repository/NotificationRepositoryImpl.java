@@ -53,13 +53,14 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
     return notifications;
   }
 
-  private List<OrderSpecifier<?>> buildOrderSpecifiers(SortBy sortBy, SortDirection sortDirection, QNotification qnotification) {
+  private List<OrderSpecifier<?>> buildOrderSpecifiers(SortBy sortBy, SortDirection sortDirection,
+      QNotification qnotification) {
     List<OrderSpecifier<?>> orders = new ArrayList<>();
 
     if (sortBy != null && sortDirection != null) {
       Order order = sortDirection.equals(SortDirection.DESCENDING) ? Order.DESC : Order.ASC;
-      switch (sortBy.toString()) {
-        case "createdAt":
+      switch (sortBy) {
+        case CREATED_AT:
           orders.add(new OrderSpecifier<>(order, qnotification.createdAt));
           break;
       }
@@ -69,7 +70,8 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
     return orders;
   }
 
-  private BooleanExpression buildCursorCondition(String cursor, UUID idAfter, SortBy sortBy, SortDirection sortDirection, QNotification qnotification) {
+  private BooleanExpression buildCursorCondition(String cursor, UUID idAfter, SortBy sortBy,
+      SortDirection sortDirection, QNotification qnotification) {
 
     if (sortBy == null || sortDirection == null) {
       return null;
@@ -79,8 +81,8 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
 
     BooleanExpression condition  = null;
 
-    switch (sortBy.toString()) {
-      case "createdAt": {
+    switch (sortBy) {
+      case CREATED_AT: {
         if (sortDirection == SortDirection.DESCENDING) {
           condition = qnotification.createdAt.lt(cursorTime);
         }

@@ -2,7 +2,7 @@ package com.codeit.mopl.event.listener;
 
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
-import com.codeit.mopl.exception.follow.FollowEventMissingFolloweeIdException;
+import com.codeit.mopl.exception.follow.FolloweeIdIsNullException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +45,7 @@ public class KafkaEventListener {
     UUID followeeId = event.followDto().followeeId();
     String key = Optional.ofNullable(followeeId)
             .map(Object::toString)
-            .orElseThrow(() -> new FollowEventMissingFolloweeIdException(Map.of()));
+            .orElseThrow(() -> new FolloweeIdIsNullException(Map.of()));
     send("mopl-follower-increase", key, event);
   }
 

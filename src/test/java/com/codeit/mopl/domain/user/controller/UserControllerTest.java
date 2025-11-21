@@ -65,8 +65,8 @@ public class UserControllerTest {
     @MockitoBean
     private JpaMetamodelMappingContext jpaMappingContext;
 
-    private static UUID uuid = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-    private static UserDto userDto = new UserDto(uuid,LocalDateTime.now(),"test@test.com","testName",null,Role.USER,null);
+    private static final UUID TEST_UUID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    private static final UserDto USER_DTO = new UserDto(TEST_UUID,LocalDateTime.now(),"test@test.com","testName",null,Role.USER,null);
 
     @DisplayName("이메일, 비밀번호, 이름이 정상적으로 들어오면 회원가입을 시도한다.")
     @Test
@@ -242,7 +242,7 @@ public class UserControllerTest {
         String content = om.writeValueAsString(request);
 
         ResultActions resultActions = mockMvc.perform(
-                patch("/api/users/" + uuid + "/password")
+                patch("/api/users/" + TEST_UUID + "/password")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(content)
@@ -278,7 +278,7 @@ public class UserControllerTest {
         ChangePasswordRequest request = new ChangePasswordRequest(" ");
         String content = om.writeValueAsString(request);
         ResultActions resultActions = mockMvc.perform(
-                patch("/api/users/" + uuid + "/password")
+                patch("/api/users/" + TEST_UUID + "/password")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(content)
@@ -298,11 +298,11 @@ public class UserControllerTest {
         String content = om.writeValueAsString(updateRequest);
         MockPart request = new MockPart("request", content.getBytes());
         request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        given(userService.updateProfile(uuid, updateRequest, image)).willReturn(userDto);
+        given(userService.updateProfile(TEST_UUID, updateRequest, image)).willReturn(USER_DTO);
 
         // when
         ResultActions resultActions = mockMvc.perform(
-                multipart("/api/users/" + uuid)
+                multipart("/api/users/" + TEST_UUID)
                         .file(image)
                         .part(request)
                 .with(csrf())
@@ -313,8 +313,8 @@ public class UserControllerTest {
 
         // then
         resultActions.andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(uuid.toString()));
-        then(userService).should(times(1)).updateProfile(uuid, updateRequest, image);
+                .andExpect(jsonPath("$.id").value(TEST_UUID.toString()));
+        then(userService).should(times(1)).updateProfile(TEST_UUID, updateRequest, image);
     }
 
     @DisplayName("본인 이외의 프로필은 수정할 수 없다")

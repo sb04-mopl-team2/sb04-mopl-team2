@@ -90,7 +90,7 @@ public class UserController {
         log.info("[사용자 관리] 유저 프로필 변경 호출 userId = {}", userId);
         UserDto response = userService.updateProfile(userId, request, profileImage);
         log.info("[사용자 관리] 유저 프로필 변경 응답 userId = {}", response.id());
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.ok(response);
     }
 
 

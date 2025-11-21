@@ -117,22 +117,20 @@ public class UserService {
             return CursorResponseUserDto.from(slice,null,null,0L, request.sortBy(), request.sortDirection());
         }
 
-        UserDto lastDto = page.getContent().get(page.getContent().size() - 1);
         String lastItemCursor = null;
+        UUID lastItemAfter = null;
 
-        if ("name".equalsIgnoreCase(request.sortBy())){
-            lastItemCursor = lastDto.name();
-        } else if ("email".equalsIgnoreCase(request.sortBy())) {
-            lastItemCursor = lastDto.email();
-        } else if ("createdAt".equalsIgnoreCase(request.sortBy())) {
-            lastItemCursor = lastDto.createdAt().toString();
-        } else if ("isLocked".equalsIgnoreCase(request.sortBy())) {
-            lastItemCursor = lastDto.locked().toString();
-        } else if ("role".equalsIgnoreCase(request.sortBy())) {
-            lastItemCursor = lastDto.role().toString();
+        if (page.hasNext()) {
+            UserDto lastItem = page.getContent().get(page.getContent().size() - 1);
+            switch(request.sortBy()) {
+                case "name" -> lastItemCursor = lastItem.name();
+                case "email" -> lastItemCursor = lastItem.email();
+                case "createdAt" -> lastItemCursor = lastItem.createdAt().toString();
+                case "isLocked" -> lastItemCursor = lastItem.locked().toString();
+                case "role" -> lastItemCursor = lastItem.role().toString();
+            }
+            lastItemAfter = lastItem.id();
         }
-
-        UUID lastItemAfter = lastDto.id();
 
         Long totalElements = userRepository.countTotalElements(request.emailLike());
         CursorResponseUserDto response = CursorResponseUserDto.from(page,lastItemCursor,lastItemAfter,totalElements, request.sortBy(), request.sortDirection());

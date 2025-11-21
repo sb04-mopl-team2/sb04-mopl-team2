@@ -74,6 +74,13 @@ public class UserRepositoryImpl implements CustomUserRepository{
             query.where(createCursorAfter(request.sortBy(), request.sortDirection(), request.cursor(), request.idAfter()));
         }
 
+        if (request.roleEqual() != null) {
+            query.where(user.role.eq(request.roleEqual()));
+        }
+        if(request.isLocked() != null) {
+            query.where(user.locked.eq(request.isLocked()));
+        }
+
         List<UserDto> content = query.fetch();
 
         boolean hasNext = content!=null && content.size() > request.limit();
@@ -108,32 +115,32 @@ public class UserRepositoryImpl implements CustomUserRepository{
             if (directionOrder == Order.ASC) {
                 predicate.and(
                         user.name.gt(cursor)
-                                .or(StringUtils.hasText(String.valueOf(after))
+                                .or(after != null
                                         ? user.name.eq(cursor).and(user.id.gt(after))
-                                        : user.name.eq(cursor))
+                                        : user.name.gt(cursor))
                 );
             } else {
                 predicate.and(
                         user.name.lt(cursor)
-                                .or(StringUtils.hasText(String.valueOf(after))
+                                .or(after != null
                                         ? user.name.eq(cursor).and(user.id.lt(after))
-                                        : user.name.eq(cursor))
+                                        : user.name.lt(cursor))
                 );
             }
-        } else if (orderBy.equalsIgnoreCase("email")) {  // subscriberCount
+        } else if (orderBy.equalsIgnoreCase("email")) {
             if (directionOrder == Order.ASC) {
                 predicate.and(
                         user.email.gt(cursor)
                                 .or(after != null
                                         ? user.email.eq(cursor).and(user.id.gt(after))
-                                        : user.email.eq(cursor))
+                                        : user.email.gt(cursor))
                 );
             } else {
                 predicate.and(
                         user.email.lt(cursor)
                                 .or(after != null
                                         ? user.email.eq(cursor).and(user.id.lt(after))
-                                        : user.email.eq(cursor))
+                                        : user.email.lt(cursor))
                 );
             }
         } else if (orderBy.equalsIgnoreCase("createdAt")) {
@@ -143,14 +150,14 @@ public class UserRepositoryImpl implements CustomUserRepository{
                         user.createdAt.gt(cursorValue)
                                 .or(after != null
                                         ? user.createdAt.eq(cursorValue).and(user.id.gt(after))
-                                        : user.createdAt.eq(cursorValue))
+                                        : user.createdAt.gt(cursorValue))
                 );
             } else {
                 predicate.and(
                         user.createdAt.lt(cursorValue)
                                 .or(after != null
                                         ? user.createdAt.eq(cursorValue).and(user.id.lt(after))
-                                        : user.createdAt.eq(cursorValue))
+                                        : user.createdAt.lt(cursorValue))
                 );
             }
         } else if (orderBy.equalsIgnoreCase("isLocked")) {

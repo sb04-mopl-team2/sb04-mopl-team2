@@ -101,8 +101,8 @@ public class FollowService {
         User followee = follow.getFollowee();
         UUID followeeId = follow.getFollowee().getId();
         long followerCount = followee.getFollowerCount();
-        if (followerCount-1 <= 0) {
-            log.error("[팔로우 관리] 팔로우 삭제 중단 - 팔로워 수가 이미 0입니다.");
+        if (followerCount <= 0) {
+            log.error("[팔로우 관리] 팔로우 삭제 중단 - 팔로워 수가 0이하 입니다. followId: {}, followeeId: {}, followerCount: {}", followId, followeeId, followerCount);
             throw FollowerCountCannotBeNegativeException.withId(followId);
         }
 

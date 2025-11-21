@@ -1,6 +1,7 @@
 package com.codeit.mopl.domain.user.entity;
 
 import com.codeit.mopl.domain.base.UpdatableEntity;
+import com.codeit.mopl.exception.follow.FollowerCountCannotBeNegativeException;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -74,5 +75,12 @@ public class User extends UpdatableEntity {
 
     public void increaseFollowerCount() {
         this.followerCount++;
+    }
+
+    public void decreaseFollowerCount() {
+        if (this.followerCount <= 0) {
+            throw FollowerCountCannotBeNegativeException.withFolloweeIdAndFollowerCount(this.getId(), this.getFollowerCount());
+        }
+        this.followerCount--;
     }
 }

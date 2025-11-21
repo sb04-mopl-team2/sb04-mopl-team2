@@ -10,7 +10,6 @@ import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
-import com.codeit.mopl.exception.follow.FollowDtoIsNullException;
 import com.codeit.mopl.exception.follow.FollowDuplicateException;
 import com.codeit.mopl.exception.follow.FollowSelfProhibitedException;
 import com.codeit.mopl.exception.user.UserIdIsNullException;
@@ -102,7 +101,7 @@ class FollowServiceTest {
 
         verify(eventPublisher).publishEvent(eventCaptor.capture());
         FollowerIncreaseEvent event = eventCaptor.getValue();
-        assertThat(event.followDto()).isEqualTo(result);
+        assertThat(event.followeeId()).isEqualTo(followeeId);
 
         verify(notificationService).createNotification(eq(followeeId), any(String.class), eq(""), eq(Level.INFO));
     }
@@ -158,11 +157,7 @@ class FollowServiceTest {
     @DisplayName("팔로워 증가 이벤트 처리 성공 테스트")
     void increaseFollowerCount_Success() {
         // given
-        UUID followId = UUID.randomUUID();
-        UUID followerId = UUID.randomUUID();
         UUID followeeId = UUID.randomUUID();
-        FollowDto followDto = new FollowDto(followId, followerId, followeeId);
-
         User followee = new User();
         ReflectionTestUtils.setField(followee, "id", followeeId);
         followee.setFollowerCount(0L);
@@ -170,7 +165,7 @@ class FollowServiceTest {
         given(userRepository.findById(eq(followeeId))).willReturn(Optional.of(followee));
 
         // when
-        followService.increaseFollowerCount(followDto);
+        followService.increaseFollowerCount(followeeId);
 
         // then
         verify(userRepository, times(1)).findById(eq(followeeId));
@@ -178,25 +173,12 @@ class FollowServiceTest {
     }
 
     @Test
-    @DisplayName("팔로워 증가 이벤트 처리 실패 - followDto가 null이 될 수 없음")
-    void increaseFollowerCount_FollowDtoNull_ThrowsException() {
+    @DisplayName("팔로워 증가 이벤트 처리 실패 - followeeId가 null이 될 수 없음")
+    void increaseFollowerCount_FolloweeIdNull_ThrowsException() {
         // given
 
         // when & then
         assertThatThrownBy(() -> followService.increaseFollowerCount(null))
-                .isInstanceOf(FollowDtoIsNullException.class);
-    }
-
-    @Test
-    @DisplayName("팔로워 증가 이벤트 처리 실패 - followeeId가 null이 될 수 없음")
-    void increaseFollowerCount_FolloweeIdNull_ThrowsException() {
-        // given
-        UUID followId = UUID.randomUUID();
-        UUID followerId = UUID.randomUUID();
-        FollowDto followDto = new FollowDto(followId, followerId, null);
-
-        // when & then
-        assertThatThrownBy(() -> followService.increaseFollowerCount(followDto))
                 .isInstanceOf(UserIdIsNullException.class);
     }
 

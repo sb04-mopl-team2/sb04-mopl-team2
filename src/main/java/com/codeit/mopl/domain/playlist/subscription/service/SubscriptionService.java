@@ -62,8 +62,13 @@ public class SubscriptionService {
         }
 
         Subscription subscription = new Subscription(playlist, subscriber, subscribedAt);
-        log.info("[플레이리스트] 플레이리스트 구독 처리 완료 - playlistId = {}, subscriberId = {}", playlistId, subscriberId);
         subscriptionRepository.save(subscription);
+
+        // 구독자 증가
+        playlist.incrementSubscriberCount();
+        playlistRepository.save(playlist);
+
+        log.info("[플레이리스트] 플레이리스트 구독 처리 완료 - playlistId = {}, subscriberId = {}", playlistId, subscriberId);
 
         // 플레이리스트 소유자에게 알림을 생성함(동기 처리)
         String title = "플레이리스트에 새로운 구독자 알림";
@@ -81,7 +86,14 @@ public class SubscriptionService {
                             log.warn("[플레이리스트] 플레이리스트 구독 취소 처리 실패 - 구독 내역이 존재하지 않음 - playlistId = {}", playlistId);
                             return SubscriptionNotFoundException.withId(subscriberId, playlistId);
                         });
-        log.info("[플레이리스트] 플레이리스트 구독 취소 처리 완료 - playlistId = {}, subscriberId = {}", playlistId, subscriberId);
+        Playlist playlist = subscription.getPlaylist();
         subscriptionRepository.delete(subscription);
+
+        //구독자 감소
+        playlist.decrementSubscriberCount();
+        playlistRepository.save(playlist);
+
+        log.info("[플레이리스트] 플레이리스트 구독 취소 처리 완료 - playlistId = {}, subscriberId = {}", playlistId, subscriberId);
+
     }
 }

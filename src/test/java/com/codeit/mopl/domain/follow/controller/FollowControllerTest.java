@@ -3,7 +3,6 @@ package com.codeit.mopl.domain.follow.controller;
 import com.codeit.mopl.domain.follow.dto.FollowDto;
 import com.codeit.mopl.domain.follow.dto.FollowRequest;
 import com.codeit.mopl.domain.follow.service.FollowService;
-import com.codeit.mopl.domain.notification.mapper.MapperUtils;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
@@ -62,9 +61,6 @@ class FollowControllerTest {
 
     @MockitoBean
     private SseEmitterRegistry sseEmitterRegistry;
-
-    @MockitoBean
-    private MapperUtils mapperUtils;
 
     @MockitoBean
     private UserMapper userMapper;

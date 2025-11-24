@@ -75,4 +75,8 @@ public class User extends UpdatableEntity {
     public void increaseFollowerCount() {
         this.followerCount++;
     }
+
+    public void decreaseFollowerCount() {
+        this.followerCount--;
+    }
 }

@@ -21,6 +21,7 @@ import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.exception.watchingsession.ContentNotFoundException;
+import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -89,14 +90,14 @@ public class WatchingSessionServiceTest {
   }
 
   @Test
-  @DisplayName("존재하지 않는 UserId면 실패")
+  @DisplayName("UserId의 watchingsession이 존재하지 않으면 실패")
   void getByNonExistentUserIdFailure() {
     // given
     UUID userId = UUID.randomUUID();
     when(watchingSessionRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
     // when & then
-    assertThrows(UserNotFoundException.class, () -> {
+    assertThrows(WatchingSessionNotFoundException.class, () -> {
       watchingSessionService.getByUserId(userId);
     });
     verify(watchingSessionRepository, times(1)).findByUserId(userId);
@@ -125,7 +126,7 @@ public class WatchingSessionServiceTest {
     );
     when(contentRepository.existsById(contentId)).thenReturn(true);
     when(watchingSessionMapper.toDto(entity)).thenReturn(watchingSessionDto);
-    when(watchingSessionRepository.getWatcherCount(contentId, userId, null)).thenReturn(1L);
+    when(watchingSessionRepository.getWatcherCount(userId,contentId, null)).thenReturn(1L);
 
     // when
     CursorResponseWatchingSessionDto result = watchingSessionService.getWatchingSessions(userId, contentId,
@@ -134,7 +135,7 @@ public class WatchingSessionServiceTest {
 
     // then
     assertEquals(expectedDto, result);
-    verify(watchingSessionRepository, times(1)).getWatcherCount(contentId, userId, null);
+    verify(watchingSessionRepository, times(1)).getWatcherCount(userId, contentId, null);
     verify(watchingSessionMapper, times(1)).toDto(any());
   }
 
@@ -188,7 +189,7 @@ public class WatchingSessionServiceTest {
     WatchingSessionDto watchingSessionDto = mock(WatchingSessionDto.class);
     when(contentRepository.existsById(contentId)).thenReturn(true);
     when(watchingSessionMapper.toDto(entity)).thenReturn(watchingSessionDto);
-    when(watchingSessionRepository.getWatcherCount(contentId, userId, null)).thenReturn(2L);
+    when(watchingSessionRepository.getWatcherCount(userId, contentId, null)).thenReturn(2L);
 
     // expected response
     CursorResponseWatchingSessionDto expectedDto = new CursorResponseWatchingSessionDto(
@@ -210,7 +211,7 @@ public class WatchingSessionServiceTest {
     // then
     assertThat(result).usingRecursiveComparison().isEqualTo(expectedDto);
     verify(watchingSessionRepository, times(1)).getWatcherCount(
-        contentId, userId, null);
+        userId, contentId, null);
     verify(watchingSessionMapper, times(1)).toDto(any());
   }
 }

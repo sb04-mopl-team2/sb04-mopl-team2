@@ -3,12 +3,12 @@ package com.codeit.mopl.domain.watchingsession.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
+import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
-import com.codeit.mopl.util.QueryDslConfig;
-import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.codeit.mopl.util.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Sort;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @DataJpaTest
@@ -31,6 +33,9 @@ public class WatchingSessionRepositoryTest {
 
   @Autowired
   WatchingSessionRepository watchingSessionRepository;
+
+  @MockitoBean
+  ContentMapper contentMapper;
 
   private User user1;
   private User user2;
@@ -224,18 +229,13 @@ public class WatchingSessionRepositoryTest {
     em.flush();
     em.clear();
 
-    WatchingSession expectedFirst;
-    WatchingSession expectedSecond;
+    List<WatchingSession> allSessions = watchingSessionRepository.findAll(
+        Sort.by(Sort.Direction.DESC, "createdAt")
+            .and(Sort.by(Sort.Direction.DESC, "id"))
+    );
 
-    if (w3.getId().compareTo(w2.getId()) > 0) {
-      // w3 larger -> comes 1st in DESC
-      expectedFirst = w3;
-      expectedSecond = w2;
-    } else {
-      // w2 larger
-      expectedFirst = w2;
-      expectedSecond = w3;
-    }
+    WatchingSession expectedFirst = allSessions.get(0);
+    WatchingSession expectedSecond = allSessions.get(1);
 
     // get top 1
     List<WatchingSession> page1 = watchingSessionRepository.findWatchingSessions(
@@ -251,8 +251,8 @@ public class WatchingSessionRepositoryTest {
     String cursorTime = first.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     List<WatchingSession> page2 = watchingSessionRepository.findWatchingSessions(
         null, content.getId(), null,
-        cursorTime, // <
-        first.getId(), // <
+        cursorTime,
+        first.getId(),
         1,
         SortDirection.DESCENDING, SortBy.CREATED_AT
     );
@@ -269,24 +269,24 @@ public class WatchingSessionRepositoryTest {
   void getWatcherCount() {
     // when & then - total count
     Long result1 = watchingSessionRepository.getWatcherCount(
-        content.getId(),
         null,
+        content.getId(),
         null
     );
     assertThat(result1).isEqualTo(2L);
 
     // when & then - with userId1
     Long result2 = watchingSessionRepository.getWatcherCount(
-        content.getId(),
         user1.getId(),
+        content.getId(),
         null
     );
     assertThat(result2).isEqualTo(1L);
 
     // when & then - non existing name
     Long result3 = watchingSessionRepository.getWatcherCount(
+        UUID.randomUUID(),
         content.getId(),
-        null,
         "nonExistingName"
     );
     assertThat(result3).isEqualTo(0L);

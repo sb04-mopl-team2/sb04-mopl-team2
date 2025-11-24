@@ -41,4 +41,24 @@ public class FollowController {
         log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 요청 응답 - followerId: {}, followeeId: {}, isFollowed: {}", followerId, followeeId, isFollowed);
         return ResponseEntity.status(HttpStatus.OK).body(isFollowed);
     }
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> getFollowerCount(@RequestParam("followeeId") UUID followeeId,
+                                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
+        UUID requesterId = userDetails.getUser().id();
+        log.info("[팔로우 관리] 팔로워 수 조회 요청 시작 - userId: {}, followeeId: {}", requesterId, followeeId);
+        long followerCount = followService.getFollowerCount(followeeId);
+        log.info("[팔로우 관리] 팔로워 수 조회 요청 응답 - userId: {}, followeeId: {}, followerCount: {}", requesterId, followeeId, followerCount);
+        return ResponseEntity.status(HttpStatus.OK).body(followerCount);
+    }
+
+    @DeleteMapping("/{followId}")
+    public ResponseEntity<Void> deleteFollow(@PathVariable("followId") UUID followId,
+                                             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        UUID requesterId = userDetails.getUser().id();
+        log.info("[팔로우 관리] 팔로우 삭제 요청 시작 - userId: {}, followId: {}", requesterId, followId);
+        followService.deleteFollow(followId, requesterId);
+        log.info("[팔로우 관리] 팔로우 삭제 요청 응답 - userId: {}, followId: {}", requesterId, followId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 }

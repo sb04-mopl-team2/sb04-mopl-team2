@@ -1,9 +1,9 @@
 package com.codeit.mopl.domain.playlist.controller;
 
-import co.elastic.clients.elasticsearch.security.get_token.AuthenticatedUser;
 import com.codeit.mopl.domain.playlist.dto.*;
 import com.codeit.mopl.domain.playlist.playlistitem.service.PlaylistItemService;
 import com.codeit.mopl.domain.playlist.service.PlaylistService;
+import com.codeit.mopl.domain.playlist.subscription.service.SubscriptionService;
 import com.codeit.mopl.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +24,7 @@ import java.util.UUID;
 public class PlaylistController {
     private final PlaylistService playlistService;
     private final PlaylistItemService playlistItemService;
+    private final SubscriptionService subscriptionService;
 
     @PostMapping
     public ResponseEntity<PlaylistDto> createPlaylist(
@@ -90,6 +91,24 @@ public class PlaylistController {
         log.info("[플레이리스트] 플레이리스트에서 콘텐츠 삭제 요청 - playlistId = {}, contentId = {}, userId = {}", playlistId, contentId, loginUser.getUser().id());
         playlistItemService.deleteContent(playlistId, contentId, loginUser.getUser().id());
         log.info("[플레이리스트] 플레이리스트에서 콘텐츠 삭제 응답 - playlistId = {}, contentId = {}", playlistId, contentId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{playlistId}/subscription")
+    public ResponseEntity<Void> subscribePlaylist(@PathVariable UUID playlistId,
+                                                  @AuthenticationPrincipal CustomUserDetails loginUser) {
+        log.info("[플레이리스트] 플레이리스트 구독 처리 요청 - playlistId = {}, userId = {}", playlistId, loginUser.getUser().id());
+        subscriptionService.subscribe(playlistId, loginUser.getUser().id());
+        log.info("[플레이리스트] 플레이리스트 구독 처리 응답 - playlistId = {}, userId = {}", playlistId, loginUser.getUser().id());
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{playlistId}/subscription")
+    public ResponseEntity<Void> unsubscribePlaylist(@PathVariable UUID playlistId,
+                                                    @AuthenticationPrincipal CustomUserDetails loginUser) {
+        log.info("[플레이리스트] 플레이리스트 구독 취소 처리 요청 - playlistId = {}, userId = {}", playlistId, loginUser.getUser().id());
+        subscriptionService.unsubscribe(playlistId, loginUser.getUser().id());
+        log.info("[플레이리스트] 플레이리스트 구독 취소 처리 응답 - playlistId = {}", playlistId);
         return ResponseEntity.ok().build();
     }
 }

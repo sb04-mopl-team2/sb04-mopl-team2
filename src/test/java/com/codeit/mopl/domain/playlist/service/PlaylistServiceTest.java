@@ -1,7 +1,6 @@
 package com.codeit.mopl.domain.playlist.service;
 
 import com.codeit.mopl.domain.base.BaseEntity;
-import com.codeit.mopl.domain.base.UpdatableEntity;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.playlist.dto.*;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
@@ -125,10 +124,11 @@ public class PlaylistServiceTest {
             UUID ownerId = UUID.randomUUID();
             UserSummary userSummary = new UserSummary(ownerId, "test", "test");
             Playlist playlist = Playlist.builder().title("테스트").build();
-            given(playlistRepository.findAllByCond(cond)).willReturn(Arrays.asList(playlist));
+            given(playlistRepository.findAllByCond(any(PlaylistSearchCond.class)))
+                    .willReturn(Arrays.asList(playlist));
             given(playlistMapper.toPlaylistDto(playlist)).willReturn(new PlaylistDto(playlistId, userSummary, "테스트","테스트 설명", null, 0, false,null));
-            given(playlistRepository.countAllByCond(cond)).willReturn(1L);
-
+            given(playlistRepository.countAllByCond(any(PlaylistSearchCond.class)))
+                    .willReturn(1L);
             // when
             CursorResponsePlaylistDto result = playlistService.getAllPlaylists(cond);
 
@@ -154,8 +154,8 @@ public class PlaylistServiceTest {
             Playlist playlist1 = Playlist.builder().title("키워드 포함 제목1").description("테스트 설명1").build();
             Playlist playlist2 = Playlist.builder().title("키워드 포함 제목2").description("테스트 설명2").build();
             List<Playlist> playlists = Arrays.asList(playlist1, playlist2);
-            given(playlistRepository.findAllByCond(cond)).willReturn(playlists);
-
+            given(playlistRepository.findAllByCond(any(PlaylistSearchCond.class)))
+                    .willReturn(playlists);
             UUID playlist1_Id = UUID.randomUUID();
             UUID playlist2_Id = UUID.randomUUID();
             UUID ownerId = UUID.randomUUID();
@@ -165,8 +165,8 @@ public class PlaylistServiceTest {
                     .willReturn(new PlaylistDto(playlist1_Id, userSummary, "키워드 포함 제목1", "테스트 설명1", null, 0, false,null));
             given(playlistMapper.toPlaylistDto(playlist2))
                     .willReturn(new PlaylistDto(playlist2_Id, userSummary, "키워드 포함 제목2", "테스트 설명2", null, 0, false,null));
-            given(playlistRepository.countAllByCond(cond)).willReturn(2L);
-
+            given(playlistRepository.countAllByCond(any(PlaylistSearchCond.class)))
+                    .willReturn(2L);
             //when
             CursorResponsePlaylistDto result = playlistService.getAllPlaylists(cond);
 

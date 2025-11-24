@@ -3,11 +3,11 @@ package com.codeit.mopl.domain.review.repository;
 import com.codeit.mopl.config.QuerydslConfig;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
+import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.review.entity.Review;
 import com.codeit.mopl.domain.review.entity.ReviewSortBy;
 import com.codeit.mopl.domain.review.entity.SortDirection;
 import com.codeit.mopl.domain.user.entity.User;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,17 +17,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 @DataJpaTest
 @Import(QuerydslConfig.class) // JPAQueryFactory 빈 등록한 설정
 class ReviewRepositoryImplTest {
+
+  @MockitoBean
+  private ContentMapper contentMapper;
 
   @Autowired
   private ReviewRepository reviewRepository; // JpaRepository + CustomReviewRepository
@@ -46,7 +45,6 @@ class ReviewRepositoryImplTest {
 
   @BeforeEach
   void setUp() throws Exception {
-    // 이미 만들어둔 헬퍼 메소드 사용 (같은 테스트 클래스 안에 있다고 가정)
     content1 = createContent("테스트 제목1", "테스트 설명1", ContentType.TV);
     content2 = createContent("테스트 제목2", "테스트 설명2", ContentType.MOVIE);
     user = createUser("test@example.com", "encodedPassword", "test");
@@ -55,20 +53,19 @@ class ReviewRepositoryImplTest {
     em.persist(content1);
     em.persist(content2);
 
-    // 리뷰 4개 생성 (헬퍼 메소드 사용)
-    r1 = createReview(user, content1, 4.0, false); // 대상 content, NOT deleted
+    r1 = createReview(user, content1, 4.0, false);
     em.persist(r1);
     Thread.sleep(5);
 
-    r2 = createReview(user, content1, 5.0, true);  // 대상 content, BUT deleted
+    r2 = createReview(user, content1, 5.0, true);
     em.persist(r2);
     Thread.sleep(5);
 
-    r3 = createReview(user, content2, 3.0, false); // 다른 content
+    r3 = createReview(user, content2, 3.0, false);
     em.persist(r3);
     Thread.sleep(5);
 
-    r4 = createReview(user, content1, 3.5, false); // 대상 content, 가장 나중에 생성 (가장 최신)
+    r4 = createReview(user, content1, 3.5, false);
     em.persist(r4);
 
     em.flush();
@@ -93,7 +90,7 @@ class ReviewRepositoryImplTest {
 
     // then
     assertThat(result.get(0).getId())
-        .isEqualTo(r4.getId()); // 최신 createdAt이 가장 먼저 와야 함
+        .isEqualTo(r4.getId());
   }
 
   @Test
@@ -114,7 +111,7 @@ class ReviewRepositoryImplTest {
 
     // then
     assertThat(result.get(0).getId())
-        .isEqualTo(r1.getId()); // 최신 createdAt이 가장 먼저 와야 함
+        .isEqualTo(r1.getId());
   }
 
   @Test
@@ -135,7 +132,7 @@ class ReviewRepositoryImplTest {
 
     // then
     assertThat(result.get(0).getId())
-        .isEqualTo(r1.getId()); // 최신 createdAt이 가장 먼저 와야 함
+        .isEqualTo(r1.getId());
   }
 
   @Test
@@ -156,7 +153,7 @@ class ReviewRepositoryImplTest {
 
     // then
     assertThat(result.get(0).getId())
-        .isEqualTo(r4.getId()); // 최신 createdAt이 가장 먼저 와야 함
+        .isEqualTo(r4.getId());
   }
 
 

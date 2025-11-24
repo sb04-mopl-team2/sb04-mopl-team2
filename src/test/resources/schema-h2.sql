@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS contents
     description TEXT NOT NULL,
     thumbnail_url TEXT,
     average_rating DOUBLE DEFAULT 0.0,
-    review_count INT DEFAULT 0
+    review_count INT DEFAULT 0,
+    watcher_count INT DEFAULT 0
     );
 
 CREATE TABLE IF NOT EXISTS contents_tags

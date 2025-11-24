@@ -34,7 +34,7 @@ public class Content extends UpdatableEntity {
   private String thumbnailUrl;
 
   @ElementCollection
-  @CollectionTable(name = "content_tags", joinColumns = @JoinColumn(name = "content_id"))
+  @CollectionTable(name = "contents_tags", joinColumns = @JoinColumn(name = "content_id"))
   @Column(name = "tag")
   private List<String> tags = new ArrayList<>();
 
@@ -48,4 +48,7 @@ public class Content extends UpdatableEntity {
 
   @Column(columnDefinition = "INTEGER DEFAULT 0")
   private Integer reviewCount = 0;
+
+  @Column(columnDefinition = "INTEGER DEFAULT 0")
+  private Integer watcherCount = 0;
 }

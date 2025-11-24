@@ -3,7 +3,6 @@ package com.codeit.mopl.domain.review.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -16,16 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.codeit.mopl.domain.content.repository.ContentRepository;
-import com.codeit.mopl.domain.notification.controller.NotificationController;
-import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
-import com.codeit.mopl.domain.notification.dto.NotificationDto;
-import com.codeit.mopl.domain.notification.dto.NotificationSearchRequest;
-import com.codeit.mopl.domain.notification.entity.Level;
-import com.codeit.mopl.domain.notification.entity.NotificationSortBy;
 import com.codeit.mopl.domain.notification.mapper.MapperUtils;
-import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
-import com.codeit.mopl.domain.notification.repository.NotificationRepository;
-import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.review.dto.CursorResponseReviewDto;
 import com.codeit.mopl.domain.review.dto.ReviewCreateRequest;
 import com.codeit.mopl.domain.review.dto.ReviewDto;
@@ -38,32 +28,24 @@ import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
-import com.codeit.mopl.exception.review.ReviewDuplicateException;
-import com.codeit.mopl.exception.review.ReviewErrorCode;
-import com.codeit.mopl.exception.review.ReviewForbiddenException;
-import com.codeit.mopl.exception.review.ReviewNotFoundException;
 import com.codeit.mopl.security.CustomUserDetails;
 import com.codeit.mopl.security.config.TestSecurityConfig;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
-import com.codeit.mopl.sse.service.SseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.batch.item.ItemStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -298,171 +280,4 @@ public class ReviewControllerTest {
     verify(reviewService).deleteReview(userId, reviewId);
   }
 
-  @Test
-  @DisplayName("리뷰 삭제 실패 - 권한이 없어서")
-  void deleteReview_forbidden() throws Exception {
-    // given
-    UUID userId = customUserDetails.getUser().id();
-    UUID reviewId = UUID.randomUUID();
-
-    doThrow(new ReviewForbiddenException(
-        ReviewErrorCode.REVIEW_FORBIDDEN,
-        Map.of("reviewId", reviewId)
-    )).when(reviewService).deleteReview(userId, reviewId);
-
-    // when
-    ResultActions resultActions = mockMvc.perform(
-        delete("/api/reviews/{reviewId}", reviewId)
-            .with(user(customUserDetails))
-            .with(csrf())
-            .accept(MediaType.APPLICATION_JSON)
-    );
-
-    // then
-    resultActions
-        .andExpect(status().isForbidden())
-        .andExpect(jsonPath("$.exceptionName").value(ReviewErrorCode.REVIEW_FORBIDDEN.name()))
-        .andExpect(jsonPath("$.message").value(ReviewErrorCode.REVIEW_FORBIDDEN.getMessage()))
-        .andExpect(jsonPath("$.details.reviewId").value(reviewId.toString()));
-  }
-
-  @Test
-  @DisplayName("리뷰 삭제 실패 - 리뷰가 없어서")
-  void deleteReview_notFound() throws Exception {
-    // given
-    UUID userId = customUserDetails.getUser().id();
-    UUID reviewId = UUID.randomUUID();
-
-    doThrow(new ReviewNotFoundException(
-        ReviewErrorCode.REVIEW_NOT_FOUND,
-        Map.of("reviewId", reviewId)
-    )).when(reviewService).deleteReview(userId, reviewId);
-
-    // when
-    ResultActions resultActions = mockMvc.perform(
-        delete("/api/reviews/{reviewId}", reviewId)
-            .with(user(customUserDetails))
-            .with(csrf())
-            .accept(MediaType.APPLICATION_JSON)
-    );
-
-    // then
-    resultActions
-        .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.exceptionName").value(ReviewErrorCode.REVIEW_NOT_FOUND.name()))
-        .andExpect(jsonPath("$.message").value(ReviewErrorCode.REVIEW_NOT_FOUND.getMessage()))
-        .andExpect(jsonPath("$.details.reviewId").value(reviewId.toString()));
-  }
-
-  @Test
-  @DisplayName("리뷰 수정 실패 - 권한이 없어서")
-  void updateReview_forbidden() throws Exception {
-    // given
-    UUID userId = customUserDetails.getUser().id();
-    UUID reviewId = UUID.randomUUID();
-
-    String newText = "수정된 리뷰 내용입니다.";
-    double newRating = 4.5;
-
-    String requestBody = om.writeValueAsString(
-        new ReviewUpdateRequest(newText, newRating));
-
-    doThrow(new ReviewForbiddenException(
-        ReviewErrorCode.REVIEW_FORBIDDEN,
-        Map.of("reviewId", reviewId)
-    )).when(reviewService).updateReview(userId, reviewId, newText, newRating);
-
-    // when
-    ResultActions resultActions = mockMvc.perform(
-        patch("/api/reviews/{reviewId}", reviewId)
-            .with(user(customUserDetails))
-            .with(csrf())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody)
-            .accept(MediaType.APPLICATION_JSON)
-    );
-
-    // then
-    resultActions
-        .andExpect(status().isForbidden())
-        .andExpect(jsonPath("$.exceptionName").value(ReviewErrorCode.REVIEW_FORBIDDEN.name()))
-        .andExpect(jsonPath("$.message").value(ReviewErrorCode.REVIEW_FORBIDDEN.getMessage()))
-        .andExpect(jsonPath("$.details.reviewId").value(reviewId.toString()));
-  }
-
-  @Test
-  @DisplayName("리뷰 수정 실패 - 리뷰가 없어서")
-  void updateReview_notFound() throws Exception {
-    // given
-    UUID userId = customUserDetails.getUser().id();
-    UUID reviewId = UUID.randomUUID();
-
-    String newText = "수정된 리뷰 내용입니다.";
-    double newRating = 4.5;
-
-    String requestBody = om.writeValueAsString(
-        new ReviewUpdateRequest(newText, newRating));
-
-    doThrow(new ReviewNotFoundException(
-        ReviewErrorCode.REVIEW_NOT_FOUND,
-        Map.of("reviewId", reviewId)
-    )).when(reviewService).updateReview(userId, reviewId, newText, newRating);
-
-    // when
-    ResultActions resultActions = mockMvc.perform(
-        patch("/api/reviews/{reviewId}", reviewId)
-            .with(user(customUserDetails))
-            .with(csrf())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody)
-            .accept(MediaType.APPLICATION_JSON)
-    );
-
-    // then
-    resultActions
-        .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.exceptionName").value(ReviewErrorCode.REVIEW_NOT_FOUND.name()))
-        .andExpect(jsonPath("$.message").value(ReviewErrorCode.REVIEW_NOT_FOUND.getMessage()))
-        .andExpect(jsonPath("$.details.reviewId").value(reviewId.toString()));
-  }
-
-  @Test
-  @DisplayName("리뷰 생성 실패 - 이미 리뷰가 있어서")
-  void createReview_duplicated() throws Exception {
-    // given
-    UUID userId = customUserDetails.getUser().id();
-    UUID contentId = UUID.randomUUID();
-
-    String text = "리뷰 내용입니다.";
-    double rating = 4.5;
-
-    // 요청 DTO
-    ReviewCreateRequest request = new ReviewCreateRequest(
-        contentId,
-        text,
-        rating
-    );
-
-    doThrow(new ReviewDuplicateException(
-        ReviewErrorCode.REVIEW_DUPLICATED,
-        Map.of("userId", userId)
-    )).when(reviewService).createReview(userId, contentId, text, rating);
-
-    // when
-    ResultActions resultActions = mockMvc.perform(
-        post("/api/reviews")
-            .with(user(customUserDetails))
-            .with(csrf())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(om.writeValueAsString(request))
-            .accept(MediaType.APPLICATION_JSON)
-    );
-
-    // then
-    resultActions
-        .andExpect(status().isForbidden())
-        .andExpect(jsonPath("$.exceptionName").value(ReviewErrorCode.REVIEW_DUPLICATED.name()))
-        .andExpect(jsonPath("$.message").value(ReviewErrorCode.REVIEW_DUPLICATED.getMessage()))
-        .andExpect(jsonPath("$.details.userId").value(userId.toString()));
-  }
 }

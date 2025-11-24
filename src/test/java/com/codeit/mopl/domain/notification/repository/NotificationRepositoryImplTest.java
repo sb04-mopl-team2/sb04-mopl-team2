@@ -1,7 +1,6 @@
 package com.codeit.mopl.domain.notification.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.not;
 
 import com.codeit.mopl.config.QuerydslConfig;
 import com.codeit.mopl.domain.notification.entity.Level;

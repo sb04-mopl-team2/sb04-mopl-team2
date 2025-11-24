@@ -40,7 +40,7 @@ public class Content extends UpdatableEntity {
 
   @NotNull
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
+  @Column(name = "content_type", nullable = false)
   private ContentType contentType;
 
   @Column(columnDefinition = "DOUBLE PRECISION DEFAULT 0.0")

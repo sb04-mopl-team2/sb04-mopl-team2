@@ -15,16 +15,16 @@ public enum MessageErrorCode implements ErrorCodeInterface {
 
     @Override
     public String getName() {
-        return "";
+        return name();
     }
 
     @Override
     public String getMessage() {
-        return "";
+        return message;
     }
 
     @Override
     public HttpStatus getStatus() {
-        return null;
+        return status;
     }
 }

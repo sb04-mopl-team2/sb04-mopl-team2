@@ -33,17 +33,17 @@ public class ConversationService {
 
         User loginUser = userRepository.findById(loginUserId)
                 .orElseThrow(() -> {
-                    log.warn("[메세지] 채팅방 생성 실패 - 로그인 유저가 존재히자 않음 - userId = {}", loginUserId);
+                    log.warn("[메세지] 채팅방 생성 실패 - 로그인 유저가 존재하지 않음 - userId = {}", loginUserId);
                     return new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", loginUserId));
                 });
 
         User withUser = userRepository.findById(withUserId)
                 .orElseThrow(() -> {
-                    log.warn("[메세지] 채팅방 생성 실패 - 상대 유저가 존재히자 않음 - userId = {}", withUserId);
+                    log.warn("[메세지] 채팅방 생성 실패 - 상대 유저가 존재하지 않음 - userId = {}", withUserId);
                     return new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", withUserId));
                 });
 
-        if (conversationRepository.existsById(conversationId)) {
+        if (conversationRepository.existsByUserIdAndWithUserId(loginUserId, withUserId)) {
             log.info("[메세지] 채팅방 생성 실패 - 이미 생성된 채팅방임 - conversationId = {}", conversationId);
             throw ConversationDuplicateException.withId(conversationId);
         }

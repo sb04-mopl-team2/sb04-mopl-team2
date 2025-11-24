@@ -39,6 +39,7 @@ public class KafkaConsumer {
             }
 
             notificationService.sendNotification(notificationDto);
+            processedEventRepository.save(new ProcessedEvent(notificationDto.id(), EventType.NOTIFICATION_CREATED));
             ack.acknowledge();
         } catch (JsonProcessingException e) {
             log.error("[Kafka] 알림 생성 역직렬화 실패: {}", kafkaEventJson, e);

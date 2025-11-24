@@ -31,16 +31,6 @@ public class FollowEventKafkaConsumer {
     public void onFollowIncrease(String kafkaEventJson, Acknowledgment ack) {
         try {
             FollowerIncreaseEvent event = objectMapper.readValue(kafkaEventJson, FollowerIncreaseEvent.class);
-            FollowDto followDto = event.followDto();
-
-            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByIdAndEventType(followDto.id(), EventType.NOTIFICATION_CREATED);
-            if (processedEvent.isPresent()) {
-                log.warn("[Kafka] 이미 처리된 알림 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
-                ack.acknowledge();
-                return;
-            }
-
-            followService.increaseFollowerCount(followDto);
             UUID followeeId = event.followeeId();
             followService.increaseFollowerCount(followeeId);
             ack.acknowledge();

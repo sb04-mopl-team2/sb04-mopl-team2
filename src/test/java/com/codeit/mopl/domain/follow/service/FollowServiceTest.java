@@ -292,7 +292,7 @@ class FollowServiceTest {
         followService.deleteFollow(followId, requesterId);
 
         // then
-        verify(followRepository, times(1)).deleteById(eq(followId));
+        verify(followRepository, times(1)).delete(eq(follow));
 
         verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
         FollowerDecreaseEvent event = eventCaptor.getValue();
@@ -338,32 +338,6 @@ class FollowServiceTest {
     }
 
     @Test
-    @DisplayName("팔로우 삭제 실패 - followerCount가 0이하면 삭제 불가능")
-    void deleteFollow_Follower_Count_Cannot_Be_Negative_ThrowsException() {
-        // given
-        UUID followId = UUID.randomUUID();
-        UUID followerId = UUID.randomUUID();
-        UUID followeeId = UUID.randomUUID();
-        UUID requesterId = followerId;
-
-        User follower = new User();
-        ReflectionTestUtils.setField(follower, "id", followerId);
-
-        User followee = new User();
-        ReflectionTestUtils.setField(followee, "id", followeeId);
-        followee.setFollowerCount(0L);
-
-        Follow follow = new Follow(follower, followee);
-        ReflectionTestUtils.setField(follow, "id", followId);
-
-        given(followRepository.findById(eq(followId))).willReturn(Optional.of(follow));
-
-        // when & then
-        assertThatThrownBy(() -> followService.deleteFollow(followId, requesterId))
-                .isInstanceOf(FollowerCountCannotBeNegativeException.class);
-    }
-
-    @Test
     @DisplayName("팔로우 감소 이벤트 처리 성공")
     void decreaseFollowerCount_Success() {
         // given
@@ -401,5 +375,21 @@ class FollowServiceTest {
         // when & then
         assertThatThrownBy(() -> followService.decreaseFollowerCount(followeeId))
                 .isInstanceOf(UserNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("팔로우 감소 이벤트 처리 실패 - 팔로워 수가 0이하라면 팔로워 감소 이벤트를 처리할 수 없음")
+    void decreaseFollowerCount_FollowerCount_Cannot_Be_Negative_ThrowsException() {
+        // given
+        UUID followeeId = UUID.randomUUID();
+        User followee = new User();
+        ReflectionTestUtils.setField(followee, "id", followeeId);
+        followee.setFollowerCount(0L);
+
+        given(userRepository.findById(eq(followeeId))).willReturn(Optional.of(followee));
+
+        // when & then
+        assertThatThrownBy(() -> followService.decreaseFollowerCount(followeeId))
+                .isInstanceOf(FollowerCountCannotBeNegativeException.class);
     }
 }

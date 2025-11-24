@@ -65,6 +65,14 @@ public class FollowService {
         return dto;
     }
 
+    @Transactional
+    public void increaseFollowerCount(UUID followeeId) {
+        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followeeId: {}", followeeId);
+        User followee = getUserById(followeeId);
+        followee.increaseFollowerCount();
+        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
+    }
+
     @Transactional(readOnly = true)
     public boolean isFollowedByMe(UUID followerId, UUID followeeId) {
         log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 시작 - followerId: {}, followeeId: {}", followerId, followeeId);
@@ -101,14 +109,6 @@ public class FollowService {
         UUID followeeId = follow.getFollowee().getId();
         eventPublisher.publishEvent(new FollowerDecreaseEvent(followeeId));
         log.info("[팔로우 관리] 팔로우 삭제 완료 - followId: {}", followId);
-    }
-
-    @Transactional
-    public void increaseFollowerCount(UUID followeeId) {
-        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followeeId: {}", followeeId);
-        User followee = getUserById(followeeId);
-        followee.increaseFollowerCount();
-        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
     }
 
     @Transactional

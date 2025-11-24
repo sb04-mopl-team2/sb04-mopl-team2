@@ -11,8 +11,7 @@ import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
-import com.codeit.mopl.exception.follow.FollowDuplicateException;
-import com.codeit.mopl.exception.follow.FollowSelfProhibitedException;
+import com.codeit.mopl.exception.follow.*;
 import com.codeit.mopl.exception.user.UserIdIsNullException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
@@ -175,7 +174,7 @@ class FollowServiceTest {
 
     @Test
     @DisplayName("팔로워 증가 이벤트 처리 실패 - followeeId가 null이 될 수 없음")
-    void increaseFollowerCount_UserId_Is_Null_ThrowsException() {
+    void increaseFollowerCount_FolloweeIdNull_ThrowsException() {
         // given
 
         // when & then
@@ -233,6 +232,37 @@ class FollowServiceTest {
         assertThatThrownBy(() -> followService.isFollowedByMe(followerId, followeeId))
                 .isInstanceOf(UserNotFoundException.class);
         verify(followRepository, never()).existsByFollowerIdAndFolloweeId(eq(followerId), eq(followeeId));
+    }
+
+    @Test
+    @DisplayName("특정 유저의 팔로워 수 조회 성공 테스트")
+    void getFollowerCount_Success() {
+        // given
+        UUID followeeId = UUID.randomUUID();
+        User followee = new User();
+        ReflectionTestUtils.setField(followee, "id", followeeId);
+        followee.setFollowerCount(1L);
+
+        given(userRepository.findById(eq(followeeId))).willReturn(Optional.of(followee));
+
+        // when
+        long result = followService.getFollowerCount(followeeId);
+
+        // then
+        assertThat(result).isEqualTo(1L);
+        verify(userRepository, times(1)).findById(eq(followeeId));
+    }
+
+    @Test
+    @DisplayName("특정 유저의 팔로워 수 조회 실패 - followee가 존재하지 않는 유저")
+    void getFollowerCount_FolloweeNotExists_ThrowsException() {
+        // given
+        UUID followeeId = UUID.randomUUID();
+        given(userRepository.findById(eq(followeeId))).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> followService.getFollowerCount(followeeId))
+                .isInstanceOf(UserNotFoundException.class);
     }
 
     @Test

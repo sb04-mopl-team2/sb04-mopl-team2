@@ -9,9 +9,9 @@ import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
@@ -31,10 +31,9 @@ public class KafkaConsumer {
             NotificationCreateEvent event = objectMapper.readValue(kafkaEventJson, NotificationCreateEvent.class);
             NotificationDto notificationDto = event.notificationDto();
 
-            try {
-                processedEventRepository.save(new ProcessedEvent(notificationDto.id(), EventType.NOTIFICATION_CREATED));
-            } catch (DataIntegrityViolationException e) {
-                log.warn("[Kafka] 이미 처리된 알림 생성 이벤트입니다. eventId={}", notificationDto.id());
+            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByIdAndEventType(notificationDto.id(), EventType.NOTIFICATION_CREATED);
+            if (processedEvent.isPresent()) {
+                log.warn("[Kafka] 이미 처리된 알림 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
                 ack.acknowledge();
                 return;
             }

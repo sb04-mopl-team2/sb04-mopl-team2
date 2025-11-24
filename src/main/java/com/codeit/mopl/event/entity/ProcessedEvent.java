@@ -21,7 +21,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 public class ProcessedEvent extends BaseEntity {
 
-  @Column(name = "event_id", nullable = false, updatable = false, unique = true)
+  @Column(name = "event_id", nullable = false, updatable = false)
   private UUID eventId;
 
   @Enumerated(EnumType.STRING)

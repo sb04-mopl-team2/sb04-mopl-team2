@@ -9,9 +9,9 @@ import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
@@ -33,10 +33,9 @@ public class FollowEventKafkaConsumer {
             FollowerIncreaseEvent event = objectMapper.readValue(kafkaEventJson, FollowerIncreaseEvent.class);
             FollowDto followDto = event.followDto();
 
-            try {
-                processedEventRepository.save(new ProcessedEvent(followDto.id(), EventType.FOLLOWER_INCREASE));
-            } catch (DataIntegrityViolationException e) {
-                log.warn("[Kafka] 이미 처리된 팔로워 증가 이벤트입니다. eventId={}", followDto.id());
+            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByIdAndEventType(followDto.id(), EventType.NOTIFICATION_CREATED);
+            if (processedEvent.isPresent()) {
+                log.warn("[Kafka] 이미 처리된 알림 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
                 ack.acknowledge();
                 return;
             }

@@ -31,7 +31,7 @@ public class KafkaConsumer {
             NotificationCreateEvent event = objectMapper.readValue(kafkaEventJson, NotificationCreateEvent.class);
             NotificationDto notificationDto = event.notificationDto();
 
-            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByIdAndEventType(notificationDto.id(), EventType.NOTIFICATION_CREATED);
+            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(notificationDto.id(), EventType.NOTIFICATION_CREATED);
             if (processedEvent.isPresent()) {
                 log.warn("[Kafka] 이미 처리된 알림 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
                 ack.acknowledge();

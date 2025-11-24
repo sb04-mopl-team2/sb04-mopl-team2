@@ -15,6 +15,7 @@ import com.codeit.mopl.exception.review.ReviewDuplicateException;
 import com.codeit.mopl.exception.review.ReviewErrorCode;
 import com.codeit.mopl.exception.review.ReviewNotFoundException;
 import com.codeit.mopl.exception.review.ReviewForbiddenException;
+import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -145,7 +146,7 @@ public class ReviewService {
     return userRepository.findById(userId)
         .orElseThrow(() -> {
           log.warn("[리뷰] 해당 유저를 찾을 수 없음 userId = {}", userId);
-          return new UserNotFoundException(ErrorCode.USER_NOT_FOUND, Map.of("userId", userId));
+          return new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId));
         });
   }
   

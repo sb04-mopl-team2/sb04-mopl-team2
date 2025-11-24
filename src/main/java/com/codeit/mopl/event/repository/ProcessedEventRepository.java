@@ -9,5 +9,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProcessedEventRepository extends JpaRepository<ProcessedEvent, UUID> {
 
-  Optional<ProcessedEvent> findByIdAndEventType(@NotNull UUID id, EventType eventType);
+  Optional<ProcessedEvent> findByEventIdAndEventType(@NotNull UUID eventId, EventType eventType);
 }
+

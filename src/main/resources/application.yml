@@ -76,18 +76,18 @@ jwt:
 
 tmdb:
   api:
-    token: ${TMDB_API_TOKEN}
-  base-url: ${TMDB_BASE_URL}
+    token : ${TMDB_API_TOKEN}
+  base-url : ${TMDB_BASE_URL}
 
 mail:
   host: ${MAIL_HOST}
   port: ${MAIL_PORT}
-  username: ${MAIL_USERNAME}
-  password: ${MAIL_PASSWORD}
-  properties:
-    mail:
-      smtp:
-        auth: true
-        starttls:
-          enable: true
-      debug: true
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+        debug: true

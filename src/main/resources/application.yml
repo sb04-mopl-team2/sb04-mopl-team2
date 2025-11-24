@@ -6,16 +6,22 @@ spring:
   config:
     import: optional:file:.env[.properties]
   servlet:
-   multipart:
-     maxFileSize: 10MB
-     maxRequestSize: 30MB
+    multipart:
+      maxFileSize: 10MB
+      maxRequestSize: 30MB
   batch:
-   jdbc:
-     initialize-schema: always
-   initial-load:
-     enabled: false
-   job:
-     enabled: false
+    jdbc:
+      initialize-schema: always
+    initial-load:
+      enabled: false
+    job:
+      enabled: false
+  # redis 설정
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
 
 management:
   endpoints:

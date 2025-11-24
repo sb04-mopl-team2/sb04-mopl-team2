@@ -3,8 +3,7 @@ package com.codeit.mopl.domain.review.repository;
 import com.codeit.mopl.config.QuerydslConfig;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
-import com.codeit.mopl.domain.content.mapper.ContentMapperImpl;
-import com.codeit.mopl.domain.content.repository.ContentRepositoryImpl;
+import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.review.entity.Review;
 import com.codeit.mopl.domain.review.entity.ReviewSortBy;
 import com.codeit.mopl.domain.review.entity.SortDirection;
@@ -18,16 +17,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import({QuerydslConfig.class,
-  ContentRepositoryImpl.class, ContentMapperImpl.class}) // JPAQueryFactory 빈 등록한 설정
+@Import(QuerydslConfig.class) // JPAQueryFactory 빈 등록한 설정
 class ReviewRepositoryImplTest {
 
+  @MockitoBean
+  private ContentMapper contentMapper;
+
   @Autowired
-  private ReviewRepository reviewRepository;
+  private ReviewRepository reviewRepository; // JpaRepository + CustomReviewRepository
 
   @Autowired
   private TestEntityManager em;

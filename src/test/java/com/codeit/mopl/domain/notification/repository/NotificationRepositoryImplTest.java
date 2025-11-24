@@ -3,9 +3,8 @@ package com.codeit.mopl.domain.notification.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.codeit.mopl.config.QuerydslConfig;
-import com.codeit.mopl.domain.content.mapper.ContentMapperImpl;
+import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
-import com.codeit.mopl.domain.content.repository.ContentRepositoryImpl;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.NotificationSortBy;
@@ -21,10 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @DataJpaTest
-@Import({QuerydslConfig.class,
-    ContentRepositoryImpl.class, ContentMapperImpl.class})
+@Import(QuerydslConfig.class) // JPAQueryFactory 빈 등록한 설정
 public class NotificationRepositoryImplTest {
 
   @Autowired
@@ -39,6 +38,9 @@ public class NotificationRepositoryImplTest {
 
   @Autowired
   private NotificationRepository notificationRepository;
+
+  @MockitoBean
+  private ContentMapper contentMapper;
 
   @BeforeEach
   void setUp() throws Exception {

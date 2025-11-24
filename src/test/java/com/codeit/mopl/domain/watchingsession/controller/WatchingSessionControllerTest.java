@@ -161,7 +161,7 @@ public class WatchingSessionControllerTest {
         get("/api/contents/" + contentId +"/watching-sessions")
             .param("limit", "10")
             .param("sortDirection", "ASCENDING")
-            .param("sortBy", "createdAt")
+            .param("sortBy", "CREATED_AT")
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON_VALUE)
     );
@@ -204,7 +204,7 @@ public class WatchingSessionControllerTest {
         get("/api/contents/" + contentId +"/watching-sessions")
             .param("limit", "10")
             .param("sortDirection", "ASCENDING")
-            .param("sortBy", "createdAt")
+            .param("sortBy", "CREATED_AT")
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON_VALUE)
     );

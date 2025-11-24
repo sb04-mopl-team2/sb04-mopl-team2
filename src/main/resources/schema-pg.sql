@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS contents
     description TEXT NOT NULL,
     thumbnail_url TEXT,
     average_rating DOUBLE PRECISION DEFAULT 0.0,
-    review_count INT DEFAULT 0
+    review_count INT DEFAULT 0,
+    watcher_count INT DEFAULT 0
     );
 
 -- CONTENT TAGS TABLE
@@ -134,6 +135,7 @@ CREATE TABLE IF NOT EXISTS direct_messages
 CREATE TABLE IF NOT EXISTS follows
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
     follower_id UUID NOT NULL,
     followee_id UUID NOT NULL,
     FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -159,6 +161,6 @@ CREATE TABLE IF NOT EXISTS processed_events
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
-    event_id UUID NOT NULL,
-    event_type VARCHAR(255) NOT NULL,
+    event_id UUID UNIQUE NOT NULL,
+    event_type VARCHAR(255) NOT NULL
     );

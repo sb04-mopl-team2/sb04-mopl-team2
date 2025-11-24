@@ -43,7 +43,7 @@ public class ContentController {
   }
 
   @GetMapping
-  public CursorResponseContentDto findContents(@ModelAttribute ContentSearchRequest request) {
+  public CursorResponseContentDto findContents(@Valid @ModelAttribute ContentSearchRequest request) {
     return contentService.findContents(request);
   }
 

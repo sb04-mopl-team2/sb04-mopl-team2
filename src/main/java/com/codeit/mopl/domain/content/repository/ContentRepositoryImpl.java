@@ -29,6 +29,14 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
 
   @Override
   public CursorResponseContentDto findContents(ContentSearchCondition cond) {
+    if (cond.getSortBy() == null || cond.getSortDirection() == null) {
+      throw new IllegalArgumentException("sortBy, sortDirection은 필수입니다.");
+    }
+
+    int limit = cond.getLimit();
+    if (limit <= 0) {
+      throw new IllegalArgumentException("limit는 1 이상이어야 합니다.");
+    }
 
     // 1. 데이터 (limit + 1)
     List<Content> contents = queryFactory
@@ -40,10 +48,10 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
             cursorCondition(cond)
         )
         .orderBy(orderSpecifiers(cond))
-        .limit(cond.getLimit() + 1)
+        .limit(limit + 1)
         .fetch();
 
-    boolean hasNext = contents.size() > cond.getLimit();
+    boolean hasNext = contents.size() > limit;
     if (hasNext) {
       contents.remove(contents.size() - 1);
     }
@@ -57,7 +65,7 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
 
       nextCursor = switch (cond.getSortBy()) {
         case CREATED_AT -> last.getCreatedAt().toString();
-        case WATCHER_COUNT -> String.valueOf(last.getReviewCount());
+        case WATCHER_COUNT -> String.valueOf(last.getWatcherCount());
         case RATE -> String.valueOf(last.getAverageRating());
       };
 
@@ -92,24 +100,32 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
 
   // ---------- where 조건 ----------
   private BooleanExpression typeEqual(String typeEqual) {
-    if (typeEqual == null) return null;
+    if (typeEqual == null) {
+      return null;
+    }
     return content.contentType.eq(ContentType.fromType(typeEqual));
   }
 
   private BooleanExpression keywordLike(String keyword) {
-    if (keyword == null) return null;
+    if (keyword == null) {
+      return null;
+    }
     return content.title.containsIgnoreCase(keyword)
         .or(content.description.containsIgnoreCase(keyword));
   }
 
   private BooleanExpression tagsIn(List<String> tags) {
-    if (tags == null || tags.isEmpty()) return null;
+    if (tags == null || tags.isEmpty()) {
+      return null;
+    }
     return content.tags.any().in(tags);
   }
 
   // ---------- 커서 조건 ----------
   private BooleanExpression cursorCondition(ContentSearchCondition cond) {
-    if (cond.getCursor() == null) return null;
+    if (cond.getCursor() == null) {
+      return null;
+    }
 
     SortBy sortBy = cond.getSortBy();
     SortDirection dir = cond.getSortDirection();
@@ -196,7 +212,7 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
           new OrderSpecifier<>(Order.ASC, content.id)
       };
       case WATCHER_COUNT -> new OrderSpecifier[]{
-          new OrderSpecifier<>(direction, content.reviewCount),
+          new OrderSpecifier<>(direction, content.watcherCount),
           new OrderSpecifier<>(Order.ASC, content.id)
       };
       case RATE -> new OrderSpecifier[]{

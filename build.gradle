@@ -25,6 +25,14 @@ repositories {
     mavenCentral()
 }
 
+jacocoTestReport {
+    dependsOn test // 테스트 후 실행
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-batch'
@@ -74,9 +82,6 @@ dependencies {
 
     // s3
     implementation 'software.amazon.awssdk:s3:2.31.7'
-
-    // for security test
-    testImplementation 'org.springframework.security:spring-security-test'
 
 }
 

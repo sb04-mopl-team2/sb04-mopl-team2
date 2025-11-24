@@ -15,6 +15,8 @@ public interface ContentMapper {
   @Mapping(target = "averageRating", constant = "0.0")
   @Mapping(target = "reviewCount", constant = "0")
   @Mapping(target = "thumbnailUrl", ignore = true)
+  @Mapping(target = "watcherCount", ignore = true)
+  @Mapping(target = "updatedAt", ignore = true)
   Content fromCreateRequest(ContentCreateRequest request);
 
   @Mapping(target = "type", expression = "java(content.getContentType().getType())")

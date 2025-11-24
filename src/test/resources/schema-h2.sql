@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS contents
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     thumbnail_url TEXT,
+    content_type VARCHAR(255) NOT NULL,
     average_rating DOUBLE DEFAULT 0.0,
     review_count INT DEFAULT 0,
     watcher_count INT DEFAULT 0

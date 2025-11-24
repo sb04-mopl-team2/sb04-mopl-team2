@@ -2,20 +2,13 @@ package com.codeit.mopl.domain.content.entity;
 
 import com.codeit.mopl.domain.base.UpdatableEntity;
 import com.codeit.mopl.domain.content.dto.request.ContentUpdateRequest;
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -28,8 +21,7 @@ public class Content extends UpdatableEntity {
   private String title;
 
   @NotNull
-  @Lob
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String description;
 
   private String thumbnailUrl;
@@ -41,7 +33,7 @@ public class Content extends UpdatableEntity {
 
   @NotNull
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
+  @Column(name = "content_type", nullable = false)
   private ContentType contentType;
 
   @Column(columnDefinition = "DOUBLE PRECISION DEFAULT 0.0")

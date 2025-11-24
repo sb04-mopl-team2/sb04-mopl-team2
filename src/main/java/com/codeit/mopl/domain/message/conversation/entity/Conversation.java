@@ -12,7 +12,10 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@Table(name = "conversations")
+@Table(name = "conversations",
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = {"user_id", "with_user_id"},
+                name = "uk_conversation_users"))
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder

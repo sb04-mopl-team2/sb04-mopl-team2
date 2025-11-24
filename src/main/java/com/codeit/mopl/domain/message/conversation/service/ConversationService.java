@@ -29,6 +29,14 @@ public class ConversationService {
     public ConversationDto createConversation(UUID loginUserId, ConversationCreateRequest request) {
         UUID conversationId = UUID.randomUUID();
         UUID withUserId = request.withUserId();
+        if (loginUserId.equals(withUserId)) {
+            log.warn("[메세지] 채팅방 생성 실패 - 본인과의 대화는 생성할 수 없음 - userId = {}", loginUserId);
+            throw new IllegalArgumentException("본인과의 대화는 생성할 수 없습니다.");
+        }
+
+        // loginUserId, withUserId 중 저 작은 쪽을 userA, 더 큰 쪽을 userB로 설정하여 순서를 고정시킴
+        UUID userA = loginUserId.compareTo(withUserId) < 0 ? loginUserId : withUserId;
+        UUID userB = loginUserId.compareTo(withUserId) < 0 ? withUserId : loginUserId;
         log.info("[메세지] 채팅방 생성 시작 - conversationId = {}, receiverId = {} ", conversationId, withUserId);
 
         User loginUser = userRepository.findById(loginUserId)
@@ -43,9 +51,14 @@ public class ConversationService {
                     return new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", withUserId));
                 });
 
-        if (conversationRepository.existsByUserIdAndWithUserId(loginUserId, withUserId)) {
-            log.info("[메세지] 채팅방 생성 실패 - 이미 생성된 채팅방임 - conversationId = {}", conversationId);
-            throw ConversationDuplicateException.withId(conversationId);
+        boolean exists = conversationRepository.existsByUser_IdAndWithUser_Id(userA, userB);
+        if (exists) {
+            throw ConversationDuplicateException.withId(withUserId);
+        }
+
+        if (conversationRepository.existsByUser_IdAndWithUser_Id(userA, userB)) {
+            log.info("[메세지] 채팅방 생성 실패 - 이미 생성된 채팅방임 - loginUserId = {}, withUserId = {}", loginUserId, withUserId);
+            throw ConversationDuplicateException.withId(withUserId);
         }
 
         Conversation conversation = Conversation.builder()
@@ -59,5 +72,4 @@ public class ConversationService {
         log.info("[메세지] 채팅방 생성 완료 - conversationId = {}", saved.getId());
         return conversationMapper.toConversationDto(saved, null);
     }
-
 }

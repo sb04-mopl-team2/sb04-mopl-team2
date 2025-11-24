@@ -11,9 +11,9 @@ public class ConversationDuplicateException extends MessageException {
         super(MessageErrorCode.CONVERSATION_ALREADY_EXIST, new HashMap<>());
     }
 
-    public static ConversationDuplicateException withId(UUID conversationId) {
+    public static ConversationDuplicateException withId(UUID withUserId) {
         ConversationDuplicateException ex = new ConversationDuplicateException();
-        ex.getDetails().put("conversationId", conversationId);
+        ex.getDetails().put("withUserId", withUserId);
         return ex;
     }
 }

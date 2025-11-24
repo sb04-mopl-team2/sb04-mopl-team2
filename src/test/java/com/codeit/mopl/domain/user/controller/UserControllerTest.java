@@ -11,6 +11,7 @@ import com.codeit.mopl.domain.user.service.UserService;
 import com.codeit.mopl.security.config.TestSecurityConfig;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
+import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
 import com.codeit.mopl.util.WithCustomMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -64,6 +65,9 @@ public class UserControllerTest {
 
     @MockitoBean
     private JpaMetamodelMappingContext jpaMappingContext;
+
+    @MockitoBean
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     private static final UUID TEST_UUID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     private static final UserDto USER_DTO = new UserDto(TEST_UUID,LocalDateTime.now(),"test@test.com","testName",null,Role.USER,false);

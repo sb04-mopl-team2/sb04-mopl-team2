@@ -110,6 +110,8 @@ CREATE TABLE IF NOT EXISTS reviews
 CREATE TABLE IF NOT EXISTS conversations
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP,
     with_user_id UUID NOT NULL,
     user_id UUID NOT NULL,
     has_unread BOOLEAN NOT NULL DEFAULT FALSE,

@@ -79,6 +79,8 @@ CREATE TABLE IF NOT EXISTS reviews
 CREATE TABLE IF NOT EXISTS conversations
 (
     id UUID PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    updated_at TIMESTAMP,
     with_user_id UUID NOT NULL,
     user_id UUID NOT NULL,
     has_unread BOOLEAN NOT NULL DEFAULT FALSE

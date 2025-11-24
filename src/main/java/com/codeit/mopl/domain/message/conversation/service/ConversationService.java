@@ -27,17 +27,13 @@ public class ConversationService {
     private final ConversationMapper conversationMapper;
 
     public ConversationDto createConversation(UUID loginUserId, ConversationCreateRequest request) {
-        UUID conversationId = UUID.randomUUID();
         UUID withUserId = request.withUserId();
         if (loginUserId.equals(withUserId)) {
             log.warn("[메세지] 채팅방 생성 실패 - 본인과의 대화는 생성할 수 없음 - userId = {}", loginUserId);
             throw new IllegalArgumentException("본인과의 대화는 생성할 수 없습니다.");
         }
 
-        // loginUserId, withUserId 중 저 작은 쪽을 userA, 더 큰 쪽을 userB로 설정하여 순서를 고정시킴
-        UUID userA = loginUserId.compareTo(withUserId) < 0 ? loginUserId : withUserId;
-        UUID userB = loginUserId.compareTo(withUserId) < 0 ? withUserId : loginUserId;
-        log.info("[메세지] 채팅방 생성 시작 - conversationId = {}, receiverId = {} ", conversationId, withUserId);
+        log.info("[메세지] 채팅방 생성 시작 - loginUser = {}, receiverId = {} ", loginUserId, withUserId);
 
         User loginUser = userRepository.findById(loginUserId)
                 .orElseThrow(() -> {
@@ -51,19 +47,22 @@ public class ConversationService {
                     return new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", withUserId));
                 });
 
-        boolean exists = conversationRepository.existsByUser_IdAndWithUser_Id(userA, userB);
-        if (exists) {
-            throw ConversationDuplicateException.withId(withUserId);
-        }
+        // loginUserId, withUserId 중 더 작은 쪽을 userA, 더 큰 쪽을 userB로 설정하여 순서를 고정시킴
+        UUID userA = loginUserId.compareTo(withUserId) < 0 ? loginUserId : withUserId;
+        UUID userB = loginUserId.compareTo(withUserId) < 0 ? withUserId : loginUserId;
 
-        if (conversationRepository.existsByUser_IdAndWithUser_Id(userA, userB)) {
-            log.info("[메세지] 채팅방 생성 실패 - 이미 생성된 채팅방임 - loginUserId = {}, withUserId = {}", loginUserId, withUserId);
-            throw ConversationDuplicateException.withId(withUserId);
+        Optional<Conversation> existing =
+                conversationRepository.findByUser_IdAndWith_Id(userA, userB);
+
+        if (existing.isPresent()) {
+            UUID existingConversationId = existing.get().getId();
+            log.info("[메세지] 채팅방 생성 실패 - 이미 생성된 채팅방임 - 기존 conversationId = {}", existingConversationId);
+            throw ConversationDuplicateException.withId(existingConversationId);
         }
 
         Conversation conversation = Conversation.builder()
-                .user(loginUser)
-                .with(withUser)
+                .user(userA.equals(loginUserId) ? loginUser : withUser)
+                .with(userB.equals(loginUserId) ? loginUser : withUser)
                 .hasUnread(false)
                 .messages(new ArrayList<>())
                 .build();

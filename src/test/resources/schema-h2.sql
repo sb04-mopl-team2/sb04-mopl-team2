@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS direct_messages
 CREATE TABLE IF NOT EXISTS follows
 (
     id UUID PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
     follower_id UUID NOT NULL,
     followee_id UUID NOT NULL,
     UNIQUE (follower_id, followee_id)
@@ -104,7 +105,7 @@ CREATE TABLE IF NOT EXISTS follows
 CREATE TABLE IF NOT EXISTS processed_events
 (
     id UUID PRIMARY KEY,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
     event_id UUID NOT NULL,
     event_type VARCHAR(255) NOT NULL
     );

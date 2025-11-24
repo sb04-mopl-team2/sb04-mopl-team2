@@ -134,6 +134,7 @@ CREATE TABLE IF NOT EXISTS direct_messages
 CREATE TABLE IF NOT EXISTS follows
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
     follower_id UUID NOT NULL,
     followee_id UUID NOT NULL,
     FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,

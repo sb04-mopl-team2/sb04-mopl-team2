@@ -89,7 +89,7 @@ class ReviewServiceTest {
     assertThat(result.nextCursor()).isNull();
     assertThat(result.nextIdAfter()).isNull();
     assertThat(result.sortBy()).isEqualTo(sortBy.toString());
-    assertThat(result.sortDirection()).isEqualTo(sortDirection);
+    assertThat(result.sortDirection()).isEqualTo(sortDirection.toString());
 
     // ✔ 빈 결과일 때 totalCount 조회 안 하는지 검증
     verify(reviewRepository, never()).countByContentIdAndIsDeleted(any(), any());
@@ -139,7 +139,7 @@ class ReviewServiceTest {
     assertThat(result.nextIdAfter()).isNull();
     assertThat(result.totalCount()).isEqualTo(2L);
     assertThat(result.sortBy()).isEqualTo(sortBy.toString());
-    assertThat(result.sortDirection()).isEqualTo(sortDirection);
+    assertThat(result.sortDirection()).isEqualTo(sortDirection.toString());
   }
 
   @Test
@@ -191,7 +191,7 @@ class ReviewServiceTest {
     assertThat(result.nextIdAfter()).isEqualTo(review2.getId());
     assertThat(result.totalCount()).isEqualTo(3L);
     assertThat(result.sortBy()).isEqualTo(sortBy.toString());
-    assertThat(result.sortDirection()).isEqualTo(sortDirection);
+    assertThat(result.sortDirection()).isEqualTo(sortDirection.toString());
   }
 
   @Test

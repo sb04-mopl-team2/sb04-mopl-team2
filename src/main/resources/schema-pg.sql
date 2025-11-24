@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS playlist_subscriptions
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP,
     subscriber_id UUID NOT NULL,
     playlist_id UUID NOT NULL,
 

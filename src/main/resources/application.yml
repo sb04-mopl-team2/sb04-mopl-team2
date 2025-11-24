@@ -17,6 +17,36 @@ spring:
    job:
      enabled: false
 
+    multipart:
+      maxFileSize: 10MB
+      maxRequestSize: 30MB
+  batch:
+    jdbc:
+      initialize-schema: always
+    initial-load:
+      enabled: false
+    job:
+      enabled: false
+
+  kafka:
+    bootstrap-servers: ${CONFLUENT_BOOTSTRAP_SERVERS}
+
+    properties:
+      security.protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
+      sasl.mechanism: ${KAFKA_SASL_MECHANISM:PLAIN}
+      sasl.jaas.config: >
+        org.apache.kafka.common.security.plain.PlainLoginModule required
+        username="${CONFLUENT_API_KEY}"
+        password="${CONFLUENT_API_SECRET}";
+
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:mopl-notification}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 management:
   endpoints:
     web:
@@ -67,11 +97,6 @@ jwt:
   key: ${JWT_KEY}
   access-token-expiration-minutes: ${ACCESS_TOKEN_EXPIRATION_MINUTES}
   refresh-token-expiration-minutes: ${REFRESH_TOKEN_EXPIRATION_MINUTES}
-
-tmdb:
-  api:
-    token : ${TMDB_API_TOKEN}
-  base-url : ${TMDB_BASE_URL}
 
 mail:
   host: smtp.gmail.com

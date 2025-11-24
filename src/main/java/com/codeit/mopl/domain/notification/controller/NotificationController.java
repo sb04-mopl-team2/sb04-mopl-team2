@@ -2,8 +2,6 @@ package com.codeit.mopl.domain.notification.controller;
 
 import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationSearchRequest;
-import com.codeit.mopl.domain.notification.entity.SortBy;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -13,14 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.parameters.P;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -40,7 +34,7 @@ public class NotificationController {
 
     UUID userId = user.getUser().id();
     CursorResponseNotificationDto response = notificationService.getNotifications(userId,
-        request.cursor(), request.idAfter(), request.limit(), request.sortDirection(), request.sortBy()
+        request.cursor(), request.idAfter(), request.limit(), request.sortDirection(), request.notificationSortBy()
     );
 
     log.info("[알림] 알림 조회 요청 종료");

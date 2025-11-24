@@ -6,17 +6,6 @@ spring:
   config:
     import: optional:file:.env[.properties]
   servlet:
-   multipart:
-     maxFileSize: 10MB
-     maxRequestSize: 30MB
-  batch:
-   jdbc:
-     initialize-schema: always
-   initial-load:
-     enabled: false
-   job:
-     enabled: false
-
     multipart:
       maxFileSize: 10MB
       maxRequestSize: 30MB
@@ -47,6 +36,7 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
 management:
   endpoints:
     web:

@@ -70,6 +70,9 @@ CREATE TABLE IF NOT EXISTS notifications
 CREATE TABLE IF NOT EXISTS reviews
 (
     id UUID PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    updated_at TIMESTAMP,
+    deleted_at TIMESTAMP,
     text TEXT NOT NULL,
     rating DOUBLE NOT NULL DEFAULT 0.0,
     content_id UUID NOT NULL,

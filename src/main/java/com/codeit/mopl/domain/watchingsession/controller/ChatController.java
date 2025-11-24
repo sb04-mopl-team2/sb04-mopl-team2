@@ -4,14 +4,15 @@ import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.watchingsession.dto.ContentChatDto;
 import com.codeit.mopl.domain.watchingsession.entity.ContentChatSendRequest;
 import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
+import com.codeit.mopl.domain.watchingsession.service.RedisPublisher;
 import com.codeit.mopl.security.CustomUserDetails;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
@@ -24,7 +25,8 @@ import org.springframework.stereotype.Controller;
 @RequiredArgsConstructor
 public class ChatController {
 
-  private final SimpMessagingTemplate messagingTemplate;
+//  private final SimpMessagingTemplate messagingTemplate;
+  private final RedisPublisher redisPublisher;
 
   // (adds /pub) client -> server
   // 엔드포인트: SEND /pub/contents/{contentId}/chat
@@ -48,7 +50,8 @@ public class ChatController {
     // server -> client
     // 엔드포인트: SUBSCRIBE /sub/contents/{contentId}/chat
     String destination = String.format("/sub/contents/%s/chat", contentId);
-    messagingTemplate.convertAndSend(destination, contentChatDto);
+    redisPublisher.convertAndSend(destination, contentChatDto);
+//    messagingTemplate.convertAndSend(destination, contentChatDto);
   }
 
 }

@@ -11,6 +11,7 @@ import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSessionChange;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
+import com.codeit.mopl.domain.watchingsession.service.RedisPublisher;
 import com.codeit.mopl.security.CustomUserDetails;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,8 @@ public class WebSocketEventListener {
   private final UserRepository userRepository;
   private final ContentRepository contentRepository;
   private final SimpMessagingTemplate messagingTemplate;
+
+  private final RedisPublisher redisPublisher;
   
   /*
      콘텐츠 시청 세션: 누가 시청 세션에 들어오고 나가는지 (참가자 목록) 업데이트를 받기 위해
@@ -83,7 +86,8 @@ public class WebSocketEventListener {
 
       // server -> client
       String payloadDestination = String.format("/sub/contents/%s/watch", contentId);
-      messagingTemplate.convertAndSend(payloadDestination, watchingSessionChange);
+//      messagingTemplate.convertAndSend(payloadDestination, watchingSessionChange);
+      redisPublisher.convertAndSend(payloadDestination, watchingSessionChange);
     }
   }
 
@@ -113,7 +117,8 @@ public class WebSocketEventListener {
         watchingSession, user, ChangeType.LEAVE, watcherCount);
 
     String payloadDestination = String.format("/sub/contents/%s/watch", contentId);
-    messagingTemplate.convertAndSend(payloadDestination, watchingSessionChange);
+//    messagingTemplate.convertAndSend(payloadDestination, watchingSessionChange);
+    redisPublisher.convertAndSend(payloadDestination, watchingSessionChange);
   }
 
   // ==================== helper methods ====================

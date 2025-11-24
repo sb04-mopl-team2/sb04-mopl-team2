@@ -66,7 +66,7 @@ public class ReviewService {
     log.info("[리뷰] 리뷰 수정 종료, reviewId = {}", reviewId);
     return reviewMapper.toDto(review);
   }
-  
+
   @Transactional
   public void deleteReview(UUID userId, UUID reviewId) {
     log.info("[리뷰] 리뷰 삭제 시작, userId = {}, reviewId = {}", userId, reviewId);

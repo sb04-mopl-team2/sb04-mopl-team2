@@ -7,10 +7,12 @@ import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ContentService {
@@ -21,14 +23,20 @@ public class ContentService {
 
   @Transactional
   public ContentDto createContent(@Valid ContentCreateRequest request, MultipartFile thumbnail) {
+    log.info("[콘텐츠] 콘텐츠 생성 서비스 시작 title = {}", request.title());
+
     Content content = contentMapper.fromCreateRequest(request);
 
     String thumbnailUrl = uploadThumbnail(thumbnail);
     content.setThumbnailUrl(thumbnailUrl);
 
     Content saveContent = contentRepository.save(content);
+
     Long watcherCount = getWatcherCount();
-    return contentMapper.toDto(saveContent, watcherCount);
+
+    ContentDto dto = contentMapper.toDto(saveContent, watcherCount);
+    log.info("[콘텐츠] 콘텐츠 서비스 완료 id = {}, title = {}", dto.id(), dto.title());
+    return dto;
   }
 
   //redis로 실시간 세션 관리 매서드 기능 완성후 추가 구현예정

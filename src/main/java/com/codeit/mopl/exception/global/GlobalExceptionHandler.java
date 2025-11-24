@@ -18,7 +18,8 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleMoplException(MoplException e) {
     log.error(e.getMessage(), e);
 
-    ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode().getName(), e.getErrorCode().getMessage(), e.getDetails(), e.getTimestamp());
+    ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode().getName(),
+        e.getErrorCode().getMessage(), e.getDetails(), e.getTimestamp());
 
     return ResponseEntity.status(e.getErrorCode().getStatus()).body(errorResponse);
   }
@@ -27,18 +28,25 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleMessagingException(MessagingException e) {
     log.error(e.getMessage(), e);
 
-    ErrorResponse errorResponse = new ErrorResponse("MessagingException", e.getMessage(), Map.of("log","이메일 발신 중 오류 발생"), LocalDateTime.now());
+    ErrorResponse errorResponse = new ErrorResponse("MessagingException", e.getMessage(),
+        Map.of("log", "이메일 발신 중 오류 발생"), LocalDateTime.now());
 
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+  public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
+      MethodArgumentNotValidException e) {
     log.error(e.getMessage(), e);
 
     ErrorCodeInterface errorCode = ErrorCode.INVALID_INPUT_VALUE;
 
-    ErrorResponse errorResponse = new ErrorResponse(errorCode.getName(), errorCode.getMessage() , Map.of("입력값 검증 실패","유효하지 않은 입력값입니다."), LocalDateTime.now());
+    Map<String, Object> errors = new java.util.HashMap<>();
+    e.getBindingResult().getFieldErrors().forEach(error ->
+        errors.put(error.getField(), error.getDefaultMessage())
+    );
+
+    ErrorResponse errorResponse = new ErrorResponse(errorCode.getName(), errorCode.getMessage(), errors, LocalDateTime.now());
 
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
   }

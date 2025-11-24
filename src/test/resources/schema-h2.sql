@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS watching_sessions
     id UUID PRIMARY KEY,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
-    deleted_at TIMESTAMP
+    deleted_at TIMESTAMP,
     user_id UUID NOT NULL,
     content_id UUID NOT NULL,
 

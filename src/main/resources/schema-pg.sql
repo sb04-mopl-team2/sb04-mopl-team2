@@ -162,5 +162,5 @@ CREATE TABLE IF NOT EXISTS processed_events
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     event_id UUID NOT NULL,
-    event_type VARCHAR(255) NOT NULL
+    event_type VARCHAR(255) UNIQUE NOT NULL
     );

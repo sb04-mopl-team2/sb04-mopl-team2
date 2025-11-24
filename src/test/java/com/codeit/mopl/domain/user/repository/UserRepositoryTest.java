@@ -1,6 +1,7 @@
 package com.codeit.mopl.domain.user.repository;
 
 import com.codeit.mopl.config.QuerydslConfig;
+import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.user.dto.request.CursorRequestUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.LocalDateTime;
 
@@ -27,6 +29,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
+    @MockitoBean
+    private ContentMapper contentMapper;
 
     @AfterEach
     public void tearDown() {

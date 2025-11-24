@@ -1,11 +1,17 @@
 package com.codeit.mopl.domain.content.service;
 
-import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.request.ContentCreateRequest;
+import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
+import com.codeit.mopl.domain.content.dto.response.ContentDto;
+import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
+import com.codeit.mopl.exception.content.ContentErrorCode;
+import com.codeit.mopl.exception.content.ContentNotFoundException;
 import jakarta.validation.Valid;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,6 +27,7 @@ public class ContentService {
 
   private final ContentMapper contentMapper;
 
+  //콘텐츠 수동등록
   @Transactional
   public ContentDto createContent(@Valid ContentCreateRequest request, MultipartFile thumbnail) {
     log.info("[콘텐츠] 콘텐츠 생성 서비스 시작 title = {}", request.title());
@@ -37,6 +44,23 @@ public class ContentService {
     ContentDto dto = contentMapper.toDto(saveContent, watcherCount);
     log.info("[콘텐츠] 콘텐츠 서비스 완료 id = {}, title = {}", dto.id(), dto.title());
     return dto;
+  }
+
+  //콘텐츠 목록조회
+  @Transactional(readOnly = true)
+  public CursorResponseContentDto findContents(ContentSearchRequest request) {
+    return contentRepository.findContents(request.toCondition());
+  }
+
+  //콘텐츠 단건조회
+  @Transactional(readOnly = true)
+  public ContentDto findContent(UUID contentId) {
+    Content content = contentRepository.findById(contentId).orElseThrow(
+        () ->  new ContentNotFoundException(ContentErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId))
+    );
+
+    Long watcherCount = getWatcherCount();
+    return contentMapper.toDto(content, watcherCount);
   }
 
   //redis로 실시간 세션 관리 매서드 기능 완성후 추가 구현예정

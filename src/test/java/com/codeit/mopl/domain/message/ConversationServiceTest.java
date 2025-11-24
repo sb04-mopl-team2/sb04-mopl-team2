@@ -56,14 +56,19 @@ public class ConversationServiceTest {
             setId(withUser, withUserId);
             UserSummary with = new UserSummary(withUserId,"test", "test");
 
-            given(userRepository.findById(loginUserId)).willReturn(Optional.of(withUser));
+            UUID userA = loginUserId.compareTo(withUserId) < 0 ? loginUserId : withUserId;
+            UUID userB = loginUserId.compareTo(withUserId) < 0 ? withUserId : loginUserId;
+
+            given(userRepository.findById(loginUserId)).willReturn(Optional.of(loginUser));
             given(userRepository.findById(withUserId)).willReturn(Optional.of(withUser));
-            given(conversationRepository.existsById(any())).willReturn(false);
+            given(conversationRepository.findByUser_IdAndWith_Id(userA, userB))
+                    .willReturn(Optional.empty());
+
             ConversationCreateRequest request =
                     new ConversationCreateRequest(withUserId);
             Conversation conversation = Conversation.builder()
-                    .user(loginUser)
-                    .with(withUser)
+                    .user(userA.equals(loginUserId) ? loginUser : withUser)
+                    .with(userB.equals(loginUserId) ? loginUser : withUser)
                     .hasUnread(false)
                     .messages(new ArrayList<>())
                     .build();
@@ -78,7 +83,7 @@ public class ConversationServiceTest {
             //then
             verify(userRepository).findById(loginUserId);
             verify(userRepository).findById(withUserId);
-            verify(conversationRepository).existsById(any());
+            verify(conversationRepository).findByUser_IdAndWith_Id(userA, userB);
             verify(conversationRepository).save(any());
         }
 
@@ -91,9 +96,7 @@ public class ConversationServiceTest {
             setId(loginUser, loginUserId);
 
             UUID nonExistentUserId = UUID.randomUUID();
-            User withUser = new User();
-            setId(withUser, nonExistentUserId);
-            given(userRepository.findById(loginUserId)).willReturn(Optional.of(withUser));
+            given(userRepository.findById(loginUserId)).willReturn(Optional.of(loginUser));
             given(userRepository.findById(nonExistentUserId)).willReturn(Optional.empty());
 
             ConversationCreateRequest request = new ConversationCreateRequest(nonExistentUserId);
@@ -118,9 +121,22 @@ public class ConversationServiceTest {
             User withUser = new User();
             setId(withUser, withUserId);
 
+            UUID userA = loginUserId.compareTo(withUserId) < 0 ? loginUserId : withUserId;
+            UUID userB = loginUserId.compareTo(withUserId) < 0 ? withUserId : loginUserId;
+
+            UUID existingConversationId = UUID.randomUUID();
+            Conversation existingConversation = Conversation.builder()
+                    .user(userA.equals(loginUserId) ? loginUser : withUser)
+                    .with(userB.equals(loginUserId) ? loginUser : withUser)
+                    .hasUnread(false)
+                    .messages(new ArrayList<>())
+                    .build();
+            setId(existingConversation, existingConversationId);
+
             given(userRepository.findById(loginUserId)).willReturn(Optional.of(withUser));
             given(userRepository.findById(withUserId)).willReturn(Optional.of(withUser));
-            given(conversationRepository.existsById(any())).willReturn(true);
+            given(conversationRepository.findByUser_IdAndWith_Id(userA, userB))
+                    .willReturn(Optional.of(existingConversation));
             ConversationCreateRequest request =
                     new ConversationCreateRequest(withUserId);
 
@@ -129,6 +145,7 @@ public class ConversationServiceTest {
                     () -> conversationService.createConversation(loginUserId,request));
             verify(userRepository).findById(loginUserId);
             verify(userRepository).findById(withUserId);
+            verify(conversationRepository).findByUser_IdAndWith_Id(userA, userB);
             verify(conversationRepository, never()).save(any());
         }
     }

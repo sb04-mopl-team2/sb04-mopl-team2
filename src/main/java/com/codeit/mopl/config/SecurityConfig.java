@@ -59,6 +59,7 @@ public class SecurityConfig {
                                            LoginFailureHandler loginFailureHandler, JwtLogoutHandler jwtLogoutHandler, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) throws Exception {
         http
                 .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/api/batch/**")
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
                 )
@@ -85,6 +86,7 @@ public class SecurityConfig {
                                 .accessDeniedHandler(new AccessDeniedHandlerImpl())
                 )
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/api/batch/init").permitAll() // 초기 데이터 세팅
                         .requestMatchers("/api/auth/csrf-token").permitAll()  // csrf-token 조회
                         .requestMatchers("/api/auth/sign-in").permitAll()  // 로그인
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()  // 회원가입

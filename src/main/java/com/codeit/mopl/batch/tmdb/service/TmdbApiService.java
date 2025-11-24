@@ -8,6 +8,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TmdbApiService {
@@ -27,13 +29,6 @@ public class TmdbApiService {
   private final TmdbMovieMapper tmdbMovieMapper;
   private final ContentRepository contentRepository;
 
-  /**
-   * 특정 날짜 영화 조회 및 저장 GET /discover/movie?release_date.gte=...&release_date.lte=...
-   *
-   * @param from 개봉일
-   * @param page 페이지 번호
-   * @return Mono<List < Content>> 저장된 컨텐츠 리스트
-   */
   @Transactional
   public Mono<List<Content>> discoverMoviesFromDate(
       LocalDate from,

@@ -7,8 +7,8 @@ public class FolloweeIdIsNullException extends FollowException {
         super(FollowErrorCode.FOLLOWEE_ID_IS_NULL, details);
     }
 
-    public static FolloweeIdIsNullException withClassName(String className) {
-        Map<String, Object> details = Map.of("className", className);
+    public static FolloweeIdIsNullException withDetails() {
+        Map<String, Object> details = Map.of("followeeId", "null");
         return new FolloweeIdIsNullException(details);
     }
 }

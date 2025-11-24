@@ -44,7 +44,7 @@ public class KafkaEventListener {
     UUID followeeId = event.followDto().followeeId();
     String key = Optional.ofNullable(followeeId)
             .map(Object::toString)
-            .orElseThrow(() -> FolloweeIdIsNullException.withClassName(this.getClass().getSimpleName()));
+            .orElseThrow(FolloweeIdIsNullException::withDetails);
     send("mopl-follower-increase", key, event);
   }
 

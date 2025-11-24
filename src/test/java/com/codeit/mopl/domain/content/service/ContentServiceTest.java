@@ -5,10 +5,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.request.ContentCreateRequest;
+import com.codeit.mopl.domain.content.dto.request.ContentSearchCondition;
+import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
+import com.codeit.mopl.domain.content.dto.response.ContentDto;
+import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
+import com.codeit.mopl.domain.content.entity.SortBy;
+import com.codeit.mopl.domain.content.entity.SortDirection;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import java.util.Arrays;
@@ -80,5 +85,40 @@ class ContentServiceTest {
     assertThat(result).isNotNull();
     assertThat(result.title()).isEqualTo("범죄도시");
     assertThat(result.thumbnailUrl()).isEqualTo("thumbnailUrl");
+  }
+
+  @Test
+  @DisplayName("콘텐츠 목록 조회")
+  void findContents_Success() {
+    // given
+    ContentSearchRequest request = new ContentSearchRequest();
+    request.setCursor("cursor123");
+    request.setLimit(10);
+    request.setSortBy(SortBy.CREATED_AT);
+    request.setSortDirection(SortDirection.ASCENDING);
+
+    CursorResponseContentDto mockedResponse =
+        new CursorResponseContentDto(
+            List.of(),
+            "nextCursorValue",
+            UUID.randomUUID(),
+            true,
+            0L,
+            "createdAt",
+            "ASCENDING"
+        );
+
+    given(contentRepository.findContents(any(ContentSearchCondition.class)))
+        .willReturn(mockedResponse);
+
+    // when
+    CursorResponseContentDto result = contentService.findContents(request);
+
+    // then
+    assertThat(result).isNotNull();
+    assertThat(result.data()).isEmpty();
+    assertThat(result.hasNext()).isTrue();
+    assertThat(result.sortBy()).isEqualTo("createdAt");
+    assertThat(result.sortDirection()).isEqualTo("ASCENDING");
   }
 }

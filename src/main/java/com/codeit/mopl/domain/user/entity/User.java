@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
@@ -34,7 +35,7 @@ public class User extends UpdatableEntity {
     private boolean locked;
 
     @Column(nullable = false, columnDefinition = "BIGINT DEFAULT 0")
-    private long followerCount = 0L;
+    private long followerCount;
 
     public User(String email, String password, String name) {
         this.email = email;
@@ -43,6 +44,7 @@ public class User extends UpdatableEntity {
         this.profileImageUrl = null;
         this.role = Role.USER;
         this.locked = false;
+        this.followerCount = 0;
     }
 
     public void updateRole(Role role) {
@@ -70,6 +72,11 @@ public class User extends UpdatableEntity {
     @Override
     public int hashCode() {
         return Objects.hashCode(getId());
+    }
+
+    public User(String email, String password, String name, LocalDateTime createdAt) {
+        this(email,password,name);
+        this.createdAt = createdAt;
     }
 
     public void increaseFollowerCount() {

@@ -1,6 +1,7 @@
 package com.codeit.mopl.domain.content.entity;
 
 import com.codeit.mopl.domain.base.UpdatableEntity;
+import com.codeit.mopl.domain.content.dto.request.ContentUpdateRequest;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -51,4 +52,11 @@ public class Content extends UpdatableEntity {
 
   @Column(columnDefinition = "INTEGER DEFAULT 0")
   private Integer watcherCount = 0;
+
+  public void update(ContentUpdateRequest request) {
+    this.title = request.title();
+    this.description = request.description();
+    this.tags = new ArrayList<>(request.tags());
+    this.contentType = ContentType.fromType(request.type());
+  }
 }

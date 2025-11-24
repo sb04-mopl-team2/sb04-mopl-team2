@@ -2,10 +2,14 @@ package com.codeit.mopl.event.consumer;
 
 import com.codeit.mopl.domain.follow.dto.FollowDto;
 import com.codeit.mopl.domain.follow.service.FollowService;
+import com.codeit.mopl.event.entity.EventType;
+import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
+import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -21,6 +25,7 @@ public class FollowEventKafkaConsumer {
 
     private final FollowService followService;
     private final ObjectMapper objectMapper;
+    private final ProcessedEventRepository processedEventRepository;
 
     @KafkaListener(topics = "mopl-follower-increase", groupId = "mopl-follow", concurrency = "3")
     public void onFollowIncrease(String kafkaEventJson, Acknowledgment ack) {
@@ -37,7 +42,7 @@ public class FollowEventKafkaConsumer {
             throw e;
         }
     }
-    
+
     @KafkaListener(topics = "mopl-follower-decrease", groupId = "mopl-follow", concurrency = "3")
     public void onFollowDecrease(String kafkaEventJson, Acknowledgment ack) {
         try {

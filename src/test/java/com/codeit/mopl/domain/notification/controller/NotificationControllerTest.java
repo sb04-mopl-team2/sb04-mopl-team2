@@ -4,7 +4,7 @@ import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationSearchRequest;
 import com.codeit.mopl.domain.notification.entity.Level;
-import com.codeit.mopl.domain.notification.entity.NotificationSortBy;
+import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.mapper.MapperUtils;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
@@ -41,7 +41,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -113,7 +112,7 @@ public class NotificationControllerTest {
             null,
             5,
             SortDirection.DESCENDING,
-            NotificationSortBy.CREATED_AT
+            SortBy.CREATED_AT
         );
 
     NotificationDto notificationDto1 = new NotificationDto(
@@ -136,7 +135,7 @@ public class NotificationControllerTest {
             null,
             false,
             3L,
-            NotificationSortBy.CREATED_AT,
+            SortBy.CREATED_AT,
             SortDirection.DESCENDING
         );
 
@@ -146,7 +145,7 @@ public class NotificationControllerTest {
         eq(notificationSearchRequest.idAfter()),
         eq(notificationSearchRequest.limit()),
         eq(notificationSearchRequest.sortDirection()),
-        eq(notificationSearchRequest.notificationSortBy())
+        eq(notificationSearchRequest.sortBy())
     )).thenReturn(cursorResponseNotificationDto);
 
     // when
@@ -155,7 +154,7 @@ public class NotificationControllerTest {
             .with(user(customUserDetails))
             .param("limit", String.valueOf(notificationSearchRequest.limit()))
             .param("sortDirection", notificationSearchRequest.sortDirection().name())
-            .param("notificationSortBy", notificationSearchRequest.notificationSortBy().name())
+            .param("sortBy", notificationSearchRequest.sortBy().name())
             .accept(MediaType.APPLICATION_JSON)
     );
 
@@ -168,7 +167,7 @@ public class NotificationControllerTest {
         .andExpect(jsonPath("$.data[2].id").value(notificationDto3.id().toString()))
         .andExpect(jsonPath("$.hasNext").value(false))
         .andExpect(jsonPath("$.totalCount").value(3))
-        .andExpect(jsonPath("$.notificationSortBy").value(NotificationSortBy.CREATED_AT.name()))
+        .andExpect(jsonPath("$.sortBy").value(SortBy.CREATED_AT.name()))
         .andExpect(jsonPath("$.sortDirection").value(SortDirection.DESCENDING.name()));
 
     verify(notificationService).getNotifications(
@@ -177,7 +176,7 @@ public class NotificationControllerTest {
         eq(notificationSearchRequest.idAfter()),
         eq(notificationSearchRequest.limit()),
         eq(notificationSearchRequest.sortDirection()),
-        eq(notificationSearchRequest.notificationSortBy())
+        eq(notificationSearchRequest.sortBy())
     );
   }
 

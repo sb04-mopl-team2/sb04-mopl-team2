@@ -6,17 +6,6 @@ spring:
   config:
     import: optional:file:.env[.properties]
   servlet:
-   multipart:
-     maxFileSize: 10MB
-     maxRequestSize: 30MB
-  batch:
-   jdbc:
-     initialize-schema: always
-   initial-load:
-     enabled: false
-   job:
-     enabled: false
-
     multipart:
       maxFileSize: 10MB
       maxRequestSize: 30MB
@@ -27,6 +16,12 @@ spring:
       enabled: false
     job:
       enabled: false
+  # redis 설정
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
 
   kafka:
     bootstrap-servers: ${CONFLUENT_BOOTSTRAP_SERVERS}
@@ -47,6 +42,7 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
 management:
   endpoints:
     web:
@@ -98,9 +94,14 @@ jwt:
   access-token-expiration-minutes: ${ACCESS_TOKEN_EXPIRATION_MINUTES}
   refresh-token-expiration-minutes: ${REFRESH_TOKEN_EXPIRATION_MINUTES}
 
+tmdb:
+  api:
+    token : ${TMDB_API_TOKEN}
+  base-url : ${TMDB_BASE_URL}
+
 mail:
-  host: smtp.gmail.com
-  port: 587
+  host: ${MAIL_HOST}
+  port: ${MAIL_PORT}
   username: ${MAIL_USERNAME}
   password: ${MAIL_PASSWORD}
   properties:

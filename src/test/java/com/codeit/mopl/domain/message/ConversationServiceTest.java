@@ -133,7 +133,7 @@ public class ConversationServiceTest {
                     .build();
             setId(existingConversation, existingConversationId);
 
-            given(userRepository.findById(loginUserId)).willReturn(Optional.of(withUser));
+            given(userRepository.findById(loginUserId)).willReturn(Optional.of(loginUser));
             given(userRepository.findById(withUserId)).willReturn(Optional.of(withUser));
             given(conversationRepository.findByUser_IdAndWith_Id(userA, userB))
                     .willReturn(Optional.of(existingConversation));

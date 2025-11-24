@@ -3,6 +3,9 @@ package com.codeit.mopl.domain.notification.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.codeit.mopl.config.QuerydslConfig;
+import com.codeit.mopl.domain.content.mapper.ContentMapperImpl;
+import com.codeit.mopl.domain.content.repository.ContentRepository;
+import com.codeit.mopl.domain.content.repository.ContentRepositoryImpl;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.NotificationSortBy;
@@ -20,7 +23,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
 @DataJpaTest
-@Import(QuerydslConfig.class) // JPAQueryFactory 빈 등록한 설정
+@Import({QuerydslConfig.class,
+    ContentRepositoryImpl.class, ContentMapperImpl.class})
 public class NotificationRepositoryImplTest {
 
   @Autowired

@@ -3,6 +3,8 @@ package com.codeit.mopl.domain.review.repository;
 import com.codeit.mopl.config.QuerydslConfig;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
+import com.codeit.mopl.domain.content.mapper.ContentMapperImpl;
+import com.codeit.mopl.domain.content.repository.ContentRepositoryImpl;
 import com.codeit.mopl.domain.review.entity.Review;
 import com.codeit.mopl.domain.review.entity.ReviewSortBy;
 import com.codeit.mopl.domain.review.entity.SortDirection;
@@ -20,11 +22,12 @@ import org.springframework.context.annotation.Import;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(QuerydslConfig.class) // JPAQueryFactory 빈 등록한 설정
+@Import({QuerydslConfig.class,
+  ContentRepositoryImpl.class, ContentMapperImpl.class}) // JPAQueryFactory 빈 등록한 설정
 class ReviewRepositoryImplTest {
 
   @Autowired
-  private ReviewRepository reviewRepository; // JpaRepository + CustomReviewRepository
+  private ReviewRepository reviewRepository;
 
   @Autowired
   private TestEntityManager em;

@@ -153,3 +153,14 @@ CREATE TABLE IF NOT EXISTS watching_sessions
     FOREIGN KEY (content_id) REFERENCES contents(id) ON DELETE CASCADE,
     UNIQUE(user_id)
     );
+
+-- PROCESSED EVENT
+CREATE TABLE IF NOT EXISTS processed_events
+(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP,
+    event_id UUID NOT NULL UNIQUE,
+    event_type VARCHAR(255) NOT NULL,
+    UNIQUE (event_id)
+    );

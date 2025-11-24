@@ -1,7 +1,5 @@
 package com.codeit.mopl.domain.notification.controller;
 
-
-import com.codeit.mopl.domain.auth.service.AuthService;
 import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationSearchRequest;

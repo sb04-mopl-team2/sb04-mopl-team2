@@ -16,6 +16,12 @@ spring:
       enabled: false
     job:
       enabled: false
+  # redis 설정
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
 
   kafka:
     bootstrap-servers: ${CONFLUENT_BOOTSTRAP_SERVERS}

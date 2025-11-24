@@ -10,9 +10,11 @@ import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
+import com.codeit.mopl.exception.follow.FollowDtoIsNullException;
 import com.codeit.mopl.exception.follow.FollowDuplicateException;
 import com.codeit.mopl.exception.follow.FollowSelfProhibitedException;
 import com.codeit.mopl.exception.user.UserErrorCode;
+import com.codeit.mopl.exception.user.UserIdIsNullException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,19 +69,39 @@ public class FollowService {
     @Transactional
     public void increaseFollowerCount(FollowDto followDto) {
         if (followDto == null) {
-            throw new IllegalArgumentException("FollowDto must not be null");
-        }
-        UUID followeeId = followDto.followeeId();
-        if (followeeId == null) {
-            throw new IllegalArgumentException("FolloweeId must not be null or blank");
+            throw FollowDtoIsNullException.withDetails();
         }
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followDto: {}", followDto);
+        UUID followeeId = followDto.followeeId();
         User followee = getUserById(followeeId);
         followee.increaseFollowerCount();
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
     }
 
+    @Transactional(readOnly = true)
+    public boolean isFollowedByMe(UUID followerId, UUID followeeId) {
+        log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 시작 - followerId: {}, followeeId: {}", followerId, followeeId);
+        if (!userRepository.existsById(followeeId)) {
+            throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", followeeId));
+        }
+        boolean isFollowed = followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
+        log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 완료 - followerId: {}, followeeId: {}, isFollowed: {}", followerId, followeeId, isFollowed);
+        return isFollowed;
+    }
+
+    @Transactional(readOnly = true)
+    public long getFollowerCount(UUID followeeId) {
+        log.info("[팔로우 관리] 팔로워 수 조회 시작 - followeeId: {}", followeeId);
+        User followee = getUserById(followeeId);
+        long followerCount = followee.getFollowerCount();
+        log.info("[팔로우 관리] 팔로워 수 조회 완료 - followeeId: {}, followerCount: {}", followeeId, followerCount);
+        return followerCount;
+    }
+
     private User getUserById(UUID userId) {
+        if (userId == null) {
+            throw new UserIdIsNullException(UserErrorCode.USER_ID_IS_NULL, Map.of("userId", "null"));
+        }
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
     }

@@ -42,4 +42,14 @@ public class Playlist extends UpdatableEntity {
         this.title = title;
         this.description = description;
     }
+
+    public void incrementSubscriberCount() {
+        this.subscriberCount++;
+    }
+
+    public void decrementSubscriberCount() {
+        if (this.subscriberCount > 0) {
+            this.subscriberCount--;
+        }
+    }
 }

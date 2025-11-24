@@ -50,7 +50,7 @@ public class PlaylistService {
             .user(user)
             .title(request.title())
             .description(request.description())
-            .playlistItems(new ArrayList<>()) // 빈 리스트 생성
+            .playlistItems(new ArrayList<>())
             .subscriberCount(0)
             .subscribedByMe(false)
             .build();

@@ -1,12 +1,16 @@
 package com.codeit.mopl.domain.message;
 
 import com.codeit.mopl.domain.base.BaseEntity;
-import com.codeit.mopl.domain.message.conversation.dto.ConversationCreateRequest;
-import com.codeit.mopl.domain.message.conversation.dto.ConversationDto;
+import com.codeit.mopl.domain.message.conversation.dto.request.ConversationCreateRequest;
+import com.codeit.mopl.domain.message.conversation.dto.request.ConversationSearchCond;
+import com.codeit.mopl.domain.message.conversation.dto.response.ConversationDto;
+import com.codeit.mopl.domain.message.conversation.dto.response.CursorResponseConversationDto;
 import com.codeit.mopl.domain.message.conversation.entity.Conversation;
 import com.codeit.mopl.domain.message.conversation.mapper.ConversationMapper;
 import com.codeit.mopl.domain.message.conversation.repository.ConversationRepository;
 import com.codeit.mopl.domain.message.conversation.service.ConversationService;
+import com.codeit.mopl.domain.notification.entity.SortDirection;
+import com.codeit.mopl.domain.playlist.entity.SortBy;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
@@ -21,10 +25,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -147,6 +150,131 @@ public class ConversationServiceTest {
             verify(userRepository).findById(withUserId);
             verify(conversationRepository).findByUser_IdAndWith_Id(userA, userB);
             verify(conversationRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("find()")
+    class FindConversation {
+
+        @Test
+        @DisplayName("요청 파라미터 없이 모든 생성된 채팅방 목록을 조회함")
+        void shouldFindConversations() {
+            //given
+            ConversationSearchCond cond = new ConversationSearchCond();
+            cond.setKeywordLike(null);
+            cond.setCursor(null);
+            cond.setLimit(10);
+            cond.setSortBy(SortBy.UPDATED_AT);
+            cond.setSortDirection(SortDirection.DESCENDING);
+
+            UUID conversationId = UUID.randomUUID();
+            UUID loginUserId = UUID.randomUUID();
+            User loginUser = new User();
+            setId(loginUser, loginUserId);
+            UUID withUserId = UUID.randomUUID();
+            User withUser = new User();
+            setId(withUser, withUserId);
+            UserSummary with = new UserSummary(withUserId, "test", "test" );
+
+            Conversation conversation = Conversation.builder()
+                    .user(loginUser)
+                    .with(withUser)
+                    .build();
+            given(conversationRepository.findAllByCond(any(ConversationSearchCond.class)))
+                    .willReturn(Arrays.asList(conversation));
+            given(conversationMapper.toConversationDto(conversation,null))
+                    .willReturn(new ConversationDto(
+                            conversationId,
+                            with,
+                            null,
+                            false
+                    ));
+            given(conversationRepository.countAllByCond(any(ConversationSearchCond.class)))
+            .willReturn(1L);
+
+            //when
+            CursorResponseConversationDto result = conversationService.getAllConversations(loginUserId, cond);
+
+            //then
+            assertThat(result.totalCount()).isEqualTo(1);
+            assertThat(result.data().get(0).id()).isEqualTo(conversationId);
+            assertThat(result.data().get(0).with()).isEqualTo(with);
+            assertThat(result.data().get(0).lastestMessage()).isEqualTo(null);
+            assertThat(result.data().get(0).hasUnread()).isEqualTo(false);
+        }
+
+        @Test
+        @DisplayName("해당 키워드가 유저네임 또는 메세지에 포함된 채팅방만 조회함")
+        void shouldThrowExceptionWhenConversationByKeyword() {
+            //given
+            ConversationSearchCond cond = new ConversationSearchCond();
+            cond.setKeywordLike(null);
+            cond.setCursor(null);
+            cond.setLimit(10);
+            cond.setSortBy(SortBy.UPDATED_AT);
+            cond.setSortDirection(SortDirection.DESCENDING);
+
+            UUID loginUserId = UUID.randomUUID();
+
+            UUID conversationId1 = UUID.randomUUID();
+            UUID withUserId1 = UUID.randomUUID();
+            User withUser1 = new User();
+            setId(withUser1, withUserId1);
+            UserSummary with1 = new UserSummary(withUserId1, "test", "test" );
+
+            UUID conversationId2 = UUID.randomUUID();
+            UUID withUserId2 = UUID.randomUUID();
+            User withUser2 = new User();
+            setId(withUser2, withUserId2);
+            UserSummary with2 = new UserSummary(withUserId2, "test2", "test2" );
+
+            Conversation conversation1 = Conversation.builder()
+                    .user(withUser1)
+                    .build();
+            Conversation conversation2 = Conversation.builder()
+                    .user(withUser2)
+                    .build();
+            List<Conversation> conversations = Arrays.asList(conversation1, conversation2);
+            given(conversationRepository.findAllByCond(any(ConversationSearchCond.class)))
+                    .willReturn(conversations);
+            given(conversationMapper.toConversationDto(conversation1,null))
+                    .willReturn(new ConversationDto(conversationId1,with1,null,true));
+            given(conversationMapper.toConversationDto(conversation2,null))
+                    .willReturn(new ConversationDto(conversationId2,with2,null,true));
+            given(conversationRepository.countAllByCond(any(ConversationSearchCond.class)))
+                    .willReturn(2L);
+
+            //when
+            CursorResponseConversationDto result = conversationService.getAllConversations(loginUserId, cond);
+
+            //then
+            assertThat(result.totalCount()).isEqualTo(2);
+            assertThat(result.data().get(0).id()).isEqualTo(conversationId1);
+            assertThat(result.data().get(1).id()).isEqualTo(conversationId2);
+            assertThat(result.data().get(0).lastestMessage()).isEqualTo(null);
+            assertThat(result.data().get(0).hasUnread()).isEqualTo(true);
+        }
+
+        @Test
+        @DisplayName("키워드와 일치하는 결과가 없을 경우 빈리스트를 반환함")
+        void shouldThrowEmptyWhenKeywordNotFound() {
+            //given
+            ConversationSearchCond cond = new ConversationSearchCond();
+            cond.setKeywordLike(null);
+            cond.setCursor(null);
+            cond.setLimit(10);
+            cond.setSortBy(SortBy.UPDATED_AT);
+            cond.setSortDirection(SortDirection.DESCENDING);
+            UUID loginUserId = UUID.randomUUID();
+            given(conversationRepository.findAllByCond(any(ConversationSearchCond.class)))
+                    .willReturn(Collections.emptyList());
+
+            //when
+            CursorResponseConversationDto result = conversationService.getAllConversations(loginUserId, cond);
+
+            //then
+            assertThat(result.totalCount()).isEqualTo(0);
         }
     }
 

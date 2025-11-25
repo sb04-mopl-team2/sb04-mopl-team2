@@ -182,5 +182,5 @@ CREATE TABLE IF NOT EXISTS processed_events
     event_id UUID NOT NULL,
     event_type VARCHAR(255) NOT NULL,
 
-    UNIQUE(event_id)
+    UNIQUE(event_id, event_type)
     );

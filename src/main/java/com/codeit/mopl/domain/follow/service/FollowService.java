@@ -108,7 +108,7 @@ public class FollowService {
         followRepository.delete(follow);
         UUID followeeId = follow.getFollowee().getId();
         eventPublisher.publishEvent(new FollowerDecreaseEvent(follow.getId(), followeeId));
-        log.info("[팔로우 관리] 팔로우 삭제 완료 - followId: {}", followId);
+        log.info("[팔로우 관리] 팔로우 삭제 완료 - followId: {}, followeeId: {}", followId, followeeId);
     }
 
     @Transactional

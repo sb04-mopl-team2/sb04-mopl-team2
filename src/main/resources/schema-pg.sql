@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS playlist_subscriptions
     updated_at TIMESTAMP,
     subscriber_id UUID NOT NULL,
     playlist_id UUID NOT NULL,
+    subscribed_at TIMESTAMP,
 
     FOREIGN KEY (subscriber_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,

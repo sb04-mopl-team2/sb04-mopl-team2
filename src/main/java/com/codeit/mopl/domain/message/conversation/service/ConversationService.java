@@ -110,17 +110,9 @@ public class ConversationService {
 
         List<ConversationDto> conversationDtos =
                 result.stream()
-                        .map(conversation -> {
-                            List<DirectMessage> msgs = conversation.getMessages();
-                            DirectMessage lastMessage = (msgs == null || msgs.isEmpty())
-                                    ? null
-                                    : msgs.get(msgs.size() - 1);
-
-                            DirectMessageDto lastMessageDto =
-                                    lastMessage == null ? null : directMessageMapper.toDirectMessageDto(lastMessage);
-                            return conversationMapper.toConversationDto(conversation, lastMessageDto);
-                        })
+                        .map(this::buildDtoWithLastMessage)
                         .collect(Collectors.toList());
+
         long totalCount = conversationRepository.countAllByCond(cond);
         log.info("[메세지] 채팅방 목록 조회 완료 - conversationId = {}", nextIdAfter);
         return new CursorResponseConversationDto(
@@ -152,13 +144,40 @@ public class ConversationService {
             throw ConversationForbiddenException.withId(conversationId);
         }
 
+        log.info("[메세지] 채팅방 정보 조회 완료 - conversationId = {}", conversationId);
+        return buildDtoWithLastMessage(conversation);
+    }
+
+    @Transactional(readOnly = true)
+    public ConversationDto getConversationByUserId(UUID loginUserId, UUID withUserId) {
+        UUID userA = loginUserId.compareTo(withUserId) < 0 ? loginUserId : withUserId;
+        UUID userB = loginUserId.compareTo(withUserId) < 0 ? withUserId : loginUserId;
+        log.info("[메세지] 특정 사용자와의 채팅방 조회 시작 - withUserId = {}", withUserId);
+
+        Conversation conversation = conversationRepository.findByUser_IdAndWith_Id(userA,userB)
+                .orElseThrow(()->{
+                    log.warn("[메세지] 특정 사용자와의 채팅방 조회 실패 - 채팅방 존재하지 않음 - conversationId = {}", userA, userB);
+                    return ConversationNotFound.withId(withUserId);
+                });
+
+        if (!conversation.getUser().getId().equals(loginUserId) &&
+                !conversation.getWith().getId().equals(loginUserId)) {
+            log.warn("[메세지] 특정 사용자와의 채팅방 조회 실패 - 접근 권한 없음 - (loginUserId = {})", loginUserId );
+            throw ConversationForbiddenException.withId(conversation.getId());
+        }
+        log.info("[메세지] 특정 사용자와의 채팅방 조회 완료 - withUserId = {}", withUserId);
+        return buildDtoWithLastMessage(conversation);
+    }
+
+    // 보조 메서드
+    private ConversationDto buildDtoWithLastMessage(Conversation conversation) {
         List<DirectMessage> messages = conversation.getMessages();
         DirectMessage lastMessage =
-                (messages == null || messages.isEmpty()) ? null
-                        : messages.get(messages.size() - 1);
+                (messages == null || messages.isEmpty()) ? null : messages.get(messages.size() - 1);
+
         DirectMessageDto lastMessageDto =
                 lastMessage == null ? null : directMessageMapper.toDirectMessageDto(lastMessage);
-        log.info("[메세지] 채팅방 정보 조회 완료 - conversationId = {}", conversationId);
+
         return conversationMapper.toConversationDto(conversation, lastMessageDto);
     }
 }

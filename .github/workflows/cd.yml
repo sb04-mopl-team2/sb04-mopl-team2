@@ -42,11 +42,7 @@ jobs:
         id: set-tag
         run: echo "image_tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
-      - name: Debug REPO_URI
-        run: |
-          echo "REPO_URI=${REPO_URI}"
-          echo "Literal: $REPO_URI"
-
+      ## 도커 빌드 & 캐싱
       - name: 도커 빌드
         uses: docker/build-push-action@v5
         with:
@@ -55,8 +51,8 @@ jobs:
           tags: |
             ${{ env.REPO_URI }}:${{ steps.set-tag.outputs.image_tag }}
             ${{ env.REPO_URI }}:latest
-#          cache-from: type=registry, ref=${{ env.REPO_URI }}:buildcache
-#          cache-to: type=registry, ref=${{ env.REPO_URI }}:buildcache, mode=max
+          cache-from: type=registry,ref=${{ env.REPO_URI }}:buildcache
+          cache-to: type=registry,ref=${{ env.REPO_URI }}:buildcache,mode=max
           platforms: linux/amd64
 
 # Job2: 새 이미지를 ECR 서비스에 배포

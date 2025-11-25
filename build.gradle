@@ -25,6 +25,14 @@ repositories {
     mavenCentral()
 }
 
+jacocoTestReport {
+    dependsOn test // 테스트 후 실행
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-batch'

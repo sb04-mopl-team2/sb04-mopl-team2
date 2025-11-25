@@ -139,7 +139,7 @@ public class NotificationControllerTest {
             null,
             false,
             3L,
-            SortBy.CREATED_AT,
+            SortBy.CREATED_AT.toString(),
             SortDirection.DESCENDING
         );
 

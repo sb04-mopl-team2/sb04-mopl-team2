@@ -18,6 +18,7 @@ import com.codeit.mopl.security.CustomUserDetails;
 import com.codeit.mopl.security.config.TestSecurityConfig;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
+import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
 import com.codeit.mopl.sse.service.SseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -95,6 +96,9 @@ public class NotificationControllerTest {
 
   @MockitoBean
   private JwtRegistry jwtRegistry;
+
+  @MockitoBean
+  private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
   @Test
   @DisplayName("알림 조회 성공")

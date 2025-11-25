@@ -14,7 +14,7 @@ public class SortByConverter implements Converter<String, SortBy> {
     }
 
     return Arrays.stream(SortBy.values())
-        .filter(v -> v.field().equalsIgnoreCase(source))  // "createdAt" 매칭
+        .filter(sortBy -> sortBy.getType().equalsIgnoreCase(source))  // "createdAt" 매칭
         .findFirst()
         .orElseThrow(() -> new IllegalArgumentException("Invalid sortBy: " + source));
   }

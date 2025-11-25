@@ -1,15 +1,14 @@
 package com.codeit.mopl.domain.notification.entity;
 
+import lombok.Getter;
+
+@Getter
 public enum SortBy {
   CREATED_AT("createdAt");
 
-  private final String field;
+  private final String type;
 
-  SortBy(String field) {
-    this.field = field;
-  }
-
-  public String field() {
-    return field;
+  SortBy(String type) {
+    this.type = type;
   }
 }

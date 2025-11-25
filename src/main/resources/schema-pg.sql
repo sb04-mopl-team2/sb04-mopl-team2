@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS playlists
     title VARCHAR(255) NOT NULL,
     description TEXT,
     subscriber_count BIGINT NOT NULL DEFAULT 0,
-    subscribe_by_me BOOLEAN NOT NULL DEFAULT FALSE,
+    subscribed_by_me BOOLEAN NOT NULL DEFAULT FALSE,
 
     FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
     );

@@ -1,15 +1,20 @@
 package com.codeit.mopl.domain.content.entity;
 
 import com.codeit.mopl.domain.base.UpdatableEntity;
-import jakarta.persistence.*;
+import com.codeit.mopl.domain.content.dto.request.ContentUpdateRequest;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter

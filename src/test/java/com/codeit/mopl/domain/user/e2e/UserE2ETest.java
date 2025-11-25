@@ -14,11 +14,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.transaction.AfterTransaction;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -28,6 +32,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.BDDMockito.given;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UserE2ETest {
@@ -41,10 +46,15 @@ public class UserE2ETest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @MockitoBean
+    private StringRedisTemplate redisTemplate;
+
     private HttpHeaders defaultHeaders = new HttpHeaders();
 
     @BeforeEach
     void setUp() {
+        ValueOperations<String, String> ops = Mockito.mock(ValueOperations.class);
+        given(redisTemplate.opsForValue()).willReturn(ops);
         if (!userRepository.existsByEmail("admin@google.com")){
             User admin = new User("admin@google.com",passwordEncoder.encode("asdf1234!"),"admin");
             admin.setRole(Role.ADMIN);

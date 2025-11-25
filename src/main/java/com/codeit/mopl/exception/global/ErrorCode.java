@@ -18,4 +18,9 @@ public enum ErrorCode implements ErrorCodeInterface{
   public String getName() {
     return this.name();
   }
+
+  @Override
+  public String getMessage() {
+    return this.message;
+  }
 }

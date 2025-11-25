@@ -27,35 +27,25 @@ public class TempPasswordAuthenticationProvider implements AuthenticationProvide
         String username = authentication.getName();
         String rawPassword = (String) authentication.getCredentials();
 
-        UserDetails user = userDetailsService.loadUserByUsername(username);
+        String encodedTempPw = redisTemplate.opsForValue().getAndDelete(username);
 
-        String encodedTempPw = redisTemplate.opsForValue().get(username);
-
-        if (encodedTempPw != null) {
-            if (!passwordEncoder.matches(rawPassword, encodedTempPw)) {
-                throw new BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
-            }
-
-            redisTemplate.delete(username);
-
-            UsernamePasswordAuthenticationToken token =
-                    new UsernamePasswordAuthenticationToken(
-                            user,
-                            null,
-                            user.getAuthorities()
-                    );
-            return token;
+        if (encodedTempPw == null) {
+            return null;
         }
 
-        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+        if (!passwordEncoder.matches(rawPassword, encodedTempPw)) {
             throw new BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
 
-        return new UsernamePasswordAuthenticationToken(
-                user,
-                null,
-                user.getAuthorities()
-        );
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        UsernamePasswordAuthenticationToken token =
+                new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
+
+        return token;
     }
 
     @Override

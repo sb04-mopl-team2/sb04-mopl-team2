@@ -9,6 +9,8 @@ import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.fixture.UserFixture;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.transaction.AfterTransaction;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -27,7 +30,6 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Transactional
 public class UserE2ETest {
 
     @Autowired
@@ -36,10 +38,18 @@ public class UserE2ETest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private HttpHeaders defaultHeaders = new HttpHeaders();
 
     @BeforeEach
     void setUp() {
+        if (!userRepository.existsByEmail("admin@google.com")){
+            User admin = new User("admin@google.com",passwordEncoder.encode("asdf1234!"),"admin");
+            admin.setRole(Role.ADMIN);
+            userRepository.save(admin);
+        }
         var httpClient = org.apache.hc.client5.http.impl.classic.HttpClients.createDefault();
         var factory = new org.springframework.http.client.HttpComponentsClientHttpRequestFactory(httpClient);
         rest.getRestTemplate().setRequestFactory(factory);
@@ -62,7 +72,7 @@ public class UserE2ETest {
         defaultHeaders.add("X-XSRF-TOKEN", tokenValue);
     }
 
-    @AfterTransaction
+    @AfterEach
     void cleanUp() {
         userRepository.deleteAll();
     }

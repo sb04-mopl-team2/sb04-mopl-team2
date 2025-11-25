@@ -20,8 +20,8 @@ public class UserFixture {
         return new User("test3@test.com", "password", "test3", LocalDateTime.now().minusHours(2));
     }
 
-    public static User createUser4() {
-        User admin = new User("admin@admin.com", "password", "admin", LocalDateTime.now().minusHours(1));
+    public static User createAdmin() {
+        User admin = new User("admin@google.com", "asdf1234!", "admin", LocalDateTime.now().minusHours(1));
         admin.setRole(Role.ADMIN);
         return admin;
     }

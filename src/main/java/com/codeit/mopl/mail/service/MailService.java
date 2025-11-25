@@ -5,7 +5,6 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -22,7 +21,7 @@ public class MailService {
     private final StringRedisTemplate redisTemplate;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${mail.expiration:120}")
+    @Value("${mail.expiration:180}")
     private int expiration;
 
     public void sendMail(String email, String tempPw) throws MessagingException {
@@ -36,12 +35,12 @@ public class MailService {
         helper.setSubject("임시 비밀번호 발급");
         helper.setText(emailContent, true);
 
-        String encodedTempPw = passwordEncoder.encode(tempPw);
-        redisTemplate.opsForValue().set(email, encodedTempPw, expiration, TimeUnit.SECONDS);
-
-
         javaMailSender.send(message);
         log.info("[이메일] 이메일 발송 완료 email = {}", email);
+
+        String encodedTempPw = passwordEncoder.encode(tempPw);
+        redisTemplate.opsForValue().set(email, encodedTempPw, expiration, TimeUnit.SECONDS);
+        log.info("[Redis] 임시 비밀번호 설정 완료 key = {}", email);
     }
 
     private String getEmailContent(String tempPw) {

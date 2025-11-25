@@ -5,6 +5,7 @@ import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
+import com.codeit.mopl.domain.playlist.subscription.entity.Subscription;
 import com.codeit.mopl.domain.playlist.subscription.repository.SubscriptionRepository;
 import com.codeit.mopl.domain.playlist.subscription.service.SubscriptionService;
 import com.codeit.mopl.domain.user.entity.User;

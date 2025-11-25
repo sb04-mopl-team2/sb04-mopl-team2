@@ -1,4 +1,4 @@
-package com.codeit.mopl.domain.message.conversation.dto;
+package com.codeit.mopl.domain.message.conversation.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 

@@ -16,6 +16,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @Slf4j
 @RestController
 @Validated
@@ -29,8 +31,9 @@ public class ConversationController {
     public ResponseEntity<ConversationDto> createConversation(
             @Valid @RequestBody ConversationCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails loginUser) {
-        log.info("[메세지] 채팅방 생성 요청 - conversationWithId = {}", request.withUserId());
+        log.info("[메세지] 채팅방 생성 요청 - WithUserId = {}", request.withUserId());
         ConversationDto response = conversationService.createConversation(loginUser.getUser().id(), request);
+        log.info("[메세지] 채팅방 생성 응답 - WithUserId = {}", response.with().userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -39,6 +42,15 @@ public class ConversationController {
                                                                           @Validated @ModelAttribute ConversationSearchCond request) {
         log.info("[메세지] 채팅방 목록 조회 요청 - loginUser = {}", loginUser.getUser().id());
         CursorResponseConversationDto response = conversationService.getAllConversations(loginUser.getUser().id(), request);
+        log.info("[메세지] 채팅방 목록 조회 응답 - loginUser = {}", loginUser.getUser().id());
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @GetMapping("/{conversationId}")
+    public ResponseEntity<ConversationDto> getConversation(@PathVariable UUID conversationId){
+        log.info("[메세지] 채팅방 정보 조회 요청 - conversationId = {}", conversationId);
+        ConversationDto response = conversationService.getConversationById(conversationId);
+        log.info("[메세지] 채팅방 정보 조회 응답 - conversationId = {}", conversationId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

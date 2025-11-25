@@ -13,6 +13,8 @@ import java.util.UUID;
 @Getter
 @Setter
 public class ConversationSearchCond {
+    private UUID loginUserId;
+
     private String keywordLike;
     private String cursor;
     private UUID idAfter;

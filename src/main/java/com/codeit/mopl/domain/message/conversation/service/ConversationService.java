@@ -134,13 +134,22 @@ public class ConversationService {
     }
 
     @Transactional(readOnly = true)
-    public ConversationDto getConversationById(UUID conversationId) {
+    public ConversationDto getConversationById(UUID loginUserId ,UUID conversationId) {
         log.info("[메세지] 채팅방 정보 조회 시작 - conversationId = {}", conversationId);
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(()->{
                     log.warn("[메세지] 채팅방 정보 조회 실패 - 채팅방 존재하지 않음 - conversationId = {}", conversationId);
                     return ConversationNotFound.withId(conversationId);
                 });
+
+        //유저 권한 검증
+        UUID userIdA = conversation.getUser().getId();
+        UUID userB = conversation.getWith().getId();
+
+        if (!userIdA.equals(loginUserId) || !userB.equals(loginUserId)) {
+            log.warn("[메세지] 채팅방 정보 조회 실패 - 접근 권한 없음 - (loginUserId = {}, conversationId = {})", loginUserId, conversationId );
+            throw ConversationDuplicateException.withId(conversationId);
+        }
 
         List<DirectMessage> messages = conversation.getMessages();
         DirectMessage lastMessage =

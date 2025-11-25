@@ -30,15 +30,19 @@ public class ConversationRepositoryImpl implements CustomConversationRepository 
     public List<Conversation> findAllByCond(ConversationSearchCond cond) {
         QConversation c = QConversation.conversation;
         QDirectMessage m = QDirectMessage.directMessage;
-        QUser u = QUser.user;
+        QUser u1 = new QUser("userA");
+        QUser u2 = new QUser("userB");
+        UUID loginUserId = cond.getLoginUserId();
 
         return query
                 .selectDistinct(c)
                 .from(c)
-                .leftJoin(c.with, u)
+                .leftJoin(c.user, u1)
+                .leftJoin(c.with, u2)
                 .leftJoin(c.messages, m)
                 .where(
-                        keywordLike(cond.getKeywordLike()),
+                        c.user.id.eq(loginUserId).or(c.with.id.eq(loginUserId)),
+                        keywordLike(cond.getKeywordLike(), loginUserId, u1, u2, m),
                         cursorLessThan(cond.getCursor(), cond.getIdAfter())
                 )
                 .orderBy(buildOrderBy(cond.getSortBy(),cond.getSortDirection()))
@@ -48,21 +52,44 @@ public class ConversationRepositoryImpl implements CustomConversationRepository 
 
     @Override
     public long countAllByCond(ConversationSearchCond cond) {
+        QConversation c = QConversation.conversation;
+        QDirectMessage m = QDirectMessage.directMessage;
+        QUser u1 = new QUser("user1");
+        QUser u2 = new QUser("user2");
+        UUID loginUserId = cond.getLoginUserId();
         return query
-                .select(conversation.count())
-                .from(conversation)
+                .select(c.count())
+                .from(c)
+                .leftJoin(c.user,u1)
+                .leftJoin(c.with,u2)
+                .leftJoin(c.messages,m)
                 .where(
-                        keywordLike(cond.getKeywordLike())
+                        c.user.id.eq(loginUserId).or(c.with.id.eq(loginUserId)),
+                        keywordLike(cond.getKeywordLike(),loginUserId,u1,u2,m)
                 )
-                .fetchCount();
+                .fetchOne();
     }
 
-    private BooleanExpression keywordLike(String keyword) {
+    private BooleanExpression keywordLike(
+            String keyword,
+            UUID loginUserId,
+            QUser u1,
+            QUser u2,
+            QDirectMessage m
+    ) {
+        QConversation c = QConversation.conversation;
         if (keyword == null || keyword.isEmpty()) {
             return null;
         }
-        return conversation.with.name.containsIgnoreCase(keyword)
-                .or(QDirectMessage.directMessage.content.containsIgnoreCase(keyword));
+        BooleanExpression WithNameContains =
+                // 본인이 loginUser인 경우 -> with의 이름
+                c.user.id.eq(loginUserId).and(u2.name.containsIgnoreCase(keyword))
+                    .or(
+                        //내가 with인 경우 -> loginUser의 이름
+                        c.with.id.eq(loginUserId).and(u1.name.containsIgnoreCase(keyword))
+                        );
+        BooleanExpression messageContains = m.content.containsIgnoreCase(keyword);
+        return WithNameContains.and(messageContains);
     }
 
     private BooleanExpression cursorLessThan(String cursor, UUID idAfter) {
@@ -70,14 +97,14 @@ public class ConversationRepositoryImpl implements CustomConversationRepository 
             return null;
         }
        LocalDateTime cursorCreatedAt = LocalDateTime.parse(cursor);
-        BooleanExpression lessThan = conversation.createdAt.lt(cursorCreatedAt);
+        BooleanExpression ltCursor = conversation.createdAt.lt(cursorCreatedAt);
 
         if (idAfter == null) {
-            return lessThan;
+            return ltCursor;
         }
         BooleanExpression tieBreaker = conversation.createdAt.eq(cursorCreatedAt)
                 .and(conversation.id.lt(idAfter));
-        return lessThan.or(tieBreaker);
+        return ltCursor.or(tieBreaker);
     }
 
     private OrderSpecifier<?> buildOrderBy(SortBy sortBy, SortDirection sortDirection) {
@@ -85,6 +112,6 @@ public class ConversationRepositoryImpl implements CustomConversationRepository 
         boolean isDescending = sortDirection == SortDirection.DESCENDING;
 
         return isDescending ? c.createdAt.desc() : c.createdAt.asc();
-        };
     }
+}
 

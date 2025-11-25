@@ -207,7 +207,7 @@ public class ConversationServiceTest {
 
         @Test
         @DisplayName("해당 키워드가 유저네임 또는 메세지에 포함된 채팅방만 조회함")
-        void shouldThrowExceptionWhenConversationByKeyword() {
+        void shouldFindConversationsByKeyword() {
             //given
             ConversationSearchCond cond = new ConversationSearchCond();
             cond.setKeywordLike(null);
@@ -259,7 +259,7 @@ public class ConversationServiceTest {
 
         @Test
         @DisplayName("키워드와 일치하는 결과가 없을 경우 빈리스트를 반환함")
-        void shouldThrowEmptyWhenKeywordNotFound() {
+        void shouldReturnEmptyListWhenKeywordNotFound() {
             //given
             ConversationSearchCond cond = new ConversationSearchCond();
             cond.setKeywordLike(null);
@@ -302,7 +302,7 @@ public class ConversationServiceTest {
             .willReturn(new ConversationDto(conversationId,with,null,true));
 
             //when
-            ConversationDto result = conversationService.getConversationById(conversationId);
+            ConversationDto result = conversationService.getConversationById(loginUserId,conversationId);
 
             //then
             assertThat(result.id()).isEqualTo(conversationId);
@@ -314,12 +314,13 @@ public class ConversationServiceTest {
         void shouldThrowExceptionWhenConversationNotFound() {
             // given
             UUID conversationId = UUID.randomUUID();
+            UUID loginUserId = UUID.randomUUID();
 
             given(conversationRepository.findById(conversationId)).willReturn(Optional.empty());
 
             // when & then
             assertThrows(ConversationNotFound.class,
-                    () -> conversationService.getConversationById(conversationId));
+                    () -> conversationService.getConversationById(loginUserId,conversationId));
 
             verify(conversationRepository).findById(conversationId);
             verify(userRepository, never()).findById(any());

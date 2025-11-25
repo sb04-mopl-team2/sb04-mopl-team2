@@ -47,9 +47,10 @@ public class ConversationController {
     }
 
     @GetMapping("/{conversationId}")
-    public ResponseEntity<ConversationDto> getConversation(@PathVariable UUID conversationId){
+    public ResponseEntity<ConversationDto> getConversation(@PathVariable UUID conversationId,
+                                                           @AuthenticationPrincipal CustomUserDetails loginUser) {
         log.info("[메세지] 채팅방 정보 조회 요청 - conversationId = {}", conversationId);
-        ConversationDto response = conversationService.getConversationById(conversationId);
+        ConversationDto response = conversationService.getConversationById( loginUser.getUser().id() ,conversationId);
         log.info("[메세지] 채팅방 정보 조회 응답 - conversationId = {}", conversationId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

@@ -51,8 +51,8 @@ jobs:
           tags: |
             ${{ env.REPO_URI }}:${{ steps.set-tag.outputs.image_tag }}
             ${{ env.REPO_URI }}:latest
-#          cache-from: type=registry, ref=${{ env.REPO_URI }}:buildcache
-          cache-to: type=registry, ref=${{ env.REPO_URI }}:buildcache, mode=max
+#          cache-from: type=registry,ref=${{ env.REPO_URI }}:buildcache
+          cache-to: type=registry,ref=${{ env.REPO_URI }}:buildcache,mode=max
           platforms: linux/amd64
 
 # Job2: 새 이미지를 ECR 서비스에 배포

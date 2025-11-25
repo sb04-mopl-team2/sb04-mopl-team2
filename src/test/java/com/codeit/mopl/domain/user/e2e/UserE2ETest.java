@@ -242,8 +242,8 @@ public class UserE2ETest {
         ResponseEntity<JwtDto> changeLoginJwtDto = rest.postForEntity("/api/auth/sign-in", changeLoginHttpEntity, JwtDto.class);
 
         assertEquals("test@test.com",changeLoginJwtDto.getBody().userDto().email());
-        assertNotNull(loginJwtDto.getBody().accessToken());
-        assertEquals(HttpStatus.OK, loginJwtDto.getStatusCode());
+        assertNotNull(changeLoginJwtDto.getBody().accessToken());
+        assertEquals(HttpStatus.OK, changeLoginJwtDto.getStatusCode());
     }
 
     @DisplayName("회원가입 및 로그인 이후 프로필 업데이트에 성공한다")

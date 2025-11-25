@@ -61,7 +61,8 @@ public class SecurityConfig {
                                            LoginFailureHandler loginFailureHandler,
                                            JwtLogoutHandler jwtLogoutHandler,
                                            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-                                           TempPasswordAuthenticationProvider tempPasswordAuthenticationProvider) throws Exception {
+                                           TempPasswordAuthenticationProvider tempPasswordAuthenticationProvider,
+                                           PasswordEncoder passwordEncoder) throws Exception {
         http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
@@ -111,7 +112,8 @@ public class SecurityConfig {
                 http.getSharedObject(AuthenticationManagerBuilder.class);
 
         authBuilder.authenticationProvider(tempPasswordAuthenticationProvider)
-                .userDetailsService(customUserDetailsService);
+                .userDetailsService(customUserDetailsService)
+                .passwordEncoder(passwordEncoder);
 
         return http.build();
     }

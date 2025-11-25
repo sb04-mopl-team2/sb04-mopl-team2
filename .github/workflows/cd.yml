@@ -51,7 +51,7 @@ jobs:
           tags: |
             ${{ env.REPO_URI }}:${{ steps.set-tag.outputs.image_tag }}
             ${{ env.REPO_URI }}:latest
-#          cache-from: type=registry,ref=${{ env.REPO_URI }}:buildcache
+          cache-from: type=registry,ref=${{ env.REPO_URI }}:buildcache
           cache-to: type=registry,ref=${{ env.REPO_URI }}:buildcache,mode=max
           platforms: linux/amd64
 

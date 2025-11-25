@@ -13,6 +13,7 @@ import com.codeit.mopl.domain.message.directmessage.mapper.DirectMessageMapper;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.message.conversation.ConversationDuplicateException;
+import com.codeit.mopl.exception.message.conversation.ConversationForbiddenException;
 import com.codeit.mopl.exception.message.conversation.ConversationNotFound;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
@@ -146,9 +147,9 @@ public class ConversationService {
         UUID userIdA = conversation.getUser().getId();
         UUID userB = conversation.getWith().getId();
 
-        if (!userIdA.equals(loginUserId) || !userB.equals(loginUserId)) {
+        if (!userIdA.equals(loginUserId) && !userB.equals(loginUserId)) {
             log.warn("[메세지] 채팅방 정보 조회 실패 - 접근 권한 없음 - (loginUserId = {}, conversationId = {})", loginUserId, conversationId );
-            throw ConversationDuplicateException.withId(conversationId);
+            throw ConversationForbiddenException.withId(conversationId);
         }
 
         List<DirectMessage> messages = conversation.getMessages();

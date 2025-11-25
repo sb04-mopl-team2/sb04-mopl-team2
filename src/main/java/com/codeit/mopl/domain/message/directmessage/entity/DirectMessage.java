@@ -12,7 +12,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "direct_message")
+@Table(name = "direct_messages")
 public class DirectMessage extends UpdatableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

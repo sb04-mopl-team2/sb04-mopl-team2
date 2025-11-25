@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
+import com.codeit.mopl.domain.content.ContentTestFactory;
 import com.codeit.mopl.domain.content.dto.request.ContentCreateRequest;
 import com.codeit.mopl.domain.content.dto.request.ContentSearchCondition;
 import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
@@ -18,6 +20,7 @@ import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -120,5 +123,40 @@ class ContentServiceTest {
     assertThat(result.hasNext()).isTrue();
     assertThat(result.sortBy()).isEqualTo("createdAt");
     assertThat(result.sortDirection()).isEqualTo("ASCENDING");
+  }
+
+  @Test
+  @DisplayName("콘텐츠 단건 조회 성공")
+  void findContent_Success() {
+    // given
+    UUID contentId = UUID.randomUUID();
+
+    Content content = ContentTestFactory.createDefault(ContentType.MOVIE);
+
+    ContentDto contentDto = new ContentDto(
+        contentId,
+        "movie",
+        "테스트 컨텐츠",
+        "테스트 설명입니다.",
+        "/test-thumbnail.jpg",
+        List.of("tag1", "tag2"),
+        0.0,
+        0,
+        0L
+    );
+
+    given(contentRepository.findById(contentId)).willReturn(Optional.of(content));
+    given(contentMapper.toDto(content, 0L)).willReturn(contentDto);
+
+    // when
+    ContentDto result = contentService.findContent(contentId);
+
+    // then
+    assertThat(result).isNotNull();
+    assertThat(result.id()).isEqualTo(contentId);
+    assertThat(result.title()).isEqualTo("테스트 컨텐츠");
+
+    verify(contentRepository).findById(contentId);
+    verify(contentMapper).toDto(content, 0L);
   }
 }

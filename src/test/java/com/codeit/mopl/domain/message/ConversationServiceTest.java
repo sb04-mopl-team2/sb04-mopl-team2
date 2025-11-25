@@ -15,6 +15,7 @@ import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.message.conversation.ConversationDuplicateException;
+import com.codeit.mopl.exception.message.conversation.ConversationForbiddenException;
 import com.codeit.mopl.exception.message.conversation.ConversationNotFound;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
@@ -324,6 +325,71 @@ public class ConversationServiceTest {
 
             verify(conversationRepository).findById(conversationId);
             verify(userRepository, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("정상 요청 시 특정 사용자와의 채팅방을 조회함")
+        void shouldFindConversationWithUserId() {
+            //given
+            UUID conversationId = UUID.randomUUID();
+            UUID loginUserId = UUID.randomUUID();
+            User loginUser = new User();
+            setId(loginUser, loginUserId);
+
+            UUID withUserId = UUID.randomUUID();
+            User withUser = new User();
+            setId(withUser, withUserId);
+            UserSummary with = new UserSummary(withUserId,"test", "test");
+
+            Conversation conversation = Conversation.builder()
+                    .user(loginUser)
+                    .with(withUser)
+                    .build();
+
+            UUID userA = loginUserId.compareTo(withUserId) < 0 ? loginUserId : withUserId;
+            UUID userB = loginUserId.compareTo(withUserId) < 0 ? withUserId : loginUserId;
+            given(conversationRepository.findByUser_IdAndWith_Id(userA, userB))
+                    .willReturn(Optional.of(conversation));
+            given(conversationMapper.toConversationDto(conversation,null))
+                    .willReturn(new ConversationDto(conversationId,with,null,true));
+            // when
+            ConversationDto result = conversationService.getConversationByUserId(loginUserId, withUserId);
+
+            //then
+            assertThat(result.id()).isEqualTo(conversationId);
+            assertThat(result.with()).isEqualTo(with);
+        }
+
+        @Test
+        @DisplayName("채팅방 조회 접근 권한 없을 경우 예외 발생")
+        void shouldThrowExceptionWhenAccessDenied() {
+            //given
+            UUID conversationId = UUID.randomUUID();
+            UUID deniedUserId = UUID.randomUUID();
+
+            UUID loginUserId = UUID.randomUUID();
+            User loginUser = new User();
+            setId(loginUser, loginUserId);
+
+            UUID withUserId = UUID.randomUUID();
+            User withUser = new User();
+            setId(withUser, withUserId);
+
+            Conversation conversation = Conversation.builder()
+                    .user(loginUser)
+                    .with(withUser)
+                    .build();
+            UUID userA = deniedUserId.compareTo(withUserId) < 0 ? deniedUserId : withUserId;
+            UUID userB = deniedUserId.compareTo(withUserId) < 0 ? withUserId : deniedUserId;
+
+            given(conversationRepository.findByUser_IdAndWith_Id(userA, userB))
+                    .willReturn(Optional.of(conversation));
+
+            //when & then
+            assertThrows(ConversationForbiddenException.class,
+                    () -> conversationService.getConversationByUserId(deniedUserId, withUserId));
+            verify(conversationRepository).findByUser_IdAndWith_Id(userA, userB);
+            verify(conversationMapper, never()).toConversationDto(any(), any());
         }
     }
 

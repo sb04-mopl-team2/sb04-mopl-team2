@@ -106,10 +106,11 @@ CREATE TABLE IF NOT EXISTS reviews
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP,
+    user_id UUID NOT NULL,
+    content_id UUID NOT NULL,
     text TEXT NOT NULL,
     rating DOUBLE PRECISION NOT NULL DEFAULT 0.0,
-    content_id UUID NOT NULL,
-    user_id UUID NOT NULL,
+    is_deleted BOOLEAN,
 
     FOREIGN KEY (content_id) REFERENCES contents(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

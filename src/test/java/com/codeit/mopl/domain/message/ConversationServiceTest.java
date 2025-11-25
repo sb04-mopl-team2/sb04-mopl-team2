@@ -15,6 +15,7 @@ import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.message.conversation.ConversationDuplicateException;
+import com.codeit.mopl.exception.message.conversation.ConversationNotFound;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -275,6 +276,53 @@ public class ConversationServiceTest {
 
             //then
             assertThat(result.totalCount()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("정상 요청 시 해당 채팅방의 기본 정보 조회함")
+        void shouldFindConversationById() {
+            //given
+            UUID conversationId = UUID.randomUUID();
+            UUID loginUserId = UUID.randomUUID();
+            User loginUser = new User();
+            setId(loginUser, loginUserId);
+
+            UUID withUserId = UUID.randomUUID();
+            User withUser = new User();
+            setId(withUser, withUserId);
+            UserSummary with = new UserSummary(withUserId, "test", "test" );
+            Conversation conversation = new Conversation(
+                    loginUser,
+                    withUser,
+                    true,
+                    null
+            );
+            given(conversationRepository.findById(conversationId)).willReturn(Optional.of(conversation));
+            given(conversationMapper.toConversationDto(conversation,null))
+            .willReturn(new ConversationDto(conversationId,with,null,true));
+
+            //when
+            ConversationDto result = conversationService.getConversationById(conversationId);
+
+            //then
+            assertThat(result.id()).isEqualTo(conversationId);
+            assertThat(result.with()).isEqualTo(with);
+        }
+
+        @Test
+        @DisplayName("채팅방이 존재하지 않을 경우 예외 발생")
+        void shouldThrowExceptionWhenConversationNotFound() {
+            // given
+            UUID conversationId = UUID.randomUUID();
+
+            given(conversationRepository.findById(conversationId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThrows(ConversationNotFound.class,
+                    () -> conversationService.getConversationById(conversationId));
+
+            verify(conversationRepository).findById(conversationId);
+            verify(userRepository, never()).findById(any());
         }
     }
 

@@ -55,7 +55,7 @@ public class UserE2ETest {
         rest.getRestTemplate().setRequestFactory(factory);
 
         ResponseEntity<String> csrfInitResponse =
-                rest.getForEntity("/", String.class);
+                rest.getForEntity("/api/auth/csrf-token", String.class);
 
         List<String> setCookieHeaders = csrfInitResponse.getHeaders().get(HttpHeaders.SET_COOKIE);
 

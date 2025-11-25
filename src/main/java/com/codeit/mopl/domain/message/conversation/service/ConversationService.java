@@ -13,6 +13,7 @@ import com.codeit.mopl.domain.message.directmessage.mapper.DirectMessageMapper;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.message.conversation.ConversationDuplicateException;
+import com.codeit.mopl.exception.message.conversation.ConversationNotFound;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -130,5 +131,24 @@ public class ConversationService {
                 cond.getSortBy(),
                 cond.getSortDirection()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public ConversationDto getConversationById(UUID conversationId) {
+        log.info("[메세지] 채팅방 정보 조회 시작 - conversationId = {}", conversationId);
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(()->{
+                    log.warn("[메세지] 채팅방 정보 조회 실패 - 채팅방 존재하지 않음 - conversationId = {}", conversationId);
+                    return ConversationNotFound.withId(conversationId);
+                });
+
+        List<DirectMessage> messages = conversation.getMessages();
+        DirectMessage lastMessage =
+                (messages == null || messages.isEmpty()) ? null
+                        : messages.get(messages.size() - 1);
+        DirectMessageDto lastMessageDto =
+                lastMessage == null ? null : directMessageMapper.toDirectMessageDto(lastMessage);
+        log.info("[메세지] 채팅방 정보 조회 완료 - conversationId = {}", conversationId);
+        return conversationMapper.toConversationDto(conversation, lastMessageDto);
     }
 }

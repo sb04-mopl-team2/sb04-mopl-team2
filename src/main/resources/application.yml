@@ -106,3 +106,7 @@ mail:
         starttls:
           enable: true
       debug: true
+tmdb:
+  api:
+    token : ${TMDB_API_TOKEN}
+  base-url : ${TMDB_BASE_URL}

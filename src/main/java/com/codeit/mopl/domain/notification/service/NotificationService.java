@@ -82,8 +82,6 @@ public class NotificationService {
     log.info("[알림] 알림 조회 종료, userId = {}, notificationListSize = {}, hasNext = {}, totalCount = {}",
         userId, data.size(), hasNext, totalCount);
 
-
-
     CursorResponseNotificationDto cursorResponseNotificationDto = new CursorResponseNotificationDto(
         data, nextCursor, nextIdAfter, hasNext, totalCount, responseSortBy, sortDirection);
 

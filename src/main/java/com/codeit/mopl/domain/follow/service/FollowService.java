@@ -9,8 +9,11 @@ import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.entity.EventType;
+import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
+import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.codeit.mopl.exception.follow.*;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserIdIsNullException;
@@ -35,6 +38,7 @@ public class FollowService {
     private final NotificationService notificationService;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final ProcessedEventRepository processedEventRepository;
 
     @Transactional
     public FollowDto createFollow(FollowRequest request, UUID followerId) {
@@ -57,6 +61,7 @@ public class FollowService {
         Follow follow = new Follow(follower, followee);
         FollowDto dto = followMapper.toDto(followRepository.save(follow));
         eventPublisher.publishEvent(new FollowerIncreaseEvent(followeeId));
+        processedEventRepository.save(new ProcessedEvent(follow.getId(), EventType.FOLLOWER_INCREASE));
 
         // 알람 발행
         String title = getFollowNotificationTitle(follower.getName());

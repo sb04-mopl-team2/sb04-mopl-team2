@@ -11,8 +11,16 @@ import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSessionChange;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
+import com.codeit.mopl.exception.content.ContentErrorCode;
+import com.codeit.mopl.exception.content.ContentNotFoundException;
+import com.codeit.mopl.exception.user.UserErrorCode;
+import com.codeit.mopl.exception.user.UserNotFoundException;
+import com.codeit.mopl.exception.watchingsession.UserNotAuthenticatedException;
+import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
+import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
 import com.codeit.mopl.domain.watchingsession.service.RedisPublisher;
 import com.codeit.mopl.security.CustomUserDetails;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +44,7 @@ public class WebSocketEventListener {
   private final SimpMessagingTemplate messagingTemplate;
 
   private final RedisPublisher redisPublisher;
-  
+
   /*
      콘텐츠 시청 세션: 누가 시청 세션에 들어오고 나가는지 (참가자 목록) 업데이트를 받기 위해
      - 엔드포인트: SUBSCRIBE /sub/contents/{contentId}/watch
@@ -55,16 +63,18 @@ public class WebSocketEventListener {
     }
 
     // extract contentId
-    String contentId = null;
+    String contentId;
     if (destination.startsWith("/sub/contents/") && destination.endsWith("watch")) {
       contentId = getContentId(destination);
+    } else {
+      contentId = null;
     }
 
     if (contentId != null) {
       // get user and content info
       User user = getUser(accessor, sessionId);
       Content content = contentRepository.findById(UUID.fromString(contentId))
-          .orElseThrow(() -> new RuntimeException("user not found"));
+          .orElseThrow(() -> new ContentNotFoundException(ContentErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId)));
 
       // disconnect any other watching session for user (1 session per user)
       watchingSessionRepository.deleteByUserId(user.getId());
@@ -108,7 +118,9 @@ public class WebSocketEventListener {
     // get user, watchingsession, watcherCount
     User user = getUser(accessor, sessionId);
     WatchingSession watchingSession = watchingSessionRepository.findById(watchingSessionId)
-        .orElseThrow(() -> new RuntimeException("watchingsession for user does not exist"));
+        .orElseThrow(() -> new WatchingSessionNotFoundException(
+            WatchingSessionErrorCode.WATCHING_SESSION_NOT_FOUND, Map.of("watchingSessionId", watchingSessionId))
+        );
     watchingSessionRepository.deleteById(watchingSessionId);
     long watcherCount = watchingSessionRepository.countByContentId(UUID.fromString(contentId));
 
@@ -126,24 +138,24 @@ public class WebSocketEventListener {
     Authentication authentication = (Authentication) accessor.getUser();
     if (authentication == null) {
       log.error("[WebsocketEventListener] getUser: 세션 {}에 대해 사용자가 인증되지 않았습니다.", sessionId);
-      // throw custom exception
-      throw new RuntimeException("User is not authenticated");
+      throw new UserNotAuthenticatedException(WatchingSessionErrorCode.USER_NOT_AUTHENTICATED, Map.of("session", sessionId));
     }
 
     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-    return userRepository.findById(userDetails.getUser().id())
-        .orElseThrow(() -> new RuntimeException("user not found"));
+    UUID userId = userDetails.getUser().id();
+    return userRepository.findById(userId)
+        .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
   }
 
   private String getContentId(String destination) {
       try {
         String[] parts = destination.split("/");
         String contentId = parts[3];
-        log.info("WebSocketEventListener: contentId={}", contentId);
+        log.info("[WebSocketEventListener] 컨텐트 아이디 파싱 완료: contentId={}", contentId);
         return contentId;
       } catch (Exception e) {
-        log.error("WebSocketEventListener: error while parsing contentId from destination!");
-        throw new RuntimeException("error while parsing contentId from destination");
+        log.error("[WebSocketEventListener] 컨텐츠 아이디 파싱 오류");
+        throw new IllegalArgumentException("컨텐츠 아이디 파싱 오류", e);
       }
   }
 

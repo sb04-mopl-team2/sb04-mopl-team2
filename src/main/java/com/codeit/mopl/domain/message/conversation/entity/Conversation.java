@@ -35,6 +35,8 @@ public class Conversation extends UpdatableEntity {
     @Column(nullable = false)
     private boolean hasUnread;
 
+    @OrderBy("createdAt ASC")
+    @Builder.Default
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DirectMessage> messages = new ArrayList<>();
 }

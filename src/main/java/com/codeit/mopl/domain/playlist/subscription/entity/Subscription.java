@@ -1,4 +1,4 @@
-package com.codeit.mopl.domain.playlist.subscription;
+package com.codeit.mopl.domain.playlist.subscription.entity;
 
 import com.codeit.mopl.domain.base.UpdatableEntity;
 import com.codeit.mopl.domain.playlist.entity.Playlist;

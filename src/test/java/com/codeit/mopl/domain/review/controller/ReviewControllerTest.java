@@ -32,6 +32,7 @@ import com.codeit.mopl.security.CustomUserDetails;
 import com.codeit.mopl.security.config.TestSecurityConfig;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
+import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
@@ -92,6 +93,10 @@ public class ReviewControllerTest {
 
   @MockitoBean
   private ContentRepository contentRepository;
+
+  @MockitoBean
+  private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
 
   private CustomUserDetails customUserDetails;
 

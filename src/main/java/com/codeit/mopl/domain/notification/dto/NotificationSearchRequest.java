@@ -1,6 +1,6 @@
 package com.codeit.mopl.domain.notification.dto;
 
-import com.codeit.mopl.domain.notification.entity.NotificationSortBy;
+import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -17,5 +17,5 @@ public record NotificationSearchRequest(
     SortDirection sortDirection,
 
     @NotNull
-    NotificationSortBy notificationSortBy
+    SortBy sortBy
 ) { }

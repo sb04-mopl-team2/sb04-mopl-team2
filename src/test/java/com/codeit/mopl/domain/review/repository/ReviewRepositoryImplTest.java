@@ -4,6 +4,8 @@ import com.codeit.mopl.config.QuerydslConfig;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
+import com.codeit.mopl.domain.notification.entity.Notification;
+import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.review.entity.Review;
 import com.codeit.mopl.domain.review.entity.ReviewSortBy;
 import com.codeit.mopl.domain.review.entity.SortDirection;
@@ -42,6 +44,8 @@ class ReviewRepositoryImplTest {
   private Review r2;
   private Review r3;
   private Review r4;
+  private Review r5;
+  private Review r6;
 
   @BeforeEach
   void setUp() throws Exception {
@@ -55,18 +59,27 @@ class ReviewRepositoryImplTest {
 
     r1 = createReview(user, content1, 4.0, false);
     em.persist(r1);
-    Thread.sleep(5);
+    Thread.sleep(1000);
 
     r2 = createReview(user, content1, 5.0, true);
     em.persist(r2);
-    Thread.sleep(5);
+    Thread.sleep(1000);
 
     r3 = createReview(user, content2, 3.0, false);
     em.persist(r3);
-    Thread.sleep(5);
+    Thread.sleep(1000);
 
     r4 = createReview(user, content1, 3.5, false);
     em.persist(r4);
+    Thread.sleep(1000);
+
+    r5 = createReview(user, content1, 3.8, false);
+    em.persist(r5);
+    Thread.sleep(1000);
+
+    r6 = createReview(user, content1, 3.7, false);
+    em.persist(r6);
+    Thread.sleep(1000);
 
     em.flush();
     em.clear();
@@ -74,7 +87,7 @@ class ReviewRepositoryImplTest {
 
   @Test
   @DisplayName("시간을 기준으로 내림차순 정렬했을 때, contentId와 isDeleted=false 조건에 맞는 리뷰만 조회된다")
-  void searchReview_sortedByCreatedAtDesc() throws Exception {
+  void searchReview_sortedByCreatedAtDesc() {
     // given
     UUID contentId1 = content1.getId();
 
@@ -89,13 +102,15 @@ class ReviewRepositoryImplTest {
     );
 
     // then
-    assertThat(result.get(0).getId())
-        .isEqualTo(r4.getId());
+    assertThat(result.get(0).getRating())
+        .isEqualTo(r6.getRating());
+
+    assertThat(result.size()).isEqualTo(4);
   }
 
   @Test
   @DisplayName("시간을 기준으로 오름차순으로 정렬했을 때, contentId와 isDeleted=false 조건에 맞는 리뷰만 조회된다")
-  void searchReview_sortedByCreatedAtAsc() throws Exception {
+  void searchReview_sortedByCreatedAtAsc() {
     // given
     UUID contentId1 = content1.getId();
 
@@ -104,19 +119,21 @@ class ReviewRepositoryImplTest {
         contentId1,
         null,
         null,
-        10,
+        3,
         SortDirection.ASCENDING,
         ReviewSortBy.createdAt
     );
 
     // then
-    assertThat(result.get(0).getId())
-        .isEqualTo(r1.getId());
+    assertThat(result.get(0).getRating())
+        .isEqualTo(r1.getRating());
+    assertThat(result.size()).isEqualTo(4);
+
   }
 
   @Test
   @DisplayName("평점을 기준으로 내림차순으로 정렬했을 때, contentId와 isDeleted=false 조건에 맞는 리뷰만 조회된다")
-  void searchReview_sortedByRatingDesc() throws Exception {
+  void searchReview_sortedByRatingDesc() {
     // given
     UUID contentId1 = content1.getId();
 
@@ -125,19 +142,21 @@ class ReviewRepositoryImplTest {
         contentId1,
         null,
         null,
-        10,
+        3,
         SortDirection.DESCENDING,
         ReviewSortBy.rating
     );
 
     // then
-    assertThat(result.get(0).getId())
-        .isEqualTo(r1.getId());
+    assertThat(result.get(0).getRating())
+        .isEqualTo(r1.getRating());
+
+    assertThat(result.size()).isEqualTo(4);
   }
 
   @Test
   @DisplayName("평점을 기준으로 오름차순으로 정렬했을 때, contentId와 isDeleted=false 조건에 맞는 리뷰만 조회된다")
-  void searchReview_sortedByRatingAsc() throws Exception {
+  void searchReview_sortedByRatingAsc() {
     // given
     UUID contentId1 = content1.getId();
 
@@ -146,16 +165,117 @@ class ReviewRepositoryImplTest {
         contentId1,
         null,
         null,
-        10,
+        3,
         SortDirection.ASCENDING,
         ReviewSortBy.rating
     );
 
     // then
-    assertThat(result.get(0).getId())
-        .isEqualTo(r4.getId());
+    assertThat(result.get(0).getRating())
+        .isEqualTo(r4.getRating());
+
+    assertThat(result.size()).isEqualTo(4);
   }
 
+  @Test
+  @DisplayName("정렬기준이 rating 이고 내림차순 정렬일 때 cursor와 idAfter가 있을 때 커서페이지네이션을 진행한다.")
+  void searchNotification_withRatingCursorAndDesc() {
+    // given
+    UUID contentId1 = content1.getId();
+    String cursor = r6.getRating().toString();
+    UUID id = r6.getId();
+
+    // when
+    List<Review> result = reviewRepository.searchReview(
+        contentId1,
+        cursor,
+        id,
+        3,
+        SortDirection.DESCENDING,
+        ReviewSortBy.rating
+    );
+
+    // then
+    assertThat(result.get(0).getRating())
+        .isEqualTo(r4.getRating());
+
+    assertThat(result.size()).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("정렬기준이 rating 이고 오름차순 정렬일 때 cursor와 idAfter가 있을 때 커서페이지네이션을 진행한다.")
+  void searchNotification_withRatingCursorAndAsc() {
+    // given
+    UUID contentId1 = content1.getId();
+    String cursor = r5.getRating().toString();
+    UUID id = r5.getId();
+
+    // when
+    List<Review> result = reviewRepository.searchReview(
+        contentId1,
+        cursor,
+        id,
+        3,
+        SortDirection.ASCENDING,
+        ReviewSortBy.rating
+    );
+
+    // then
+    assertThat(result.get(0).getRating())
+        .isEqualTo(r1.getRating());
+
+    assertThat(result.size()).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("정렬기준이 createdAt 이고 내림차순 정렬일 때 cursor와 idAfter가 있을 때 커서페이지네이션을 진행한다.")
+  void searchNotification_withCreatedAtCursorAndDesc() {
+    // given
+    UUID contentId1 = content1.getId();
+    String cursor = r4.getCreatedAt().toString();
+    UUID id = r4.getId();
+
+    // when
+    List<Review> result = reviewRepository.searchReview(
+        contentId1,
+        cursor,
+        id,
+        3,
+        SortDirection.DESCENDING,
+        ReviewSortBy.createdAt
+    );
+
+    // then
+    assertThat(result.get(0).getRating())
+        .isEqualTo(r1.getRating());
+
+    assertThat(result.size()).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("정렬기준이 createdAt 이고 오름차순 정렬일 때 cursor와 idAfter가 있을 때 커서페이지네이션을 진행한다.")
+  void searchNotification_withCreatedAtCursorAndAsc() {
+    // given
+    UUID contentId1 = content1.getId();
+    String cursor = r5.getCreatedAt().toString();
+    UUID id = r5.getId();
+
+    // when
+    List<Review> result = reviewRepository.searchReview(
+        contentId1,
+        cursor,
+        id,
+        3,
+        SortDirection.ASCENDING,
+        ReviewSortBy.createdAt
+    );
+
+    // then
+    assertThat(result.get(0).getRating())
+        .isEqualTo(r6.getRating());
+
+    assertThat(result.size()).isEqualTo(1);
+  }
 
   // 아래는 헬퍼 메소드
   private User createUser(String email, String password, String name) {

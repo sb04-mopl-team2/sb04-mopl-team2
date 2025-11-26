@@ -6,6 +6,7 @@ import com.codeit.mopl.security.CustomUserDetailsService;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.filter.JwtAuthenticationFilter;
+import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
@@ -31,7 +32,8 @@ public class TestSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JwtTokenProvider jwtTokenProvider,
                                            UserDetailsService customUserDetailsService,
-                                           JwtRegistry jwtRegistry) throws Exception {
+                                           JwtRegistry jwtRegistry,
+                                           JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) throws Exception {
         http
 //                .csrf(csrf -> csrf
 //                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
@@ -47,7 +49,7 @@ public class TestSecurityConfig {
                 )
                 .cors(Customizer.withDefaults())
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(new Http403ForbiddenEntryPoint())
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                         .accessDeniedHandler(new AccessDeniedHandlerImpl())
                 )
                 .authorizeHttpRequests(authorize -> authorize

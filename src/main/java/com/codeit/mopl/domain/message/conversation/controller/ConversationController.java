@@ -63,4 +63,14 @@ public class ConversationController {
         log.info("[메세지] 특정 사용자와의 채팅방 조회 응답 - withUserId = {}", withUserId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
+
+    @PostMapping("/{conversationId}/direct-messages/{directMessageId}/read")
+    public ResponseEntity<Void> MarkRead(@PathVariable UUID conversationId,
+                                         @PathVariable UUID directMessageId,
+                                         @AuthenticationPrincipal CustomUserDetails loginUser) {
+        log.info("[메세지] DM '읽음' 처리 요청 - conversationId = {}, directMessageId = {}", conversationId, directMessageId);
+        conversationService.markAsRead(loginUser.getUser().id(), conversationId, directMessageId);
+        log.info("[메세지] DM '읽음' 처리 응답 - conversationId = {}, directMessageId = {}", conversationId, directMessageId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }

@@ -4,10 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.codeit.mopl.config.QuerydslConfig;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
-import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.entity.Notification;
-import com.codeit.mopl.domain.notification.entity.NotificationSortBy;
+import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
 import com.codeit.mopl.domain.user.entity.User;
@@ -80,7 +79,7 @@ public class NotificationRepositoryImplTest {
         null,
         10,
         SortDirection.DESCENDING,
-        NotificationSortBy.CREATED_AT
+        SortBy.CREATED_AT
     );
 
     // then
@@ -102,7 +101,7 @@ public class NotificationRepositoryImplTest {
         null,
         10,
         SortDirection.ASCENDING,
-        NotificationSortBy.CREATED_AT
+        SortBy.CREATED_AT
     );
 
     // then

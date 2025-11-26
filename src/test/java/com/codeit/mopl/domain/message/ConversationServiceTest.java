@@ -6,11 +6,11 @@ import com.codeit.mopl.domain.message.conversation.dto.request.ConversationSearc
 import com.codeit.mopl.domain.message.conversation.dto.response.ConversationDto;
 import com.codeit.mopl.domain.message.conversation.dto.response.CursorResponseConversationDto;
 import com.codeit.mopl.domain.message.conversation.entity.Conversation;
+import com.codeit.mopl.domain.message.conversation.entity.SortBy;
 import com.codeit.mopl.domain.message.conversation.mapper.ConversationMapper;
 import com.codeit.mopl.domain.message.conversation.repository.ConversationRepository;
 import com.codeit.mopl.domain.message.conversation.service.ConversationService;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
-import com.codeit.mopl.domain.playlist.entity.SortBy;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
@@ -167,7 +167,7 @@ public class ConversationServiceTest {
             cond.setKeywordLike(null);
             cond.setCursor(null);
             cond.setLimit(10);
-            cond.setSortBy(SortBy.UPDATED_AT);
+            cond.setSortBy(SortBy.CREATED_AT);
             cond.setSortDirection(SortDirection.DESCENDING);
 
             UUID conversationId = UUID.randomUUID();
@@ -211,10 +211,10 @@ public class ConversationServiceTest {
         void shouldFindConversationsByKeyword() {
             //given
             ConversationSearchCond cond = new ConversationSearchCond();
-            cond.setKeywordLike(null);
+            cond.setKeywordLike("test");
             cond.setCursor(null);
             cond.setLimit(10);
-            cond.setSortBy(SortBy.UPDATED_AT);
+            cond.setSortBy(SortBy.CREATED_AT);
             cond.setSortDirection(SortDirection.DESCENDING);
 
             UUID loginUserId = UUID.randomUUID();
@@ -266,7 +266,7 @@ public class ConversationServiceTest {
             cond.setKeywordLike(null);
             cond.setCursor(null);
             cond.setLimit(10);
-            cond.setSortBy(SortBy.UPDATED_AT);
+            cond.setSortBy(SortBy.CREATED_AT);
             cond.setSortDirection(SortDirection.DESCENDING);
             UUID loginUserId = UUID.randomUUID();
             given(conversationRepository.findAllByCond(any(ConversationSearchCond.class)))
@@ -365,25 +365,29 @@ public class ConversationServiceTest {
         void shouldThrowExceptionWhenAccessDenied() {
             //given
             UUID conversationId = UUID.randomUUID();
-            UUID deniedUserId = UUID.randomUUID();
+            UUID deniedUserId = UUID.randomUUID(); // 권한 없는 사용자
 
-            UUID loginUserId = UUID.randomUUID();
+            UUID loginUserId = UUID.randomUUID(); // 실제 대화 참여자 1
             User loginUser = new User();
             setId(loginUser, loginUserId);
 
-            UUID withUserId = UUID.randomUUID();
+            UUID withUserId = UUID.randomUUID(); // 실제 대화 참여자 2
             User withUser = new User();
             setId(withUser, withUserId);
 
             Conversation conversation = Conversation.builder()
-                    .user(loginUser)
-                    .with(withUser)
+                    .user(loginUser)  // 실제 참여자
+                    .with(withUser)  // 실제 참여자
                     .build();
+            setId(conversation, conversationId);
+
+            // deniedUserId와 withUserId로 userA, userB 계산 (서비스 로직과 동일)
             UUID userA = deniedUserId.compareTo(withUserId) < 0 ? deniedUserId : withUserId;
             UUID userB = deniedUserId.compareTo(withUserId) < 0 ? withUserId : deniedUserId;
 
+            // 대화방은 존재하지만, deniedUserId는 참여자가 아님
             given(conversationRepository.findByUser_IdAndWith_Id(userA, userB))
-                    .willReturn(Optional.of(conversation));
+                    .willReturn(Optional.of(conversation)); // Optional.empty() → Optional.of()로 변경
 
             //when & then
             assertThrows(ConversationForbiddenException.class,

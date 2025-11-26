@@ -1,7 +1,7 @@
 package com.codeit.mopl.domain.message.conversation.dto.request;
 
+import com.codeit.mopl.domain.message.conversation.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
-import com.codeit.mopl.domain.playlist.entity.SortBy;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

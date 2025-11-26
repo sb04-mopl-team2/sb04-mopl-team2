@@ -9,9 +9,13 @@ import java.util.UUID;
 public class ConversationNotFound extends MessageException {
     private ConversationNotFound() { super(MessageErrorCode.CONVERSATION_NOT_FOUND, new HashMap<>());}
 
-    public static ConversationNotFound withId(UUID conversationId) {
+    public static ConversationNotFound withId(UUID withUserId) {
         ConversationNotFound ex = new ConversationNotFound();
-        ex.getDetails().put("conversationId", conversationId);
+        ex.getDetails().put("withUserId", withUserId);
         return ex;
+    }
+
+    public static ConversationNotFound of() {
+        return new ConversationNotFound();
     }
 }

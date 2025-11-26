@@ -12,5 +12,4 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
     //boolean existsByUser_IdAndWith_Id(UUID userA, UUID userB);
 
     Optional<Conversation> findByUser_IdAndWith_Id(UUID userA, UUID userB);
-
 }

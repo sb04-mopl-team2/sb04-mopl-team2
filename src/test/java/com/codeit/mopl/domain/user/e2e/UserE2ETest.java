@@ -55,8 +55,8 @@ public class UserE2ETest {
     void setUp() {
         ValueOperations<String, String> ops = Mockito.mock(ValueOperations.class);
         given(redisTemplate.opsForValue()).willReturn(ops);
-        if (!userRepository.existsByEmail("admin@google.com")){
-            User admin = new User("admin@google.com",passwordEncoder.encode("asdf1234!"),"admin");
+        if (!userRepository.existsByEmail("admin@admin.com")){
+            User admin = new User("admin@admin.com",passwordEncoder.encode("admin!"),"admin");
             admin.setRole(Role.ADMIN);
             userRepository.save(admin);
         }
@@ -288,11 +288,11 @@ public class UserE2ETest {
     @DisplayName("서버 시작 시 자동으로 생성되는 어드민 계정으로 로그인에 성공한다")
     @Test
     void LoginAdmin() {
-        SignInRequest signInRequest = new SignInRequest("admin@google.com","asdf1234!");
+        SignInRequest signInRequest = new SignInRequest("admin@admin.com","admin!");
         HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
         ResponseEntity<JwtDto> loginJwtDto = rest.postForEntity("/api/auth/sign-in", loginHttpEntity, JwtDto.class);
 
-        assertEquals("admin@google.com",loginJwtDto.getBody().userDto().email());
+        assertEquals("admin@admin.com",loginJwtDto.getBody().userDto().email());
         assertNotNull(loginJwtDto.getBody().accessToken());
         assertEquals(HttpStatus.OK, loginJwtDto.getStatusCode());
         assertEquals(Role.ADMIN, loginJwtDto.getBody().userDto().role());
@@ -312,11 +312,11 @@ public class UserE2ETest {
         assertEquals(false, createdUser.getBody().locked());
         assertEquals(Role.USER, createdUser.getBody().role());
 
-        SignInRequest signInRequest = new SignInRequest("admin@google.com","asdf1234!");
+        SignInRequest signInRequest = new SignInRequest("admin@admin.com","admin!");
         HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
         ResponseEntity<JwtDto> loginJwtDto = rest.postForEntity("/api/auth/sign-in", loginHttpEntity, JwtDto.class);
 
-        assertEquals("admin@google.com",loginJwtDto.getBody().userDto().email());
+        assertEquals("admin@admin.com",loginJwtDto.getBody().userDto().email());
         assertNotNull(loginJwtDto.getBody().accessToken());
         assertEquals(HttpStatus.OK, loginJwtDto.getStatusCode());
         assertEquals(Role.ADMIN, loginJwtDto.getBody().userDto().role());
@@ -391,7 +391,7 @@ public class UserE2ETest {
         ResponseEntity<UserDto> createdUser2 = rest.postForEntity("/api/users", httpEntity2, UserDto.class);
 
 
-        SignInRequest signInRequest = new SignInRequest("admin@google.com","asdf1234!");
+        SignInRequest signInRequest = new SignInRequest("admin@admin.com","admin!");
         HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
         ResponseEntity<JwtDto> loginJwtDto = rest.postForEntity("/api/auth/sign-in", loginHttpEntity, JwtDto.class);
         assertEquals(HttpStatus.OK, loginJwtDto.getStatusCode());
@@ -419,7 +419,7 @@ public class UserE2ETest {
 
         ResponseEntity<UserDto> createdUser = rest.postForEntity("/api/users", httpEntity, UserDto.class);
 
-        SignInRequest signInRequest = new SignInRequest("admin@google.com","asdf1234!");
+        SignInRequest signInRequest = new SignInRequest("admin@admin.com","admin!");
         HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
         ResponseEntity<JwtDto> loginJwtDto = rest.postForEntity("/api/auth/sign-in", loginHttpEntity, JwtDto.class);
         assertEquals(HttpStatus.OK, loginJwtDto.getStatusCode());

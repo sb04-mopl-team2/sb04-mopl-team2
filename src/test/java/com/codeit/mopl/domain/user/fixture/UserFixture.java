@@ -21,7 +21,7 @@ public class UserFixture {
     }
 
     public static User createAdmin() {
-        User admin = new User("admin@google.com", "asdf1234!", "admin", LocalDateTime.now().minusHours(1));
+        User admin = new User("admin@admin.com", "admin!", "admin", LocalDateTime.now().minusHours(1));
         admin.setRole(Role.ADMIN);
         return admin;
     }

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
@@ -31,15 +32,17 @@ public class FollowEventKafkaConsumer {
             FollowerIncreaseEvent event = objectMapper.readValue(kafkaEventJson, FollowerIncreaseEvent.class);
             UUID followId = event.followId();
             UUID followeeId = event.followeeId();
-            
+
             // 이미 처리된 이벤트인지 검증
-            boolean isProcessed = detectIsProcessed(followId, EventType.FOLLOWER_INCREASE);
-            if (isProcessed) {
+            ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_INCREASE);
+            try {
+                processedEventRepository.save(processedEvent);
+            } catch (DataIntegrityViolationException e) {
+                printAlreadyProcessedWarnLogMessage(processedEvent);
                 ack.acknowledge();
                 return;
             }
             followService.increaseFollowerCount(followeeId);
-            processedEventRepository.save(new ProcessedEvent(followId, EventType.FOLLOWER_INCREASE));
             ack.acknowledge();
         } catch (JsonProcessingException e) {
             log.error("[Kafka] 팔로워 증가 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
@@ -58,13 +61,15 @@ public class FollowEventKafkaConsumer {
             UUID followeeId = event.followeeId();
 
             // 이미 처리된 이벤트인지 검증
-            boolean isProcessed = detectIsProcessed(followId, EventType.FOLLOWER_DECREASE);
-            if (isProcessed) {
+            ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_DECREASE);
+            try {
+                processedEventRepository.save(processedEvent);
+            } catch (DataIntegrityViolationException e) {
+                printAlreadyProcessedWarnLogMessage(processedEvent);
                 ack.acknowledge();
                 return;
             }
             followService.decreaseFollowerCount(followeeId);
-            processedEventRepository.save(new ProcessedEvent(followId, EventType.FOLLOWER_DECREASE));
             ack.acknowledge();
         } catch (JsonProcessingException e) {
             log.error("[Kafka] 팔로워 감소 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
@@ -75,11 +80,9 @@ public class FollowEventKafkaConsumer {
         }
     }
 
-    private boolean detectIsProcessed(UUID eventId, EventType eventType) {
-        boolean isProcessed = processedEventRepository.existsByEventIdAndEventType(eventId, eventType);
-        if (isProcessed) {
-            log.warn("[Kafka] 이미 처리된 이벤트입니다: eventId = {}, eventType = {}", eventId, eventType);
-        }
-        return isProcessed;
+    private void printAlreadyProcessedWarnLogMessage(ProcessedEvent processedEvent) {
+        UUID eventId = processedEvent.getEventId();
+        EventType eventType = processedEvent.getEventType();
+        log.warn("[Kafka] 이미 처리된 이벤트입니다: eventId = {}, eventType = {}", eventId, eventType);
     }
 }

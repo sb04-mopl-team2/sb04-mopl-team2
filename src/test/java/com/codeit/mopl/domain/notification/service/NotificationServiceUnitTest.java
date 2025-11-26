@@ -97,7 +97,7 @@ class NotificationServiceUnitTest {
     assertThat(result.nextIdAfter()).isNull();
     assertThat(result.hasNext()).isFalse();
     assertThat(result.totalCount()).isZero();
-    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT);
+    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT.getType());
     assertThat(result.sortDirection()).isEqualTo(SortDirection.DESCENDING);
 
     verify(notificationRepository, never())
@@ -135,7 +135,7 @@ class NotificationServiceUnitTest {
     assertThat(result.nextCursor()).isNull();
     assertThat(result.nextIdAfter()).isNull();
     assertThat(result.totalCount()).isEqualTo(totalCount);
-    assertThat(result.sortBy()).isEqualTo(sortBy);
+    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT.getType());
     assertThat(result.sortDirection()).isEqualTo(sortDirection);
   }
 
@@ -171,7 +171,7 @@ class NotificationServiceUnitTest {
     assertThat(result.nextCursor()).isEqualTo(n2.getCreatedAt().toString());
     assertThat(result.hasNext()).isTrue();
     assertThat(result.totalCount()).isEqualTo(totalCount);
-    assertThat(result.sortBy()).isEqualTo(sortBy);
+    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT.getType());
     assertThat(result.sortDirection()).isEqualTo(sortDirection);
 
     verify(notificationRepository).countByUserIdAndStatus(userId, Status.UNREAD);

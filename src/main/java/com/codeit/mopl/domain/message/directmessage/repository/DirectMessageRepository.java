@@ -8,4 +8,6 @@ import java.util.UUID;
 
 @Repository
 public interface DirectMessageRepository extends JpaRepository<DirectMessage, UUID> {
+
+    boolean existsByConversationIdAndReceiverIdAndIsReadFalse(UUID conversationId, UUID receiverId);
 }

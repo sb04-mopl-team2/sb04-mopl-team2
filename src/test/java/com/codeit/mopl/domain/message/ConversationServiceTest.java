@@ -10,6 +10,8 @@ import com.codeit.mopl.domain.message.conversation.entity.SortBy;
 import com.codeit.mopl.domain.message.conversation.mapper.ConversationMapper;
 import com.codeit.mopl.domain.message.conversation.repository.ConversationRepository;
 import com.codeit.mopl.domain.message.conversation.service.ConversationService;
+import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
+import com.codeit.mopl.domain.message.directmessage.repository.DirectMessageRepository;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
@@ -17,6 +19,7 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.message.conversation.ConversationDuplicateException;
 import com.codeit.mopl.exception.message.conversation.ConversationForbiddenException;
 import com.codeit.mopl.exception.message.conversation.ConversationNotFound;
+import com.codeit.mopl.exception.message.directmessage.DirectMessageNotFound;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -41,6 +44,7 @@ public class ConversationServiceTest {
     @Mock private ConversationRepository conversationRepository;
     @Mock private UserRepository userRepository;
     @Mock private ConversationMapper conversationMapper;
+    @Mock private DirectMessageRepository directMessageRepository;
     @InjectMocks private ConversationService conversationService;
 
     @Nested
@@ -394,6 +398,107 @@ public class ConversationServiceTest {
                     () -> conversationService.getConversationByUserId(deniedUserId, withUserId));
             verify(conversationRepository).findByUser_IdAndWith_Id(userA, userB);
             verify(conversationMapper, never()).toConversationDto(any(), any());
+        }
+
+        @Test
+        @DisplayName("정상 요청 시 DM을 읽음 처리 함")
+        void shouldMarkDirectMessageAsRead() {
+            //given
+            UUID loginUserId = UUID.randomUUID();
+            User loginUser = new User();
+            setId(loginUser, loginUserId);
+            UUID withUserId = UUID.randomUUID();
+            User withUser = new User();
+            setId(withUser, withUserId);
+
+            UUID conversationId = UUID.randomUUID();
+            Conversation conversation = Conversation.builder()
+                    .user(loginUser)
+                    .with(withUser)
+                    .hasUnread(true)
+                    .build();
+            setId(conversation, conversationId);
+            given(conversationRepository.findById(conversationId)).willReturn(Optional.of(conversation));
+
+            UUID directMessageId = UUID.randomUUID();
+            DirectMessage directMessage = DirectMessage.builder()
+                    .sender(withUser)
+                    .receiver(loginUser)
+                    .conversation(conversation)
+                    .content("test")
+                    .isRead(true)
+                    .build();
+            given(directMessageRepository.findById(directMessageId)).willReturn(Optional.of(directMessage));
+            given(directMessageRepository.existsByConversationIdAndReceiverIdAndIsReadFalse(conversationId, loginUserId))
+                .willReturn(false);
+            //when
+            conversationService.markAsRead(loginUserId,conversationId,directMessageId);
+
+            //then
+            verify(conversationRepository).findById(conversationId);
+            verify(directMessageRepository).findById(directMessageId);
+            verify(directMessageRepository).existsByConversationIdAndReceiverIdAndIsReadFalse(conversationId, loginUserId);
+            assertThat(directMessage.isRead()).isTrue();
+            assertThat(conversation.isHasUnread()).isFalse();
+        }
+
+        @Test
+        @DisplayName("권한 없는 사용자가 요청할 경우 예외 발생")
+        void shouldThrowExceptionWhenMarkAsReadByUnauthorizedUser() {
+            //given
+            UUID loginUserId = UUID.randomUUID();
+            User loginUser = new User();
+            setId(loginUser, loginUserId);
+            UUID withUserId = UUID.randomUUID();
+            User withUser = new User();
+            setId(withUser, withUserId);
+
+            UUID deniedUserId = UUID.randomUUID();
+
+            UUID conversationId = UUID.randomUUID();
+            Conversation conversation = Conversation.builder()
+                    .user(loginUser)
+                    .with(withUser)
+                    .hasUnread(true)
+                    .build();
+            setId(conversation, conversationId);
+            given(conversationRepository.findById(conversationId)).willReturn(Optional.of(conversation));
+
+            UUID directMessageId = UUID.randomUUID();
+
+            //when & then
+            assertThrows(ConversationForbiddenException.class,
+                    ()-> conversationService.markAsRead(deniedUserId,conversationId,directMessageId));
+            verify(conversationRepository).findById(conversationId);
+        }
+
+        @Test
+        @DisplayName("해당 DM 이 존재하지 않을 경우 예외 발생")
+        void shouldThrowExceptionWhenDirectMessageNotFound() {
+            UUID loginUserId = UUID.randomUUID();
+            User loginUser = new User();
+            setId(loginUser, loginUserId);
+            UUID withUserId = UUID.randomUUID();
+            User withUser = new User();
+            setId(withUser, withUserId);
+
+            UUID conversationId = UUID.randomUUID();
+            Conversation conversation = Conversation.builder()
+                    .user(loginUser)
+                    .with(withUser)
+                    .hasUnread(true)
+                    .build();
+            setId(conversation, conversationId);
+            given(conversationRepository.findById(conversationId)).willReturn(Optional.of(conversation));
+
+            UUID nonExistentDirectMessageId = UUID.randomUUID();
+            given(directMessageRepository.findById(nonExistentDirectMessageId)).willReturn(Optional.empty());
+
+            //when & then
+            assertThrows(DirectMessageNotFound.class,
+                    ()->conversationService.markAsRead(loginUserId,conversationId,nonExistentDirectMessageId));
+            verify(conversationRepository).findById(conversationId);
+            verify(directMessageRepository).findById(nonExistentDirectMessageId);
         }
     }
 

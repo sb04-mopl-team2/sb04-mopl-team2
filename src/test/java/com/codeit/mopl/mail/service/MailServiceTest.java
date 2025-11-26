@@ -1,5 +1,6 @@
 package com.codeit.mopl.mail.service;
 
+import com.codeit.mopl.mail.utils.RedisStoreUtils;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -7,16 +8,36 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class MailServiceTest {
     @Mock
     JavaMailSender javaMailSender;
+
+    @Mock
+    PasswordEncoder passwordEncoder;
+
+    @Mock
+    StringRedisTemplate redisTemplate;
+
+    @Mock
+    ValueOperations<String, String> valueOps;
+
+    @Mock
+    RedisStoreUtils redisStoreUtils;
 
     @InjectMocks
     MailService mailService;
@@ -26,10 +47,12 @@ public class MailServiceTest {
     void sendMailShouldSucceed() throws Exception {
         // given
         String email = "test@test.com";
-        String tempPw = "Abcd1234!";
+        String tempPw = "asdf1234!";
+        String encodedPw = "encodedPassword";
 
         MimeMessage mimeMessage = new MimeMessage((jakarta.mail.Session) null);
         given(javaMailSender.createMimeMessage()).willReturn(mimeMessage);
+        willDoNothing().given(redisStoreUtils).storeTempPassword(email, tempPw);
 
         // when
         mailService.sendMail(email, tempPw);

@@ -26,7 +26,6 @@ import java.util.Optional;
 public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final PasswordUtils passwordUtils;
     private final MailService mailService;
 
@@ -62,12 +61,7 @@ public class AuthService {
             log.debug("[사용자 관리] 해당 유저를 찾을 수 없음 email = {}", request.email());
             return;
         }
-        User findUser = optionalUser.get();
         String tempPw = passwordUtils.makeTempPassword();
-        String encodedPw = passwordEncoder.encode(tempPw);
-        findUser.setPassword(encodedPw);
-        userRepository.save(findUser);
-        log.info("[사용자 관리] 패스워드 초기화 완료 userId = {}", findUser.getId());
         log.info("[이메일] 이메일 전송 email = {}", request.email());
         mailService.sendMail(request.email(), tempPw);
     }

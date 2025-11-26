@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface ConversationRepository extends JpaRepository<Conversation, UUID> {
+public interface ConversationRepository extends JpaRepository<Conversation, UUID>, CustomConversationRepository {
     //boolean existsByUser_IdAndWith_Id(UUID userA, UUID userB);
 
     Optional<Conversation> findByUser_IdAndWith_Id(UUID userA, UUID userB);

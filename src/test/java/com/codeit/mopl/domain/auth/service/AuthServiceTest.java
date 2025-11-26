@@ -6,7 +6,6 @@ import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.auth.InvalidTokenException;
-import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.mail.service.MailService;
 import com.codeit.mopl.mail.utils.PasswordUtils;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
@@ -18,12 +17,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,8 +35,6 @@ public class AuthServiceTest {
     @Mock
     private UserRepository userRepository;
     @Mock
-    private PasswordEncoder passwordEncoder;
-    @Mock
     private PasswordUtils passwordUtils;
     @Mock
     private MailService mailService;
@@ -55,11 +49,8 @@ public class AuthServiceTest {
         ResetPasswordRequest request = new ResetPasswordRequest("test@test.com");
         User findUser = new User("test@test.com","password","test");
         String tempPw = "TempPW1234";
-        String encodedPw = "encodedPw";
         given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(findUser));
         given(passwordUtils.makeTempPassword()).willReturn(tempPw);
-        given(passwordEncoder.encode(tempPw)).willReturn(encodedPw);
-        given(userRepository.save(findUser)).willReturn(findUser);
         doNothing().when(mailService).sendMail("test@test.com",tempPw);
 
         // when

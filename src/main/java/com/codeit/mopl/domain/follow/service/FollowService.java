@@ -73,12 +73,8 @@ public class FollowService {
     @Transactional
     public void processFollowerIncrease(UUID followId, UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작: followId = {}, followeeId = {}", followId, followeeId);
-        // 이미 처리된 이벤트인지 검증
-        ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_INCREASE);
-        try {
-            processedEventRepository.save(processedEvent);
-        } catch (DataIntegrityViolationException e) {
-            printAlreadyProcessedWarnLogMessage(processedEvent);
+        // 이미 처리된 이벤트면 early return
+        if(isFailToSaveToProcessedEvent(followId, EventType.FOLLOWER_INCREASE)) {
             return;
         }
         User followee = getUserById(followeeId);
@@ -127,12 +123,8 @@ public class FollowService {
     @Transactional
     public void processFollowerDecrease(UUID followId, UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 시작: followId = {}, followeeId = {}", followId, followeeId);
-        // 이미 처리된 이벤트인지 검증
-        ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_DECREASE);
-        try {
-            processedEventRepository.save(processedEvent);
-        } catch (DataIntegrityViolationException e) {
-            printAlreadyProcessedWarnLogMessage(processedEvent);
+        // 이미 처리된 이벤트면 early return
+        if (isFailToSaveToProcessedEvent(followId, EventType.FOLLOWER_DECREASE)) {
             return;
         }
         User followee = getUserById(followeeId);
@@ -149,18 +141,26 @@ public class FollowService {
         }
     }
 
+    private boolean isFailToSaveToProcessedEvent(UUID followId, EventType eventType) {
+        if (followId == null) {
+            throw FollowIdIsNullException.withDetails();
+        }
+        ProcessedEvent processedEvent = new ProcessedEvent(followId, eventType);
+        try {
+            processedEventRepository.save(processedEvent);
+            return false;
+        } catch (DataIntegrityViolationException e) {
+            log.warn("[팔로우 관리] 이벤트 처리 중단 - 이미 처리된 이벤트입니다: eventId = {}, eventType = {}", followId, eventType);
+            return true;
+        }
+    }
+
     private User getUserById(UUID userId) {
         if (userId == null) {
             throw new UserIdIsNullException(UserErrorCode.USER_ID_IS_NULL, Map.of("userId", "null"));
         }
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
-    }
-
-    private void printAlreadyProcessedWarnLogMessage(ProcessedEvent processedEvent) {
-        UUID eventId = processedEvent.getEventId();
-        EventType eventType = processedEvent.getEventType();
-        log.warn("[팔로우 관리] 이벤트 처리 중단 - 이미 처리된 이벤트입니다: eventId = {}, eventType = {}", eventId, eventType);
     }
 
     private String getFollowNotificationTitle(String followerName) {

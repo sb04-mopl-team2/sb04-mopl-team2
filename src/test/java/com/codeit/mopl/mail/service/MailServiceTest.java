@@ -1,5 +1,6 @@
 package com.codeit.mopl.mail.service;
 
+import com.codeit.mopl.mail.utils.RedisStoreUtils;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,9 @@ public class MailServiceTest {
     @Mock
     ValueOperations<String, String> valueOps;
 
+    @Mock
+    RedisStoreUtils redisStoreUtils;
+
     @InjectMocks
     MailService mailService;
 
@@ -48,8 +52,7 @@ public class MailServiceTest {
 
         MimeMessage mimeMessage = new MimeMessage((jakarta.mail.Session) null);
         given(javaMailSender.createMimeMessage()).willReturn(mimeMessage);
-        given(passwordEncoder.encode(tempPw)).willReturn(encodedPw);
-        given(redisTemplate.opsForValue()).willReturn(valueOps);
+        willDoNothing().given(redisStoreUtils).storeTempPassword(email, tempPw);
 
         // when
         mailService.sendMail(email, tempPw);

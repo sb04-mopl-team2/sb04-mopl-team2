@@ -20,8 +20,8 @@ public class UserFixture {
         return new User("test3@test.com", "password", "test3", LocalDateTime.now().minusHours(2));
     }
 
-    public static User createUser4() {
-        User admin = new User("admin@admin.com", "password", "admin", LocalDateTime.now().minusHours(1));
+    public static User createAdmin() {
+        User admin = new User("admin@admin.com", "admin!", "admin", LocalDateTime.now().minusHours(1));
         admin.setRole(Role.ADMIN);
         return admin;
     }
@@ -39,6 +39,6 @@ public class UserFixture {
     }
 
     public static UserDto createUserDto4() {
-        return new UserDto(UUID.randomUUID(), LocalDateTime.now(), "admin@test.com", "admin", null, Role.ADMIN, false);
+        return new UserDto(UUID.randomUUID(), LocalDateTime.now(), "admin@admin.com", "admin", null, Role.ADMIN, false);
     }
 }

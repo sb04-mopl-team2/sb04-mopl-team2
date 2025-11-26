@@ -312,11 +312,11 @@ public class UserE2ETest {
     @DisplayName("서버 시작 시 자동으로 생성되는 어드민 계정으로 로그인에 성공한다")
     @Test
     void LoginAdmin() {
-        SignInRequest signInRequest = new SignInRequest("admin@google.com","asdf1234!");
+        SignInRequest signInRequest = new SignInRequest("admin@admin.com","admin!");
         HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
         ResponseEntity<JwtDto> loginJwtDto = rest.postForEntity("/api/auth/sign-in", loginHttpEntity, JwtDto.class);
 
-        assertEquals("admin@google.com",loginJwtDto.getBody().userDto().email());
+        assertEquals("admin@admin.com",loginJwtDto.getBody().userDto().email());
         assertNotNull(loginJwtDto.getBody().accessToken());
         assertEquals(HttpStatus.OK, loginJwtDto.getStatusCode());
         assertEquals(Role.ADMIN, loginJwtDto.getBody().userDto().role());
@@ -336,11 +336,11 @@ public class UserE2ETest {
         assertEquals(false, createdUser.getBody().locked());
         assertEquals(Role.USER, createdUser.getBody().role());
 
-        SignInRequest signInRequest = new SignInRequest("admin@google.com","asdf1234!");
+        SignInRequest signInRequest = new SignInRequest("admin@admin.com","admin!");
         HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
         ResponseEntity<JwtDto> loginJwtDto = rest.postForEntity("/api/auth/sign-in", loginHttpEntity, JwtDto.class);
 
-        assertEquals("admin@google.com",loginJwtDto.getBody().userDto().email());
+        assertEquals("admin@admin.com",loginJwtDto.getBody().userDto().email());
         assertNotNull(loginJwtDto.getBody().accessToken());
         assertEquals(HttpStatus.OK, loginJwtDto.getStatusCode());
         assertEquals(Role.ADMIN, loginJwtDto.getBody().userDto().role());
@@ -433,7 +433,6 @@ public class UserE2ETest {
                 CursorResponseUserDto.class
         );
 
-        System.out.println(userRepository.count());
         assertEquals(HttpStatus.OK, findResponse.getStatusCode());
         assertEquals(3, findResponse.getBody().totalCount());
     }

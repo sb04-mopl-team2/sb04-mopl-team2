@@ -6,12 +6,15 @@ import com.codeit.mopl.domain.watchingsession.entity.ContentChatSendRequest;
 import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
 import com.codeit.mopl.security.CustomUserDetails;
 import jakarta.validation.Valid;
+import java.security.Principal;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
@@ -20,6 +23,7 @@ import org.springframework.stereotype.Controller;
   - 라이브 채팅 메시지를 받아 모든 시청자에게 중계하는 컨트롤러
   - Service 거치지 않음
  */
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class ChatController {
@@ -31,10 +35,12 @@ public class ChatController {
   @MessageMapping("/contents/{contentId}/chat")
   public void sendChat(@DestinationVariable UUID contentId,
                        @Valid @Payload ContentChatSendRequest contentChatSendRequest,
-                       @AuthenticationPrincipal CustomUserDetails principal
+                       UsernamePasswordAuthenticationToken token
   ) {
-    UserDto userDto = principal.getUser();
+    CustomUserDetails userDetails = (CustomUserDetails) token.getPrincipal();
+    log.info("[실기간 채팅] Chat Controller 유저 정보 받음. UserDto = {}", userDetails.getUser());
 
+    UserDto userDto = userDetails.getUser();
     UserSummary senderSummary = new UserSummary(
         userDto.id(),
         userDto.name(),
@@ -49,6 +55,6 @@ public class ChatController {
     // 엔드포인트: SUBSCRIBE /sub/contents/{contentId}/chat
     String destination = String.format("/sub/contents/%s/chat", contentId);
     messagingTemplate.convertAndSend(destination, contentChatDto);
+    log.info("[실기간 채팅] Chat Controller - 채팅 보냄. destination = {}", destination);
   }
-
 }

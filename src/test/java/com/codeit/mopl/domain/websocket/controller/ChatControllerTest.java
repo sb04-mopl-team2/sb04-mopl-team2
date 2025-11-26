@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 @ExtendWith(MockitoExtension.class)
 public class ChatControllerTest {
@@ -49,9 +50,15 @@ public class ChatControllerTest {
         userDto,
         "testPassword"
     );
+    UsernamePasswordAuthenticationToken authenticationToken =
+        new UsernamePasswordAuthenticationToken(
+            customUserDetails,
+            null, // 비번은 필요 없음
+            customUserDetails.getAuthorities()
+        );
 
     // when
-    chatController.sendChat(contentId, contentChatSendRequest, customUserDetails);
+    chatController.sendChat(contentId, contentChatSendRequest, authenticationToken);
 
     // then
     ArgumentCaptor<String> destinationCaptor = ArgumentCaptor.forClass(String.class);

@@ -61,4 +61,11 @@ public class WatchingSessionController {
     return ResponseEntity.ok(response);
   }
 
+  @GetMapping("/test")
+  public ResponseEntity<String> testApi(
+  ) {
+    return ResponseEntity.ok("test API successful!");
+  }
+
+
 }

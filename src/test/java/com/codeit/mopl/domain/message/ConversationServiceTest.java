@@ -211,7 +211,7 @@ public class ConversationServiceTest {
         void shouldFindConversationsByKeyword() {
             //given
             ConversationSearchCond cond = new ConversationSearchCond();
-            cond.setKeywordLike(null);
+            cond.setKeywordLike("test");
             cond.setCursor(null);
             cond.setLimit(10);
             cond.setSortBy(SortBy.CREATED_AT);

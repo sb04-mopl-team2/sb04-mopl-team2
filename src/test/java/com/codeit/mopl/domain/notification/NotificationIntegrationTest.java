@@ -32,7 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
-
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -49,8 +48,6 @@ class NotificationIntegrationTest {
 
   @Autowired
   private UserMapper userMapper;
-
-
 
   private User user1;
   private User user2;

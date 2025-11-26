@@ -27,7 +27,7 @@ public class TempPasswordAuthenticationProvider implements AuthenticationProvide
         String username = authentication.getName();
         String rawPassword = (String) authentication.getCredentials();
 
-        String encodedTempPw = redisTemplate.opsForValue().getAndDelete(username);
+        String encodedTempPw = redisTemplate.opsForValue().get(username);
 
         if (encodedTempPw == null) {
             return null;
@@ -44,7 +44,7 @@ public class TempPasswordAuthenticationProvider implements AuthenticationProvide
                         null,
                         userDetails.getAuthorities()
                 );
-
+        redisTemplate.delete(username);
         return token;
     }
 

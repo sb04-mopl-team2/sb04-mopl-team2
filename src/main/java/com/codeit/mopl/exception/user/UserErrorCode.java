@@ -10,7 +10,8 @@ public enum UserErrorCode implements ErrorCodeInterface {
     PROFILE_UPLOAD_FAIL(HttpStatus.BAD_REQUEST, "프로필 업로드 실패"),
     PROFILE_DELETE_FAIL(HttpStatus.BAD_REQUEST, "프로필 삭제 실패"),
     NOT_IMAGE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "프로필에 사용된 데이터가 이미지가 아닙니다."),
-    USER_ID_IS_NULL(HttpStatus.BAD_REQUEST, "유효한 userId가 아닙니다.");
+    USER_ID_IS_NULL(HttpStatus.BAD_REQUEST, "유효한 userId가 아닙니다."),
+    TEMP_PASSWORD_STORE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "임시 비밀번호 저장에 실패했습니다."),;
 
     private final HttpStatus status;
     private final String message;

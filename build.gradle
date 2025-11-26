@@ -83,7 +83,7 @@ dependencies {
     // s3
     implementation 'software.amazon.awssdk:s3:2.31.7'
 
-    implementation 'org.apache.httpcomponents.client5:httpclient5'
+    testImplementation 'org.apache.httpcomponents.client5:httpclient5'
 }
 
 tasks.named('test') {

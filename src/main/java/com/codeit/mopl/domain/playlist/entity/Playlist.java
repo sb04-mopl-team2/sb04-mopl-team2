@@ -32,10 +32,10 @@ public class Playlist extends UpdatableEntity {
     @Column
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "subscriber_count", nullable = false)
     private long subscriberCount;
 
-    @Column(nullable = false)
+    @Column(name = "subscribed_by_me", nullable = false)
     private boolean subscribedByMe;
 
     public void update(String title, String description) {

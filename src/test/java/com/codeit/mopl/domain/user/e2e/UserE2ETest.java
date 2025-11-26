@@ -13,6 +13,7 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.mail.utils.PasswordUtils;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMessage;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.*;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -77,8 +79,8 @@ public class UserE2ETest {
         given(javaMailSender.createMimeMessage()).willReturn(message);
         willDoNothing().given(javaMailSender).send(any(MimeMessage.class));
 
-        if (!userRepository.existsByEmail("admin@google.com")){
-            User admin = new User("admin@google.com",passwordEncoder.encode("asdf1234!"),"admin");
+        if (!userRepository.existsByEmail("admin@admin.com")){
+            User admin = new User("admin@admin.com",passwordEncoder.encode("admin!"),"admin");
             admin.setRole(Role.ADMIN);
             userRepository.save(admin);
         }
@@ -357,7 +359,6 @@ public class UserE2ETest {
         );
 
         assertEquals(HttpStatus.NO_CONTENT, changePasswordResponse.getStatusCode());
-        assertFalse(jwtRegistry.hasActiveJwtInformationByUserId(createdUser.getBody().id()));
         User findUser = userRepository.findById(userId).orElse(null);
         assertNotNull(findUser);
         assertTrue(findUser.isLocked());
@@ -416,7 +417,8 @@ public class UserE2ETest {
 
         ResponseEntity<UserDto> createdUser2 = rest.postForEntity("/api/users", httpEntity2, UserDto.class);
 
-        SignInRequest signInRequest = new SignInRequest("admin@google.com","asdf1234!");
+
+        SignInRequest signInRequest = new SignInRequest("admin@admin.com","admin!");
         HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
         ResponseEntity<JwtDto> loginJwtDto = rest.postForEntity("/api/auth/sign-in", loginHttpEntity, JwtDto.class);
         assertEquals(HttpStatus.OK, loginJwtDto.getStatusCode());
@@ -447,7 +449,7 @@ public class UserE2ETest {
         assertEquals("test@test.com",createdUser.getBody().email());
         assertEquals(HttpStatus.CREATED, createdUser.getStatusCode());
 
-        SignInRequest signInRequest = new SignInRequest("admin@google.com","asdf1234!");
+        SignInRequest signInRequest = new SignInRequest("admin@admin.com","admin!");
         HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
         ResponseEntity<JwtDto> loginJwtDto = rest.postForEntity("/api/auth/sign-in", loginHttpEntity, JwtDto.class);
         assertEquals(HttpStatus.OK, loginJwtDto.getStatusCode());

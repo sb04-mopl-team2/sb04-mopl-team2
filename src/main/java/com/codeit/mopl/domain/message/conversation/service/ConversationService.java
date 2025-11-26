@@ -85,6 +85,7 @@ public class ConversationService {
     @Transactional(readOnly = true)
     public CursorResponseConversationDto getAllConversations(UUID loginUserId ,ConversationSearchCond cond) {
         log.info("[메세지] 채팅방 목록 조회 시작 - loginUserId = {}", loginUserId);
+        cond.setLoginUserId(loginUserId);
         List<Conversation> conversations = conversationRepository.findAllByCond(cond);
 
         // 빈 리스트에 대한 체크
@@ -156,14 +157,14 @@ public class ConversationService {
 
         Conversation conversation = conversationRepository.findByUser_IdAndWith_Id(userA,userB)
                 .orElseThrow(()->{
-                    log.warn("[메세지] 특정 사용자와의 채팅방 조회 실패 - 채팅방 존재하지 않음 - conversationId = {}", userA, userB);
+                    log.warn("[메세지] 특정 사용자와의 채팅방 조회 실패 - 채팅방 존재하지 않음 - userA = {}, userB = {}", userA, userB);
                     return ConversationNotFound.withId(withUserId);
                 });
 
         if (!conversation.getUser().getId().equals(loginUserId) &&
                 !conversation.getWith().getId().equals(loginUserId)) {
             log.warn("[메세지] 특정 사용자와의 채팅방 조회 실패 - 접근 권한 없음 - (loginUserId = {})", loginUserId );
-            throw ConversationForbiddenException.withId(conversation.getId());
+            throw ConversationForbiddenException.withId(loginUserId);
         }
         log.info("[메세지] 특정 사용자와의 채팅방 조회 완료 - withUserId = {}", withUserId);
         return buildDtoWithLastMessage(conversation);

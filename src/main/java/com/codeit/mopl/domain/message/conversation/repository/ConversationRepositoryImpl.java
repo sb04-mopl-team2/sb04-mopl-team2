@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.UUID;
 
@@ -89,14 +90,20 @@ public class ConversationRepositoryImpl implements CustomConversationRepository 
                         c.with.id.eq(loginUserId).and(u1.name.containsIgnoreCase(keyword))
                         );
         BooleanExpression messageContains = m.content.containsIgnoreCase(keyword);
-        return WithNameContains.and(messageContains);
+        return WithNameContains.or(messageContains);
     }
 
     private BooleanExpression cursorLessThan(String cursor, UUID idAfter) {
         if (cursor == null || cursor.isEmpty()) {
             return null;
         }
-       LocalDateTime cursorCreatedAt = LocalDateTime.parse(cursor);
+       LocalDateTime cursorCreatedAt;
+        try {
+            cursorCreatedAt = LocalDateTime.parse(cursor);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+
         BooleanExpression ltCursor = conversation.createdAt.lt(cursorCreatedAt);
 
         if (idAfter == null) {

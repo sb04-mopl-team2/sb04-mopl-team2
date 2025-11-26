@@ -1,6 +1,8 @@
 package com.codeit.mopl.domain.notification.repository;
 
+import static java.time.ZoneOffset.UTC;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.LOCAL_DATE;
 
 import com.codeit.mopl.config.QuerydslConfig;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
@@ -10,6 +12,9 @@ import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
 import com.codeit.mopl.domain.user.entity.User;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,27 +56,27 @@ public class NotificationRepositoryImplTest {
 
     n1 = createNotification(user, "testTitle1", "testContent1", Level.INFO, Status.UNREAD);
     em.persist(n1);
-    Thread.sleep(300);
+    Thread.sleep(2000);
 
     n2 = createNotification(user, "testTitle2", "testContent2", Level.INFO, Status.UNREAD);
     em.persist(n2);
-    Thread.sleep(300);
+    Thread.sleep(2000);
 
     n3 = createNotification(user, "testTitle3", "testContent3", Level.INFO, Status.READ);
     em.persist(n3);
-    Thread.sleep(300);
+    Thread.sleep(2000);
 
     n4 = createNotification(user, "testTitle4", "testContent4", Level.INFO, Status.UNREAD);
     em.persist(n4);
-    Thread.sleep(300);
+    Thread.sleep(2000);
 
     n5 = createNotification(user, "testTitle5", "testContent5", Level.INFO, Status.UNREAD);
     em.persist(n5);
-    Thread.sleep(300);
+    Thread.sleep(2000);
 
     n6 = createNotification(user, "testTitle6", "testContent6", Level.INFO, Status.UNREAD);
     em.persist(n6);
-    Thread.sleep(300);
+    Thread.sleep(2000);
 
     em.flush();
     em.clear();
@@ -142,8 +147,8 @@ public class NotificationRepositoryImplTest {
 
     // then
     assertThat(result)
-        .extracting(Notification::getId)
-        .containsExactly(n2.getId(), n1.getId());
+        .extracting(Notification::getContent)
+        .containsExactly(n2.getContent(), n1.getContent());
 
     assertThat(result.size()).isEqualTo(2);
   }
@@ -168,8 +173,8 @@ public class NotificationRepositoryImplTest {
 
     // then
     assertThat(result)
-        .extracting(Notification::getId)
-        .containsExactly(n5.getId(), n6.getId());
+        .extracting(Notification::getContent)
+        .containsExactly(n5.getContent(), n6.getContent());
 
     assertThat(result.size()).isEqualTo(2);
   }

@@ -37,6 +37,7 @@ public class ReviewRepositoryImpl implements CustomReviewRepository {
 
     if (cursor != null && idAfter != null) {
       where.and(buildCursorCondition(cursor, idAfter, sortBy, sortDirection, qReview));
+      where.and(qReview.id.notIn(idAfter));
     }
 
     List<OrderSpecifier<?>> orders = buildOrderSpecifiers(sortBy, sortDirection, qReview);
@@ -51,48 +52,81 @@ public class ReviewRepositoryImpl implements CustomReviewRepository {
     return reviewList;
   }
 
-  private List<OrderSpecifier<?>> buildOrderSpecifiers(ReviewSortBy sortBy, SortDirection sortDirection, QReview qReview) {
+  private List<OrderSpecifier<?>> buildOrderSpecifiers(
+      ReviewSortBy sortBy,
+      SortDirection sortDirection,
+      QReview qReview
+  ) {
     List<OrderSpecifier<?>> orders = new ArrayList<>();
 
     if (sortBy != null && sortDirection != null) {
-      Order order = sortDirection.equals(SortDirection.DESCENDING) ? Order.DESC : Order.ASC;
+      Order order = (sortDirection == SortDirection.DESCENDING)
+          ? Order.DESC
+          : Order.ASC;
+
       switch (sortBy) {
         case createdAt:
           orders.add(new OrderSpecifier<>(order, qReview.createdAt));
           break;
+
         case rating:
           orders.add(new OrderSpecifier<>(order, qReview.rating));
           break;
       }
+
+      orders.add(new OrderSpecifier<>(order, qReview.id));
     }
 
     return orders;
   }
 
-  private BooleanExpression buildCursorCondition(String cursor, UUID idAfter, ReviewSortBy sortBy, SortDirection sortDirection, QReview qReview) {
 
-    if (sortBy == null || sortDirection == null) {
+  private BooleanExpression buildCursorCondition(
+      String cursor,
+      UUID idAfter,
+      ReviewSortBy sortBy,
+      SortDirection sortDirection,
+      QReview qReview
+  ) {
+    if (cursor == null || idAfter == null || sortBy == null || sortDirection == null) {
       return null;
     }
 
-    LocalDateTime cursorTime = cursor != null ? LocalDateTime.parse(cursor) : null;
+    BooleanExpression main;
+    BooleanExpression tie;
 
-    BooleanExpression condition  = null;
+    switch (sortBy) {
 
-    switch (sortBy.toString()) {
-      case "createdAt": {
+      case createdAt: {
+        LocalDateTime cursorTime = LocalDateTime.parse(cursor);
+
         if (sortDirection == SortDirection.DESCENDING) {
-          condition = qReview.createdAt.lt(cursorTime);
+          main = qReview.createdAt.lt(cursorTime);
+          tie = qReview.createdAt.eq(cursorTime).and(qReview.id.lt(idAfter));
+        } else {
+          main = qReview.createdAt.gt(cursorTime);
+          tie = qReview.createdAt.eq(cursorTime).and(qReview.id.gt(idAfter));
         }
-        else {
-          condition = qReview.createdAt.gt(cursorTime);
+
+        return main.or(tie);
+      }
+
+      case rating: {
+        double cursorRating = Double.parseDouble(cursor);
+
+        if (sortDirection == SortDirection.DESCENDING) {
+          main = qReview.rating.lt(cursorRating);
+          tie = qReview.rating.eq(cursorRating).and(qReview.id.lt(idAfter));
+        } else {
+          main = qReview.rating.gt(cursorRating);
+          tie = qReview.rating.eq(cursorRating).and(qReview.id.gt(idAfter));
         }
-        break;
+
+        return main.or(tie);
       }
 
       default:
-        break;
+        return null;
     }
-    return condition;
   }
 }

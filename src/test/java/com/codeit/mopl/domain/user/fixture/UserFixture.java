@@ -39,6 +39,6 @@ public class UserFixture {
     }
 
     public static UserDto createUserDto4() {
-        return new UserDto(UUID.randomUUID(), LocalDateTime.now(), "admin@google.com", "admin", null, Role.ADMIN, false);
+        return new UserDto(UUID.randomUUID(), LocalDateTime.now(), "admin@admin.com", "admin", null, Role.ADMIN, false);
     }
 }

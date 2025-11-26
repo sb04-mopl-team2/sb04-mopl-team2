@@ -6,11 +6,11 @@ import com.codeit.mopl.domain.message.conversation.dto.request.ConversationSearc
 import com.codeit.mopl.domain.message.conversation.dto.response.ConversationDto;
 import com.codeit.mopl.domain.message.conversation.dto.response.CursorResponseConversationDto;
 import com.codeit.mopl.domain.message.conversation.entity.Conversation;
+import com.codeit.mopl.domain.message.conversation.entity.SortBy;
 import com.codeit.mopl.domain.message.conversation.mapper.ConversationMapper;
 import com.codeit.mopl.domain.message.conversation.repository.ConversationRepository;
 import com.codeit.mopl.domain.message.conversation.service.ConversationService;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
-import com.codeit.mopl.domain.playlist.entity.SortBy;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
@@ -167,7 +167,7 @@ public class ConversationServiceTest {
             cond.setKeywordLike(null);
             cond.setCursor(null);
             cond.setLimit(10);
-            cond.setSortBy(SortBy.UPDATED_AT);
+            cond.setSortBy(SortBy.CREATED_AT);
             cond.setSortDirection(SortDirection.DESCENDING);
 
             UUID conversationId = UUID.randomUUID();
@@ -214,7 +214,7 @@ public class ConversationServiceTest {
             cond.setKeywordLike(null);
             cond.setCursor(null);
             cond.setLimit(10);
-            cond.setSortBy(SortBy.UPDATED_AT);
+            cond.setSortBy(SortBy.CREATED_AT);
             cond.setSortDirection(SortDirection.DESCENDING);
 
             UUID loginUserId = UUID.randomUUID();
@@ -266,7 +266,7 @@ public class ConversationServiceTest {
             cond.setKeywordLike(null);
             cond.setCursor(null);
             cond.setLimit(10);
-            cond.setSortBy(SortBy.UPDATED_AT);
+            cond.setSortBy(SortBy.CREATED_AT);
             cond.setSortDirection(SortDirection.DESCENDING);
             UUID loginUserId = UUID.randomUUID();
             given(conversationRepository.findAllByCond(any(ConversationSearchCond.class)))

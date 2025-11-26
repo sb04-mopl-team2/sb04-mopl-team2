@@ -133,7 +133,7 @@ public class ConversationService {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(()->{
                     log.warn("[메세지] 채팅방 정보 조회 실패 - 채팅방 존재하지 않음 - conversationId = {}", conversationId);
-                    return ConversationNotFound.withId(conversationId);
+                    return ConversationNotFound.of();
                 });
 
         //유저 권한 검증
@@ -142,7 +142,7 @@ public class ConversationService {
 
         if (!userIdA.equals(loginUserId) && !userB.equals(loginUserId)) {
             log.warn("[메세지] 채팅방 정보 조회 실패 - 접근 권한 없음 - (loginUserId = {}, conversationId = {})", loginUserId, conversationId );
-            throw ConversationForbiddenException.withId(conversationId);
+            throw ConversationForbiddenException.withId(loginUserId);
         }
 
         log.info("[메세지] 채팅방 정보 조회 완료 - conversationId = {}", conversationId);

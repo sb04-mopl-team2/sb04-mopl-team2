@@ -14,4 +14,8 @@ public class ConversationNotFound extends MessageException {
         ex.getDetails().put("withUserId", withUserId);
         return ex;
     }
+
+    public static ConversationNotFound of() {
+        return new ConversationNotFound();
+    }
 }

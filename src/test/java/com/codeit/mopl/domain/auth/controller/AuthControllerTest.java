@@ -2,8 +2,6 @@ package com.codeit.mopl.domain.auth.controller;
 
 import com.codeit.mopl.domain.auth.dto.request.ResetPasswordRequest;
 import com.codeit.mopl.domain.auth.service.AuthService;
-import com.codeit.mopl.domain.user.controller.UserController;
-import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.user.service.UserService;

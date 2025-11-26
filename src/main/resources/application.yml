@@ -17,6 +17,12 @@ spring:
     job:
       enabled: false
 
+  # redis 설정
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
 management:
   endpoints:
     web:
@@ -70,8 +76,8 @@ jwt:
 
 tmdb:
   api:
-    token : ${TMDB_API_TOKEN}
-  base-url : ${TMDB_BASE_URL}
+    token: ${TMDB_API_TOKEN}
+  base-url: ${TMDB_BASE_URL}
 
 mail:
   host: ${MAIL_HOST}
@@ -85,3 +91,4 @@ mail:
         starttls:
           enable: true
       debug: true
+  expiration: 180

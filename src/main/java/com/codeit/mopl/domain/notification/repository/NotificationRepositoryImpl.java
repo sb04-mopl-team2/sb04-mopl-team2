@@ -69,7 +69,7 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
 
   private BooleanExpression buildCursorCondition(String cursor, UUID idAfter, SortBy sortBy, SortDirection sortDirection, QNotification qnotification) {
 
-    LocalDateTime cursorTime = cursor != null ? LocalDateTime.parse(cursor) : null;
+    LocalDateTime cursorTime = LocalDateTime.parse(cursor);
 
     BooleanExpression condition  = null;
 
@@ -83,9 +83,6 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
         }
         break;
       }
-
-      default:
-        break;
     }
     return condition;
   }

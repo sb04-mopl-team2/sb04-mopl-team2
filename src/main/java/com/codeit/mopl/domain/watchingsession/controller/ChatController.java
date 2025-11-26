@@ -4,9 +4,12 @@ import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.watchingsession.dto.ContentChatDto;
 import com.codeit.mopl.domain.watchingsession.entity.ContentChatSendRequest;
 import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
+import com.codeit.mopl.exception.watchingsession.UserNotAuthenticatedException;
+import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import java.security.Principal;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +40,14 @@ public class ChatController {
                        @Valid @Payload ContentChatSendRequest contentChatSendRequest,
                        UsernamePasswordAuthenticationToken token
   ) {
-    CustomUserDetails userDetails = (CustomUserDetails) token.getPrincipal();
-    log.info("[실기간 채팅] Chat Controller 유저 정보 받음. UserDto = {}", userDetails.getUser());
+
+     if (token == null || !(token.getPrincipal() instanceof CustomUserDetails userDetails)) {
+       throw new UserNotAuthenticatedException(
+          WatchingSessionErrorCode.USER_NOT_AUTHENTICATED,
+          Map.of("contentId", contentId));
+    }
+
+    log.info("[실시간 채팅] Chat Controller - 유저 정보 받음. UserDto = {}", userDetails.getUser());
 
     UserDto userDto = userDetails.getUser();
     UserSummary senderSummary = new UserSummary(
@@ -55,6 +64,6 @@ public class ChatController {
     // 엔드포인트: SUBSCRIBE /sub/contents/{contentId}/chat
     String destination = String.format("/sub/contents/%s/chat", contentId);
     messagingTemplate.convertAndSend(destination, contentChatDto);
-    log.info("[실기간 채팅] Chat Controller - 채팅 보냄. destination = {}", destination);
+    log.info("[실시간 채팅] Chat Controller - 채팅 보냄. destination = {}", destination);
   }
 }

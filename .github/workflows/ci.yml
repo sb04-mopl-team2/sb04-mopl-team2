@@ -11,6 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Start Kafka
+        run: docker compose -f docker-compose-kafka.yml up -d
+
       - name: JDK 17S
         uses: actions/setup-java@v3
         with:

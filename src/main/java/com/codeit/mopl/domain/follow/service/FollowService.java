@@ -39,7 +39,7 @@ public class FollowService {
     @Transactional
     public FollowDto createFollow(FollowRequest request, UUID followerId) {
         UUID followeeId = request.followeeId();
-        log.info("[팔로우 관리] 팔로우 생성 시작 - followerId: {}, followeeId: {}", followerId, followeeId);
+        log.info("[팔로우 관리] 팔로우 생성 시작: followerId = {}, followeeId = {}", followerId, followeeId);
 
         // 자기 자신 팔로우 금지
         if (followerId.equals(followeeId)) {
@@ -61,41 +61,41 @@ public class FollowService {
         // 알람 발행
         String title = getFollowNotificationTitle(follower.getName());
         notificationService.createNotification(followeeId, title, "", Level.INFO);
-        log.info("[팔로우 관리] 팔로우 생성 완료 - id: {}", dto.id());
+        log.info("[팔로우 관리] 팔로우 생성 완료: id = {}", dto.id());
         return dto;
     }
 
     @Transactional
     public void increaseFollowerCount(UUID followeeId) {
-        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작 - followeeId: {}", followeeId);
+        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작: followeeId = {}", followeeId);
         User followee = getUserById(followeeId);
         followee.increaseFollowerCount();
-        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료 - followeeId: {}", followeeId);
+        log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료: followeeId = {}", followeeId);
     }
 
     @Transactional(readOnly = true)
     public boolean isFollowedByMe(UUID followerId, UUID followeeId) {
-        log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 시작 - followerId: {}, followeeId: {}", followerId, followeeId);
+        log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 시작: followerId = {}, followeeId = {}", followerId, followeeId);
         if (!userRepository.existsById(followeeId)) {
             throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", followeeId));
         }
         boolean isFollowed = followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
-        log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 완료 - followerId: {}, followeeId: {}, isFollowed: {}", followerId, followeeId, isFollowed);
+        log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 완료: followerId = {}, followeeId = {}, isFollowed = {}", followerId, followeeId, isFollowed);
         return isFollowed;
     }
 
     @Transactional(readOnly = true)
     public long getFollowerCount(UUID followeeId) {
-        log.info("[팔로우 관리] 팔로워 수 조회 시작 - followeeId: {}", followeeId);
+        log.info("[팔로우 관리] 팔로워 수 조회 시작: followeeId = {}", followeeId);
         User followee = getUserById(followeeId);
         long followerCount = followee.getFollowerCount();
-        log.info("[팔로우 관리] 팔로워 수 조회 완료 - followeeId: {}, followerCount: {}", followeeId, followerCount);
+        log.info("[팔로우 관리] 팔로워 수 조회 완료: followeeId = {}, followerCount = {}", followeeId, followerCount);
         return followerCount;
     }
 
     @Transactional
     public void deleteFollow(UUID followId, UUID requesterId) {
-        log.info("[팔로우 관리] 팔로우 삭제 시작 - followId: {}, requesterId: {}", followId, requesterId);
+        log.info("[팔로우 관리] 팔로우 삭제 시작: followId = {}, requesterId = {}", followId, requesterId);
         Follow follow = followRepository.findById(followId)
                 .orElseThrow(() -> FollowNotFoundException.withId(followId));
 
@@ -108,22 +108,22 @@ public class FollowService {
         followRepository.delete(follow);
         UUID followeeId = follow.getFollowee().getId();
         eventPublisher.publishEvent(new FollowerDecreaseEvent(follow.getId(), followeeId));
-        log.info("[팔로우 관리] 팔로우 삭제 완료 - followId: {}, followeeId: {}", followId, followeeId);
+        log.info("[팔로우 관리] 팔로우 삭제 완료: followId = {}, followeeId = {}", followId, followeeId);
     }
 
     @Transactional
     public void decreaseFollowerCount(UUID followeeId) {
-        log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 시작 - followeeId: {}", followeeId);
+        log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 시작: followeeId = {}", followeeId);
         User followee = getUserById(followeeId);
         long followerCount = followee.getFollowerCount();
         detectFollowerCountIsNegative(followeeId, followerCount);
         followee.decreaseFollowerCount();
-        log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 완료 - followeeId: {}", followeeId);
+        log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 완료: followeeId = {}", followeeId);
     }
 
     private void detectFollowerCountIsNegative(UUID followeeId, long followerCount) {
         if (followerCount <= 0) {
-            log.error("[팔로우 관리] 팔로우 감소 중단 - 팔로워 수가 0이하 입니다. followeeId: {}, followerCount: {}", followeeId, followerCount);
+            log.error("[팔로우 관리] 팔로우 감소 중단 - 팔로워 수가 0이하 입니다: followeeId = {}, followerCount = {}", followeeId, followerCount);
             throw FollowerCountCannotBeNegativeException.withFolloweeIdAndFollowerCount(followeeId, followerCount);
         }
     }

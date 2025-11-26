@@ -75,7 +75,7 @@ public class FollowService {
     public void processFollowerIncrease(UUID followId, UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작: followId = {}, followeeId = {}", followId, followeeId);
         // 이미 처리된 이벤트면 early return
-        if(isAlreadyProcessed(followId, EventType.FOLLOWER_INCREASE)) {
+        if(checkAndMarkAsProcessed(followId, EventType.FOLLOWER_INCREASE)) {
             return;
         }
         User followee = getUserById(followeeId);
@@ -125,7 +125,7 @@ public class FollowService {
     public void processFollowerDecrease(UUID followId, UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 시작: followId = {}, followeeId = {}", followId, followeeId);
         // 이미 처리된 이벤트면 early return
-        if (isAlreadyProcessed(followId, EventType.FOLLOWER_DECREASE)) {
+        if (checkAndMarkAsProcessed(followId, EventType.FOLLOWER_DECREASE)) {
             return;
         }
         User followee = getUserById(followeeId);
@@ -143,7 +143,7 @@ public class FollowService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean isAlreadyProcessed(UUID followId, EventType eventType) {
+    protected boolean checkAndMarkAsProcessed(UUID followId, EventType eventType) {
         if (followId == null) {
             throw FollowIdIsNullException.withDetails();
         }

@@ -7,6 +7,7 @@ import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.event.listener.KafkaEventListener;
 import com.codeit.mopl.exception.follow.FollowIdIsNullException;
 import com.codeit.mopl.exception.follow.FolloweeIdIsNullException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -220,5 +221,47 @@ class KafkaEventListenerTest {
     // when & then
     assertThatThrownBy(() -> kafkaEventListener.on(event))
             .isInstanceOf(FolloweeIdIsNullException.class);
+  }
+
+  @Test
+  @DisplayName("JSON 직렬화 실패 시 카프카 메시지 전송이 수행되지 않음")
+  void send_shouldNotCallKafka_whenJsonSerializationFails() throws Exception {
+    // given
+    UUID followId = UUID.randomUUID();
+    UUID followeeId = UUID.randomUUID();
+    FollowerIncreaseEvent event = new FollowerIncreaseEvent(followId, followeeId);
+
+    when(objectMapper.writeValueAsString(event))
+            .thenThrow(new JsonProcessingException("serialize error") {});
+
+    // when
+    kafkaEventListener.on(event);
+
+    // then
+    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
+  }
+
+  @Test
+  @DisplayName("카프카 메시지 전송 실패 시 whenComplete 예외 로그 흐름 수행 테스트")
+  void send_shouldHandleKafkaSendFailure() throws Exception {
+    // given
+    UUID followId = UUID.randomUUID();
+    UUID followeeId = UUID.randomUUID();
+    FollowerIncreaseEvent event = new FollowerIncreaseEvent(followId, followeeId);
+    when(objectMapper.writeValueAsString(event)).thenReturn("{}");
+
+    CompletableFuture<SendResult<String, String>> future = new CompletableFuture<>();
+    when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(future);
+
+    // when
+    kafkaEventListener.on(event);
+
+    // future 실패 강제 발생
+    Exception ex = new RuntimeException("SEND_FAIL");
+    future.completeExceptionally(ex);
+
+    // then
+    verify(kafkaTemplate).send(any(ProducerRecord.class));
+    assertThat(future.isCompletedExceptionally()).isTrue();
   }
 }

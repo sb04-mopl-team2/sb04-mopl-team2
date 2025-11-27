@@ -1,5 +1,7 @@
 package com.codeit.mopl.domain.content.entity;
 
+import com.codeit.mopl.exception.content.InvalidContentTypeException;
+import java.util.Map;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -18,6 +20,6 @@ public enum ContentType {
         return ct;
       }
     }
-    throw new IllegalArgumentException("유효하지 않은 콘텐츠 타입입니다. 타입 : " + type);
+    throw new InvalidContentTypeException(Map.of("inputValue", type));
   }
 }

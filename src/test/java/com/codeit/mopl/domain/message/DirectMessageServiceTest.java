@@ -1,10 +1,13 @@
 package com.codeit.mopl.domain.message;
 
 import com.codeit.mopl.domain.base.BaseEntity;
+import com.codeit.mopl.domain.message.conversation.entity.Conversation;
 import com.codeit.mopl.domain.message.conversation.entity.SortBy;
+import com.codeit.mopl.domain.message.conversation.repository.ConversationRepository;
 import com.codeit.mopl.domain.message.directmessage.dto.CursorResponseDirectMessageDto;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageSearchCond;
+import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageSendRequest;
 import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
 import com.codeit.mopl.domain.message.directmessage.mapper.DirectMessageMapper;
 import com.codeit.mopl.domain.message.directmessage.repository.DirectMessageRepository;
@@ -13,6 +16,7 @@ import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,17 +29,22 @@ import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 
 @ExtendWith(MockitoExtension.class)
 public class DirectMessageServiceTest {
     @Mock private DirectMessageRepository directMessageRepository;
     @Mock private DirectMessageMapper directMessageMapper;
+    @Mock private ConversationRepository conversationRepository;
     @Mock private UserRepository userRepository;
     @InjectMocks private DirectMessageService directMessageService;
 
@@ -43,6 +52,98 @@ public class DirectMessageServiceTest {
     @DisplayName("createDM()")
     class createDirectMessage {
 
+        @Test
+        @DisplayName("정상 요청 시 DM을 저장함")
+        void shouldSaveDirectMessage() {
+            UUID loginUserId = UUID.randomUUID();
+            User localUser = new User();
+            setId(localUser, loginUserId);
+            UserSummary sender = new UserSummary(loginUserId,"test1","test1");
+
+            UUID receiverUserId = UUID.randomUUID();
+            User receiverUser = new User();
+            setId(receiverUser, receiverUserId);
+            UserSummary receiver = new UserSummary(receiverUserId,"test2","test2");
+
+            UUID conversationId = UUID.randomUUID();
+            DirectMessageSendRequest request = new DirectMessageSendRequest(
+                    conversationId,
+                    receiverUserId,
+                    "test"
+            );
+            Conversation conversation = Conversation.builder()
+                    .user(localUser)
+                    .with(receiverUser)
+                    .hasUnread(false)
+                    .messages(null)
+                    .build();
+            given(conversationRepository.findById(conversationId)).willReturn(Optional.of(conversation));
+            given(userRepository.findById(loginUserId)).willReturn(Optional.of(localUser));
+            given(userRepository.findById(receiverUserId)).willReturn(Optional.of(receiverUser));
+
+            DirectMessage message = DirectMessage.builder()
+                    .sender(localUser)
+                    .receiver(receiverUser)
+                    .conversation(conversation)
+                    .content("test")
+                    .isRead(false)
+                    .build();
+            given(directMessageRepository.save(any(DirectMessage.class)))
+                    .willReturn(message);            given(directMessageMapper.toDirectMessageDto(message))
+                    .willReturn(new DirectMessageDto(
+                       message.getId(),
+                       conversationId,
+                       LocalDateTime.now(),
+                       sender,
+                       receiver,
+                       message.getContent()
+                    ));
+            //when
+            DirectMessageDto result = directMessageService.saveDirectMessage(loginUserId, request);
+
+            //then
+            verify(conversationRepository).findById(conversationId);
+            verify(userRepository).findById(loginUserId);
+            verify(userRepository).findById(receiverUserId);
+            verify(directMessageMapper).toDirectMessageDto(message);
+            verify(directMessageRepository).save(any(DirectMessage.class));
+        }
+
+        @Test
+        @DisplayName("상대 유저가 존재하지 않는 경우 예외 발생")
+        void shouldThrowExceptionWhenUserNotFound() {
+            UUID loginUserId = UUID.randomUUID();
+            User localUser = new User();
+            setId(localUser, loginUserId);
+
+            UUID nonExistentUserId = UUID.randomUUID();
+            User nonExistentUser = new User();
+            setId(nonExistentUser, nonExistentUserId);
+            given(userRepository.findById(loginUserId)).willReturn(Optional.of(localUser));
+            given(userRepository.findById(nonExistentUserId)).willReturn(Optional.empty());
+
+            UUID conversationId = UUID.randomUUID();
+            DirectMessageSendRequest request = new DirectMessageSendRequest(
+                    conversationId,
+                    nonExistentUserId,
+                    "test"
+            );
+            Conversation conversation = Conversation.builder()
+                    .user(localUser)
+                    .with(nonExistentUser)
+                    .hasUnread(false)
+                    .messages(null)
+                    .build();
+            given(conversationRepository.findById(conversationId)).willReturn(Optional.of(conversation));
+
+            //when&then
+            assertThrows(UserNotFoundException.class,
+                    ()-> directMessageService.saveDirectMessage(loginUserId,request));
+            verify(userRepository).findById(loginUserId);
+            verify(userRepository).findById(nonExistentUserId);
+            verify(conversationRepository).findById(conversationId);
+            verify(directMessageRepository,never()).save(any(DirectMessage.class));
+        }
     }
 
     @Nested
@@ -189,6 +290,7 @@ public class DirectMessageServiceTest {
             assertThat(result.data().get(0).id()).isEqualTo(after1.getId());
             assertThat(result.data().get(1).id()).isEqualTo(after2.getId());
         }
+
 
     }
 

@@ -32,10 +32,11 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(FollowController.class)
 @ActiveProfiles("test")
@@ -117,6 +118,7 @@ class FollowControllerTest {
                 .andExpect(jsonPath("$.id").value(followId.toString()))
                 .andExpect(jsonPath("$.followerId").value(followerId.toString()))
                 .andExpect(jsonPath("$.followeeId").value(followeeId.toString()));
+        verify(followService, times(1)).createFollow(eq(request), eq(followerId));
     }
 
     @Test
@@ -143,6 +145,67 @@ class FollowControllerTest {
                         .with(user(follower))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(content)
+        );
+        resultActions.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("팔로워 수 조회 성공 테스트")
+    void get_followerCount_Success() throws Exception {
+        // given
+        UUID followerId = UUID.randomUUID();
+        UUID followeeId = UUID.randomUUID();
+        UserDto userDto = new UserDto(
+                followerId,
+                LocalDateTime.now(),
+                "testUser@test.com",
+                "test",
+                null,
+                Role.USER,
+                false
+        );
+        CustomUserDetails follower = new CustomUserDetails(userDto, "test1234");
+
+        given(followService.getFollowerCount(eq(followeeId))).willReturn(1L);
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/count")
+                        .with(user(follower))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId.toString())
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(content().string("1"));
+        verify(followService, times(1)).getFollowerCount(eq(followeeId));
+    }
+
+    @Test
+    @DisplayName("팔로워 수 조회 실패 테스트 - 유효하지 않은 요청")
+    void get_followerCount_Failure_InvalidRequest() throws Exception {
+        // given
+        UUID followerId = UUID.randomUUID();
+        String followeeId = "testId";
+        UserDto userDto = new UserDto(
+                followerId,
+                LocalDateTime.now(),
+                "testUser@test.com",
+                "test",
+                null,
+                Role.USER,
+                false
+        );
+        CustomUserDetails follower = new CustomUserDetails(userDto, "test1234");
+
+        // when & then
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/count")
+                        .with(user(follower))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId)
         );
         resultActions.andExpect(status().isBadRequest());
     }

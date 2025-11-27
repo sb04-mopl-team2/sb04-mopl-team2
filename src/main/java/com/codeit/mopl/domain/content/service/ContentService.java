@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.content.service;
 
 import com.codeit.mopl.domain.content.dto.request.ContentCreateRequest;
 import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
+import com.codeit.mopl.domain.content.dto.request.ContentUpdateRequest;
 import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
@@ -61,6 +62,29 @@ public class ContentService {
 
     Long watcherCount = getWatcherCount();
     return contentMapper.toDto(content, watcherCount);
+  }
+
+  //콘텐츠 수정
+  @Transactional
+  public ContentDto updateContent(UUID contentId, @Valid ContentUpdateRequest request, MultipartFile thumbnail) {
+    log.info("[콘텐츠] 콘텐츠 수정 서비스 시작 contentId = {}, title = {}", contentId, request.title());
+
+    Content content = contentRepository.findById(contentId).orElseThrow(
+        () -> new ContentNotFoundException(ContentErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId))
+    );
+
+    content.update(request);
+
+    if (thumbnail != null && !thumbnail.isEmpty()) {
+      String thumbnailUrl = uploadThumbnail(thumbnail);
+      content.setThumbnailUrl(thumbnailUrl);
+    }
+
+    Long watcherCount = getWatcherCount();
+
+    ContentDto dto = contentMapper.toDto(content, watcherCount);
+    log.info("[콘텐츠] 콘텐츠 수정 서비스 완료 id = {}, title = {}", dto.id(), dto.title());
+    return dto;
   }
 
   //redis로 실시간 세션 관리 매서드 기능 완성후 추가 구현예정

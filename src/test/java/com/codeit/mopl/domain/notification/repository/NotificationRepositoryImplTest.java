@@ -176,7 +176,7 @@ public class NotificationRepositoryImplTest {
       n.setUser(user);
       n.setLevel(level);
       n.setStatus(status);
-      Thread.sleep(100);     // sleep 각 객체마다 createdAt의 값에 차이점을 주기 위함
+      Thread.sleep(10);     // sleep 각 객체마다 createdAt의 값에 차이점을 주기 위함
       return n;
   }
   private User createUser(String email, String password, String name) {

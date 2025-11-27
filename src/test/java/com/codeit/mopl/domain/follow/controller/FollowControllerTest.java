@@ -32,7 +32,10 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -117,6 +120,8 @@ class FollowControllerTest {
                 .andExpect(jsonPath("$.id").value(followId.toString()))
                 .andExpect(jsonPath("$.followerId").value(followerId.toString()))
                 .andExpect(jsonPath("$.followeeId").value(followeeId.toString()));
+
+        verify(followService, times(1)).createFollow(eq(request), eq(followerId));
     }
 
     @Test
@@ -143,6 +148,62 @@ class FollowControllerTest {
                         .with(user(follower))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(content)
+        );
+        resultActions.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("팔로우 삭제 성공 테스트")
+    void deleteFollow_Success() throws Exception {
+        // given
+        UUID followId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+        UserDto userDto = new UserDto(
+                requesterId,
+                LocalDateTime.now(),
+                "testUser@test.com",
+                "test",
+                null,
+                Role.USER,
+                false
+        );
+        CustomUserDetails follower = new CustomUserDetails(userDto, "test1234");
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                delete("/api/follows/" + followId)
+                        .with(user(follower))
+                        .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isNoContent());
+        verify(followService, times(1)).deleteFollow(eq(followId), eq(requesterId));
+    }
+
+    @Test
+    @DisplayName("팔로우 삭제 실패 테스트 - 유효하지 않은 요청")
+    void deleteFollow_Failure_InvalidRequest() throws Exception {
+        // given
+        String followId = "testId";
+        UUID followerId = UUID.randomUUID();
+        UserDto userDto = new UserDto(
+                followerId,
+                LocalDateTime.now(),
+                "testUser@test.com",
+                "test",
+                null,
+                Role.USER,
+                false
+        );
+        CustomUserDetails follower = new CustomUserDetails(userDto, "test1234");
+
+        // when & then
+        ResultActions resultActions = mockMvc.perform(
+                delete("/api/follows/" + followId)
+                        .with(user(follower))
+                        .contentType(MediaType.APPLICATION_JSON)
         );
         resultActions.andExpect(status().isBadRequest());
     }

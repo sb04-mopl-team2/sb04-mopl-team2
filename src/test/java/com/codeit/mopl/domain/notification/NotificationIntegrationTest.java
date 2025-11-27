@@ -20,17 +20,23 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.eq;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -48,6 +54,9 @@ class NotificationIntegrationTest {
 
   @Autowired
   private UserMapper userMapper;
+
+  @Autowired
+  private CacheManager cacheManager;
 
   private User user1;
   private User user2;
@@ -108,6 +117,11 @@ class NotificationIntegrationTest {
         userDto2,
         "dummyPassword"
     );
+
+    Cache cache = cacheManager.getCache("notification:firstPage");
+    if (cache != null) {
+      cache.clear();
+    }
   }
 
   @Test
@@ -207,6 +221,33 @@ class NotificationIntegrationTest {
     // then
     resultActions
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("Cursor가 없을 때, 첫 페이지 조회는 캐시가 적용되어, 같은 파라미터로 두 번 호출해도 Repository는 한 번만 호출된다")
+  void getNotifications_firstPage_isCached() throws Exception {
+    // given
+    int limit = 5;
+
+    // when
+    ResultActions resultActions = mockMvc.perform(
+        get("/api/notifications")
+            .with(user(customUserDetails1))
+            .param("limit", String.valueOf(limit))
+            .param("sortDirection", SortDirection.DESCENDING.toString())
+            .param("sortBy", SortBy.CREATED_AT.getType())
+            .accept(MediaType.APPLICATION_JSON)
+    );
+
+    // then
+    verify(notificationRepository, times(1)).searchNotifications(
+        customUserDetails1.getUser().id(),
+        null,
+        null,
+        limit,
+        SortDirection.DESCENDING,
+        SortBy.CREATED_AT
+    );
   }
 
   private Notification createNotification(

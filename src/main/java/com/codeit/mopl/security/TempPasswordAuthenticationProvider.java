@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -27,14 +28,20 @@ public class TempPasswordAuthenticationProvider implements AuthenticationProvide
         String username = authentication.getName();
         String rawPassword = (String) authentication.getCredentials();
 
-        String encodedTempPw = redisTemplate.opsForValue().get(username);
+        String encodedTempPw = null;
+
+        try {
+            encodedTempPw = redisTemplate.opsForValue().get(username);
+        } catch (Exception e) {
+            return null;
+        }
 
         if (encodedTempPw == null) {
             return null;
         }
 
         if (!passwordEncoder.matches(rawPassword, encodedTempPw)) {
-            throw new BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
+            throw new LockedException("임시 비밀번호가 설정된 계정입니다. 임시 비밀번호를 확인해 주세요.");
         }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -44,7 +51,7 @@ public class TempPasswordAuthenticationProvider implements AuthenticationProvide
                         null,
                         userDetails.getAuthorities()
                 );
-        redisTemplate.delete(username);
+
         return token;
     }
 

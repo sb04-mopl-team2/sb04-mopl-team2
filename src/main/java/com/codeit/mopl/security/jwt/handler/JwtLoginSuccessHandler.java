@@ -4,8 +4,8 @@ import com.codeit.mopl.domain.auth.dto.JwtDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.security.CustomUserDetails;
 import com.codeit.mopl.security.jwt.JwtInformation;
-import com.codeit.mopl.security.jwt.JwtRegistry;
-import com.codeit.mopl.security.jwt.JwtTokenProvider;
+import com.codeit.mopl.security.jwt.registry.JwtRegistry;
+import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -14,7 +14,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.CacheManager;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 @Slf4j
 @Component

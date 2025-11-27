@@ -1,5 +1,8 @@
 package com.codeit.mopl.security.jwt.handler;
 
+import com.codeit.mopl.exception.global.ErrorResponse;
+import com.codeit.mopl.exception.user.LoginFailException;
+import com.codeit.mopl.exception.user.UserErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,6 +13,8 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -22,10 +27,13 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        log.warn("[사용자 관리] 로그인 실패 - 접근 권한이 없음 msg = {}", exception.getMessage());
+        log.warn("[사용자 관리] 로그인 실패");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
 
-        objectMapper.writeValue(response.getWriter(), exception.getMessage());
+        LoginFailException e = new LoginFailException(UserErrorCode.LOGIN_FAIL,null);
+        ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode().getName(), e.getErrorCode().getMessage(), e.getDetails(), e.getTimestamp());
+        objectMapper.writeValue(response.getWriter(), errorResponse);
     }
 }

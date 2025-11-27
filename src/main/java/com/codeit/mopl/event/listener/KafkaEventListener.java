@@ -1,8 +1,6 @@
 package com.codeit.mopl.event.listener;
 
-import com.codeit.mopl.event.event.FollowerDecreaseEvent;
-import com.codeit.mopl.event.event.FollowerIncreaseEvent;
-import com.codeit.mopl.event.event.NotificationCreateEvent;
+import com.codeit.mopl.event.event.*;
 import com.codeit.mopl.exception.follow.FolloweeIdIsNullException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.slf4j.MDC;
+import org.springframework.context.event.EventListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -57,6 +56,21 @@ public class KafkaEventListener {
             .map(Object::toString)
             .orElseThrow(FolloweeIdIsNullException::withDetails);
     send("mopl-follower-decrease", key, event);
+  }
+
+  @Async("taskExecutor")
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void on(UserRoleUpdateEvent event) {
+    String key = event.userId().toString();
+    send("mopl-user-role-update", key, event);
+  }
+
+  @Async("taskExecutor")
+  @EventListener
+  public void on(UserLogInOutEvent event) throws JsonProcessingException {
+    log.info("kafka UserLogInOut Event");
+    String key = event.userId().toString();
+    send("mopl-user-login-out", key, event);
   }
 
   private void send(String topic, String key, Object payload) {

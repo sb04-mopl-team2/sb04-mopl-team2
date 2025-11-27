@@ -1,14 +1,15 @@
 package com.codeit.mopl.security.jwt.filter;
 
-import com.codeit.mopl.security.jwt.JwtRegistry;
-import com.codeit.mopl.security.jwt.JwtTokenProvider;
+import com.codeit.mopl.exception.auth.AuthErrorCode;
+import com.codeit.mopl.exception.auth.InvalidTokenException;
+import com.codeit.mopl.security.jwt.registry.JwtRegistry;
+import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -32,7 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = request.getHeader("Authorization").replace("Bearer ", "");
             if (!jwtRegistry.hasActiveJwtInformationByAccessToken(token)) {
                 log.warn("[JWT 인증] Access Token이 유효하지 않음 token = {}", token);
-                throw new AuthenticationServiceException("Invalid access token");
+                throw new InvalidTokenException(AuthErrorCode.TOKEN_INVALID, Map.of("type", "accessToken"));
             }
             jwtTokenProvider.verifyJws(token);
             String email = jwtTokenProvider.getEmail(token);

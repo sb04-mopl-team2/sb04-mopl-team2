@@ -52,7 +52,6 @@ public class MailServiceTest {
 
         MimeMessage mimeMessage = new MimeMessage((jakarta.mail.Session) null);
         given(javaMailSender.createMimeMessage()).willReturn(mimeMessage);
-        willDoNothing().given(redisStoreUtils).storeTempPassword(email, tempPw);
 
         // when
         mailService.sendMail(email, tempPw);

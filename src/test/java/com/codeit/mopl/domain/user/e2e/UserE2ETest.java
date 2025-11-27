@@ -3,14 +3,17 @@ package com.codeit.mopl.domain.user.e2e;
 import com.codeit.mopl.domain.auth.dto.JwtDto;
 import com.codeit.mopl.domain.auth.dto.request.ResetPasswordRequest;
 import com.codeit.mopl.domain.auth.dto.request.SignInRequest;
+import com.codeit.mopl.domain.notification.repository.NotificationRepository;
 import com.codeit.mopl.domain.user.dto.request.*;
 import com.codeit.mopl.domain.user.dto.response.CursorResponseUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.repository.ProcessedEventRepository;
+import com.codeit.mopl.exception.global.ErrorResponse;
 import com.codeit.mopl.mail.utils.PasswordUtils;
-import com.codeit.mopl.security.jwt.JwtRegistry;
+import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,9 +23,10 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.*;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -54,8 +58,11 @@ public class UserE2ETest {
     @Autowired
     private JwtRegistry jwtRegistry;
 
-    @MockitoBean
+    @Autowired
     private StringRedisTemplate redisTemplate;
+
+    @MockitoBean
+    private ApplicationEventPublisher publisher;
 
     @MockitoBean
     private JavaMailSender javaMailSender;
@@ -67,8 +74,6 @@ public class UserE2ETest {
 
     @BeforeEach
     void setUp() {
-        ValueOperations<String, String> ops = Mockito.mock(ValueOperations.class);
-        given(redisTemplate.opsForValue()).willReturn(ops);
         MimeMessage message = Mockito.mock(MimeMessage.class);
         given(javaMailSender.createMimeMessage()).willReturn(message);
         willDoNothing().given(javaMailSender).send(any(MimeMessage.class));
@@ -78,6 +83,7 @@ public class UserE2ETest {
             admin.setRole(Role.ADMIN);
             userRepository.save(admin);
         }
+        redisTemplate.getConnectionFactory().getConnection().flushAll();
         var httpClient = org.apache.hc.client5.http.impl.classic.HttpClients.createDefault();
         var factory = new org.springframework.http.client.HttpComponentsClientHttpRequestFactory(httpClient);
         rest.getRestTemplate().setRequestFactory(factory);
@@ -359,9 +365,9 @@ public class UserE2ETest {
 
         SignInRequest lockUserSignInRequest = new SignInRequest("test@test.com", "password");
         HttpEntity changeLoginHttpEntity = getSignInRequest(lockUserSignInRequest);
-        ResponseEntity<JwtDto> lockUserJwtDto = rest.postForEntity("/api/auth/sign-in", changeLoginHttpEntity, JwtDto.class);
+        ResponseEntity<ErrorResponse> lockUserErrorResponse = rest.postForEntity("/api/auth/sign-in", changeLoginHttpEntity, ErrorResponse.class);
 
-        assertEquals(HttpStatus.UNAUTHORIZED, lockUserJwtDto.getStatusCode());
+        assertEquals(HttpStatus.UNAUTHORIZED, lockUserErrorResponse.getStatusCode());
     }
 
     @DisplayName("일반 유저는 전체 유저 목록을 조회할 수 없다")
@@ -441,13 +447,20 @@ public class UserE2ETest {
 
         assertEquals("test@test.com",createdUser.getBody().email());
         assertEquals(HttpStatus.CREATED, createdUser.getStatusCode());
+        assertEquals(Role.USER,createdUser.getBody().role());
 
-        SignInRequest signInRequest = new SignInRequest("admin@admin.com","admin!");
+        SignInRequest signInRequest = new SignInRequest("test@test.com","password");
         HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
         ResponseEntity<JwtDto> loginJwtDto = rest.postForEntity("/api/auth/sign-in", loginHttpEntity, JwtDto.class);
         assertEquals(HttpStatus.OK, loginJwtDto.getStatusCode());
+        assertTrue(jwtRegistry.hasActiveJwtInformationByUserId(createdUser.getBody().id()));
 
-        HttpHeaders headers = getHttpHeaders(loginJwtDto);
+        SignInRequest signInAdminRequest = new SignInRequest("admin@admin.com","admin!");
+        HttpEntity loginAdminHttpEntity = getSignInRequest(signInAdminRequest);
+        ResponseEntity<JwtDto> loginAdminJwtDto = rest.postForEntity("/api/auth/sign-in", loginAdminHttpEntity, JwtDto.class);
+        assertEquals(HttpStatus.OK, loginAdminJwtDto.getStatusCode());
+
+        HttpHeaders headers = getHttpHeaders(loginAdminJwtDto);
         UserRoleUpdateRequest roleUpdateRequest = new UserRoleUpdateRequest(Role.ADMIN);
 
         HttpEntity<UserRoleUpdateRequest> roleUpdateHttpEntity = new HttpEntity<>(roleUpdateRequest,headers);
@@ -460,6 +473,7 @@ public class UserE2ETest {
 
         assertEquals(HttpStatus.NO_CONTENT, roleUpdateResponse.getStatusCode());
         assertFalse(jwtRegistry.hasActiveJwtInformationByUserId(createdUser.getBody().id()));
+        assertEquals(Role.ADMIN, userRepository.findById(createdUser.getBody().id()).get().getRole());
     }
 
     @DisplayName("유저 생성 후 비밀번호 초기화 진행")
@@ -484,14 +498,67 @@ public class UserE2ETest {
         );
         assertEquals(HttpStatus.NO_CONTENT, resetPasswordResponse.getStatusCode());
         verify(javaMailSender, times(1)).send(any(MimeMessage.class));
+        assertNotNull(redisTemplate.opsForValue().get(createdUser.getBody().email()));  // redis key 등록 확인
 
-//        SignInRequest signInRequest = new SignInRequest("test@test.com", "tempPw");
-//        HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
-//
-//        ResponseEntity<JwtDto> loginJwtDto = rest.postForEntity("/api/auth/sign-in", loginHttpEntity, JwtDto.class);
-//
-//        assertEquals(HttpStatus.OK, loginJwtDto.getStatusCode());
-        // TODO : Redis 통합 환경 필요
+        SignInRequest signInRequest = new SignInRequest("test@test.com", "tempPw");
+        HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
+
+        ResponseEntity<JwtDto> loginJwtDto = rest.postForEntity("/api/auth/sign-in", loginHttpEntity, JwtDto.class);
+
+        assertEquals(HttpStatus.OK, loginJwtDto.getStatusCode());
+
+        ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest("changePassword");
+        HttpEntity changePasswordHttpEntity = new HttpEntity<>(changePasswordRequest,getHttpHeaders(loginJwtDto));
+
+        ResponseEntity<Void> changePasswordResponse = rest.exchange(
+                "/api/users/"+loginJwtDto.getBody().userDto().id()+"/password",
+                HttpMethod.PATCH,
+                changePasswordHttpEntity,
+                Void.class
+        );
+
+        assertEquals(HttpStatus.NO_CONTENT, changePasswordResponse.getStatusCode());
+        assertNull(redisTemplate.opsForValue().get(signInRequest.username()));  // redis key 삭제 확인
+
+        SignInRequest changeSignInRequest = new SignInRequest("test@test.com", "changePassword");
+        HttpEntity changeLoginHttpEntity = getSignInRequest(changeSignInRequest);
+
+        ResponseEntity<JwtDto> changeLoginJwtDto = rest.postForEntity("/api/auth/sign-in", changeLoginHttpEntity, JwtDto.class);
+
+        assertEquals(HttpStatus.OK, changeLoginJwtDto.getStatusCode());
+    }
+
+    @DisplayName("비밀번호 초기화 후 기존 비밀번호로 로그인할 수 없다")
+    @Test
+    void createUserAndResetPasswordShouldFailWithPreviousPassword() {
+        given(passwordUtils.makeTempPassword()).willReturn("tempPw");
+        UserCreateRequest request = new UserCreateRequest("test","test@test.com", "password");
+        HttpEntity<UserCreateRequest> httpEntity = new HttpEntity<>(request, defaultHeaders);
+        ResponseEntity<UserDto> createdUser = rest.postForEntity("/api/users", httpEntity, UserDto.class);
+
+        assertEquals("test@test.com",createdUser.getBody().email());
+        assertEquals(HttpStatus.CREATED, createdUser.getStatusCode());
+
+        ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest("test@test.com");
+        HttpEntity<ResetPasswordRequest> resetPasswordHttpEntity = new HttpEntity<>(resetPasswordRequest,defaultHeaders);
+
+        ResponseEntity<Void> resetPasswordResponse = rest.exchange(
+                "/api/auth/reset-password",
+                HttpMethod.POST,
+                resetPasswordHttpEntity,
+                Void.class
+        );
+        assertEquals(HttpStatus.NO_CONTENT, resetPasswordResponse.getStatusCode());
+        verify(javaMailSender, times(1)).send(any(MimeMessage.class));
+        assertNotNull(redisTemplate.opsForValue().get(createdUser.getBody().email()));  // redis key 등록 확인
+
+        SignInRequest signInRequest = new SignInRequest("test@test.com", "password");
+        HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
+
+        ResponseEntity<JwtDto> loginJwtDto = rest.postForEntity("/api/auth/sign-in", loginHttpEntity, JwtDto.class);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, loginJwtDto.getStatusCode());
+        assertNotNull(redisTemplate.opsForValue().get(signInRequest.username()));  // redis key 삭제 확인 - 삭제되지 않아야 함
     }
 
     private HttpEntity<MultiValueMap<String, String>> getSignInRequest(SignInRequest signInRequest) {

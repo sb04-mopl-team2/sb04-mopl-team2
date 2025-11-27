@@ -3,10 +3,10 @@ package com.codeit.mopl.security.config;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.security.CustomUserDetailsService;
-import com.codeit.mopl.security.jwt.JwtRegistry;
-import com.codeit.mopl.security.jwt.JwtTokenProvider;
+import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.filter.JwtAuthenticationFilter;
 import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
+import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
@@ -21,7 +21,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
-import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @TestConfiguration

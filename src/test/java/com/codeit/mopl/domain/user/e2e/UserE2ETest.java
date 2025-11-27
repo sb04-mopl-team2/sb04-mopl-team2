@@ -10,6 +10,7 @@ import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.global.ErrorResponse;
+import com.codeit.mopl.exception.user.UserLockedException;
 import com.codeit.mopl.mail.utils.PasswordUtils;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import jakarta.mail.internet.MimeMessage;
@@ -360,7 +361,7 @@ public class UserE2ETest {
 
         SignInRequest lockUserSignInRequest = new SignInRequest("test@test.com", "password");
         HttpEntity changeLoginHttpEntity = getSignInRequest(lockUserSignInRequest);
-        ResponseEntity<ErrorResponse> lockUserJwtDto = rest.postForEntity("/api/auth/sign-in", changeLoginHttpEntity, ErrorResponse.class);
+        ResponseEntity<String> lockUserJwtDto = rest.postForEntity("/api/auth/sign-in", changeLoginHttpEntity, String.class);
 
         assertEquals(HttpStatus.UNAUTHORIZED, lockUserJwtDto.getStatusCode());
     }

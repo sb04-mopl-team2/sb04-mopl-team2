@@ -1,8 +1,11 @@
 package com.codeit.mopl.event;
 
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
+import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.event.listener.KafkaEventListener;
+import com.codeit.mopl.exception.follow.FollowIdIsNullException;
+import com.codeit.mopl.exception.follow.FolloweeIdIsNullException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -22,6 +25,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -95,5 +99,66 @@ class KafkaEventListenerTest {
     assertThat(eventTypeHeader).isNotNull();
     assertThat(new String(eventTypeHeader.value(), StandardCharsets.UTF_8))
         .isEqualTo(event.getClass().getSimpleName());
+  }
+
+  @Test
+  @DisplayName("FollowerIncreaseEvent 발생 시 Kafka 메시지 전송 성공")
+  void onFollowerIncreaseEvent_shouldSendKafkaMessageWithHeaders() throws Exception {
+    // given
+    UUID followId = UUID.randomUUID();
+    UUID followeeId = UUID.randomUUID();
+    FollowerIncreaseEvent event = new FollowerIncreaseEvent(followId, followeeId);
+
+    String expectedJson = "{\"event\":\"increase\"}";
+    when(objectMapper.writeValueAsString(event)).thenReturn(expectedJson);
+
+    @SuppressWarnings("unchecked")
+    CompletableFuture<SendResult<String, String>> future =
+            (CompletableFuture<SendResult<String, String>>) mock(CompletableFuture.class);
+    when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(future);
+
+    MDC.put("requestId", "trace-456");
+
+    // when
+    kafkaEventListener.on(event);
+
+    // then
+    ArgumentCaptor<ProducerRecord<String, String>> captor = ArgumentCaptor.forClass(ProducerRecord.class);
+    verify(kafkaTemplate).send(captor.capture());
+
+    ProducerRecord<String, String> record = captor.getValue();
+    assertThat(record.topic()).isEqualTo("mopl-follower-increase");
+    assertThat(record.key()).isEqualTo(followeeId.toString());
+    assertThat(record.value()).isEqualTo(expectedJson);
+
+    Header typeHeader = record.headers().lastHeader("x-event-type");
+    assertThat(typeHeader).isNotNull();
+    assertThat(new String(typeHeader.value(), StandardCharsets.UTF_8))
+            .isEqualTo(event.getClass().getSimpleName());
+  }
+
+  @Test
+  @DisplayName("FollowerIncreaseEvent Kafka 메시지 전송 실패 - followId는 null이 될 수 없음")
+  void onFollowerIncreaseEvent_FollowIdIsNull_ThrowsException() throws Exception {
+    // given
+    FollowerIncreaseEvent event = new FollowerIncreaseEvent(null, null);
+
+    // when & then
+    assertThatThrownBy(() -> kafkaEventListener.on(event))
+            .isInstanceOf(FollowIdIsNullException.class);
+    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
+  }
+
+  @Test
+  @DisplayName("FollowerIncreaseEvent Kafka 메시지 전송 실패 - followeeId는 null이 될 수 없음")
+  void onFollowerIncreaseEvent_FolloweeIdIsNull_ThrowsException() throws Exception {
+    // given
+    UUID followId = UUID.randomUUID();
+    FollowerIncreaseEvent event = new FollowerIncreaseEvent(followId, null);
+
+    // when & then
+    assertThatThrownBy(() -> kafkaEventListener.on(event))
+            .isInstanceOf(FolloweeIdIsNullException.class);
+    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
   }
 }

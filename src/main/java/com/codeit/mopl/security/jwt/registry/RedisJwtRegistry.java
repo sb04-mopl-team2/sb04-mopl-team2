@@ -119,7 +119,7 @@ public class RedisJwtRegistry implements JwtRegistry {
             if(!(oldToken instanceof JwtInformation jwtInformation)) {
                 throw new JwtInformationNotFoundException(AuthErrorCode.JWT_INFORMATION_NOT_FOUND, Map.of("userKey",userKey));
             }
-            if (jwtInformation.getRefreshToken().equals(refreshToken)) {
+            if (!jwtInformation.getRefreshToken().equals(refreshToken)) {
                 throw new RefreshTokenMismatchException(AuthErrorCode.REFRESH_TOKEN_MISMATCH, Map.of("userKey",userKey));
             }
             removeTokenIndex(jwtInformation.getAccessToken(), jwtInformation.getRefreshToken());

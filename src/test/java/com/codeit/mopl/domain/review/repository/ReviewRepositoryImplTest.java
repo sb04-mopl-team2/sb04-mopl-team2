@@ -32,14 +32,14 @@ class ReviewRepositoryImplTest {
   private ContentMapper contentMapper;
 
   @Autowired
-  private ReviewRepository reviewRepository; // JpaRepository + CustomReviewRepository
+  private ReviewRepository reviewRepository;
 
   @Autowired
   private TestEntityManager em;
 
-  private User user;           // 모든 테스트 공용
-  private Content content1;    // 모든 테스트 공용
-  private Content content2;    // 모든 테스트 공용
+  private User user;
+  private Content content1;
+  private Content content2;
 
   private Review r1;
   private Review r2;
@@ -49,7 +49,7 @@ class ReviewRepositoryImplTest {
   private Review r6;
 
   @BeforeEach
-  void setUp() throws InterruptedException {
+  void setUp() throws Exception {
     content1 = createContent("테스트 제목1", "테스트 설명1");
     content2 = createContent("테스트 제목2", "테스트 설명2");
     user = createUser("test@example.com", "encodedPassword", "test");
@@ -60,28 +60,22 @@ class ReviewRepositoryImplTest {
 
     r1 = createReview(user, "text1", content1, 4.0, false);
     em.persist(r1);
-    Thread.sleep(100);
 
     r2 = createReview(user, "text2", content1, 5.0, true);
     em.persist(r2);
-    Thread.sleep(100);
 
     r3 = createReview(user, "text3", content2, 3.0, false);
     em.persist(r3);
-    Thread.sleep(100);
 
     r4 = createReview(user, "text4", content1, 3.5, false);
     em.persist(r4);
-    Thread.sleep(100);
 
     r5 = createReview(user, "text5", content1, 3.8, false);
     em.persist(r5);
-    Thread.sleep(100);
 
     r6 = createReview(user, "text6", content1, 3.7, false);
     em.persist(r6);
-    Thread.sleep(100);
-    // sleep 각 객체마다 createdAt의 값에 차이점을 주기 위함
+
     em.flush();
     em.clear();
   }
@@ -291,13 +285,15 @@ class ReviewRepositoryImplTest {
     return content;
   }
 
-  private Review createReview(User user,String text, Content content, double rating, boolean isDeleted) {
+  private Review createReview(User user,String text, Content content, double rating, boolean isDeleted)
+      throws InterruptedException {
     Review review = new Review();
     review.setUser(user);
     review.setContent(content);
     review.setText(text);
     review.setRating(rating);
     review.setIsDeleted(isDeleted);
+    Thread.sleep(100);     // sleep 각 객체마다 createdAt의 값에 차이점을 주기 위함
     return review;
   }
 

@@ -2,6 +2,8 @@ package com.codeit.mopl.domain.content.dto.request;
 
 import com.codeit.mopl.domain.content.entity.SortBy;
 import com.codeit.mopl.domain.content.entity.SortDirection;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
@@ -16,8 +18,14 @@ public class ContentSearchRequest {
   private List<String> tagsIn;
   private String cursor;
   private UUID idAfter;
+
+  @Min(1)
   private int limit;
+
+  @NotNull
   private SortDirection sortDirection;
+
+  @NotNull
   private SortBy sortBy;
 
   public ContentSearchCondition toCondition() {

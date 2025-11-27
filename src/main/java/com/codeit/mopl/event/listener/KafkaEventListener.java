@@ -1,7 +1,9 @@
 package com.codeit.mopl.event.listener;
 
+import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
+import com.codeit.mopl.exception.follow.FollowIdIsNullException;
 import com.codeit.mopl.exception.follow.FolloweeIdIsNullException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,11 +43,23 @@ public class KafkaEventListener {
   @Async("taskExecutor")
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void on(FollowerIncreaseEvent event) {
-    UUID followeeId = event.followDto().followeeId();
+    if (event.followId() == null) throw FollowIdIsNullException.withDetails();
+    UUID followeeId = event.followeeId();
     String key = Optional.ofNullable(followeeId)
             .map(Object::toString)
-            .orElseThrow(() -> FolloweeIdIsNullException.withClassName(this.getClass().getSimpleName()));
+            .orElseThrow(FolloweeIdIsNullException::withDetails);
     send("mopl-follower-increase", key, event);
+  }
+
+  @Async("taskExecutor")
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void on(FollowerDecreaseEvent event) {
+    if (event.followId() == null) throw FollowIdIsNullException.withDetails();
+    UUID followeeId = event.followeeId();
+    String key = Optional.ofNullable(followeeId)
+            .map(Object::toString)
+            .orElseThrow(FolloweeIdIsNullException::withDetails);
+    send("mopl-follower-decrease", key, event);
   }
 
   private void send(String topic, String key, Object payload) {

@@ -1,6 +1,6 @@
 package com.codeit.mopl.domain.message.conversation.mapper;
 
-import com.codeit.mopl.domain.message.conversation.dto.ConversationDto;
+import com.codeit.mopl.domain.message.conversation.dto.response.ConversationDto;
 import com.codeit.mopl.domain.message.conversation.entity.Conversation;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.user.mapper.UserMapper;

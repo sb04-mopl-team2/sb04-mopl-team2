@@ -1,4 +1,4 @@
-package com.codeit.mopl.domain.message.conversation.dto;
+package com.codeit.mopl.domain.message.conversation.dto.response;
 
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;

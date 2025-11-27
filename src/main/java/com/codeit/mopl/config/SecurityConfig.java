@@ -5,6 +5,7 @@ import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.security.CustomUserDetailsService;
+import com.codeit.mopl.security.TempPasswordAuthenticationProvider;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.filter.JwtAuthenticationFilter;
@@ -22,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -56,7 +58,11 @@ public class SecurityConfig {
                                            UserDetailsService customUserDetailsService,
                                            JwtRegistry jwtRegistry,
                                            JwtLoginSuccessHandler jwtLoginSuccessHandler,
-                                           LoginFailureHandler loginFailureHandler, JwtLogoutHandler jwtLogoutHandler, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) throws Exception {
+                                           LoginFailureHandler loginFailureHandler,
+                                           JwtLogoutHandler jwtLogoutHandler,
+                                           JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+                                           TempPasswordAuthenticationProvider tempPasswordAuthenticationProvider,
+                                           PasswordEncoder passwordEncoder) throws Exception {
         http
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/api/batch/**")
@@ -104,6 +110,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/contents/{contentId}").hasRole("ADMIN")  // 콘텐츠 수정
                         .anyRequest().authenticated()
                 );
+        AuthenticationManagerBuilder authBuilder =
+                http.getSharedObject(AuthenticationManagerBuilder.class);
+
+        authBuilder.authenticationProvider(tempPasswordAuthenticationProvider)
+                .userDetailsService(customUserDetailsService)
+                .passwordEncoder(passwordEncoder);
+
         return http.build();
     }
 

@@ -14,7 +14,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "playlist_item")
+@Table(name = "playlist_items")
 @Builder
 public class PlaylistItem extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)

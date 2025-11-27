@@ -53,10 +53,12 @@ public class NotificationService {
     List<Notification> notificationList =
         searchNotifications(userId, cursor, idAfter, limit, sortDirection, sortBy);
 
+    String responseSortBy = sortBy == SortBy.CREATED_AT ? "createdAt" : "updatedAt";
+
     if (notificationList.isEmpty()) {
       log.debug("[알림] 알림 리스트가 비었음, userId = {}", userId);
       CursorResponseNotificationDto cursorResponseNotificationDto = new CursorResponseNotificationDto(
-          null, null, null, false, 0L, SortBy.CREATED_AT, SortDirection.DESCENDING);
+          null, null, null, false, 0L, responseSortBy, SortDirection.DESCENDING);
 
       log.info("[알림] 알림 조회 종료, userId = {}, notificationListSize = {}, hasNext = {}, totalCount = {}",
           userId, 0L, cursorResponseNotificationDto.hasNext(), cursorResponseNotificationDto.totalCount());
@@ -81,7 +83,7 @@ public class NotificationService {
         userId, data.size(), hasNext, totalCount);
 
     CursorResponseNotificationDto cursorResponseNotificationDto = new CursorResponseNotificationDto(
-        data, nextCursor, nextIdAfter, hasNext, totalCount, sortBy, sortDirection);
+        data, nextCursor, nextIdAfter, hasNext, totalCount, responseSortBy, sortDirection);
 
     log.info("[알림] 알림 조회 종료, userId={}, resultSize={}, hasNext={}, totalCount={}",
         userId, cursorResponseNotificationDto.data().size(), cursorResponseNotificationDto.hasNext(), cursorResponseNotificationDto.totalCount());
@@ -143,7 +145,8 @@ public class NotificationService {
 
   private List<Notification> searchNotifications(
       UUID userId, String cursor, UUID idAfter, int limit, SortDirection sortDirection, SortBy sortBy) {
-    return notificationRepository.searchNotifications(userId, cursor, idAfter, limit, sortDirection, sortBy);
+    return notificationRepository.searchNotifications(userId, cursor, idAfter, limit, sortDirection,
+        sortBy);
   }
 
   private Long getTotalCount(UUID userId) {

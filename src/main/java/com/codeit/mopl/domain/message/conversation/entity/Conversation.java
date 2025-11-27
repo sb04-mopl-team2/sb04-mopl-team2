@@ -4,10 +4,7 @@ import com.codeit.mopl.domain.base.UpdatableEntity;
 import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
 import com.codeit.mopl.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +12,13 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@Table(name = "conversations")
+@Table(name = "conversations",
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = {"user_id", "with_user_id"},
+                name = "uk_conversation_users"))
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 public class Conversation extends UpdatableEntity {
 
     // 대화방을 소유하고 있는 사용자 (본인)
@@ -34,6 +35,8 @@ public class Conversation extends UpdatableEntity {
     @Column(nullable = false)
     private boolean hasUnread;
 
+    @OrderBy("createdAt ASC")
+    @Builder.Default
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DirectMessage> messages = new ArrayList<>();
 }

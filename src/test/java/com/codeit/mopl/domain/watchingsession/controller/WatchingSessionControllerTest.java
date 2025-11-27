@@ -14,6 +14,7 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.user.service.UserService;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
+import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
 import com.codeit.mopl.util.WithCustomMockUser;
 import com.codeit.mopl.domain.watchingsession.dto.CursorResponseWatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
@@ -71,6 +72,9 @@ public class WatchingSessionControllerTest {
 
   @MockitoBean
   private JpaMetamodelMappingContext jpaMappingContext;
+
+  @MockitoBean
+  private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
   @MockitoBean
   private CustomUserDetailsService customUserDetailsService;
@@ -161,7 +165,7 @@ public class WatchingSessionControllerTest {
         get("/api/contents/" + contentId +"/watching-sessions")
             .param("limit", "10")
             .param("sortDirection", "ASCENDING")
-            .param("sortBy", "createdAt")
+            .param("sortBy", "CREATED_AT")
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON_VALUE)
     );
@@ -204,7 +208,7 @@ public class WatchingSessionControllerTest {
         get("/api/contents/" + contentId +"/watching-sessions")
             .param("limit", "10")
             .param("sortDirection", "ASCENDING")
-            .param("sortBy", "createdAt")
+            .param("sortBy", "CREATED_AT")
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON_VALUE)
     );

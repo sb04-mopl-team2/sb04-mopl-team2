@@ -13,6 +13,11 @@ spring:
       hibernate:
         database-platform: org.hibernate.dialect.H2Dialect
         format_sql: true
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: embedded
   sql:
     init:
       mode: always

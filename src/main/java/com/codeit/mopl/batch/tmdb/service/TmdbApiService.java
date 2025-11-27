@@ -30,10 +30,9 @@ public class TmdbApiService {
   private final ContentRepository contentRepository;
 
   @Transactional
-  public Mono<List<Content>> discoverMoviesFromDate(
-      LocalDate from,
-      int page
-  ) {
+  public Mono<List<Content>> discoverMoviesFromDate(LocalDate from, int page) {
+    log.info("[TMDB] 영화 조회 시작 from = {}, page = {}", from, page);
+
     Mono<TmdbDiscoverMovieResponse> tmdbDiscoverMovieResponseMono = tmdbWebClient
         .get()
         .uri(uriBuilder -> buildDiscoverMoviesFromDateUri(uriBuilder, from, page))
@@ -47,7 +46,8 @@ public class TmdbApiService {
         .map(tmdbMovieMapper::toContent)
         .publishOn(Schedulers.boundedElastic())
         .map(contentRepository::save)
-        .collectList();
+        .collectList()
+        .doOnSuccess(list -> log.info("[TMDB] 영화 조회 완료 저장된 컨텐츠 수 = {}", list.size()));
   }
 
   /**
@@ -58,31 +58,26 @@ public class TmdbApiService {
    * @return Mono<TmdbDiscoverMovieResponse> API 응답 전체
    */
   @Transactional
-  public Mono<TmdbDiscoverMovieResponse> discoverMoviesFromDateWithResponse(
-      LocalDate from,
-      int page
-  ) {
+  public Mono<TmdbDiscoverMovieResponse> discoverMoviesFromDateWithResponse(LocalDate from, int page) {
+    log.info("[TMDB] 영화 조회(응답 포함) 시작 from = {}, page = {}", from, page);
+
     return tmdbWebClient
         .get()
         .uri(uriBuilder -> buildDiscoverMoviesFromDateUri(uriBuilder, from, page))
         .retrieve()
         .bodyToMono(TmdbDiscoverMovieResponse.class)
-        .publishOn(Schedulers.boundedElastic())  // Netty 스레드에서 즉시 전환!
+        .publishOn(Schedulers.boundedElastic())
         .doOnNext(response -> {
-          // 이제 boundedElastic 스레드에서 안전하게 실행
           Flux.fromIterable(response.getResults())
               .map(tmdbMovieMapper::toContent)
               .publishOn(Schedulers.boundedElastic())
               .doOnNext(contentRepository::save)
               .blockLast();
+          log.info("[TMDB] 영화 조회 및 저장 완료 조회 수 = {}", response.getResults().size());
         });
   }
 
-  private URI buildDiscoverMoviesFromDateUri(
-      UriBuilder builder,
-      LocalDate from,
-      int page
-  ) {
+  private URI buildDiscoverMoviesFromDateUri(UriBuilder builder, LocalDate from, int page) {
     return builder
         .path("/discover/movie")
         .queryParam("region", "KR")

@@ -4,13 +4,12 @@ import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.entity.QPlaylist;
+import com.codeit.mopl.domain.playlist.subscription.entity.QSubscription;
 import com.codeit.mopl.domain.playlist.entity.SortBy;
-import com.codeit.mopl.domain.playlist.subscription.QSubscription;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Repository;
 
 import java.time.DateTimeException;
@@ -19,7 +18,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.codeit.mopl.domain.playlist.entity.QPlaylist.playlist;
-
 @Repository
 @RequiredArgsConstructor
 public class PlaylistRepositoryImpl implements CustomPlaylistRepository {
@@ -90,7 +88,7 @@ public class PlaylistRepositoryImpl implements CustomPlaylistRepository {
         try {
             cursorCreatedAt = LocalDateTime.parse(cursor);
         } catch (DateTimeException e) {
-            throw new IllegalArgumentException("올바르지 않은 커서 포맷" + cursor, e);
+            throw new IllegalArgumentException("올바르지 않은 커서 포맷입니다." + cursor, e);
         }
         BooleanExpression lessThanCreatedAt = playlist.createdAt.lt(cursorCreatedAt);
 

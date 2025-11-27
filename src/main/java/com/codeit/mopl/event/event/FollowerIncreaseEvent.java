@@ -1,8 +1,9 @@
 package com.codeit.mopl.event.event;
 
-import com.codeit.mopl.domain.follow.dto.FollowDto;
+import java.util.UUID;
 
 public record FollowerIncreaseEvent(
-        FollowDto followDto
+    UUID followId,
+    UUID followeeId
 ) {
 }

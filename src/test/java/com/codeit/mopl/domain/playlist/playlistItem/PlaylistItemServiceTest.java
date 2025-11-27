@@ -3,12 +3,15 @@ package com.codeit.mopl.domain.playlist.playlistItem;
 import com.codeit.mopl.domain.base.BaseEntity;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
+import com.codeit.mopl.domain.notification.entity.Level;
+import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.playlistitem.entity.PlaylistItem;
 import com.codeit.mopl.domain.playlist.playlistitem.repository.PlaylistItemRepository;
 import com.codeit.mopl.domain.playlist.playlistitem.service.PlaylistItemService;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
-import com.codeit.mopl.domain.playlist.service.PlaylistService;
+import com.codeit.mopl.domain.playlist.subscription.entity.Subscription;
+import com.codeit.mopl.domain.playlist.subscription.repository.SubscriptionRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
 import com.codeit.mopl.exception.playlist.PlaylistUpdateForbiddenException;
@@ -22,11 +25,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -35,9 +40,10 @@ import static org.mockito.Mockito.verify;
 public class PlaylistItemServiceTest {
 
     @Mock private PlaylistItemRepository playlistItemRepository;
-    @Mock private PlaylistService playlistService;
     @Mock private PlaylistRepository playlistRepository;
     @Mock private ContentRepository contentRepository;
+    @Mock private SubscriptionRepository subscriptionRepository;
+    @Mock private NotificationService notificationService;
     @InjectMocks
     private PlaylistItemService playlistItemService;
 
@@ -62,8 +68,21 @@ public class PlaylistItemServiceTest {
                     .build();
 
             Content content = new Content();
+            content.setTitle("테스트 콘텐츠");
+
+            UUID subscriberId = UUID.randomUUID();
+            User subscriber = new User();
+            setId(subscriber, subscriberId);
+
+            Subscription subscription = Subscription.builder()
+                    .playlist(playlist)
+                    .subscriber(subscriber)
+                    .build();
+
             given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
             given(contentRepository.findById(contentId)).willReturn(Optional.ofNullable(content));
+            given(subscriptionRepository.findByPlaylistId(playlistId))
+                    .willReturn(List.of(subscription));
             PlaylistItem playlistItem = new PlaylistItem(playlist, content);
 
             //when
@@ -73,6 +92,13 @@ public class PlaylistItemServiceTest {
             verify(playlistRepository).findById(playlistId);
             verify(contentRepository).findById(contentId);
             verify(playlistItemRepository).save(any(PlaylistItem.class));
+            verify(subscriptionRepository).findByPlaylistId(playlistId);
+            verify(notificationService).createNotification(
+                    eq(subscriberId),
+                    eq("구독한 플레이리스트에 새로운 콘텐츠 추가"),
+                    any(String.class),
+                    eq(Level.INFO)
+            );
         }
 
         @Test
@@ -90,6 +116,8 @@ public class PlaylistItemServiceTest {
                     () -> playlistItemService.addContent(nonExistentPlaylistId, contentId, ownerId));
             verify(playlistRepository).findById(nonExistentPlaylistId);
             verify(playlistItemRepository,never()).save(any());
+            verify(subscriptionRepository, never()).findByPlaylistId(any());
+            verify(notificationService, never()).createNotification(any(), any(), any(), any());
         }
     }
 

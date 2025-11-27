@@ -6,35 +6,22 @@ spring:
   config:
     import: optional:file:.env[.properties]
   servlet:
-   multipart:
-     maxFileSize: 10MB
-     maxRequestSize: 30MB
+    multipart:
+      maxFileSize: 10MB
+      maxRequestSize: 30MB
   batch:
-   jdbc:
-     initialize-schema: always
-   initial-load:
-     enabled: false
-   job:
-     enabled: false
-  kafka:
-    bootstrap-servers: ${CONFLUENT_BOOTSTRAP_SERVERS}
+    jdbc:
+      initialize-schema: always
+    initial-load:
+      enabled: false
+    job:
+      enabled: false
 
-    properties:
-      security.protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
-      sasl.mechanism: ${KAFKA_SASL_MECHANISM:PLAIN}
-      sasl.jaas.config: >
-        org.apache.kafka.common.security.plain.PlainLoginModule required
-        username="${CONFLUENT_API_KEY}"
-        password="${CONFLUENT_API_SECRET}";
-
-    consumer:
-      group-id: ${KAFKA_CONSUMER_GROUP_ID:mopl-notification}
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  # redis 설정
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 management:
   endpoints:
@@ -89,12 +76,12 @@ jwt:
 
 tmdb:
   api:
-    token : ${TMDB_API_TOKEN}
-  base-url : ${TMDB_BASE_URL}
+    token: ${TMDB_API_TOKEN}
+  base-url: ${TMDB_BASE_URL}
 
 mail:
-  host: smtp.gmail.com
-  port: 587
+  host: ${MAIL_HOST}
+  port: ${MAIL_PORT}
   username: ${MAIL_USERNAME}
   password: ${MAIL_PASSWORD}
   properties:
@@ -104,3 +91,4 @@ mail:
         starttls:
           enable: true
       debug: true
+  expiration: 180

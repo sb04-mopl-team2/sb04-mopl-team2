@@ -12,7 +12,7 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@Table(name = "playlist")
+@Table(name = "playlists")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -32,14 +32,24 @@ public class Playlist extends UpdatableEntity {
     @Column
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "subscriber_count", nullable = false)
     private long subscriberCount;
 
-    @Column(nullable = false)
+    @Column(name = "subscribed_by_me", nullable = false)
     private boolean subscribedByMe;
 
     public void update(String title, String description) {
         this.title = title;
         this.description = description;
+    }
+
+    public void incrementSubscriberCount() {
+        this.subscriberCount++;
+    }
+
+    public void decrementSubscriberCount() {
+        if (this.subscriberCount > 0) {
+            this.subscriberCount--;
+        }
     }
 }

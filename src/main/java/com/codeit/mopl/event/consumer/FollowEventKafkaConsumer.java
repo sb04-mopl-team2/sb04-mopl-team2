@@ -1,7 +1,7 @@
 package com.codeit.mopl.event.consumer;
 
-import com.codeit.mopl.domain.follow.dto.FollowDto;
 import com.codeit.mopl.domain.follow.service.FollowService;
+import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -23,14 +25,32 @@ public class FollowEventKafkaConsumer {
     public void onFollowIncrease(String kafkaEventJson, Acknowledgment ack) {
         try {
             FollowerIncreaseEvent event = objectMapper.readValue(kafkaEventJson, FollowerIncreaseEvent.class);
-            FollowDto followDto = event.followDto();
-            followService.increaseFollowerCount(followDto);
+            UUID followId = event.followId();
+            UUID followeeId = event.followeeId();
+            followService.processFollowerIncrease(followId, followeeId);
             ack.acknowledge();
         } catch (JsonProcessingException e) {
             log.error("[Kafka] 팔로워 증가 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
         } catch (Exception e) {
             log.error("[Kafka] 팔로워 증가 이벤트 처리 실패: {}", kafkaEventJson, e);
+            throw e;
+        }
+    }
+
+    @KafkaListener(topics = "mopl-follower-decrease", groupId = "mopl-follow", concurrency = "3")
+    public void onFollowDecrease(String kafkaEventJson, Acknowledgment ack) {
+        try {
+            FollowerDecreaseEvent event = objectMapper.readValue(kafkaEventJson, FollowerDecreaseEvent.class);
+            UUID followId = event.followId();
+            UUID followeeId = event.followeeId();
+            followService.processFollowerDecrease(followId, followeeId);
+            ack.acknowledge();
+        } catch (JsonProcessingException e) {
+            log.error("[Kafka] 팔로워 감소 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
+            ack.acknowledge();
+        } catch (Exception e) {
+            log.error("[Kafka] 팔로워 감소 이벤트 처리 실패: {}", kafkaEventJson, e);
             throw e;
         }
     }

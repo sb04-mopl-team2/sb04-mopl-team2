@@ -14,26 +14,26 @@ import org.springframework.security.test.context.support.WithSecurityContextFact
 
 public class WithCustomMockUserSecurityContextFactory implements WithSecurityContextFactory<WithCustomMockUser> {
 
-  @Override
-  public SecurityContext createSecurityContext(WithCustomMockUser annotation) {
-    String email = annotation.email();
-    String password = annotation.password();
-    String name = annotation.name();
+    @Override
+    public SecurityContext createSecurityContext(WithCustomMockUser annotation) {
+        String email = annotation.email();
+        String password = annotation.password();
+        String name = annotation.name();
 
-    CustomUserDetails customUserDetails = new CustomUserDetails(
-        new UserDto(
-            UUID.randomUUID(),
-            LocalDateTime.now(),
-            email, name,null,
-            Role.USER,false
-        ),
-        password
-    );
-    UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
-        customUserDetails, password, List.of(new SimpleGrantedAuthority("ROLE_" + Role.USER))
-    );
-    SecurityContext context = SecurityContextHolder.createEmptyContext();
-    context.setAuthentication(token);
-    return context;
-  }
+        CustomUserDetails customUserDetails = new CustomUserDetails(
+                new UserDto(
+                        UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                        LocalDateTime.now(),
+                        email, name,null,
+                        Role.USER,false
+                ),
+                password
+        );
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
+                customUserDetails, password, List.of(new SimpleGrantedAuthority("ROLE_" + Role.USER))
+        );
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(token);
+        return context;
+    }
 }

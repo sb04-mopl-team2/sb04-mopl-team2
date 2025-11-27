@@ -9,8 +9,6 @@ import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
-import com.codeit.mopl.exception.global.ErrorResponse;
-import com.codeit.mopl.exception.user.UserLockedException;
 import com.codeit.mopl.mail.utils.PasswordUtils;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import jakarta.mail.internet.MimeMessage;

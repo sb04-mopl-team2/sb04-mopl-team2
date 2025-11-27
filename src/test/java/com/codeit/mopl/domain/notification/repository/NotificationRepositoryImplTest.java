@@ -1,8 +1,6 @@
 package com.codeit.mopl.domain.notification.repository;
 
-import static java.time.ZoneOffset.UTC;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.InstanceOfAssertFactories.LOCAL_DATE;
 
 import com.codeit.mopl.config.QuerydslConfig;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
@@ -12,9 +10,6 @@ import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
 import com.codeit.mopl.domain.user.entity.User;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,7 +72,7 @@ public class NotificationRepositoryImplTest {
     n6 = createNotification(user, "testTitle6", "testContent6", Level.INFO, Status.UNREAD);
     em.persist(n6);
     Thread.sleep(100);
-
+    // sleep 각 객체마다 createdAt의 값에 차이점을 주기 위함
     em.flush();
     em.clear();
   }

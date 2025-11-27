@@ -81,7 +81,7 @@ class ReviewRepositoryImplTest {
     r6 = createReview(user, "text6", content1, 3.7, false);
     em.persist(r6);
     Thread.sleep(100);
-
+    // sleep 각 객체마다 createdAt의 값에 차이점을 주기 위함
     em.flush();
     em.clear();
   }

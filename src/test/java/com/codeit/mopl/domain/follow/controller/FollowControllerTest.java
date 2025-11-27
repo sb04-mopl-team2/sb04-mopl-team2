@@ -152,7 +152,7 @@ class FollowControllerTest {
     
     @Test
     @DisplayName("특정 유저 팔로우 여부 조회 API 성공 테스트")
-    void get_followerCount_Success() throws Exception {
+    void isFollowedByMe_Success() throws Exception {
         // given
         UUID followeeId = UUID.randomUUID();
         UUID followerId = UUID.randomUUID();
@@ -186,7 +186,7 @@ class FollowControllerTest {
 
     @Test
     @DisplayName("특정 유저 팔로우 여부 조회 API 실패 테스트 - 유효하지 않은 요청")
-    void get_followerCount_Failure_InvalidRequest() throws Exception {
+    void isFollowedByMe_Failure_InvalidRequest() throws Exception {
         // given
         String followeeId = "testId";
         UUID followerId = UUID.randomUUID();

@@ -87,6 +87,8 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
 
     LocalDateTime cursorTime = LocalDateTime.parse(cursor);
 
+    // 커서를 통해 먼저 짜르고
+    // 커서의 값이 같을 경우 아이디로 짜름
     // createdAt 기준 + id 기준 조합
     if (sortDirection == SortDirection.DESCENDING) {
       return q.createdAt.lt(cursorTime)
@@ -95,8 +97,5 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
       return q.createdAt.gt(cursorTime)
           .or(q.createdAt.eq(cursorTime).and(q.id.gt(idAfter)));
     }
-
-    // 커서를 통해 먼저 짜르고
-    // 커서의 값이 같을 경우 아이디로 짜름
   }
 }

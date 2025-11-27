@@ -89,6 +89,10 @@ public class ReviewRepositoryImpl implements CustomReviewRepository {
       QReview qReview
   ) {
 
+    if (sortBy == null || sortDirection == null) {
+      return null;
+    }
+
     BooleanExpression main;
     BooleanExpression tie;
 

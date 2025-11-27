@@ -56,27 +56,27 @@ public class NotificationRepositoryImplTest {
 
     n1 = createNotification(user, "testTitle1", "testContent1", Level.INFO, Status.UNREAD);
     em.persist(n1);
-    Thread.sleep(2000);
+    Thread.sleep(100);
 
     n2 = createNotification(user, "testTitle2", "testContent2", Level.INFO, Status.UNREAD);
     em.persist(n2);
-    Thread.sleep(2000);
+    Thread.sleep(100);
 
     n3 = createNotification(user, "testTitle3", "testContent3", Level.INFO, Status.READ);
     em.persist(n3);
-    Thread.sleep(2000);
+    Thread.sleep(100);
 
     n4 = createNotification(user, "testTitle4", "testContent4", Level.INFO, Status.UNREAD);
     em.persist(n4);
-    Thread.sleep(2000);
+    Thread.sleep(100);
 
     n5 = createNotification(user, "testTitle5", "testContent5", Level.INFO, Status.UNREAD);
     em.persist(n5);
-    Thread.sleep(2000);
+    Thread.sleep(100);
 
     n6 = createNotification(user, "testTitle6", "testContent6", Level.INFO, Status.UNREAD);
     em.persist(n6);
-    Thread.sleep(2000);
+    Thread.sleep(100);
 
     em.flush();
     em.clear();

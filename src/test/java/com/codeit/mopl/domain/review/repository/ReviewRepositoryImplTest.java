@@ -4,12 +4,12 @@ import com.codeit.mopl.config.QuerydslConfig;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
-import com.codeit.mopl.domain.notification.entity.Notification;
-import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.review.entity.Review;
 import com.codeit.mopl.domain.review.entity.ReviewSortBy;
 import com.codeit.mopl.domain.review.entity.SortDirection;
 import com.codeit.mopl.domain.user.entity.User;
+import java.lang.reflect.Field;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.util.ReflectionUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -48,38 +49,38 @@ class ReviewRepositoryImplTest {
   private Review r6;
 
   @BeforeEach
-  void setUp() throws Exception {
-    content1 = createContent("테스트 제목1", "테스트 설명1", ContentType.TV);
-    content2 = createContent("테스트 제목2", "테스트 설명2", ContentType.MOVIE);
+  void setUp() throws InterruptedException {
+    content1 = createContent("테스트 제목1", "테스트 설명1");
+    content2 = createContent("테스트 제목2", "테스트 설명2");
     user = createUser("test@example.com", "encodedPassword", "test");
 
     em.persist(user);
     em.persist(content1);
     em.persist(content2);
 
-    r1 = createReview(user, content1, 4.0, false);
+    r1 = createReview(user, "text1", content1, 4.0, false);
     em.persist(r1);
-    Thread.sleep(1000);
+    Thread.sleep(100);
 
-    r2 = createReview(user, content1, 5.0, true);
+    r2 = createReview(user, "text2", content1, 5.0, true);
     em.persist(r2);
-    Thread.sleep(1000);
+    Thread.sleep(100);
 
-    r3 = createReview(user, content2, 3.0, false);
+    r3 = createReview(user, "text3", content2, 3.0, false);
     em.persist(r3);
-    Thread.sleep(1000);
+    Thread.sleep(100);
 
-    r4 = createReview(user, content1, 3.5, false);
+    r4 = createReview(user, "text4", content1, 3.5, false);
     em.persist(r4);
-    Thread.sleep(1000);
+    Thread.sleep(100);
 
-    r5 = createReview(user, content1, 3.8, false);
+    r5 = createReview(user, "text5", content1, 3.8, false);
     em.persist(r5);
-    Thread.sleep(1000);
+    Thread.sleep(100);
 
-    r6 = createReview(user, content1, 3.7, false);
+    r6 = createReview(user, "text6", content1, 3.7, false);
     em.persist(r6);
-    Thread.sleep(1000);
+    Thread.sleep(100);
 
     em.flush();
     em.clear();
@@ -96,7 +97,7 @@ class ReviewRepositoryImplTest {
         contentId1,
         null,
         null,
-        10,
+        3,
         SortDirection.DESCENDING,
         ReviewSortBy.createdAt
     );
@@ -179,7 +180,7 @@ class ReviewRepositoryImplTest {
 
   @Test
   @DisplayName("정렬기준이 rating 이고 내림차순 정렬일 때 cursor와 idAfter가 있을 때 커서페이지네이션을 진행한다.")
-  void searchNotification_withRatingCursorAndDesc() {
+  void searchReview_withRatingCursorAndDesc() {
     // given
     UUID contentId1 = content1.getId();
     String cursor = r6.getRating().toString();
@@ -204,7 +205,7 @@ class ReviewRepositoryImplTest {
 
   @Test
   @DisplayName("정렬기준이 rating 이고 오름차순 정렬일 때 cursor와 idAfter가 있을 때 커서페이지네이션을 진행한다.")
-  void searchNotification_withRatingCursorAndAsc() {
+  void searchReview_withRatingCursorAndAsc() {
     // given
     UUID contentId1 = content1.getId();
     String cursor = r5.getRating().toString();
@@ -229,7 +230,7 @@ class ReviewRepositoryImplTest {
 
   @Test
   @DisplayName("정렬기준이 createdAt 이고 내림차순 정렬일 때 cursor와 idAfter가 있을 때 커서페이지네이션을 진행한다.")
-  void searchNotification_withCreatedAtCursorAndDesc() {
+  void searchReview_withCreatedAtCursorAndDesc() {
     // given
     UUID contentId1 = content1.getId();
     String cursor = r4.getCreatedAt().toString();
@@ -254,7 +255,7 @@ class ReviewRepositoryImplTest {
 
   @Test
   @DisplayName("정렬기준이 createdAt 이고 오름차순 정렬일 때 cursor와 idAfter가 있을 때 커서페이지네이션을 진행한다.")
-  void searchNotification_withCreatedAtCursorAndAsc() {
+  void searchReview_withCreatedAtCursorAndAsc() {
     // given
     UUID contentId1 = content1.getId();
     String cursor = r5.getCreatedAt().toString();
@@ -282,7 +283,7 @@ class ReviewRepositoryImplTest {
     return new User(email, password, name);
   }
 
-  private Content createContent(String title, String description, ContentType contentType) {
+  private Content createContent(String title, String description) {
     Content content = new Content();
     content.setTitle(title);
     content.setDescription(description);
@@ -290,13 +291,22 @@ class ReviewRepositoryImplTest {
     return content;
   }
 
-  private Review createReview(User user, Content content, double rating, boolean isDeleted) {
+  private Review createReview(User user,String text, Content content, double rating, boolean isDeleted) {
     Review review = new Review();
     review.setUser(user);
     review.setContent(content);
-    review.setText("sample");
+    review.setText(text);
     review.setRating(rating);
     review.setIsDeleted(isDeleted);
     return review;
+  }
+
+  private void setCreatedAt(Review review, LocalDateTime createdAt) {
+    Field field = ReflectionUtils.findField(Review.class, "createdAt");
+    if (field == null) {
+      throw new IllegalStateException("createdAt 필드를 찾을 수 없습니다.");
+    }
+    field.setAccessible(true);
+    ReflectionUtils.setField(field, review, createdAt);
   }
 }

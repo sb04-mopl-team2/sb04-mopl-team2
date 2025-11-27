@@ -148,6 +148,7 @@ class KafkaEventListenerTest {
     // when & then
     assertThatThrownBy(() -> kafkaEventListener.on(event))
             .isInstanceOf(FollowIdIsNullException.class);
+
     verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
   }
 
@@ -161,6 +162,7 @@ class KafkaEventListenerTest {
     // when & then
     assertThatThrownBy(() -> kafkaEventListener.on(event))
             .isInstanceOf(FolloweeIdIsNullException.class);
+
     verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
   }
 
@@ -209,6 +211,8 @@ class KafkaEventListenerTest {
     // when & then
     assertThatThrownBy(() -> kafkaEventListener.on(event))
             .isInstanceOf(FollowIdIsNullException.class);
+
+    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
   }
 
   @Test
@@ -221,6 +225,8 @@ class KafkaEventListenerTest {
     // when & then
     assertThatThrownBy(() -> kafkaEventListener.on(event))
             .isInstanceOf(FolloweeIdIsNullException.class);
+
+    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
   }
 
   @Test

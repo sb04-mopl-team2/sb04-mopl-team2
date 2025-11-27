@@ -3,15 +3,12 @@ package com.codeit.mopl.domain.user.e2e;
 import com.codeit.mopl.domain.auth.dto.JwtDto;
 import com.codeit.mopl.domain.auth.dto.request.ResetPasswordRequest;
 import com.codeit.mopl.domain.auth.dto.request.SignInRequest;
-import com.codeit.mopl.domain.notification.repository.NotificationRepository;
 import com.codeit.mopl.domain.user.dto.request.*;
 import com.codeit.mopl.domain.user.dto.response.CursorResponseUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
-import com.codeit.mopl.event.repository.ProcessedEventRepository;
-import com.codeit.mopl.exception.global.ErrorResponse;
 import com.codeit.mopl.mail.utils.PasswordUtils;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import jakarta.mail.internet.MimeMessage;
@@ -25,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.*;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -74,6 +72,8 @@ public class UserE2ETest {
 
     @BeforeEach
     void setUp() {
+        ValueOperations<String, String> ops = Mockito.mock(ValueOperations.class);
+        given(redisTemplate.opsForValue()).willReturn(ops);
         MimeMessage message = Mockito.mock(MimeMessage.class);
         given(javaMailSender.createMimeMessage()).willReturn(message);
         willDoNothing().given(javaMailSender).send(any(MimeMessage.class));
@@ -365,9 +365,9 @@ public class UserE2ETest {
 
         SignInRequest lockUserSignInRequest = new SignInRequest("test@test.com", "password");
         HttpEntity changeLoginHttpEntity = getSignInRequest(lockUserSignInRequest);
-        ResponseEntity<ErrorResponse> lockUserErrorResponse = rest.postForEntity("/api/auth/sign-in", changeLoginHttpEntity, ErrorResponse.class);
+        ResponseEntity<String> lockUserJwtDto = rest.postForEntity("/api/auth/sign-in", changeLoginHttpEntity, String.class);
 
-        assertEquals(HttpStatus.UNAUTHORIZED, lockUserErrorResponse.getStatusCode());
+        assertEquals(HttpStatus.UNAUTHORIZED, lockUserJwtDto.getStatusCode());
     }
 
     @DisplayName("일반 유저는 전체 유저 목록을 조회할 수 없다")

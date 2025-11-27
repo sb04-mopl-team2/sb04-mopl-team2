@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @DataJpaTest
-@Import(QuerydslConfig.class) // JPAQueryFactory 빈 등록한 설정
+@Import(QuerydslConfig.class)
 public class NotificationRepositoryImplTest {
 
   @Autowired
@@ -51,27 +51,21 @@ public class NotificationRepositoryImplTest {
 
     n1 = createNotification(user, "testTitle1", "testContent1", Level.INFO, Status.UNREAD);
     em.persist(n1);
-    Thread.sleep(300);
 
     n2 = createNotification(user, "testTitle2", "testContent2", Level.INFO, Status.UNREAD);
     em.persist(n2);
-    Thread.sleep(300);
 
     n3 = createNotification(user, "testTitle3", "testContent3", Level.INFO, Status.READ);
     em.persist(n3);
-    Thread.sleep(300);
 
     n4 = createNotification(user, "testTitle4", "testContent4", Level.INFO, Status.UNREAD);
     em.persist(n4);
-    Thread.sleep(300);
 
     n5 = createNotification(user, "testTitle5", "testContent5", Level.INFO, Status.UNREAD);
     em.persist(n5);
-    Thread.sleep(300);
 
     n6 = createNotification(user, "testTitle6", "testContent6", Level.INFO, Status.UNREAD);
     em.persist(n6);
-    Thread.sleep(300);
 
     em.flush();
     em.clear();
@@ -142,8 +136,8 @@ public class NotificationRepositoryImplTest {
 
     // then
     assertThat(result)
-        .extracting(Notification::getId)
-        .containsExactly(n2.getId(), n1.getId());
+        .extracting(Notification::getContent)
+        .containsExactly(n2.getContent(), n1.getContent());
 
     assertThat(result.size()).isEqualTo(2);
   }
@@ -168,19 +162,21 @@ public class NotificationRepositoryImplTest {
 
     // then
     assertThat(result)
-        .extracting(Notification::getId)
-        .containsExactly(n5.getId(), n6.getId());
+        .extracting(Notification::getContent)
+        .containsExactly(n5.getContent(), n6.getContent());
 
     assertThat(result.size()).isEqualTo(2);
   }
 
-  private Notification createNotification(User user, String title, String content, Level level, Status status) {
+  private Notification createNotification(User user, String title, String content, Level level, Status status)
+      throws InterruptedException {
       Notification n = new Notification();
       n.setTitle(title);
       n.setContent(content);
       n.setUser(user);
       n.setLevel(level);
       n.setStatus(status);
+      Thread.sleep(100);     // sleep 각 객체마다 createdAt의 값에 차이점을 주기 위함
       return n;
   }
   private User createUser(String email, String password, String name) {

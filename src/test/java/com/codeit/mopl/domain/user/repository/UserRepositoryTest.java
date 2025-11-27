@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.LocalDateTime;
@@ -42,7 +41,7 @@ public class UserRepositoryTest {
         userRepository.save(UserFixture.createUser1());  // test1@test.com, test1 4시간 전 생성
         userRepository.save(UserFixture.createUser2());  // test2@test.com, test2 3시간 전 생성
         userRepository.save(UserFixture.createUser3());  // test3@test.com, test3 2시간 전 생성
-        userRepository.save(UserFixture.createUser4());  // admin@admin.com, admin 1시간 전 생성
+        userRepository.save(UserFixture.createAdmin());  // admin@admin.com, admin 1시간 전 생성
     }
 
     @DisplayName("EmailLike가 test일 때 총 3건이 조회된다.")

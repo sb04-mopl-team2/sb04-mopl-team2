@@ -1,5 +1,6 @@
-package com.codeit.mopl.domain.message.conversation.dto;
+package com.codeit.mopl.domain.message.conversation.dto.response;
 
+import com.codeit.mopl.domain.message.conversation.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 
 import java.util.List;
@@ -11,7 +12,7 @@ public record CursorResponseConversationDto (
         UUID nextIdAfter,
         boolean hasNext,
         long totalCount,
-        String sortBy,
+        SortBy sortBy,
         SortDirection sortDirection
 ) {
 }

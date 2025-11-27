@@ -11,6 +11,7 @@ import com.codeit.mopl.security.CustomUserDetails;
 import com.codeit.mopl.security.config.TestSecurityConfig;
 import com.codeit.mopl.security.jwt.JwtRegistry;
 import com.codeit.mopl.security.jwt.JwtTokenProvider;
+import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -70,6 +71,9 @@ class FollowControllerTest {
 
     @MockitoBean
     private JwtRegistry jwtRegistry;
+
+    @MockitoBean
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Test
     @DisplayName("팔로우 성공 테스트")

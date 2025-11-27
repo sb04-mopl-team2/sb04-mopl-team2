@@ -34,7 +34,7 @@ public class NotificationController {
 
     UUID userId = user.getUser().id();
     CursorResponseNotificationDto response = notificationService.getNotifications(userId,
-        request.cursor(), request.idAfter(), request.limit(), request.sortDirection(), request.notificationSortBy()
+        request.cursor(), request.idAfter(), request.limit(), request.sortDirection(), request.sortBy()
     );
 
     log.info("[알림] 알림 조회 요청 종료");

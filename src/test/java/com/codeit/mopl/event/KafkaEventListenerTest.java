@@ -1,6 +1,7 @@
 package com.codeit.mopl.event;
 
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
+import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.event.listener.KafkaEventListener;
@@ -160,5 +161,64 @@ class KafkaEventListenerTest {
     assertThatThrownBy(() -> kafkaEventListener.on(event))
             .isInstanceOf(FolloweeIdIsNullException.class);
     verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
+  }
+
+  @Test
+  @DisplayName("FollowerDecreaseEvent 발생 시 Kakfa 메시지 전송 성공")
+  void onFollowerDecreaseEvent_shouldSendKafkaMessageWithHeaders() throws Exception {
+    // given
+    UUID followId = UUID.randomUUID();
+    UUID followeeId = UUID.randomUUID();
+    FollowerDecreaseEvent event = new FollowerDecreaseEvent(followId, followeeId);
+
+    String expectedJson = "{\"event\":\"decrease\"}";
+    when(objectMapper.writeValueAsString(event)).thenReturn(expectedJson);
+
+    @SuppressWarnings("unchecked")
+    CompletableFuture<SendResult<String, String>> future =
+            (CompletableFuture<SendResult<String, String>>) mock(CompletableFuture.class);
+    when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(future);
+
+    MDC.put("requestId", "trace-456");
+
+    // when
+    kafkaEventListener.on(event);
+
+    // then
+    ArgumentCaptor<ProducerRecord<String, String>> captor = ArgumentCaptor.forClass(ProducerRecord.class);
+    verify(kafkaTemplate).send(captor.capture());
+
+    ProducerRecord<String, String> record = captor.getValue();
+    assertThat(record.topic()).isEqualTo("mopl-follower-decrease");
+    assertThat(record.key()).isEqualTo(followeeId.toString());
+    assertThat(record.value()).isEqualTo(expectedJson);
+
+    Header typeHeader = record.headers().lastHeader("x-event-type");
+    assertThat(typeHeader).isNotNull();
+    assertThat(new String(typeHeader.value(), StandardCharsets.UTF_8))
+            .isEqualTo(event.getClass().getSimpleName());
+  }
+
+  @Test
+  @DisplayName("FollowerDecreaseEvent Kafka 메시지 전송 시패 - followId는 null이 될 수 없음")
+  void onFollowerDecreaseEvent_FollowIdIsNull_ThrowsException() {
+    // given
+    FollowerDecreaseEvent event = new FollowerDecreaseEvent(null, null);
+
+    // when & then
+    assertThatThrownBy(() -> kafkaEventListener.on(event))
+            .isInstanceOf(FollowIdIsNullException.class);
+  }
+
+  @Test
+  @DisplayName("FollowerDecreaseEvent Kafka 메시지 전송 실패 - followeeId는 null이 될 수 없음")
+  void onFollowerDecreaseEvent_FolloweeIdIsNull_ThrowsException() {
+    // given
+    UUID followId = UUID.randomUUID();
+    FollowerDecreaseEvent event = new FollowerDecreaseEvent(followId, null);
+
+    // when & then
+    assertThatThrownBy(() -> kafkaEventListener.on(event))
+            .isInstanceOf(FolloweeIdIsNullException.class);
   }
 }

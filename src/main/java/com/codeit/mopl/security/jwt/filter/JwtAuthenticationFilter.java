@@ -2,8 +2,8 @@ package com.codeit.mopl.security.jwt.filter;
 
 import com.codeit.mopl.exception.auth.AuthErrorCode;
 import com.codeit.mopl.exception.auth.InvalidTokenException;
-import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
+import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String token = request.getHeader("Authorization").replace("Bearer ", "");
             if (!jwtRegistry.hasActiveJwtInformationByAccessToken(token)) {
-                log.warn("[JWT 인증] Access Token이 유효하지 않음 token = {}", token);
+                log.warn("[JWT 인증] Access Token이 유효하지 않음");
                 throw new InvalidTokenException(AuthErrorCode.TOKEN_INVALID, Map.of("type", "accessToken"));
             }
             jwtTokenProvider.verifyJws(token);

@@ -22,9 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.*;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -72,8 +70,6 @@ public class UserE2ETest {
 
     @BeforeEach
     void setUp() {
-        ValueOperations<String, String> ops = Mockito.mock(ValueOperations.class);
-        given(redisTemplate.opsForValue()).willReturn(ops);
         MimeMessage message = Mockito.mock(MimeMessage.class);
         given(javaMailSender.createMimeMessage()).willReturn(message);
         willDoNothing().given(javaMailSender).send(any(MimeMessage.class));
@@ -83,7 +79,12 @@ public class UserE2ETest {
             admin.setRole(Role.ADMIN);
             userRepository.save(admin);
         }
-        redisTemplate.getConnectionFactory().getConnection().flushAll();
+        var connection = redisTemplate.getConnectionFactory().getConnection();
+        try {
+            connection.flushAll();
+        } finally {
+            connection.close();
+        }
         var httpClient = org.apache.hc.client5.http.impl.classic.HttpClients.createDefault();
         var factory = new org.springframework.http.client.HttpComponentsClientHttpRequestFactory(httpClient);
         rest.getRestTemplate().setRequestFactory(factory);

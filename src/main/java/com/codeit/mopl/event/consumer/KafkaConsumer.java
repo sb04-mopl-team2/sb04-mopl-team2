@@ -87,7 +87,7 @@ public class KafkaConsumer {
     }
 
     @KafkaListener(topics = "mopl-user-login-out", groupId = "mopl-login-out", concurrency = "3")
-    public void onUserLogInOutEvent(String kafkaEvent) {
+    public void onUserLogInOutEvent(String kafkaEvent, Acknowledgment ack) {
         try {
             log.info("[Kafka] User LogInOut 이벤트");
             UserLogInOutEvent event = objectMapper.readValue(kafkaEvent,
@@ -98,11 +98,15 @@ public class KafkaConsumer {
             } else {
                 log.info("[Kafka] 유저 로그아웃 SseEmitter 제거 userId = {}", event.userId());
                 sseEmitterRegistry.getData().remove(event.userId());
+                ack.acknowledge();
             }
-        } catch (JsonMappingException e) {
-            throw new RuntimeException(e);
+            ack.acknowledge();
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error("[Kafka] LogInOut 이벤트 역직렬화 실패: {}", kafkaEvent, e);
+            ack.acknowledge();
+        } catch (Exception e) {
+            log.error("[Kafka] LogInOut 이벤트 처리 실패: {}", kafkaEvent, e);
+            throw e;
         }
     }
 

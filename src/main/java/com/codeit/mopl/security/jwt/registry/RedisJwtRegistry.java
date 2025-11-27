@@ -8,14 +8,15 @@ import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -121,16 +122,21 @@ public class RedisJwtRegistry implements JwtRegistry {
     @Scheduled(fixedDelay = 1000 * 60 * 5)
     @Override
     public void clearExpiredJwtInformation() throws JOSEException {
-        Set<String> userKeys = redisTemplate.keys(USER_JWT_KEY_PREFIX + "*");
-
-        for (String userKey : userKeys) {
-            Object token = redisTemplate.opsForValue().get(userKey);
-            if (token instanceof JwtInformation jwtInformation) {
-                boolean isExpired = !jwtTokenProvider.validateAccessToken(jwtInformation.getAccessToken()) ||
-                        !jwtTokenProvider.validateRefreshToken(jwtInformation.getRefreshToken());
-                if (isExpired) {
-                    removeTokenIndex(jwtInformation.getAccessToken(), jwtInformation.getRefreshToken());
-                    redisTemplate.delete(userKey);
+        ScanOptions options = ScanOptions.scanOptions()
+                .match(USER_JWT_KEY_PREFIX + "*")
+                .count(100)
+                .build();
+        try (Cursor<String> cursor = redisTemplate.scan(options)) {
+            while (cursor.hasNext()) {
+                String userKey = cursor.next();
+                Object token = redisTemplate.opsForValue().get(userKey);
+                if (token instanceof JwtInformation jwtInformation) {
+                    boolean isExpired = !jwtTokenProvider.validateAccessToken(jwtInformation.getAccessToken()) ||
+                            !jwtTokenProvider.validateRefreshToken(jwtInformation.getRefreshToken());
+                    if (isExpired) {
+                        removeTokenIndex(jwtInformation.getAccessToken(), jwtInformation.getRefreshToken());
+                        redisTemplate.delete(userKey);
+                    }
                 }
             }
         }

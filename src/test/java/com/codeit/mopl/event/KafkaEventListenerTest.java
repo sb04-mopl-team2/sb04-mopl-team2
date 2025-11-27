@@ -139,7 +139,7 @@ class KafkaEventListenerTest {
 
   @Test
   @DisplayName("FollowerIncreaseEvent Kafka 메시지 전송 실패 - followId는 null이 될 수 없음")
-  void onFollowerIncreaseEvent_FollowIdIsNull_ThrowsException() throws Exception {
+  void onFollowerIncreaseEvent_FollowIdIsNull_ThrowsException() {
     // given
     FollowerIncreaseEvent event = new FollowerIncreaseEvent(null, null);
 
@@ -151,7 +151,7 @@ class KafkaEventListenerTest {
 
   @Test
   @DisplayName("FollowerIncreaseEvent Kafka 메시지 전송 실패 - followeeId는 null이 될 수 없음")
-  void onFollowerIncreaseEvent_FolloweeIdIsNull_ThrowsException() throws Exception {
+  void onFollowerIncreaseEvent_FolloweeIdIsNull_ThrowsException() {
     // given
     UUID followId = UUID.randomUUID();
     FollowerIncreaseEvent event = new FollowerIncreaseEvent(followId, null);

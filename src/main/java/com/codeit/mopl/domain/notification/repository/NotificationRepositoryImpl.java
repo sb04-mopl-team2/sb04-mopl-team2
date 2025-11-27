@@ -36,9 +36,9 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
     where.and(qNotification.user.id.eq(userId));
     where.and(qNotification.status.eq(Status.UNREAD));
 
-
     if (cursor != null && idAfter != null) {
       where.and(buildCursorCondition(cursor, idAfter, sortBy, sortDirection, qNotification));
+      where.and(qNotification.id.notIn(idAfter));
     }
 
     List<OrderSpecifier<?>> orders = buildOrderSpecifiers(sortBy, sortDirection, qNotification);
@@ -56,13 +56,11 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
   private List<OrderSpecifier<?>> buildOrderSpecifiers(SortBy sortBy, SortDirection sortDirection, QNotification qnotification) {
     List<OrderSpecifier<?>> orders = new ArrayList<>();
 
-    if (sortBy != null && sortDirection != null) {
-      Order order = sortDirection.equals(SortDirection.DESCENDING) ? Order.DESC : Order.ASC;
-      switch (sortBy) {
-        case CREATED_AT:
-          orders.add(new OrderSpecifier<>(order, qnotification.createdAt));
-          break;
-      }
+    Order order = sortDirection.equals(SortDirection.DESCENDING) ? Order.DESC : Order.ASC;
+    switch (sortBy) {
+      case CREATED_AT:
+        orders.add(new OrderSpecifier<>(order, qnotification.createdAt));
+        break;
     }
 
     orders.add(new OrderSpecifier<>(Order.DESC, qnotification.createdAt));
@@ -71,27 +69,20 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
 
   private BooleanExpression buildCursorCondition(String cursor, UUID idAfter, SortBy sortBy, SortDirection sortDirection, QNotification qnotification) {
 
-    if (sortBy == null || sortDirection == null) {
-      return null;
-    }
-
-    LocalDateTime cursorTime = cursor != null ? LocalDateTime.parse(cursor) : null;
+    LocalDateTime cursorTime = LocalDateTime.parse(cursor);
 
     BooleanExpression condition  = null;
 
     switch (sortBy) {
       case CREATED_AT: {
-        if (sortDirection == SortDirection.DESCENDING) {
-          condition = qnotification.createdAt.lt(cursorTime);
+        if (sortDirection == SortDirection.ASCENDING) {
+          condition = qnotification.createdAt.gt(cursorTime);
         }
         else {
-          condition = qnotification.createdAt.gt(cursorTime);
+          condition = qnotification.createdAt.lt(cursorTime);
         }
         break;
       }
-
-      default:
-        break;
     }
     return condition;
   }

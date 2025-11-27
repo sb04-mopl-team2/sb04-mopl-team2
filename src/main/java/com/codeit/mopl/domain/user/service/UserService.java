@@ -76,8 +76,12 @@ public class UserService {
         User findUser = getValidUserByUserId(userId);
         String encodedNewPassword = passwordEncoder.encode(request.password());
         findUser.updatePassword(encodedNewPassword);
-        if (redisTemplate.delete(findUser.getEmail())) {
-            log.debug("[Redis] 임시 비밀번호 삭제 & 임시 비밀번호 변경 완료");
+        try{
+            if (redisTemplate.delete(findUser.getEmail())) {
+                log.debug("[Redis] 임시 비밀번호 삭제 & 비밀번호 변경 완료");
+            }
+        } catch (Exception e){
+            log.warn("[Redis] 임시 비밀번호 삭제 실패 / 비밀번호는 변경 완료 email = {}", findUser.getEmail());
         }
         log.info("[사용자 관리] 유저 비밀번호 변경 완료 userId = {}", userId);
     }

@@ -98,7 +98,6 @@ public class KafkaConsumer {
             } else {
                 log.info("[Kafka] 유저 로그아웃 SseEmitter 제거 userId = {}", event.userId());
                 sseEmitterRegistry.getData().remove(event.userId());
-                ack.acknowledge();
             }
             ack.acknowledge();
         } catch (JsonProcessingException e) {

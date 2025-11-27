@@ -426,7 +426,7 @@ public class ConversationServiceTest {
                     .receiver(loginUser)
                     .conversation(conversation)
                     .content("test")
-                    .isRead(true)
+                    .isRead(false)
                     .build();
             given(directMessageRepository.findById(directMessageId)).willReturn(Optional.of(directMessage));
             given(directMessageRepository.existsByConversationIdAndReceiverIdAndIsReadFalse(conversationId, loginUserId))

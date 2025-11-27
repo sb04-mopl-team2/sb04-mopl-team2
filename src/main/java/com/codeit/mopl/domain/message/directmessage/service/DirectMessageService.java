@@ -1,7 +1,6 @@
 package com.codeit.mopl.domain.message.directmessage.service;
 
-import com.codeit.mopl.domain.message.conversation.dto.request.ConversationSearchCond;
-import com.codeit.mopl.domain.message.conversation.entity.SortBy;
+
 import com.codeit.mopl.domain.message.conversation.repository.ConversationRepository;
 import com.codeit.mopl.domain.message.directmessage.dto.CursorResponseDirectMessageDto;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
@@ -27,8 +26,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DirectMessageService {
     private final DirectMessageRepository directMessageRepository;
-    private final UserService userService;
-    private final ConversationRepository conversationRepository;
     private final DirectMessageMapper directMessageMapper;
 
     @Transactional(readOnly = true)
@@ -41,15 +38,13 @@ public class DirectMessageService {
             directMessages = directMessageRepository.findMessagesBefore(
                     conversationId,
                     cond.getCursor(),
-                    cond.getIdAfter(),
-                    cond.getSortDirection()
+                    cond.getIdAfter()
             );
         } else {
             directMessages = directMessageRepository.findMessagesAfter(
                     conversationId,
                     cond.getCursor(),
-                    cond.getIdAfter(),
-                    cond.getSortDirection()
+                    cond.getIdAfter()
             );
         }
         //빈 리스트 체크
@@ -64,11 +59,10 @@ public class DirectMessageService {
                     cond.getSortDirection()
             );
         }
-        Integer limit = cond.getLimit() + 1;
         int originalSize = directMessages.size();
-        boolean hasNext = originalSize > limit;
+        boolean hasNext = originalSize > cond.getLimit();
         List<DirectMessage> result = hasNext
-                ? directMessages.subList(0, limit)
+                ? directMessages.subList(0, cond.getLimit())
                 : directMessages;
         DirectMessage last = result.get(result.size() - 1);
         String nextCursor = hasNext ? last.getCreatedAt().toString() : null;

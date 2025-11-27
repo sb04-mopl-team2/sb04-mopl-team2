@@ -67,7 +67,7 @@ public class ConversationController {
     }
 
     @PostMapping("/{conversationId}/direct-messages/{directMessageId}/read")
-    public ResponseEntity<Void> MarkRead(@PathVariable UUID conversationId,
+    public ResponseEntity<Void> markRead(@PathVariable UUID conversationId,
                                          @PathVariable UUID directMessageId,
                                          @AuthenticationPrincipal CustomUserDetails loginUser) {
         log.info("[메세지] DM '읽음' 처리 요청 - conversationId = {}, directMessageId = {}", conversationId, directMessageId);
@@ -82,7 +82,7 @@ public class ConversationController {
                                                                            @Validated @ModelAttribute DirectMessageSearchCond request) {
         log.info("[메세지] 해당 채팅방의 DM 목록 조회 요청 - conversationId = {}", conversationId);
         CursorResponseDirectMessageDto response = directMessageService.getDirectMessages(loginUser.getUser().id(), conversationId, request);
-        log.info("[메세지] 해당 채팅방의 DM 목록 조회 응답 - conversationId = {}, ", conversationId);
+        log.info("[메세지] 해당 채팅방의 DM 목록 조회 응답 - conversationId = {}", conversationId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

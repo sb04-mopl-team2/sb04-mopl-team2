@@ -189,9 +189,19 @@ public class ConversationService {
 
         DirectMessage dm = directMessageRepository.findById(directMessageId)
                 .orElseThrow(()->{
-                    log.warn("[메세지] DM '읽음' 처리 실패 - 메세지 수신자가 아님 directMessageId = {}, loginUserId = {}", directMessageId, loginUserId);
+                    log.warn("[메세지] DM '읽음' 처리 실패 - 메세지가 존재하지 않음 - directMessageId = {}, loginUserId = {}", directMessageId, loginUserId);
                     return DirectMessageNotFound.withId(directMessageId);
                 });
+
+        if (!dm.getConversation().getId().equals(conversationId)) {
+            log.warn("[메세지] DM '읽음'처리 실패 - DM이 해당 대화방에 속하지 않음 - directMessageId = {}, conversationId = {}",directMessageId, conversationId);
+            throw DirectMessageNotFound.withId(directMessageId);
+        }
+
+        if (!dm.getReceiver().getId().equals(loginUserId)) {
+            log.warn("[메세지] DM '읽음'처리 실패 - 메세지 수신자가 아님 - directMessageId = {}, loginUserId = {}", directMessageId, loginUserId);
+            throw ConversationForbiddenException.withId(loginUserId);
+        }
 
         if (!dm.isRead()) {
             dm.setRead(true);

@@ -77,7 +77,7 @@ public class DirectMessageServiceTest {
                     .isRead(false)
                     .content("content")
                     .build();
-            given(directMessageRepository.findMessagesBefore(any(UUID.class), nullable(String.class), nullable(UUID.class), any(SortDirection.class)))
+            given(directMessageRepository.findMessagesBefore(any(UUID.class), nullable(String.class), nullable(UUID.class)))
                     .willReturn(Arrays.asList(directMessage));
             given(directMessageMapper.toDirectMessageDto(directMessage))
                     .willReturn(new DirectMessageDto(
@@ -102,7 +102,7 @@ public class DirectMessageServiceTest {
         }
 
         @Test
-        @DisplayName("해당 채팅방에 아무 DM도 없우 빈 목록 반환함")
+        @DisplayName("해당 채팅방에 아무 DM도 없으면 빈 목록 반환함")
         void shouldReturnEmptyListWhenDirectMessageNotFound() {
             //given
             DirectMessageSearchCond cond = new DirectMessageSearchCond();
@@ -124,8 +124,7 @@ public class DirectMessageServiceTest {
             given(directMessageRepository.findMessagesBefore(
                     any(UUID.class),
                     nullable(String.class),
-                    nullable(UUID.class),
-                    any(SortDirection.class)
+                    nullable(UUID.class)
             )).willReturn(Collections.emptyList());
 
             //when
@@ -161,8 +160,7 @@ public class DirectMessageServiceTest {
             given(directMessageRepository.findMessagesBefore(
                     any(UUID.class),
                     nullable(String.class),
-                    nullable(UUID.class),
-                    any(SortDirection.class)
+                    nullable(UUID.class)
             )).willReturn(Arrays.asList(after1, after2));
             given(directMessageMapper.toDirectMessageDto(after1))
                     .willReturn(new DirectMessageDto(

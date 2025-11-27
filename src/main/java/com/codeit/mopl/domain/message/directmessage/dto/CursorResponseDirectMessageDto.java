@@ -1,7 +1,6 @@
 package com.codeit.mopl.domain.message.directmessage.dto;
 
 import com.codeit.mopl.domain.message.conversation.entity.SortBy;
-import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 
 import java.util.List;

@@ -125,7 +125,7 @@ class FollowEventKafkaConsumerTest {
         followEventKafkaConsumer.onFollowerDecrease(json, ack);
 
         // then
-        verify(followService, never()).processFollowerIncrease(any(), any());
+        verify(followService, never()).processFollowerDecrease(any(), any());
         verify(ack).acknowledge();
     }
 

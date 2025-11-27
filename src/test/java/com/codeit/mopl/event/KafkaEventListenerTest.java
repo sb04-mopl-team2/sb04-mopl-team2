@@ -165,7 +165,7 @@ class KafkaEventListenerTest {
   }
 
   @Test
-  @DisplayName("FollowerDecreaseEvent 발생 시 Kakfa 메시지 전송 성공")
+  @DisplayName("FollowerDecreaseEvent 발생 시 Kafka 메시지 전송 성공")
   void onFollowerDecreaseEvent_shouldSendKafkaMessageWithHeaders() throws Exception {
     // given
     UUID followId = UUID.randomUUID();
@@ -201,7 +201,7 @@ class KafkaEventListenerTest {
   }
 
   @Test
-  @DisplayName("FollowerDecreaseEvent Kafka 메시지 전송 시패 - followId는 null이 될 수 없음")
+  @DisplayName("FollowerDecreaseEvent Kafka 메시지 전송 실패 - followId는 null이 될 수 없음")
   void onFollowerDecreaseEvent_FollowIdIsNull_ThrowsException() {
     // given
     FollowerDecreaseEvent event = new FollowerDecreaseEvent(null, null);

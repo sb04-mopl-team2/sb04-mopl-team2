@@ -1,6 +1,7 @@
 package com.codeit.mopl.domain.message.directmessage.service;
 
 
+import com.codeit.mopl.domain.message.conversation.entity.Conversation;
 import com.codeit.mopl.domain.message.conversation.repository.ConversationRepository;
 import com.codeit.mopl.domain.message.directmessage.dto.CursorResponseDirectMessageDto;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
@@ -10,6 +11,8 @@ import com.codeit.mopl.domain.message.directmessage.mapper.DirectMessageMapper;
 import com.codeit.mopl.domain.message.directmessage.repository.DirectMessageRepository;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.user.service.UserService;
+import com.codeit.mopl.exception.message.conversation.ConversationForbiddenException;
+import com.codeit.mopl.exception.message.conversation.ConversationNotFound;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,12 +30,22 @@ import java.util.stream.Collectors;
 public class DirectMessageService {
     private final DirectMessageRepository directMessageRepository;
     private final DirectMessageMapper directMessageMapper;
+    private final ConversationRepository conversationRepository;
 
     @Transactional(readOnly = true)
     public CursorResponseDirectMessageDto getDirectMessages(UUID loginUserId,
                                                             UUID conversationId,
                                                             DirectMessageSearchCond cond) {
         log.info("[메세지] 해당 채팅방의 DM 목록 조회 시작 - loginUserId = {} conversation {}", loginUserId, conversationId);
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> ConversationNotFound.of());
+
+        UUID userA = conversation.getUser().getId();
+        UUID userB = conversation.getWith().getId();
+        if (!userA.equals(loginUserId) && !userB.equals(loginUserId)) {
+            throw ConversationForbiddenException.withId(loginUserId);
+        }
+
         List<DirectMessage> directMessages;
         if (cond.getSortDirection() ==SortDirection.DESCENDING) {
             directMessages = directMessageRepository.findMessagesBefore(

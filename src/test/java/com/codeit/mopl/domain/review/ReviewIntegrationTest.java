@@ -154,10 +154,10 @@ class ReviewIntegrationTest {
     // then
     resultActions
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.length()").value(1))
-        .andExpect(jsonPath("$.data[0].id").value(r1.getId().toString()))
-        .andExpect(jsonPath("$.data[0].contentId").value(contentId.toString()))
-        .andExpect(jsonPath("$.data[0].rating").value(r1.getRating()))
+        .andExpect(jsonPath("$.data[1].length()").value(1))
+        .andExpect(jsonPath("$.data[1][0].id").value(r1.getId().toString()))
+        .andExpect(jsonPath("$.data[1][0].contentId").value(contentId.toString()))
+        .andExpect(jsonPath("$.data[1][0].rating").value(r1.getRating()))
         .andExpect(jsonPath("$.hasNext").value(false))
         .andExpect(jsonPath("$.totalCount").value(1))
         .andExpect(jsonPath("$.sortBy").value(sortBy.name()))

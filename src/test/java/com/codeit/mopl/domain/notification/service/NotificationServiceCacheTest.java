@@ -13,13 +13,28 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
-@EnableCaching  // 캐시 AOP 활성화 (보통 메인 설정에 이미 있을 수도 있음)
+@EnableCaching
 class NotificationServiceCacheTest {
+
+  @TestConfiguration
+  static class TestCacheConfig {
+    @Bean
+    @Primary
+    public CacheManager cacheManager() {
+      return new ConcurrentMapCacheManager(
+          "notifications:first-page"
+      );
+    }
+  }
 
   @Autowired
   private NotificationService notificationService;

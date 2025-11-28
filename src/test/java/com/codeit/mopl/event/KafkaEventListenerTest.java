@@ -1,8 +1,13 @@
 package com.codeit.mopl.event;
 
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
+import com.codeit.mopl.event.event.FollowerDecreaseEvent;
+import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.event.listener.KafkaEventListener;
+import com.codeit.mopl.exception.follow.FollowIdIsNullException;
+import com.codeit.mopl.exception.follow.FolloweeIdIsNullException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -22,6 +27,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -95,5 +101,173 @@ class KafkaEventListenerTest {
     assertThat(eventTypeHeader).isNotNull();
     assertThat(new String(eventTypeHeader.value(), StandardCharsets.UTF_8))
         .isEqualTo(event.getClass().getSimpleName());
+  }
+
+  @Test
+  @DisplayName("FollowerIncreaseEvent 발생 시 Kafka 메시지 전송 성공")
+  void onFollowerIncreaseEvent_shouldSendKafkaMessageWithHeaders() throws Exception {
+    // given
+    UUID followId = UUID.randomUUID();
+    UUID followeeId = UUID.randomUUID();
+    FollowerIncreaseEvent event = new FollowerIncreaseEvent(followId, followeeId);
+
+    String expectedJson = "{\"event\":\"increase\"}";
+    when(objectMapper.writeValueAsString(event)).thenReturn(expectedJson);
+
+    @SuppressWarnings("unchecked")
+    CompletableFuture<SendResult<String, String>> future =
+            (CompletableFuture<SendResult<String, String>>) mock(CompletableFuture.class);
+    when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(future);
+
+    MDC.put("requestId", "trace-456");
+
+    // when
+    kafkaEventListener.on(event);
+
+    // then
+    ArgumentCaptor<ProducerRecord<String, String>> captor = ArgumentCaptor.forClass(ProducerRecord.class);
+    verify(kafkaTemplate).send(captor.capture());
+
+    ProducerRecord<String, String> record = captor.getValue();
+    assertThat(record.topic()).isEqualTo("mopl-follower-increase");
+    assertThat(record.key()).isEqualTo(followeeId.toString());
+    assertThat(record.value()).isEqualTo(expectedJson);
+
+    Header typeHeader = record.headers().lastHeader("x-event-type");
+    assertThat(typeHeader).isNotNull();
+    assertThat(new String(typeHeader.value(), StandardCharsets.UTF_8))
+            .isEqualTo(event.getClass().getSimpleName());
+  }
+
+  @Test
+  @DisplayName("FollowerIncreaseEvent Kafka 메시지 전송 실패 - followId는 null이 될 수 없음")
+  void onFollowerIncreaseEvent_FollowIdIsNull_ThrowsException() {
+    // given
+    FollowerIncreaseEvent event = new FollowerIncreaseEvent(null, null);
+
+    // when & then
+    assertThatThrownBy(() -> kafkaEventListener.on(event))
+            .isInstanceOf(FollowIdIsNullException.class);
+
+    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
+  }
+
+  @Test
+  @DisplayName("FollowerIncreaseEvent Kafka 메시지 전송 실패 - followeeId는 null이 될 수 없음")
+  void onFollowerIncreaseEvent_FolloweeIdIsNull_ThrowsException() {
+    // given
+    UUID followId = UUID.randomUUID();
+    FollowerIncreaseEvent event = new FollowerIncreaseEvent(followId, null);
+
+    // when & then
+    assertThatThrownBy(() -> kafkaEventListener.on(event))
+            .isInstanceOf(FolloweeIdIsNullException.class);
+
+    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
+  }
+
+  @Test
+  @DisplayName("FollowerDecreaseEvent 발생 시 Kafka 메시지 전송 성공")
+  void onFollowerDecreaseEvent_shouldSendKafkaMessageWithHeaders() throws Exception {
+    // given
+    UUID followId = UUID.randomUUID();
+    UUID followeeId = UUID.randomUUID();
+    FollowerDecreaseEvent event = new FollowerDecreaseEvent(followId, followeeId);
+
+    String expectedJson = "{\"event\":\"decrease\"}";
+    when(objectMapper.writeValueAsString(event)).thenReturn(expectedJson);
+
+    @SuppressWarnings("unchecked")
+    CompletableFuture<SendResult<String, String>> future =
+            (CompletableFuture<SendResult<String, String>>) mock(CompletableFuture.class);
+    when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(future);
+
+    MDC.put("requestId", "trace-456");
+
+    // when
+    kafkaEventListener.on(event);
+
+    // then
+    ArgumentCaptor<ProducerRecord<String, String>> captor = ArgumentCaptor.forClass(ProducerRecord.class);
+    verify(kafkaTemplate).send(captor.capture());
+
+    ProducerRecord<String, String> record = captor.getValue();
+    assertThat(record.topic()).isEqualTo("mopl-follower-decrease");
+    assertThat(record.key()).isEqualTo(followeeId.toString());
+    assertThat(record.value()).isEqualTo(expectedJson);
+
+    Header typeHeader = record.headers().lastHeader("x-event-type");
+    assertThat(typeHeader).isNotNull();
+    assertThat(new String(typeHeader.value(), StandardCharsets.UTF_8))
+            .isEqualTo(event.getClass().getSimpleName());
+  }
+
+  @Test
+  @DisplayName("FollowerDecreaseEvent Kafka 메시지 전송 실패 - followId는 null이 될 수 없음")
+  void onFollowerDecreaseEvent_FollowIdIsNull_ThrowsException() {
+    // given
+    FollowerDecreaseEvent event = new FollowerDecreaseEvent(null, null);
+
+    // when & then
+    assertThatThrownBy(() -> kafkaEventListener.on(event))
+            .isInstanceOf(FollowIdIsNullException.class);
+
+    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
+  }
+
+  @Test
+  @DisplayName("FollowerDecreaseEvent Kafka 메시지 전송 실패 - followeeId는 null이 될 수 없음")
+  void onFollowerDecreaseEvent_FolloweeIdIsNull_ThrowsException() {
+    // given
+    UUID followId = UUID.randomUUID();
+    FollowerDecreaseEvent event = new FollowerDecreaseEvent(followId, null);
+
+    // when & then
+    assertThatThrownBy(() -> kafkaEventListener.on(event))
+            .isInstanceOf(FolloweeIdIsNullException.class);
+
+    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
+  }
+
+  @Test
+  @DisplayName("JSON 직렬화 실패 시 카프카 메시지 전송이 수행되지 않음")
+  void send_shouldNotCallKafka_whenJsonSerializationFails() throws Exception {
+    // given
+    UUID followId = UUID.randomUUID();
+    UUID followeeId = UUID.randomUUID();
+    FollowerIncreaseEvent event = new FollowerIncreaseEvent(followId, followeeId);
+
+    when(objectMapper.writeValueAsString(event))
+            .thenThrow(new JsonProcessingException("serialize error") {});
+
+    // when
+    kafkaEventListener.on(event);
+
+    // then
+    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
+  }
+
+  @Test
+  @DisplayName("카프카 메시지 전송 실패 시 whenComplete 예외 로그 흐름 수행 테스트")
+  void send_shouldHandleKafkaSendFailure() throws Exception {
+    // given
+    UUID followId = UUID.randomUUID();
+    UUID followeeId = UUID.randomUUID();
+    FollowerIncreaseEvent event = new FollowerIncreaseEvent(followId, followeeId);
+    when(objectMapper.writeValueAsString(event)).thenReturn("{}");
+
+    CompletableFuture<SendResult<String, String>> future = new CompletableFuture<>();
+    when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(future);
+
+    // when
+    kafkaEventListener.on(event);
+
+    // future 실패 강제 발생
+    Exception ex = new RuntimeException("SEND_FAIL");
+    future.completeExceptionally(ex);
+
+    // then
+    verify(kafkaTemplate).send(any(ProducerRecord.class));
+    assertThat(future.isCompletedExceptionally()).isTrue();
   }
 }

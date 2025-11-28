@@ -39,6 +39,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceUnitTest {
@@ -60,6 +61,9 @@ class NotificationServiceUnitTest {
 
   @Mock
   private SseService sseService;
+
+  @Mock
+  private StringRedisTemplate stringRedisTemplate;
 
   private UUID userId;
   private String cursor;

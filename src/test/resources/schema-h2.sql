@@ -137,6 +137,7 @@ CREATE TABLE IF NOT EXISTS direct_messages
     receiver UUID NOT NULL,
     conversation_id UUID NOT NULL,
     content TEXT NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
 
     FOREIGN KEY (sender) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (receiver) REFERENCES users(id) ON DELETE CASCADE,
@@ -179,7 +180,7 @@ CREATE TABLE IF NOT EXISTS processed_events
     event_id UUID NOT NULL,
     event_type VARCHAR(255) NOT NULL,
 
-    UNIQUE(event_id)
+    UNIQUE(event_id, event_type)
     );
 
 ALTER TABLE follows

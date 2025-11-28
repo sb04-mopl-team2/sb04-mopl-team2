@@ -46,7 +46,7 @@ COPY --from=builder --chown=app:app /app/build/libs/*.jar app.jar
 USER app
 
 # 포트 노출
-EXPOSE 80
+EXPOSE 8081
 
 # 실행 명령
 ENTRYPOINT ["sh", "-c", "java ${JVM_OPTS} -jar app.jar"]

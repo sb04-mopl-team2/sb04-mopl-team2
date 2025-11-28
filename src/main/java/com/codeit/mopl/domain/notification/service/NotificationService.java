@@ -16,10 +16,13 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.sse.service.SseService;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +37,15 @@ public class NotificationService {
   private final UserRepository userRepository;
   private final ApplicationEventPublisher eventPublisher;
 
+  private final StringRedisTemplate stringRedisTemplate;
+
+  public static final String NOTIFICATIONS_FIRST_PAGE = "notifications:first-page";
+
+  @Cacheable(
+      cacheNames = NOTIFICATIONS_FIRST_PAGE,
+      key = "T(java.lang.String).format('%s:%s:%s:%s', #userId, #limit, #sortDirection, #sortBy)",
+      condition = "#cursor == null && #idAfter == null"
+  )
   @Transactional(readOnly = true)
   public CursorResponseNotificationDto getNotifications(
       UUID userId,
@@ -112,6 +124,7 @@ public class NotificationService {
     notification.setStatus(Status.READ);
     notificationRepository.save(notification);
 
+    evictFirstPageCacheByUserId(userId);
     log.info("[알림] 알림 삭제 종료, notificationId={}", notificationId);
   }
 
@@ -130,6 +143,7 @@ public class NotificationService {
     NotificationDto notificationDto = notificationMapper.toDto(notification);
     eventPublisher.publishEvent(new NotificationCreateEvent(notificationDto));
 
+    evictFirstPageCacheByUserId(userId);
     log.info("[알림] 알림 생성 종료, userId = {}, notificationId = {}", userId, notification.getId());
   }
 
@@ -151,5 +165,16 @@ public class NotificationService {
 
   private Long getTotalCount(UUID userId) {
     return notificationRepository.countByUserIdAndStatus(userId, Status.UNREAD);
+  }
+
+  private void evictFirstPageCacheByUserId(UUID userId) {
+    // Redis 실제 키: notifications:first-page::{userId}:{limit}:{sortDirection}:{sortBy}
+    String pattern = NOTIFICATIONS_FIRST_PAGE + "::" + userId + ":*";
+
+    Set<String> keys = stringRedisTemplate.keys(pattern);
+    if (keys != null && !keys.isEmpty()) {
+      stringRedisTemplate.delete(keys);
+      log.info("[알림] 알림 조회 캐싱 초기화, userId = {}, evictedKeys = {}", userId, keys.size());
+    }
   }
 }

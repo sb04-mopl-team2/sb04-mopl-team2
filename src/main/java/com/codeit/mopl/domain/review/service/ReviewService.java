@@ -21,9 +21,12 @@ import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -36,6 +39,10 @@ public class ReviewService {
   private final UserRepository userRepository;
   private final ContentRepository contentRepository;
 
+  private final StringRedisTemplate stringRedisTemplate;
+
+  public static final String REVIEWS_FIRST_PAGE = "review:first-page";
+
   @Transactional
   public ReviewDto createReview(UUID userId, UUID contentId, String text, double rating) {
     log.info("[리뷰] 리뷰 생성 시작, userId = {}, contentId = {}, text = {}, rating = {}", userId, contentId, text, rating);
@@ -45,6 +52,7 @@ public class ReviewService {
     Review review = new Review(user, content, text, rating, false);
     reviewRepository.save(review);
     log.info("[리뷰] 리뷰 생성 종료, userId = {}, contentId = {}, reviewId = {}", userId, contentId, review.getId());
+    evictFirstPageCacheByUserId(contentId);
     return reviewMapper.toDto(review);
   }
 
@@ -63,6 +71,7 @@ public class ReviewService {
     reviewRepository.save(review);
 
     log.info("[리뷰] 리뷰 수정 종료, reviewId = {}", reviewId);
+    evictFirstPageCacheByUserId(review.getContent().getId());
     return reviewMapper.toDto(review);
   }
 
@@ -77,9 +86,15 @@ public class ReviewService {
     }
     review.setIsDeleted(true);
     reviewRepository.save(review);
+    evictFirstPageCacheByUserId(review.getContent().getId());
     log.info("[리뷰] 리뷰 삭제 종료, reviewId = {}", reviewId);
   }
 
+  @Cacheable(
+      cacheNames = REVIEWS_FIRST_PAGE,
+      key = "T(java.lang.String).format('%s:%s:%s:%s', #contentId, #limit, #sortDirection, #sortBy)",
+      condition = "#cursor == null && #idAfter == null"
+  )
   public CursorResponseReviewDto findReviews(
       UUID contentId,
       String cursor,
@@ -172,6 +187,16 @@ public class ReviewService {
       log.warn("[리뷰] 이미 리뷰가 존재합니다. reviewId = {}", review.get().getId());
       throw new ReviewDuplicateException(
           ReviewErrorCode.REVIEW_DUPLICATED, Map.of("reviewId", review.get().getId()));
+    }
+  }
+
+  private void evictFirstPageCacheByUserId(UUID contentId) {
+    String pattern = REVIEWS_FIRST_PAGE + "::" + contentId + ":*";
+
+    Set<String> keys = stringRedisTemplate.keys(pattern);
+    if (keys != null && !keys.isEmpty()) {
+      stringRedisTemplate.delete(keys);
+      log.info("[리뷰] 리뷰 조회 캐싱 초기화, contentId = {}, evictedKeys = {}", contentId, keys.size());
     }
   }
 }

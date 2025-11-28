@@ -5,6 +5,8 @@ import com.codeit.mopl.domain.message.conversation.dto.request.ConversationSearc
 import com.codeit.mopl.domain.message.conversation.dto.response.ConversationDto;
 import com.codeit.mopl.domain.message.conversation.dto.response.CursorResponseConversationDto;
 import com.codeit.mopl.domain.message.conversation.service.ConversationService;
+import com.codeit.mopl.domain.message.directmessage.dto.CursorResponseDirectMessageDto;
+import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageSearchCond;
 import com.codeit.mopl.domain.message.directmessage.service.DirectMessageService;
 import com.codeit.mopl.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -61,6 +63,26 @@ public class ConversationController {
         log.info("[메세지] 특정 사용자와의 채팅방 조회 요청 - withUserId = {}", withUserId);
         ConversationDto response = conversationService.getConversationByUserId(loginUser.getUser().id(), withUserId);
         log.info("[메세지] 특정 사용자와의 채팅방 조회 응답 - withUserId = {}", withUserId);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @PostMapping("/{conversationId}/direct-messages/{directMessageId}/read")
+    public ResponseEntity<Void> markRead(@PathVariable UUID conversationId,
+                                         @PathVariable UUID directMessageId,
+                                         @AuthenticationPrincipal CustomUserDetails loginUser) {
+        log.info("[메세지] DM '읽음' 처리 요청 - conversationId = {}, directMessageId = {}", conversationId, directMessageId);
+        conversationService.markAsRead(loginUser.getUser().id(), conversationId, directMessageId);
+        log.info("[메세지] DM '읽음' 처리 응답 - conversationId = {}, directMessageId = {}", conversationId, directMessageId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @GetMapping("/{conversationId}/direct-messages")
+    public ResponseEntity<CursorResponseDirectMessageDto> getDirectMessages(@PathVariable UUID conversationId,
+                                                                           @AuthenticationPrincipal CustomUserDetails loginUser,
+                                                                           @Validated @ModelAttribute DirectMessageSearchCond request) {
+        log.info("[메세지] 해당 채팅방의 DM 목록 조회 요청 - conversationId = {}", conversationId);
+        CursorResponseDirectMessageDto response = directMessageService.getDirectMessages(loginUser.getUser().id(), conversationId, request);
+        log.info("[메세지] 해당 채팅방의 DM 목록 조회 응답 - conversationId = {}", conversationId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

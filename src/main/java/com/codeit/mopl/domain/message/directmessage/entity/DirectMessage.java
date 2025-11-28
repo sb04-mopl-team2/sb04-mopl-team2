@@ -29,4 +29,8 @@ public class DirectMessage extends UpdatableEntity {
 
     @Column(nullable = false)
     private String content;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean isRead = false;
 }

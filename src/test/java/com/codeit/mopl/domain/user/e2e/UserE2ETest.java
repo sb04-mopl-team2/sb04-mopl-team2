@@ -359,7 +359,7 @@ public class UserE2ETest {
 
         SignInRequest lockUserSignInRequest = new SignInRequest("test@test.com", "password");
         HttpEntity changeLoginHttpEntity = getSignInRequest(lockUserSignInRequest);
-        ResponseEntity<JwtDto> lockUserJwtDto = rest.postForEntity("/api/auth/sign-in", changeLoginHttpEntity, JwtDto.class);
+        ResponseEntity<String> lockUserJwtDto = rest.postForEntity("/api/auth/sign-in", changeLoginHttpEntity, String.class);
 
         assertEquals(HttpStatus.UNAUTHORIZED, lockUserJwtDto.getStatusCode());
     }

@@ -13,18 +13,7 @@ import org.springframework.context.annotation.Configuration;
 public class MovieJobConfig {
 
   private final JobRepository jobRepository;
-  private final Step initialMovieLoadStep;
   private final Step dailyMovieUpdateStep;
-
-  /**
-   * 최초 1년치 영화 데이터 수집 Job
-   */
-  @Bean
-  public Job initialMovieLoadJob() {
-    return new JobBuilder("initialMovieLoadJob", jobRepository)
-        .start(initialMovieLoadStep)
-        .build();
-  }
 
   /**
    * 매일 다음날 개봉 예정 영화 수집 Job

@@ -10,11 +10,13 @@ import com.codeit.mopl.domain.message.conversation.repository.ConversationReposi
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
 import com.codeit.mopl.domain.message.directmessage.mapper.DirectMessageMapper;
+import com.codeit.mopl.domain.message.directmessage.repository.DirectMessageRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.message.conversation.ConversationDuplicateException;
 import com.codeit.mopl.exception.message.conversation.ConversationForbiddenException;
 import com.codeit.mopl.exception.message.conversation.ConversationNotFound;
+import com.codeit.mopl.exception.message.directmessage.DirectMessageNotFound;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,7 @@ public class ConversationService {
     private final UserRepository userRepository;
     private final ConversationMapper conversationMapper;
     private final DirectMessageMapper directMessageMapper;
+    private final DirectMessageRepository directMessageRepository;
 
     public ConversationDto createConversation(UUID loginUserId, ConversationCreateRequest request) {
         UUID withUserId = request.withUserId();
@@ -169,6 +172,54 @@ public class ConversationService {
         log.info("[메세지] 특정 사용자와의 채팅방 조회 완료 - withUserId = {}", withUserId);
         return buildDtoWithLastMessage(conversation);
     }
+
+    public void markAsRead(UUID loginUserId,UUID conversationId, UUID directMessageId) {
+        log.info("[메세지] DM '읽음' 처리 시작 - conversationId = {}, directMessageId = {}", conversationId, directMessageId);
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(()->{
+                    log.warn("[메세지] DM '읽음' 처리 실패 - 채팅방 존재하지 않음 - conversationId = {}", conversationId);
+                    return ConversationNotFound.of();
+                });
+        // 유저 권한 검증
+        UUID userA = conversation.getUser().getId();
+        UUID userB = conversation.getWith().getId();
+        if (!userA.equals(loginUserId) && !userB.equals(loginUserId)) {
+            throw ConversationForbiddenException.withId(loginUserId);
+        }
+
+        DirectMessage dm = directMessageRepository.findById(directMessageId)
+                .orElseThrow(()->{
+                    log.warn("[메세지] DM '읽음' 처리 실패 - 메세지가 존재하지 않음 - directMessageId = {}, loginUserId = {}", directMessageId, loginUserId);
+                    return DirectMessageNotFound.withId(directMessageId);
+                });
+
+        if (!dm.getConversation().getId().equals(conversationId)) {
+            log.warn("[메세지] DM '읽음'처리 실패 - DM이 해당 대화방에 속하지 않음 - directMessageId = {}, conversationId = {}",directMessageId, conversationId);
+            throw DirectMessageNotFound.withId(directMessageId);
+        }
+
+        if (!dm.getReceiver().getId().equals(loginUserId)) {
+            log.warn("[메세지] DM '읽음'처리 실패 - 메세지 수신자가 아님 - directMessageId = {}, loginUserId = {}", directMessageId, loginUserId);
+            throw ConversationForbiddenException.withId(loginUserId);
+        }
+
+        if (!dm.isRead()) {
+            dm.setRead(true);
+            directMessageRepository.save(dm);
+        }
+
+        boolean existsUnread = directMessageRepository
+                .existsByConversationIdAndReceiverIdAndIsReadFalse(conversationId, loginUserId);
+
+        // 읽지않은 메세지가 없지만 Conversation 엔티티는 아직 “읽지 않은 메시지가 있다”고 표시 중일 때 해당 필드 수정함
+        if(!existsUnread && conversation.isHasUnread()) {
+            conversation.setHasUnread(false);
+            conversationRepository.save(conversation);
+        }
+        log.info("[메세지] DM '읽음' 처리 완료 - conversationId = {}, directMessageId = {} ", conversationId, directMessageId);
+    }
+
+
 
     // 보조 메서드
     private ConversationDto buildDtoWithLastMessage(Conversation conversation) {

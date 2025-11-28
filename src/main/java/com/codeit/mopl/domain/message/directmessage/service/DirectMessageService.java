@@ -15,9 +15,11 @@ import com.codeit.mopl.exception.message.conversation.ConversationForbiddenExcep
 import com.codeit.mopl.exception.message.conversation.ConversationNotFound;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Pageable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -47,19 +49,23 @@ public class DirectMessageService {
         }
 
         List<DirectMessage> directMessages;
+        Pageable pageable = PageRequest.of(0, cond.getLimit() + 1);
         if (cond.getSortDirection() ==SortDirection.DESCENDING) {
             directMessages = directMessageRepository.findMessagesBefore(
                     conversationId,
                     cond.getCursor(),
-                    cond.getIdAfter()
+                    cond.getIdAfter(),
+                    pageable
             );
         } else {
             directMessages = directMessageRepository.findMessagesAfter(
                     conversationId,
                     cond.getCursor(),
-                    cond.getIdAfter()
+                    cond.getIdAfter(),
+                    pageable
             );
         }
+        long totalCount = directMessageRepository.countAllByConversationId(conversationId);
         //빈 리스트 체크
         if (directMessages.isEmpty()) {
             return new CursorResponseDirectMessageDto(
@@ -67,7 +73,7 @@ public class DirectMessageService {
                     null,
                     null,
                     false,
-                    0L,
+                    totalCount,
                     cond.getSortBy(),
                     cond.getSortDirection()
             );
@@ -85,7 +91,6 @@ public class DirectMessageService {
                 result.stream()
                         .map(directMessageMapper::toDirectMessageDto)
                         .collect(Collectors.toList());
-        long totalCount = directMessageRepository.countAllByConversationId(conversationId);
         log.info("[메세지] 해당 채팅방의 DM 목록 조회 완료 - conversationId = {}, totalCount = {}", conversationId, totalCount);
         return new CursorResponseDirectMessageDto(
                 directMessageDtos,

@@ -1,6 +1,7 @@
 package com.codeit.mopl.domain.message.directmessage.repository;
 
 import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,7 +27,8 @@ public interface DirectMessageRepository extends JpaRepository<DirectMessage, UU
     List<DirectMessage>findMessagesBefore(
             @Param("conversationId") UUID conversationId,
             @Param("cursor") String cursor,
-            @Param("idAfter") UUID idAfter
+            @Param("idAfter") UUID idAfter,
+            Pageable pageable
             );
 
     @Query("""
@@ -41,7 +43,8 @@ public interface DirectMessageRepository extends JpaRepository<DirectMessage, UU
     List<DirectMessage> findMessagesAfter(
             @Param("conversationId") UUID conversationId,
             @Param("cursor") String cursor,
-            @Param("idAfter") UUID idAfter
+            @Param("idAfter") UUID idAfter,
+            Pageable pageable
             );
 
     long countAllByConversationId(UUID conversationId);

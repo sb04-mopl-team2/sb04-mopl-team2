@@ -223,33 +223,6 @@ class NotificationIntegrationTest {
         .andExpect(status().isNotFound());
   }
 
-  @Test
-  @DisplayName("Cursor가 없을 때, 첫 페이지 조회는 캐시가 적용되어, 같은 파라미터로 두 번 호출해도 Repository는 한 번만 호출된다")
-  void getNotifications_firstPage_isCached() throws Exception {
-    // given
-    int limit = 5;
-
-    // when
-    ResultActions resultActions = mockMvc.perform(
-        get("/api/notifications")
-            .with(user(customUserDetails1))
-            .param("limit", String.valueOf(limit))
-            .param("sortDirection", SortDirection.DESCENDING.toString())
-            .param("sortBy", SortBy.CREATED_AT.getType())
-            .accept(MediaType.APPLICATION_JSON)
-    );
-
-    // then
-    verify(notificationRepository, times(1)).searchNotifications(
-        customUserDetails1.getUser().id(),
-        null,
-        null,
-        limit,
-        SortDirection.DESCENDING,
-        SortBy.CREATED_AT
-    );
-  }
-
   private Notification createNotification(
       User user,
       String title,

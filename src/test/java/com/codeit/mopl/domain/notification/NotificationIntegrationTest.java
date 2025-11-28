@@ -143,7 +143,7 @@ class NotificationIntegrationTest {
     // then
     resultActions
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data[1].length()").value(3))
+        .andExpect(jsonPath("$.data.length()").value(3))
         .andExpect(jsonPath("$.hasNext").value(false))
         .andExpect(jsonPath("$.totalCount").value(3))
         .andExpect(jsonPath("$.sortBy").value(SortBy.CREATED_AT.getType()))

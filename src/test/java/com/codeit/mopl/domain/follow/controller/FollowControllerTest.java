@@ -153,6 +153,129 @@ class FollowControllerTest {
     }
 
     @Test
+    @DisplayName("특정 유저 팔로우 여부 조회 API 성공 테스트")
+    void isFollowedByMe_Success() throws Exception {
+        // given
+        UUID followeeId = UUID.randomUUID();
+        UUID followerId = UUID.randomUUID();
+        UserDto userDto = new UserDto(
+                followerId,
+                LocalDateTime.now(),
+                "testUser@test.com",
+                "test",
+                null,
+                Role.USER,
+                false
+        );
+        CustomUserDetails follower = new CustomUserDetails(userDto, "test1234");
+
+        given(followService.isFollowedByMe(eq(followerId), eq(followeeId))).willReturn(true);
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/followed-by-me")
+                        .with(user(follower))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId.toString())
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
+        verify(followService, times(1)).isFollowedByMe(eq(followerId), eq(followeeId));
+    }
+
+    @Test
+    @DisplayName("특정 유저 팔로우 여부 조회 API 실패 테스트 - 유효하지 않은 요청")
+    void isFollowedByMe_Failure_InvalidRequest() throws Exception {
+        // given
+        String followeeId = "testId";
+        UUID followerId = UUID.randomUUID();
+        UserDto userDto = new UserDto(
+                followerId,
+                LocalDateTime.now(),
+                "testUser@test.com",
+                "test",
+                null,
+                Role.USER,
+                false
+        );
+        CustomUserDetails follower = new CustomUserDetails(userDto, "test1234");
+
+        // when & then
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/followed-by-me")
+                        .with(user(follower))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId)
+        );
+        resultActions.andExpect(status().isBadRequest());
+    }
+
+
+    @Test
+    @DisplayName("팔로워 수 조회 성공 테스트")
+    void getFollowerCount_Success() throws Exception {
+        // given
+        UUID followerId = UUID.randomUUID();
+        UUID followeeId = UUID.randomUUID();
+        UserDto userDto = new UserDto(
+                followerId,
+                LocalDateTime.now(),
+                "testUser@test.com",
+                "test",
+                null,
+                Role.USER,
+                false
+        );
+        CustomUserDetails follower = new CustomUserDetails(userDto, "test1234");
+
+        given(followService.getFollowerCount(eq(followeeId))).willReturn(1L);
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/count")
+                        .with(user(follower))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId.toString())
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(content().string("1"));
+        verify(followService, times(1)).getFollowerCount(eq(followeeId));
+    }
+
+    @Test
+    @DisplayName("팔로워 수 조회 실패 테스트 - 유효하지 않은 요청")
+    void getFollowerCount_Failure_InvalidRequest() throws Exception {
+        // given
+        UUID followerId = UUID.randomUUID();
+        String followeeId = "testId";
+        UserDto userDto = new UserDto(
+                followerId,
+                LocalDateTime.now(),
+                "testUser@test.com",
+                "test",
+                null,
+                Role.USER,
+                false
+        );
+        CustomUserDetails follower = new CustomUserDetails(userDto, "test1234");
+
+        // when & then
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/count")
+                        .with(user(follower))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId)
+        );
+        resultActions.andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("팔로우 삭제 성공 테스트")
     void deleteFollow_Success() throws Exception {
         // given

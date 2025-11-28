@@ -23,10 +23,10 @@ public class ContentSearchRequest {
   private int limit;
 
   @NotNull
-  private SortDirection sortDirection;
+  private String sortDirection;
 
   @NotNull
-  private SortBy sortBy;
+  private String sortBy;
 
   public ContentSearchCondition toCondition() {
     return ContentSearchCondition.builder()
@@ -36,9 +36,8 @@ public class ContentSearchRequest {
         .cursor(cursor)
         .idAfter(idAfter)
         .limit(limit)
-        .sortDirection(sortDirection)
-        .sortBy(sortBy)
+        .sortDirection(SortDirection.fromValue(sortDirection))
+        .sortBy(SortBy.fromValue(sortBy))
         .build();
   }
 }
-

@@ -154,10 +154,10 @@ class ReviewIntegrationTest {
     // then
     resultActions
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.length()").value(1))
-        .andExpect(jsonPath("$.data[0].id").value(r1.getId().toString()))
-        .andExpect(jsonPath("$.data[0].contentId").value(contentId.toString()))
-        .andExpect(jsonPath("$.data[0].rating").value(r1.getRating()))
+        .andExpect(jsonPath("$.data[1].length()").value(1))
+        .andExpect(jsonPath("$.data[1][0].id").value(r1.getId().toString()))
+        .andExpect(jsonPath("$.data[1][0].contentId").value(contentId.toString()))
+        .andExpect(jsonPath("$.data[1][0].rating").value(r1.getRating()))
         .andExpect(jsonPath("$.hasNext").value(false))
         .andExpect(jsonPath("$.totalCount").value(1))
         .andExpect(jsonPath("$.sortBy").value(sortBy.name()))
@@ -367,12 +367,12 @@ class ReviewIntegrationTest {
   @DisplayName("리뷰 삭제 실패 - 다른 사용자가 리뷰를 삭제하려고 하면 Forbidden 예외가 발생한다")
   void deleteReview_forbidden() throws Exception {
     // given
-    UUID reviewId = r1.getId();  // user1의 리뷰를 user2가 삭제 시도
+    UUID reviewId = r1.getId();
 
     // when
     ResultActions resultActions = mockMvc.perform(
         delete("/api/reviews/{reviewId}", reviewId)
-            .with(user(customUserDetails2))   // 작성자 아님
+            .with(user(customUserDetails2))
             .with(csrf())
     );
 
@@ -385,12 +385,12 @@ class ReviewIntegrationTest {
   @DisplayName("리뷰 삭제 실패 - 다른 사용자가 리뷰를 삭제하려고 하면 Forbidden 예외가 발생한다")
   void deleteReview_notFound() throws Exception {
     // given
-    UUID reviewId = UUID.randomUUID();  // user1의 리뷰를 user2가 삭제 시도
+    UUID reviewId = UUID.randomUUID();
 
     // when
     ResultActions resultActions = mockMvc.perform(
         delete("/api/reviews/{reviewId}", reviewId)
-            .with(user(customUserDetails2))   // 작성자 아님
+            .with(user(customUserDetails2))
             .with(csrf())
     );
 

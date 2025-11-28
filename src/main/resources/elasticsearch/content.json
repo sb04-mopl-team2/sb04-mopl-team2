@@ -1,0 +1,48 @@
+{
+  "properties": {
+    "id": {
+      "type" : "keyword"
+    },
+    "title" : {
+      "type" : "text",
+      "analyzer": "standard",
+      "fields" : {
+        "ko" : {
+          "type": "text",
+          "analyzer" : "nori"
+        }
+      }
+    },
+    "description" : {
+      "type" : "text",
+      "analyzer": "standard",
+      "fields" : {
+        "ko" : {
+          "type": "text",
+          "analyzer" : "nori"
+        }
+      }
+    },
+    "thumbnailUrl" : {
+      "type" : "keyword"
+    },
+    "tags" : {
+      "type" : "keyword"
+    },
+    "contentType" : {
+      "type" : "keyword"
+    },
+    "averageRating" : {
+      "type" : "double"
+    },
+    "reviewCount" : {
+      "type" : "integer"
+    },
+    "watcherCount" : {
+      "type" : "integer"
+    },
+    "created_at": {
+      "type": "date"
+    }
+  }
+}

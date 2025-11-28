@@ -1,0 +1,38 @@
+services:
+  elasticsearch:
+    build:
+      context: .
+      dockerfile: Dockerfile-elastic
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      # 보안 설정 (비밀번호 설정하고 싶으면 true, 귀찮으면 false)
+      # 공부용/로컬용은 보통 끄고 하거나, 켜더라도 간단하게 설정
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  # http://localhost:5601
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.10
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
+volumes:
+  es_data:
+    driver: local

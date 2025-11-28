@@ -212,4 +212,21 @@ class ContentServiceTest {
     verify(contentMapper).toDto(eq(content), anyLong());
   }
 
+  @Test
+  @DisplayName("콘텐츠 삭제 성공")
+  void deleteContent_Success() {
+    // given
+    UUID contentId = UUID.randomUUID();
+
+    Content content = ContentTestFactory.createDefault(ContentType.MOVIE);
+
+    given(contentRepository.findById(contentId)).willReturn(Optional.of(content));
+
+    // when
+    contentService.deleteContent(contentId);
+
+    // then
+    verify(contentRepository).findById(contentId);
+    verify(contentRepository).delete(content);
+  }
 }

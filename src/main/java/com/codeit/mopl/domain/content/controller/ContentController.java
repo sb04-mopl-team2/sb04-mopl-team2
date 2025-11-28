@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -68,6 +69,16 @@ public class ContentController {
 
     log.info("[콘텐츠] 콘텐츠 수정 완료 id = {}, title = {}", content.id(), content.title());
     return ResponseEntity.ok(content);
+  }
+
+  @DeleteMapping("/{contentId}")
+  public ResponseEntity<Void> deleteContent(@PathVariable UUID contentId) {
+    log.info("[콘텐츠] 콘텐츠 삭제 요청 시작 contentId = {}", contentId);
+
+    contentService.deleteContent(contentId);
+
+    log.info("[콘텐츠] 콘텐츠 삭제 완료 contentId = {}", contentId);
+    return ResponseEntity.ok().build();
   }
 
 }

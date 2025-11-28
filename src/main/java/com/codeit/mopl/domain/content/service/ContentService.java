@@ -87,6 +87,21 @@ public class ContentService {
     return dto;
   }
 
+  //콘텐츠 삭제
+  @Transactional
+  public void deleteContent(UUID contentId) {
+    log.info("[콘텐츠] 콘텐츠 삭제 서비스 시작 contentId = {}", contentId);
+
+    Content content = contentRepository.findById(contentId).orElseThrow(
+        () -> new ContentNotFoundException(ContentErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId))
+    );
+
+    contentRepository.delete(content);
+
+    log.info("[콘텐츠] 콘텐츠 삭제 서비스 완료 contentId = {}", contentId);
+  }
+
+
   //redis로 실시간 세션 관리 매서드 기능 완성후 추가 구현예정
   private Long getWatcherCount() {
     return 0L;

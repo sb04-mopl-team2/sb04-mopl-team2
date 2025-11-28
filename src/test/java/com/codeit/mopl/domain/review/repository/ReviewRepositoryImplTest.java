@@ -293,16 +293,7 @@ class ReviewRepositoryImplTest {
     review.setText(text);
     review.setRating(rating);
     review.setIsDeleted(isDeleted);
-    Thread.sleep(100);     // sleep 각 객체마다 createdAt의 값에 차이점을 주기 위함
+    Thread.sleep(10);     // sleep 각 객체마다 createdAt의 값에 차이점을 주기 위함
     return review;
-  }
-
-  private void setCreatedAt(Review review, LocalDateTime createdAt) {
-    Field field = ReflectionUtils.findField(Review.class, "createdAt");
-    if (field == null) {
-      throw new IllegalStateException("createdAt 필드를 찾을 수 없습니다.");
-    }
-    field.setAccessible(true);
-    ReflectionUtils.setField(field, review, createdAt);
   }
 }

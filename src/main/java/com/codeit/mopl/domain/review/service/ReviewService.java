@@ -52,7 +52,7 @@ public class ReviewService {
     Review review = new Review(user, content, text, rating, false);
     reviewRepository.save(review);
     log.info("[리뷰] 리뷰 생성 종료, userId = {}, contentId = {}, reviewId = {}", userId, contentId, review.getId());
-    evictFirstPageCacheByUserId(contentId);
+    evictFirstPageCacheByContentId(contentId);
     return reviewMapper.toDto(review);
   }
 
@@ -71,7 +71,7 @@ public class ReviewService {
     reviewRepository.save(review);
 
     log.info("[리뷰] 리뷰 수정 종료, reviewId = {}", reviewId);
-    evictFirstPageCacheByUserId(review.getContent().getId());
+    evictFirstPageCacheByContentId(review.getContent().getId());
     return reviewMapper.toDto(review);
   }
 
@@ -86,7 +86,7 @@ public class ReviewService {
     }
     review.setIsDeleted(true);
     reviewRepository.save(review);
-    evictFirstPageCacheByUserId(review.getContent().getId());
+    evictFirstPageCacheByContentId(review.getContent().getId());
     log.info("[리뷰] 리뷰 삭제 종료, reviewId = {}", reviewId);
   }
 
@@ -190,7 +190,7 @@ public class ReviewService {
     }
   }
 
-  private void evictFirstPageCacheByUserId(UUID contentId) {
+  private void evictFirstPageCacheByContentId(UUID contentId) {
     String pattern = REVIEWS_FIRST_PAGE + "::" + contentId + ":*";
 
     Set<String> keys = stringRedisTemplate.keys(pattern);

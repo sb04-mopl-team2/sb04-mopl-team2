@@ -137,6 +137,7 @@ CREATE TABLE IF NOT EXISTS direct_messages
     receiver UUID NOT NULL,
     conversation_id UUID NOT NULL,
     content TEXT NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
 
     FOREIGN KEY (sender) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (receiver) REFERENCES users(id) ON DELETE CASCADE,

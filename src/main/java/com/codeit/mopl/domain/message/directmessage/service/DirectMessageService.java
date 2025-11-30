@@ -59,7 +59,7 @@ public class DirectMessageService {
         List<DirectMessage> directMessages;
         Pageable pageable = PageRequest.of(0, cond.getLimit() + 1);
         LocalDateTime cursor = null;
-        if (cond.getCursor() == null) {
+        if (cond.getCursor() != null) {
             cursor = LocalDateTime.parse(cond.getCursor());
         }
         if (cond.getSortDirection() ==SortDirection.DESCENDING) {
@@ -124,6 +124,14 @@ public class DirectMessageService {
         // 채팅방 참여자 일치 여부 검증
         UUID userA= conversation.getUser().getId();
         UUID userB = conversation.getWith().getId();
+        UUID receiverId = request.receiverId();
+
+        boolean matched =
+                (userA.equals(loginUserId) && userB.equals(receiverId)) ||
+                (userB.equals(loginUserId) && userA.equals(receiverId));
+        if (!matched) {
+            throw ConversationForbiddenException.withId(loginUserId);
+        }
 
         if (!userA.equals(loginUserId) && !userB.equals(loginUserId)) {
             throw ConversationForbiddenException.withId(loginUserId);
@@ -132,7 +140,7 @@ public class DirectMessageService {
         User sender = userRepository.findById(loginUserId)
                 .orElseThrow(()-> new  UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", loginUserId)));
         User receiver = userRepository.findById(request.receiverId())
-                .orElseThrow(()-> new  UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", request.receiverId())));
+                .orElseThrow(()-> new  UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", receiverId)));
         DirectMessage directMessage = directMessageRepository.save(DirectMessage.builder()
                 .sender(sender)
                 .receiver(receiver)

@@ -24,6 +24,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
@@ -178,7 +180,8 @@ public class DirectMessageServiceTest {
                     .isRead(false)
                     .content("content")
                     .build();
-            given(directMessageRepository.findMessagesBefore(any(UUID.class), nullable(String.class), nullable(UUID.class)))
+            Pageable pageable = PageRequest.of(0, cond.getLimit() + 1);
+            given(directMessageRepository.findMessagesBefore(any(UUID.class), nullable(LocalDateTime.class), nullable(UUID.class), pageable))
                     .willReturn(Arrays.asList(directMessage));
             given(directMessageMapper.toDirectMessageDto(directMessage))
                     .willReturn(new DirectMessageDto(
@@ -224,8 +227,9 @@ public class DirectMessageServiceTest {
 
             given(directMessageRepository.findMessagesBefore(
                     any(UUID.class),
-                    nullable(String.class),
-                    nullable(UUID.class)
+                    nullable(LocalDateTime.class),
+                    nullable(UUID.class),
+                    any(Pageable.class)
             )).willReturn(Collections.emptyList());
 
             //when
@@ -260,8 +264,9 @@ public class DirectMessageServiceTest {
             setId(after2, after2Id);
             given(directMessageRepository.findMessagesBefore(
                     any(UUID.class),
-                    nullable(String.class),
-                    nullable(UUID.class)
+                    nullable(LocalDateTime.class),
+                    nullable(UUID.class),
+                    any(Pageable.class)
             )).willReturn(Arrays.asList(after1, after2));
             given(directMessageMapper.toDirectMessageDto(after1))
                     .willReturn(new DirectMessageDto(

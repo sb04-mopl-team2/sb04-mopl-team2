@@ -24,6 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -56,17 +58,21 @@ public class DirectMessageService {
 
         List<DirectMessage> directMessages;
         Pageable pageable = PageRequest.of(0, cond.getLimit() + 1);
+        LocalDateTime cursor = null;
+        if (cond.getCursor() == null) {
+            cursor = LocalDateTime.parse(cond.getCursor());
+        }
         if (cond.getSortDirection() ==SortDirection.DESCENDING) {
             directMessages = directMessageRepository.findMessagesBefore(
                     conversationId,
-                    cond.getCursor(),
+                    cursor,
                     cond.getIdAfter(),
                     pageable
             );
         } else {
             directMessages = directMessageRepository.findMessagesAfter(
                     conversationId,
-                    cond.getCursor(),
+                    cursor,
                     cond.getIdAfter(),
                     pageable
             );
@@ -113,7 +119,7 @@ public class DirectMessageService {
                                               DirectMessageSendRequest request
                                               ){
         Conversation conversation = conversationRepository.findById(request.conversationId())
-                .orElseThrow(() -> ConversationNotFound.withId(request.receiverId()));
+                .orElseThrow(() -> ConversationNotFound.of());
         User sender = userRepository.findById(loginUserId)
                 .orElseThrow(()-> new  UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", loginUserId)));
         User receiver = userRepository.findById(request.receiverId())

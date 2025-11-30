@@ -2,17 +2,19 @@ package com.codeit.mopl.domain.message.directmessage.controller;
 
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageSendRequest;
-import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
 import com.codeit.mopl.domain.message.directmessage.service.DirectMessageService;
+import com.codeit.mopl.exception.message.MessageErrorCode;
+import com.codeit.mopl.exception.message.directmessage.UserNotAuthenticatedException;
 import com.codeit.mopl.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Controller;
 
+import java.util.Map;
 import java.util.UUID;
 
 /*
@@ -30,8 +32,17 @@ public class DirectMessageController {
     @MessageMapping("/conversations/{conversationId}/direct-messages")
     public void sendDirectMessage (@DestinationVariable UUID conversationId,
                                    DirectMessageSendRequest request,
-                                   @AuthenticationPrincipal CustomUserDetails loginUser) {
-        DirectMessageDto dto = directMessageService.saveDirectMessage(loginUser.getUser().id(), request);
+                                   UsernamePasswordAuthenticationToken token) {
+
+        if (token == null || !(token.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            throw new UserNotAuthenticatedException(MessageErrorCode.USER_NOT_AUTHENTICATED,
+                    Map.of("conversationId",conversationId));
+        }
+
+        if (!conversationId.equals(request.conversationId())) {
+            throw new IllegalArgumentException("채팅방 ID가 일치하지 않습니다.");
+        }
+        DirectMessageDto dto = directMessageService.saveDirectMessage(userDetails.getUser().id(), request);
         messagingTemplate.convertAndSend(
                 "/sub/conversations/" + conversationId + "/direct-messages", dto);
     }

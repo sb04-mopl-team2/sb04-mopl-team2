@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,7 +27,7 @@ public interface DirectMessageRepository extends JpaRepository<DirectMessage, UU
 """)
     List<DirectMessage>findMessagesBefore(
             @Param("conversationId") UUID conversationId,
-            @Param("cursor") String cursor,
+            @Param("cursor") LocalDateTime cursor,
             @Param("idAfter") UUID idAfter,
             Pageable pageable
             );
@@ -42,7 +43,7 @@ public interface DirectMessageRepository extends JpaRepository<DirectMessage, UU
 """)
     List<DirectMessage> findMessagesAfter(
             @Param("conversationId") UUID conversationId,
-            @Param("cursor") String cursor,
+            @Param("cursor") LocalDateTime cursor,
             @Param("idAfter") UUID idAfter,
             Pageable pageable
             );

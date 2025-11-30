@@ -36,7 +36,7 @@ public interface TmdbMovieMapper {
 
   @Named("buildThumbnailUrl")
   default String buildThumbnailUrl(String posterPath) {
-    if (posterPath == null || posterPath.isEmpty()) return "";
+    if (posterPath == null || posterPath.isEmpty()) return "https://github.com/user-attachments/assets/746eaca8-f375-4d82-ba57-1d01f673f9a1";
     return BASE_THUMBNAIL_URL + posterPath;
   }
 }

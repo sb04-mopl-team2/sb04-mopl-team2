@@ -120,6 +120,15 @@ public class DirectMessageService {
                                               ){
         Conversation conversation = conversationRepository.findById(request.conversationId())
                 .orElseThrow(() -> ConversationNotFound.of());
+
+        // 채팅방 참여자 일치 여부 검증
+        UUID userA= conversation.getUser().getId();
+        UUID userB = conversation.getWith().getId();
+
+        if (!userA.equals(loginUserId) && !userB.equals(loginUserId)) {
+            throw ConversationForbiddenException.withId(loginUserId);
+        }
+
         User sender = userRepository.findById(loginUserId)
                 .orElseThrow(()-> new  UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", loginUserId)));
         User receiver = userRepository.findById(request.receiverId())

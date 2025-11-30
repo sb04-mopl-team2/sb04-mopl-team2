@@ -22,6 +22,7 @@ public interface TmdbMovieMapper {
   @Mapping(target = "averageRating", ignore = true)
   @Mapping(target = "reviewCount", ignore = true)
   @Mapping(target = "updatedAt", ignore = true)
+  @Mapping(target = "watcherCount", ignore = true)
   Content toContent(TmdbDiscoverMovieResponse.Movie movie);
 
   @Named("mapGenresToTags")

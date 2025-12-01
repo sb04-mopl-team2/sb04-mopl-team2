@@ -106,8 +106,8 @@ public class WatchingSessionControllerTest {
 
     // then
     resultActions.andExpect(jsonPath("$.id").value(watchingSessionId.toString()))
-        .andExpect(jsonPath("$.userSummary.userId").value(watcherId.toString()))
-        .andExpect(jsonPath("$.userSummary.name").value("test"))
+        .andExpect(jsonPath("$.watcher.userId").value(watcherId.toString()))
+        .andExpect(jsonPath("$.watcher.name").value("test"))
         .andExpect(status().isOk());
   }
 
@@ -151,7 +151,7 @@ public class WatchingSessionControllerTest {
         List.of(watchingSessionDto),
         "nextCursor_123",
         userId,true,1L,
-        SortBy.CREATED_AT, SortDirection.ASCENDING
+        SortBy.CREATED_AT.getType(), SortDirection.ASCENDING
     );
     when(watchingSessionService.getWatchingSessions(
         any(UUID.class), eq(contentId),

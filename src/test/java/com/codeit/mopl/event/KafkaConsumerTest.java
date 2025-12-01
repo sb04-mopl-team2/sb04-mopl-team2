@@ -7,6 +7,8 @@ import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
+import com.codeit.mopl.sse.repository.SseEmitterRegistry;
+import com.codeit.mopl.sse.service.SseService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
@@ -18,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.kafka.support.Acknowledgment;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,11 +47,17 @@ class KafkaConsumerTest {
   @Mock
   private NotificationDto notificationDto;
 
+  @Mock
+  private SseService sseService;
+
+  @Mock
+  private SseEmitterRegistry sseEmitterRegistry;
+
   private KafkaConsumer kafkaConsumer;
 
   @BeforeEach
   void setUp() {
-    kafkaConsumer = new KafkaConsumer(objectMapper, notificationService, processedEventRepository);
+    kafkaConsumer = new KafkaConsumer(objectMapper, notificationService, processedEventRepository,sseService, sseEmitterRegistry);
   }
 
   @Test

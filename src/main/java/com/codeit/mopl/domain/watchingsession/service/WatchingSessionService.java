@@ -51,16 +51,10 @@ public class WatchingSessionService {
   @Transactional(readOnly = true)
   public WatchingSessionDto getByUserId(UUID userId) {
     log.info("[실시간 세션] 서비스: 사용자 ID로 시청 세션 조회 시작. userId = {}", userId);
-    WatchingSession watchingSession = watchingSessionRepository.findByUserId(userId)
-        .orElseThrow(() -> {
-          log.warn("해당 userId의 실시간 세션을 찾을 수 없음 userId = {}", userId);
-          return new WatchingSessionNotFoundException(
-              WatchingSessionErrorCode.WATCHING_SESSION_NOT_FOUND,
-              Map.of("userId",userId)
-          );
-        });
+    Optional<WatchingSession> watchingSession = watchingSessionRepository.findByUserId(userId);
+    if (watchingSession.isEmpty()) return null;
     log.info("[실시간 세션] 서비스: 사용자 시청 세션 조회 및 DTO 변환 완료. userId = {}", userId);
-    return watchingSessionMapper.toDto(watchingSession);
+    return watchingSessionMapper.toDto(watchingSession.get());
   }
 
   @Transactional(readOnly = true)

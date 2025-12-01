@@ -9,7 +9,7 @@ public record WatchingSessionDto(
     UUID id,
     LocalDateTime createdAt,
     UserSummary watcher,
-    ContentSummary contentSummary
+    ContentSummary content
 ) {
 
 }

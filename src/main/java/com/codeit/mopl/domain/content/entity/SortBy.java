@@ -15,6 +15,10 @@ public enum SortBy {
   private final String value;
 
   public static SortBy fromValue(String value) {
+    if (value == null) {
+      throw new InvalidSortByException(Map.of("inputValue", "null"));
+    }
+
     for (SortBy sortBy : values()) {
       if (sortBy.value.equalsIgnoreCase(value)) {
         return sortBy;

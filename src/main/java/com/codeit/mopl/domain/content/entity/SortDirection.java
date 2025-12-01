@@ -14,6 +14,10 @@ public enum SortDirection {
   private final String value;
 
   public static SortDirection fromValue(String value) {
+    if (value == null) {
+      throw new InvalidSortDirectionException(Map.of("inputValue", "null"));
+    }
+
     for (SortDirection direction : values()) {
       if (direction.value.equalsIgnoreCase(value)) {
         return direction;

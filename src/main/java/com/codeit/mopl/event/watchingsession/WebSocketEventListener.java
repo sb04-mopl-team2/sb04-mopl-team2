@@ -4,6 +4,7 @@ import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSessionChange;
+import com.codeit.mopl.domain.watchingsession.entity.enums.ChangeType;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.mopl.domain.watchingsession.service.WatchingSessionService;
 import com.codeit.mopl.exception.user.UserErrorCode;
@@ -34,6 +35,7 @@ public class WebSocketEventListener {
   private final WatchingSessionRepository watchingSessionRepository;
 //  private final SimpMessagingTemplate messagingTemplate;
   private final RedisPublisher redisPublisher;
+  private final WatchingSessionService watchingSessionService;
 
   /*
      콘텐츠 시청 세션: 누가 시청 세션에 들어오고 나가는지 (참가자 목록) 업데이트를 받기 위해
@@ -71,8 +73,16 @@ public class WebSocketEventListener {
         accessor.getSessionAttributes().put("watchingContentId", contentUUID);
         log.info("[WebsocketEventListener] 세션 정보 저장 완료: userId={}, watchingSessionId={}",
             user.getId(), existingSession.getId());
+        Long watcherCount = watchingSessionRepository.countByContentId(UUID.fromString(contentId));
+
+        WatchingSessionChange changePayload = service.getWatchingSessionChange(
+            existingSession,
+            user,
+            ChangeType.JOIN,
+            watcherCount
+        );
         String payloadDestination = String.format("/sub/contents/%s/watch", contentId);
-        redisPublisher.convertAndSend(payloadDestination, watchingSessionChange);
+        redisPublisher.convertAndSend(payloadDestination, changePayload);
       } else {
         // 예외 케이스 - HTTP 요청 없이 소켓만 연결된 경우
         log.warn("[WebsocketEventListener] DB에 시청 세션이 없습니다. Controller 로직이 먼저 실행되어야 합니다.");
@@ -104,7 +114,8 @@ public class WebSocketEventListener {
 
     log.info("[WebsocketEventListener] handleSessionDisconnect 완료 - userId: {}, contentId: {}, watcherCount: {}",
         user.getId(), contentId, watcherCount);
-//    messagingTemplate.convertAndSend(payloadDestination, watchingSessionChange);
+
+    // broadcasting to subscribers
     redisPublisher.convertAndSend(payloadDestination, watchingSessionChange);
   }
 

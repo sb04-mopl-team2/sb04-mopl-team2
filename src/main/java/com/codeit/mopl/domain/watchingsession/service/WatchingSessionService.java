@@ -191,7 +191,7 @@ public class WatchingSessionService {
         watchingSession, user, ChangeType.LEAVE, watcherCount);
   }
 
-  private WatchingSessionChange getWatchingSessionChange(
+  public WatchingSessionChange getWatchingSessionChange(
       WatchingSession savedWatchingSession, User user, ChangeType changeType, Long watcherCount) {
     Content content = savedWatchingSession.getContent();
 

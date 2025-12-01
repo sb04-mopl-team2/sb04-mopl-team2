@@ -20,17 +20,26 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.eq;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -49,6 +58,9 @@ class NotificationIntegrationTest {
   @Autowired
   private UserMapper userMapper;
 
+  @Autowired
+  private CacheManager cacheManager;
+
   private User user1;
   private User user2;
 
@@ -63,6 +75,15 @@ class NotificationIntegrationTest {
 
   private CustomUserDetails customUserDetails1;
   private CustomUserDetails customUserDetails2;
+
+  @TestConfiguration
+  static class TestCacheConfig {
+
+    @Bean
+    public CacheManager cacheManager() {
+      return new ConcurrentMapCacheManager("notifications:first-page");
+    }
+  }
 
   @BeforeEach
   void setUp() throws Exception {
@@ -108,6 +129,11 @@ class NotificationIntegrationTest {
         userDto2,
         "dummyPassword"
     );
+
+    Cache cache = cacheManager.getCache("notifications:first-page"); // 이름 통일
+    if (cache != null) {
+      cache.clear();
+    }
   }
 
   @Test
@@ -129,7 +155,7 @@ class NotificationIntegrationTest {
     // then
     resultActions
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data[1].length()").value(3))
+        .andExpect(jsonPath("$.data.length()").value(3))
         .andExpect(jsonPath("$.hasNext").value(false))
         .andExpect(jsonPath("$.totalCount").value(3))
         .andExpect(jsonPath("$.sortBy").value(SortBy.CREATED_AT.getType()))

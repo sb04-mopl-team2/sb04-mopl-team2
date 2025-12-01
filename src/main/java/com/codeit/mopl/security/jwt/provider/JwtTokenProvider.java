@@ -1,4 +1,4 @@
-package com.codeit.mopl.security.jwt;
+package com.codeit.mopl.security.jwt.provider;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -123,31 +123,6 @@ public class JwtTokenProvider {
         String email = jwt.getJWTClaimsSet()
                 .getClaim("sub").toString();
         return email;
-    }
-
-    public UUID getUserId(String token) throws ParseException {
-        SignedJWT jwt = SignedJWT.parse(token);
-        UUID userId = UUID.fromString(
-                jwt.getJWTClaimsSet()
-                        .getClaim("userId")
-                        .toString());
-        return userId;
-    }
-
-    public boolean isExpired(String token) {
-        log.info("[JWT] Token 유효기간 검증 시도");
-        try {
-            Date now = new Date();
-            SignedJWT jwt = SignedJWT.parse(token);
-            if (jwt.getJWTClaimsSet().getExpirationTime().before(now)) {
-                log.info("[JWT] Token의 유효기간 만료 subject = {}", jwt.getJWTClaimsSet().getSubject());
-                return true;
-            }
-            log.info("[JWT] Token의 유효기간 검증 성공 subject = {}", jwt.getJWTClaimsSet().getSubject());
-            return false;
-        } catch (Exception e) {
-            throw new RuntimeException("Token의 유효기간 검증 중 오류 발생", e);
-        }
     }
 
     public boolean validateAccessToken(String token) throws JOSEException {

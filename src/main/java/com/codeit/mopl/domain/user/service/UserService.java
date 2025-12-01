@@ -97,7 +97,7 @@ public class UserService {
     }
 
     @Transactional
-    @CacheEvict(value = "users", key = "#userId")
+    @CacheEvict(value = "users", key = "#userId", beforeInvocation = false)
     public void updateRole(UUID userId, UserRoleUpdateRequest request) {
         log.info("[사용자 관리] 회원 권한 수정 동작 userId = {}", userId);
         User findUser = getValidUserByUserId(userId);

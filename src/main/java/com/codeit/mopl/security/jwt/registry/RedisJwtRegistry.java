@@ -2,7 +2,6 @@ package com.codeit.mopl.security.jwt.registry;
 
 import com.codeit.mopl.event.event.UserLogInOutEvent;
 import com.codeit.mopl.exception.auth.AuthErrorCode;
-import com.codeit.mopl.exception.auth.InvalidTokenException;
 import com.codeit.mopl.exception.auth.JwtInformationNotFoundException;
 import com.codeit.mopl.exception.auth.RefreshTokenMismatchException;
 import com.codeit.mopl.security.jwt.JwtInformation;
@@ -57,14 +56,14 @@ public class RedisJwtRegistry implements JwtRegistry {
             redisTemplate.opsForValue().set(userKey, jwtInformation);
             redisTemplate.expire(userKey, DEFAULT_TTL);
             addTokenIndex(jwtInformation.getAccessToken(), jwtInformation.getRefreshToken());
+            eventPublisher.publishEvent(
+                    new UserLogInOutEvent(jwtInformation.getUserDto().id(), true)
+            );
 
         } finally {
             redisLockProvider.releaseLock(lockKey);
         }
 
-        eventPublisher.publishEvent(
-                new UserLogInOutEvent(jwtInformation.getUserDto().id(), true)
-        );
     }
 
     @Override
@@ -80,10 +79,10 @@ public class RedisJwtRegistry implements JwtRegistry {
             }
 
             redisTemplate.delete(userKey);
+            eventPublisher.publishEvent(new UserLogInOutEvent(userId, false));
         } finally {
             redisLockProvider.releaseLock(lockKey);
         }
-        eventPublisher.publishEvent(new UserLogInOutEvent(userId, false));
     }
 
     @Override
@@ -154,6 +153,7 @@ public class RedisJwtRegistry implements JwtRegistry {
                     }
                 } catch (Exception e) {
                     log.warn("[Redis] token 정리 중 예외 발생, 정리스킵 userKey = {}, msg = {}", userKey, e.getMessage());
+                    redisTemplate.delete(userKey);
                 }
             }
         }

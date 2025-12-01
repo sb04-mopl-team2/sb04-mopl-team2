@@ -1,7 +1,6 @@
-package com.codeit.mopl.domain.notification.exception;
+package com.codeit.mopl.exception.notification;
 
 
-import com.codeit.mopl.exception.notification.NotificationErrorCode;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;

@@ -11,6 +11,7 @@ import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSessionChange;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
+import com.codeit.mopl.domain.watchingsession.service.WatchingSessionService;
 import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.user.UserErrorCode;
@@ -20,6 +21,7 @@ import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
 import com.codeit.mopl.security.CustomUserDetails;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,101 +39,74 @@ import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 @RequiredArgsConstructor
 public class WebSocketEventListener {
 
-  private final WatchingSessionRepository watchingSessionRepository;
+  private final WatchingSessionService service;
   private final UserRepository userRepository;
-  private final ContentRepository contentRepository;
+  private final WatchingSessionRepository watchingSessionRepository;
   private final SimpMessagingTemplate messagingTemplate;
-  
+
   /*
      콘텐츠 시청 세션: 누가 시청 세션에 들어오고 나가는지 (참가자 목록) 업데이트를 받기 위해
      - 엔드포인트: SUBSCRIBE /sub/contents/{contentId}/watch
      - 페이로드: WatchingSessionChange
    */
   @EventListener
-  @Transactional
   public void handleSessionSubscribe(SessionSubscribeEvent event) {
     StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-    String sessionId = accessor.getSessionId(); // websocket connection identifier
+    String sessionId = accessor.getSessionId();
     String destination = accessor.getDestination();
 
     log.info("[WebsocketEventListener] handleSessionSubscribe 시작 - sessionId: {}, destination: {}", sessionId, destination);
 
     if (destination == null) {
-      log.error("[WebsocketEventListener] SessionSubscribeEvent: destination이 비었습니다!");
       return;
     }
 
-    // extract contentId
     String contentId;
-    if (destination.startsWith("/sub/contents/") && destination.endsWith("chat")) {
+    if (destination.startsWith("/sub/contents/") && destination.endsWith("/watch")) {
       contentId = getContentId(destination);
     } else {
-      contentId = null;
+      return;
     }
 
     if (contentId != null) {
-      // get user and content info
       User user = getUser(accessor, sessionId);
-      Content content = contentRepository.findById(UUID.fromString(contentId))
-          .orElseThrow(() -> new ContentNotFoundException(ContentErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId)));
+      UUID contentUUID = UUID.fromString(contentId);
+      WatchingSession existingSession = watchingSessionRepository.findByUserIdAndContentId(user.getId(), UUID.fromString(contentId))
+          .orElse(null);
 
-      // disconnect any other watching session for user (1 session per user)
-      watchingSessionRepository.deleteByUserId(user.getId());
-
-      // create new WatchingSession and save to repository
-      WatchingSession watchingSession = new WatchingSession();
-      watchingSession.setUser(user);
-      watchingSession.setContent(content);
-      WatchingSession savedWatchingSession = watchingSessionRepository.save(watchingSession);
-      log.info("[WebsocketEventListener] DB 저장 성공: savedWatchingSessionId={}", savedWatchingSession.getId());
-      // add to websocket session attributes
-      accessor.getSessionAttributes().put("watchingSessionId", savedWatchingSession.getId());
-      accessor.getSessionAttributes().put("watchingContentId", contentId);
-
-      // create payload
-      Long watcherCount = watchingSessionRepository.countByContentId(UUID.fromString(contentId));
-      WatchingSessionChange watchingSessionChange = getWatchingSessionChange(
-          savedWatchingSession, user, ChangeType.JOIN, watcherCount);
-
-      // server -> client
-      String payloadDestination = String.format("/sub/contents/%s/watch", contentId);
-      messagingTemplate.convertAndSend(payloadDestination, watchingSessionChange);
-      log.info("[WebsocketEventListener] handleSessionSubscribe 완료 - userId: {}, contentId: {}, watcherCount: {}",
-          user.getId(), contentId, watcherCount);
-    } else {
-      log.info("[WebsocketEventListener] handleSessionSubscribe 완료 - contentId 없음");
+      if (existingSession != null) {
+        UUID watchingSessionId = existingSession.getId();
+        accessor.getSessionAttributes().put("watchingSessionId", watchingSessionId);
+        accessor.getSessionAttributes().put("watchingContentId", contentUUID);
+        log.info("[WebsocketEventListener] 세션 정보 저장 완료: userId={}, watchingSessionId={}",
+            user.getId(), existingSession.getId());
+      } else {
+        // 예외 케이스 - HTTP 요청 없이 소켓만 연결된 경우
+        log.warn("[WebsocketEventListener] DB에 시청 세션이 없습니다. Controller 로직이 먼저 실행되어야 합니다.");
+      }
     }
   }
-
   @EventListener
-  @Transactional
   public void handleSessionDisconnect(SessionDisconnectEvent event) {
     StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
     String sessionId = accessor.getSessionId();
 
     UUID watchingSessionId = (UUID) accessor.getSessionAttributes().get("watchingSessionId");
-    String contentId = (String) accessor.getSessionAttributes().get("watchingContentId");
+    UUID contentId = (UUID) accessor.getSessionAttributes().get("watchingContentId");
 
-    log.info("[WebsocketEventListener] handleSessionDisconnect 시작 - sessionId: {}, watchingSessionId: {}, contentId: {}",
+    log.info("[WebsocketEventListener] SessionDisconnectEvent 시작 - sessionId: {}, watchingSessionId: {}, contentId: {}",
         sessionId, watchingSessionId, contentId);
 
     if (watchingSessionId == null || contentId == null) {
-      log.warn("[WebsocketEventListener] SessionDisconnectEvent: sessionId = {}, contentId = {}", sessionId, contentId);
+      log.warn("[WebsocketEventListener] SessionDisconnectEvent: watchingSessionId = {}, contentId = {}", watchingSessionId, contentId);
       return;
     }
-
     // get user, watchingsession, watcherCount
     User user = getUser(accessor, sessionId);
-    WatchingSession watchingSession = watchingSessionRepository.findById(watchingSessionId)
-        .orElseThrow(() -> new WatchingSessionNotFoundException(
-            WatchingSessionErrorCode.WATCHING_SESSION_NOT_FOUND, Map.of("watchingSessionId", watchingSessionId))
-        );
-    watchingSessionRepository.deleteById(watchingSessionId);
-    long watcherCount = watchingSessionRepository.countByContentId(UUID.fromString(contentId));
-
-    // payload
-    WatchingSessionChange watchingSessionChange = getWatchingSessionChange(
-        watchingSession, user, ChangeType.LEAVE, watcherCount);
+    log.info("[WebsocketEventListener] SessionDisconnectEvent: 서비스에서 DB 삭제 시작: watchingSessionId={}", watchingSessionId);
+    WatchingSessionChange watchingSessionChange = service.leaveSession(user, watchingSessionId, contentId);
+    log.info("[WebsocketEventListener] SessionDisconnectEvent: 서비스에서 DB 삭제 성공: savedWatchingSessionId={}", watchingSessionId);
+    long watcherCount = watchingSessionChange.watcherCount();
 
     String payloadDestination = String.format("/sub/contents/%s/watch", contentId);
     messagingTemplate.convertAndSend(payloadDestination, watchingSessionChange);
@@ -173,32 +148,5 @@ public class WebSocketEventListener {
       }
   }
 
-  private static WatchingSessionChange getWatchingSessionChange(
-      WatchingSession savedWatchingSession, User user, ChangeType changeType, Long watcherCount) {
-    Content content = savedWatchingSession.getContent();
 
-    return new WatchingSessionChange(
-        changeType,
-        new WatchingSessionDto(
-            savedWatchingSession.getId(),
-            savedWatchingSession.getCreatedAt(),
-            new UserSummary(
-                user.getId(),
-                user.getEmail(),
-                user.getProfileImageUrl()
-            ),
-            new ContentSummary(
-                content.getId(),
-                content.getContentType().getType(),
-                content.getTitle(),
-                content.getDescription(),
-                content.getThumbnailUrl(),
-                content.getTags(),
-                content.getAverageRating(),
-                content.getReviewCount()
-            )
-        ),
-        watcherCount
-    );
-  }
 }

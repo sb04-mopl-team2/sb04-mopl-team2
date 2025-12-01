@@ -2,7 +2,6 @@ package com.codeit.mopl.domain.content.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -194,7 +193,7 @@ class ContentServiceTest {
         watcherCount
     );
     // contentMapper.toDto 호출을 넓게 매칭(anyLong)해서 고정된 DTO 반환
-    given(contentMapper.toDto(eq(content))).willReturn(expectedDto);
+    given(contentMapper.toDto(content)).willReturn(expectedDto);
 
     // when
     ContentDto result = contentService.updateContent(contentId, request, null); // thumbnail = null
@@ -206,7 +205,7 @@ class ContentServiceTest {
     assertThat(result.tags()).containsExactly("tagA", "tagB");
 
     verify(contentRepository).findById(contentId);
-    verify(contentMapper).toDto(eq(content));
+    verify(contentMapper).toDto(content);
   }
 
   @Test

@@ -174,6 +174,16 @@ public class DirectMessageServiceTest {
             UserSummary receiver = new UserSummary(withUserId, "test2", "test2");
             UUID conversationId = UUID.randomUUID();
 
+            Conversation conversation = Conversation.builder()
+                    .user(loginUser)
+                    .with(withUser)
+                    .hasUnread(false)
+                    .messages(null)
+                    .build();
+
+            given(conversationRepository.findById(conversationId))
+                    .willReturn(Optional.of(conversation));
+
             DirectMessage directMessage = DirectMessage.builder()
                     .receiver(loginUser)
                     .sender(withUser)
@@ -181,7 +191,7 @@ public class DirectMessageServiceTest {
                     .content("content")
                     .build();
             Pageable pageable = PageRequest.of(0, cond.getLimit() + 1);
-            given(directMessageRepository.findMessagesBefore(any(UUID.class), nullable(LocalDateTime.class), nullable(UUID.class), pageable))
+            given(directMessageRepository.findMessagesBefore(any(UUID.class), nullable(LocalDateTime.class), nullable(UUID.class), any(Pageable.class)))
                     .willReturn(Arrays.asList(directMessage));
             given(directMessageMapper.toDirectMessageDto(directMessage))
                     .willReturn(new DirectMessageDto(
@@ -225,6 +235,16 @@ public class DirectMessageServiceTest {
             setId(withUser, withUserId);
             UUID conversationId = UUID.randomUUID();
 
+            Conversation conversation = Conversation.builder()
+                    .user(loginUser)
+                    .with(withUser)
+                    .hasUnread(false)
+                    .messages(null)
+                    .build();
+
+            given(conversationRepository.findById(conversationId))
+                    .willReturn(Optional.of(conversation));
+
             given(directMessageRepository.findMessagesBefore(
                     any(UUID.class),
                     nullable(LocalDateTime.class),
@@ -257,6 +277,26 @@ public class DirectMessageServiceTest {
                     .isRead(false)
                     .build();
             setId(after1, after1Id);
+
+            UUID loginUserId = UUID.randomUUID();
+            User loginUser = new User();
+            setId(loginUser, loginUserId);
+            UserSummary userA = new UserSummary(loginUserId, "test1", "test1");
+            UUID withUserId = UUID.randomUUID();
+            User withUser = new User();
+            setId(withUser, withUserId);
+            UserSummary userB = new UserSummary(withUserId, "test2", "test2");
+
+            Conversation conversation = Conversation.builder()
+                    .user(loginUser)
+                    .with(withUser)
+                    .hasUnread(false)
+                    .messages(null)
+                    .build();
+
+            given(conversationRepository.findById(conversationId))
+                    .willReturn(Optional.of(conversation));
+
             DirectMessage after2 = DirectMessage.builder()
                     .content("msg2")
                     .isRead(false)
@@ -273,8 +313,8 @@ public class DirectMessageServiceTest {
                             after1Id,
                             conversationId,
                             after1.getCreatedAt(),
-                            null,
-                            null,
+                            userA,
+                            userB,
                             "msg1"
                     ));
             given(directMessageMapper.toDirectMessageDto(after2))
@@ -282,14 +322,14 @@ public class DirectMessageServiceTest {
                             after2Id,
                             conversationId,
                             after2.getCreatedAt(),
-                            null,
-                            null,
+                            userB,
+                            userA,
                             "msg2"
                     ));
             given(directMessageRepository.countAllByConversationId(conversationId))
             .willReturn(2L);
             //when
-            CursorResponseDirectMessageDto result = directMessageService.getDirectMessages(UUID.randomUUID(),conversationId,cond);
+            CursorResponseDirectMessageDto result = directMessageService.getDirectMessages(loginUserId,conversationId,cond);
             //then
             assertThat(result.totalCount()).isEqualTo(2);
             assertThat(result.data().get(0).id()).isEqualTo(after1.getId());

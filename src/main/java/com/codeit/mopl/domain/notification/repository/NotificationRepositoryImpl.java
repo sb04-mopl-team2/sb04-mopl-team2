@@ -36,9 +36,9 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
     where.and(qNotification.user.id.eq(userId));
     where.and(qNotification.status.eq(Status.UNREAD));
 
-
     if (cursor != null && idAfter != null) {
       where.and(buildCursorCondition(cursor, idAfter, sortBy, sortDirection, qNotification));
+      where.and(qNotification.id.notIn(idAfter));
     }
 
     List<OrderSpecifier<?>> orders = buildOrderSpecifiers(sortBy, sortDirection, qNotification);
@@ -53,46 +53,49 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
     return notifications;
   }
 
-  private List<OrderSpecifier<?>> buildOrderSpecifiers(SortBy sortBy, SortDirection sortDirection, QNotification qnotification) {
+  private List<OrderSpecifier<?>> buildOrderSpecifiers(
+      SortBy sortBy,
+      SortDirection sortDirection,
+      QNotification q
+  ) {
     List<OrderSpecifier<?>> orders = new ArrayList<>();
 
     if (sortBy != null && sortDirection != null) {
-      Order order = sortDirection.equals(SortDirection.DESCENDING) ? Order.DESC : Order.ASC;
+      Order order = (sortDirection == SortDirection.DESCENDING)
+          ? Order.DESC
+          : Order.ASC;
+
       switch (sortBy) {
         case CREATED_AT:
-          orders.add(new OrderSpecifier<>(order, qnotification.createdAt));
+          orders.add(new OrderSpecifier<>(order, q.createdAt));
+          orders.add(new OrderSpecifier<>(order, q.id));
           break;
       }
     }
 
-    orders.add(new OrderSpecifier<>(Order.DESC, qnotification.createdAt));
     return orders;
   }
 
-  private BooleanExpression buildCursorCondition(String cursor, UUID idAfter, SortBy sortBy, SortDirection sortDirection, QNotification qnotification) {
+  private BooleanExpression buildCursorCondition(
+      String cursor,
+      UUID idAfter,
+      SortBy sortBy,
+      SortDirection sortDirection,
+      QNotification q
+  ) {
+    if (cursor == null || sortBy == null || sortDirection == null) return null;
 
-    if (sortBy == null || sortDirection == null) {
-      return null;
+    LocalDateTime cursorTime = LocalDateTime.parse(cursor);
+
+    // 커서를 통해 먼저 짜르고
+    // 커서의 값이 같을 경우 아이디로 짜름
+    // createdAt 기준 + id 기준 조합
+    if (sortDirection == SortDirection.DESCENDING) {
+      return q.createdAt.lt(cursorTime)
+          .or(q.createdAt.eq(cursorTime).and(q.id.lt(idAfter)));
+    } else {
+      return q.createdAt.gt(cursorTime)
+          .or(q.createdAt.eq(cursorTime).and(q.id.gt(idAfter)));
     }
-
-    LocalDateTime cursorTime = cursor != null ? LocalDateTime.parse(cursor) : null;
-
-    BooleanExpression condition  = null;
-
-    switch (sortBy) {
-      case CREATED_AT: {
-        if (sortDirection == SortDirection.DESCENDING) {
-          condition = qnotification.createdAt.lt(cursorTime);
-        }
-        else {
-          condition = qnotification.createdAt.gt(cursorTime);
-        }
-        break;
-      }
-
-      default:
-        break;
-    }
-    return condition;
   }
 }

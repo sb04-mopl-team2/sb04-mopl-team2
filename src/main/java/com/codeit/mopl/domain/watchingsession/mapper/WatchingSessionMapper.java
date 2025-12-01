@@ -11,8 +11,7 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface WatchingSessionMapper {
-  @Mapping(source = "user", target = "userSummary")
-  @Mapping(source = "content", target = "contentSummary")
+  @Mapping(source = "user", target = "watcher")
   WatchingSessionDto toDto(WatchingSession watchingSession);
 
   @Mapping(target = "userId", source = "id")

@@ -16,8 +16,8 @@ import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
-import com.codeit.mopl.domain.notification.exception.NotificationForbidden;
-import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
+import com.codeit.mopl.exception.notification.NotificationForbidden;
+import com.codeit.mopl.exception.notification.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
 import com.codeit.mopl.domain.user.entity.User;
@@ -39,6 +39,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceUnitTest {
@@ -60,6 +61,9 @@ class NotificationServiceUnitTest {
 
   @Mock
   private SseService sseService;
+
+  @Mock
+  private StringRedisTemplate stringRedisTemplate;
 
   private UUID userId;
   private String cursor;

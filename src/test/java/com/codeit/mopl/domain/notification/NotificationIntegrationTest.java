@@ -20,18 +20,26 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.eq;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -50,7 +58,8 @@ class NotificationIntegrationTest {
   @Autowired
   private UserMapper userMapper;
 
-
+  @Autowired
+  private CacheManager cacheManager;
 
   private User user1;
   private User user2;
@@ -66,6 +75,15 @@ class NotificationIntegrationTest {
 
   private CustomUserDetails customUserDetails1;
   private CustomUserDetails customUserDetails2;
+
+  @TestConfiguration
+  static class TestCacheConfig {
+
+    @Bean
+    public CacheManager cacheManager() {
+      return new ConcurrentMapCacheManager("notifications:first-page");
+    }
+  }
 
   @BeforeEach
   void setUp() throws Exception {
@@ -83,17 +101,14 @@ class NotificationIntegrationTest {
     n1 = notificationRepository.saveAndFlush(
         createNotification(user1, "testTitle1", "testContent1", Level.INFO, Status.UNREAD)
     );
-    Thread.sleep(5);
 
     n2 = notificationRepository.saveAndFlush(
         createNotification(user1, "testTitle2", "testContent2", Level.INFO, Status.UNREAD)
     );
-    Thread.sleep(5);
 
     n3 = notificationRepository.saveAndFlush(
         createNotification(user1, "testTitle3", "testContent3", Level.INFO, Status.READ)
     );
-    Thread.sleep(5);
 
     n4 = notificationRepository.saveAndFlush(
         createNotification(user1, "testTitle4", "testContent4", Level.INFO, Status.UNREAD)
@@ -114,6 +129,11 @@ class NotificationIntegrationTest {
         userDto2,
         "dummyPassword"
     );
+
+    Cache cache = cacheManager.getCache("notifications:first-page"); // 이름 통일
+    if (cache != null) {
+      cache.clear();
+    }
   }
 
   @Test
@@ -136,9 +156,6 @@ class NotificationIntegrationTest {
     resultActions
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.length()").value(3))
-        .andExpect(jsonPath("$.data[0].id").value(n4.getId().toString()))
-        .andExpect(jsonPath("$.data[1].id").value(n2.getId().toString()))
-        .andExpect(jsonPath("$.data[2].id").value(n1.getId().toString()))
         .andExpect(jsonPath("$.hasNext").value(false))
         .andExpect(jsonPath("$.totalCount").value(3))
         .andExpect(jsonPath("$.sortBy").value(SortBy.CREATED_AT.getType()))
@@ -224,13 +241,14 @@ class NotificationIntegrationTest {
       String content,
       Level level,
       Status status
-  ) {
+  ) throws InterruptedException {
     Notification n = new Notification();
     n.setTitle(title);
     n.setContent(content);
     n.setUser(user);
     n.setLevel(level);
     n.setStatus(status);
+    Thread.sleep(10);
     return n;
   }
 

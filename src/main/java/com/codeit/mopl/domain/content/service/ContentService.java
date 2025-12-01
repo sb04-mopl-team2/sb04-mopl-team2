@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.content.service;
 
 import com.codeit.mopl.domain.content.dto.request.ContentCreateRequest;
 import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
+import com.codeit.mopl.domain.content.dto.request.ContentUpdateRequest;
 import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
@@ -24,57 +25,111 @@ import org.springframework.web.multipart.MultipartFile;
 public class ContentService {
 
   private final ContentRepository contentRepository;
-
   private final ContentMapper contentMapper;
 
-  //콘텐츠 수동등록
   @Transactional
   public ContentDto createContent(@Valid ContentCreateRequest request, MultipartFile thumbnail) {
-    log.info("[콘텐츠] 콘텐츠 생성 서비스 시작 title = {}", request.title());
+    log.info("[콘텐츠 생성 시작] title={}", request.title());
+    log.debug("[콘텐츠 생성 상세] request={}, hasThumbnail={}", request, thumbnail != null);
 
     Content content = contentMapper.fromCreateRequest(request);
 
     String thumbnailUrl = uploadThumbnail(thumbnail);
     content.setThumbnailUrl(thumbnailUrl);
 
-    Content saveContent = contentRepository.save(content);
+    Content savedContent = contentRepository.save(content);
+    ContentDto dto = contentMapper.toDto(savedContent);
 
-    Long watcherCount = getWatcherCount();
-
-    ContentDto dto = contentMapper.toDto(saveContent, watcherCount);
-    log.info("[콘텐츠] 콘텐츠 서비스 완료 id = {}, title = {}", dto.id(), dto.title());
+    log.info("[콘텐츠 생성 완료] id={}, title={}", dto.id(), dto.title());
     return dto;
   }
 
-  //콘텐츠 목록조회
   @Transactional(readOnly = true)
   public CursorResponseContentDto findContents(ContentSearchRequest request) {
-    return contentRepository.findContents(request.toCondition());
+    log.info("[콘텐츠 목록 조회 시작] request={}", request);
+
+    CursorResponseContentDto response = contentRepository.findContents(request.toCondition());
+
+    log.info("[콘텐츠 목록 조회 완료] resultCount={}",
+        response.data() != null ? response.data().size() : 0);
+    return response;
   }
 
-  //콘텐츠 단건조회
   @Transactional(readOnly = true)
   public ContentDto findContent(UUID contentId) {
+    log.info("[콘텐츠 단건 조회 시작] contentId={}", contentId);
+
     Content content = contentRepository.findById(contentId).orElseThrow(
-        () ->  new ContentNotFoundException(ContentErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId))
+        () -> {
+          log.warn("[콘텐츠 조회 실패] 존재하지 않는 콘텐츠 contentId={}", contentId);
+          return new ContentNotFoundException(ContentErrorCode.CONTENT_NOT_FOUND,
+              Map.of("contentId", contentId));
+        }
     );
 
-    Long watcherCount = getWatcherCount();
-    return contentMapper.toDto(content, watcherCount);
+     ContentDto dto = contentMapper.toDto(content);
+
+    log.info("[콘텐츠 단건 조회 완료] id={}, title={}", dto.id(), dto.title());
+    return dto;
   }
 
-  //redis로 실시간 세션 관리 매서드 기능 완성후 추가 구현예정
+  @Transactional
+  public ContentDto updateContent(UUID contentId, @Valid ContentUpdateRequest request,
+      MultipartFile thumbnail) {
+    log.info("[콘텐츠 수정 시작] contentId={}, title={}", contentId, request.title());
+    log.debug("[콘텐츠 수정 상세] request={}, hasThumbnail={}", request, thumbnail != null);
+
+    Content content = contentRepository.findById(contentId).orElseThrow(
+        () -> {
+          log.warn("[콘텐츠 수정 실패] 존재하지 않는 콘텐츠 contentId={}", contentId);
+          return new ContentNotFoundException(ContentErrorCode.CONTENT_NOT_FOUND,
+              Map.of("contentId", contentId));
+        }
+    );
+
+    content.update(request);
+
+    if (thumbnail != null && !thumbnail.isEmpty()) {
+      String thumbnailUrl = uploadThumbnail(thumbnail);
+      content.setThumbnailUrl(thumbnailUrl);
+      log.debug("[콘텐츠 썸네일 업데이트] contentId={}, thumbnailUrl={}", contentId, thumbnailUrl);
+    }
+    ContentDto dto = contentMapper.toDto(content);
+
+    log.info("[콘텐츠 수정 완료] id={}, title={}", dto.id(), dto.title());
+    return dto;
+  }
+
+  @Transactional
+  public void deleteContent(UUID contentId) {
+    log.info("[콘텐츠 삭제 시작] contentId={}", contentId);
+
+    Content content = contentRepository.findById(contentId).orElseThrow(
+        () -> {
+          log.warn("[콘텐츠 삭제 실패] 존재하지 않는 콘텐츠 contentId={}", contentId);
+          return new ContentNotFoundException(ContentErrorCode.CONTENT_NOT_FOUND,
+              Map.of("contentId", contentId));
+        }
+    );
+
+    contentRepository.delete(content);
+
+    log.info("[콘텐츠 삭제 완료] contentId={}", contentId);
+  }
+
+  // Redis로 실시간 세션 관리 메서드 기능 완성 후 추가 구현 예정
   private Long getWatcherCount() {
     return 0L;
   }
 
-  // S3 파일 업로드 이미지 생성메서드 기능 완성 후 리팩토링 예정
+  // S3 파일 업로드 이미지 생성 메서드 기능 완성 후 리팩토링 예정
   private String uploadThumbnail(MultipartFile thumbnail) {
     if (thumbnail == null || thumbnail.isEmpty()) {
+      log.debug("[썸네일 업로드 스킵] thumbnail이 없음");
       return null;
     }
-
     String imageUrl = "thumbnailUrl";
+    log.debug("[썸네일 업로드 완료] imageUrl={}", imageUrl);
     return imageUrl;
   }
 }

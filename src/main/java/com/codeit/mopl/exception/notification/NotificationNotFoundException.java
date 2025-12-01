@@ -1,6 +1,5 @@
-package com.codeit.mopl.domain.notification.exception;
+package com.codeit.mopl.exception.notification;
 
-import com.codeit.mopl.exception.notification.NotificationErrorCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 

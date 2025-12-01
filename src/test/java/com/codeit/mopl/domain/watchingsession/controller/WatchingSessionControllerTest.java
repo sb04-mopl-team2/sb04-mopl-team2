@@ -15,6 +15,7 @@ import com.codeit.mopl.domain.user.service.UserService;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
+import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import com.codeit.mopl.util.WithCustomMockUser;
 import com.codeit.mopl.domain.watchingsession.dto.CursorResponseWatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
@@ -26,8 +27,7 @@ import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.exception.watchingsession.ContentNotFoundException;
 import com.codeit.mopl.security.CustomUserDetailsService;
 import com.codeit.mopl.security.config.TestSecurityConfig;
-import com.codeit.mopl.security.jwt.JwtRegistry;
-import com.codeit.mopl.security.jwt.JwtTokenProvider;
+import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +39,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -108,8 +106,8 @@ public class WatchingSessionControllerTest {
 
     // then
     resultActions.andExpect(jsonPath("$.id").value(watchingSessionId.toString()))
-        .andExpect(jsonPath("$.userSummary.userId").value(watcherId.toString()))
-        .andExpect(jsonPath("$.userSummary.name").value("test"))
+        .andExpect(jsonPath("$.watcher.userId").value(watcherId.toString()))
+        .andExpect(jsonPath("$.watcher.name").value("test"))
         .andExpect(status().isOk());
   }
 
@@ -153,7 +151,7 @@ public class WatchingSessionControllerTest {
         List.of(watchingSessionDto),
         "nextCursor_123",
         userId,true,1L,
-        SortBy.CREATED_AT, SortDirection.ASCENDING
+        SortBy.CREATED_AT.getType(), SortDirection.ASCENDING
     );
     when(watchingSessionService.getWatchingSessions(
         any(UUID.class), eq(contentId),

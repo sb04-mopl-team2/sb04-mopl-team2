@@ -1,11 +1,10 @@
 package com.codeit.mopl.security;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -15,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class TempPasswordAuthenticationProvider implements AuthenticationProvider {
 
@@ -27,14 +27,21 @@ public class TempPasswordAuthenticationProvider implements AuthenticationProvide
         String username = authentication.getName();
         String rawPassword = (String) authentication.getCredentials();
 
-        String encodedTempPw = redisTemplate.opsForValue().getAndDelete(username);
+        String encodedTempPw = null;
+
+        try {
+            encodedTempPw = redisTemplate.opsForValue().get(username);
+        } catch (Exception e) {
+            log.error("[Redis] Redis가 정상적으로 동작하지 않고 있습니다.");
+            return null;
+        }
 
         if (encodedTempPw == null) {
             return null;
         }
 
         if (!passwordEncoder.matches(rawPassword, encodedTempPw)) {
-            throw new BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
+            throw new TempPasswordBadCredentialsException("임시 비밀번호가 설정된 계정입니다. 임시 비밀번호를 확인해 주세요.");
         }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -51,5 +58,11 @@ public class TempPasswordAuthenticationProvider implements AuthenticationProvide
     @Override
     public boolean supports(Class<?> authentication) {
         return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);
+    }
+
+    public class TempPasswordBadCredentialsException extends AccountStatusException {
+        public TempPasswordBadCredentialsException(String msg) {
+            super(msg);
+        }
     }
 }

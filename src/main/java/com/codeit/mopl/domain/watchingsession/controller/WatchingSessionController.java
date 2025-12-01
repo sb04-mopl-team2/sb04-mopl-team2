@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.watchingsession.controller;
 
+import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.watchingsession.service.WatchingSessionService;
 import com.codeit.mopl.domain.watchingsession.dto.CursorResponseWatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
@@ -28,6 +29,10 @@ public class WatchingSessionController {
 
   private final WatchingSessionService watchingSessionService;
 
+  /**
+   * 조회용 컨트롤러 엔드포인트
+   */
+
   // 특정 사용자의 시청 목록 조회 (nullable)
   @GetMapping("/users/{watcherId}/watching-sessions")
   public ResponseEntity<WatchingSessionDto> getWatchingSessionPerUser(
@@ -47,6 +52,10 @@ public class WatchingSessionController {
       @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
     log.info("[실시간 세션] 특정 콘텐츠의 시청 세션 목록 요청 수신. contentId = {}", contentId);
+    UserDto user = userDetails.getUser();
+
+    watchingSessionService.joinSession(user.id(), contentId.toString());
+
     CursorResponseWatchingSessionDto response = watchingSessionService.getWatchingSessions(
         userDetails.getUser().id(),
         contentId,

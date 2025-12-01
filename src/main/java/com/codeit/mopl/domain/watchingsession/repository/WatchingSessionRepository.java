@@ -11,7 +11,7 @@ public interface WatchingSessionRepository extends JpaRepository<WatchingSession
 
   Long countByContentId(UUID contentId);
 
-  void deleteByContentId(UUID contentId);
+  Optional<WatchingSession> findByUserIdAndContentId(UUID userId, UUID contentId);
 
   void deleteByUserId(UUID userId);
 }

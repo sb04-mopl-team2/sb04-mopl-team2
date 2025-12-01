@@ -1,5 +1,6 @@
 package com.codeit.mopl.mail.service;
 
+import com.codeit.mopl.mail.utils.RedisStoreUtils;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,13 +13,8 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.concurrent.TimeUnit;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,6 +31,9 @@ public class MailServiceTest {
     @Mock
     ValueOperations<String, String> valueOps;
 
+    @Mock
+    RedisStoreUtils redisStoreUtils;
+
     @InjectMocks
     MailService mailService;
 
@@ -48,8 +47,6 @@ public class MailServiceTest {
 
         MimeMessage mimeMessage = new MimeMessage((jakarta.mail.Session) null);
         given(javaMailSender.createMimeMessage()).willReturn(mimeMessage);
-        given(passwordEncoder.encode(tempPw)).willReturn(encodedPw);
-        given(redisTemplate.opsForValue()).willReturn(valueOps);
 
         // when
         mailService.sendMail(email, tempPw);

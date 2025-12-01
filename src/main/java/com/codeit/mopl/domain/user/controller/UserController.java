@@ -3,10 +3,7 @@ package com.codeit.mopl.domain.user.controller;
 import com.codeit.mopl.domain.user.dto.request.*;
 import com.codeit.mopl.domain.user.dto.response.CursorResponseUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
-import com.codeit.mopl.domain.user.entity.ImageContentType;
 import com.codeit.mopl.domain.user.service.UserService;
-import com.codeit.mopl.exception.user.NotImageContentException;
-import com.codeit.mopl.exception.user.UserErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +16,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -79,7 +75,7 @@ public class UserController {
         log.info("[사용자 관리] 유저 목록 조회 호출");
         CursorResponseUserDto response = userService.getAllUsers(request);
         log.info("[사용자 관리] 유저 목록 조회 응답 totalCount = {}", response.totalCount());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PatchMapping(value = "/{userId}",consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
@@ -90,8 +86,6 @@ public class UserController {
         log.info("[사용자 관리] 유저 프로필 변경 호출 userId = {}", userId);
         UserDto response = userService.updateProfile(userId, request, profileImage);
         log.info("[사용자 관리] 유저 프로필 변경 응답 userId = {}", response.id());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
-
-
 }

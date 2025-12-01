@@ -16,7 +16,7 @@ public record CursorResponseWatchingSessionDto(
     @NotNull
     Long totalCount,
     @NotNull
-    SortBy sortBy,
+    String sortBy,
     @NotNull
     SortDirection sortDirection
 ) {

@@ -77,8 +77,7 @@ public class WebSocketEventListener {
       watchingSessionRepository.deleteByUserId(user.getId());
 
       //실시간 시청자 숫자증가 업데이트
-      content.setWatcherCount(content.getWatcherCount() + 1);
-      contentRepository.save(content);
+      contentRepository.incrementWatcherCount(content.getId());
 
       // create new WatchingSession and save to repository
       WatchingSession watchingSession = new WatchingSession();
@@ -126,8 +125,7 @@ public class WebSocketEventListener {
 
     //실시간 시청자 숫자감소 업데이트
     Content content = watchingSession.getContent();
-    content.setWatcherCount(content.getWatcherCount() - 1);
-    contentRepository.save(content);
+    contentRepository.decrementWatcherCount(content.getId());
 
     // payload
     WatchingSessionChange watchingSessionChange = getWatchingSessionChange(

@@ -54,6 +54,8 @@ public class WebSocketEventListener {
     String sessionId = accessor.getSessionId(); // websocket connection identifier
     String destination = accessor.getDestination();
 
+    log.info("[WebsocketEventListener] handleSessionSubscribe 시작 - sessionId: {}, destination: {}", sessionId, destination);
+
     if (destination == null) {
       log.error("[WebsocketEventListener] SessionSubscribeEvent: destination이 비었습니다!");
       return;
@@ -61,7 +63,7 @@ public class WebSocketEventListener {
 
     // extract contentId
     String contentId;
-    if (destination.startsWith("/sub/contents/") && destination.endsWith("watch")) {
+    if (destination.startsWith("/sub/contents/") && destination.endsWith("chat")) {
       contentId = getContentId(destination);
     } else {
       contentId = null;
@@ -81,7 +83,7 @@ public class WebSocketEventListener {
       watchingSession.setUser(user);
       watchingSession.setContent(content);
       WatchingSession savedWatchingSession = watchingSessionRepository.save(watchingSession);
-
+      log.info("[WebsocketEventListener] DB 저장 성공: savedWatchingSessionId={}", savedWatchingSession.getId());
       // add to websocket session attributes
       accessor.getSessionAttributes().put("watchingSessionId", savedWatchingSession.getId());
       accessor.getSessionAttributes().put("watchingContentId", contentId);
@@ -94,6 +96,10 @@ public class WebSocketEventListener {
       // server -> client
       String payloadDestination = String.format("/sub/contents/%s/watch", contentId);
       messagingTemplate.convertAndSend(payloadDestination, watchingSessionChange);
+      log.info("[WebsocketEventListener] handleSessionSubscribe 완료 - userId: {}, contentId: {}, watcherCount: {}",
+          user.getId(), contentId, watcherCount);
+    } else {
+      log.info("[WebsocketEventListener] handleSessionSubscribe 완료 - contentId 없음");
     }
   }
 
@@ -105,6 +111,9 @@ public class WebSocketEventListener {
 
     UUID watchingSessionId = (UUID) accessor.getSessionAttributes().get("watchingSessionId");
     String contentId = (String) accessor.getSessionAttributes().get("watchingContentId");
+
+    log.info("[WebsocketEventListener] handleSessionDisconnect 시작 - sessionId: {}, watchingSessionId: {}, contentId: {}",
+        sessionId, watchingSessionId, contentId);
 
     if (watchingSessionId == null || contentId == null) {
       log.warn("[WebsocketEventListener] SessionDisconnectEvent: sessionId = {}, contentId = {}", sessionId, contentId);
@@ -126,10 +135,15 @@ public class WebSocketEventListener {
 
     String payloadDestination = String.format("/sub/contents/%s/watch", contentId);
     messagingTemplate.convertAndSend(payloadDestination, watchingSessionChange);
+
+    log.info("[WebsocketEventListener] handleSessionDisconnect 완료 - userId: {}, contentId: {}, watcherCount: {}",
+        user.getId(), contentId, watcherCount);
   }
 
   // ==================== helper methods ====================
   private User getUser(StompHeaderAccessor accessor, String sessionId) {
+    log.info("[WebsocketEventListener] getUser 시작 - sessionId: {}", sessionId);
+
     Authentication authentication = (Authentication) accessor.getUser();
     if (authentication == null) {
       log.error("[WebsocketEventListener] getUser: 세션 {}에 대해 사용자가 인증되지 않았습니다.", sessionId);
@@ -138,12 +152,17 @@ public class WebSocketEventListener {
 
     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
     UUID userId = userDetails.getUser().id();
-    return userRepository.findById(userId)
+    User user = userRepository.findById(userId)
         .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
+
+    log.info("[WebsocketEventListener] getUser 완료 - userId: {}", userId);
+    return user;
   }
 
   private String getContentId(String destination) {
-      try {
+    log.info("[WebsocketEventListener] getContentId 시작 - destination: {}", destination);
+
+    try {
         String[] parts = destination.split("/");
         String contentId = parts[3];
         log.info("[WebSocketEventListener] 컨텐트 아이디 파싱 완료: contentId={}", contentId);

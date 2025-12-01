@@ -8,7 +8,7 @@ import java.util.UUID;
 public record WatchingSessionDto(
     UUID id,
     LocalDateTime createdAt,
-    UserSummary userSummary,
+    UserSummary watcher,
     ContentSummary contentSummary
 ) {
 

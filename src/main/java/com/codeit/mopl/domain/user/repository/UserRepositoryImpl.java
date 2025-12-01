@@ -1,14 +1,12 @@
 package com.codeit.mopl.domain.user.repository;
 
 import com.codeit.mopl.domain.user.dto.request.CursorRequestUserDto;
-import com.codeit.mopl.domain.user.dto.response.CursorResponseUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;

@@ -7,21 +7,24 @@ import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.event.UserRoleUpdateEvent;
 import com.codeit.mopl.exception.user.NotImageContentException;
 import com.codeit.mopl.exception.user.UserEmailAlreadyExistsException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.s3.S3Storage;
-import com.codeit.mopl.security.jwt.JwtRegistry;
+import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -57,6 +60,12 @@ public class UserServiceTest {
 
     @Mock
     private JwtRegistry jwtRegistry;
+
+    @Mock
+    private StringRedisTemplate redisTemplate;
+
+    @Mock
+    private ApplicationEventPublisher publisher;
 
     @InjectMocks
     private UserService userService;
@@ -138,6 +147,7 @@ public class UserServiceTest {
         UserRoleUpdateRequest request = new UserRoleUpdateRequest(Role.ADMIN);
         User findUser = new User("test@example.com","password","test");  // new User는 Default Role.USER
         given(userRepository.findById(userId)).willReturn(Optional.of(findUser));
+        willDoNothing().given(publisher).publishEvent(any(UserRoleUpdateEvent.class));
 
         // when
         userService.updateRole(userId, request);
@@ -290,6 +300,7 @@ public class UserServiceTest {
         User user = new User("test@test.com","password","test");
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(passwordEncoder.encode(request.password())).willReturn("newEncodedPassword");
+        given(redisTemplate.delete(user.getEmail())).willReturn(false);
 
         // when
         userService.changePassword(userId,request);

@@ -4,22 +4,28 @@ import com.codeit.mopl.domain.user.dto.request.*;
 import com.codeit.mopl.domain.user.dto.response.CursorResponseUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.ImageContentType;
+import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.event.UserRoleUpdateEvent;
 import com.codeit.mopl.exception.user.NotImageContentException;
-import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserEmailAlreadyExistsException;
+import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.s3.S3Storage;
-import com.codeit.mopl.security.jwt.JwtRegistry;
+import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,13 +47,14 @@ public class UserService {
     private final ApplicationEventPublisher publisher;
     private final JwtRegistry jwtRegistry;
     private final S3Storage s3Storage;
+    private final StringRedisTemplate redisTemplate;
 
     @Transactional
+    @CachePut(value = "users", key = "#result.id")
     public UserDto create(UserCreateRequest request) {
         log.info("[사용자 관리] 유저 생성 실행 email = {}",request.email());
-        validateEmail(request.email());
+        checkEmailDuplicate(request.email());
         String encodedPassword = passwordEncoder.encode(request.password());
-
         User user = new User(request.email(), encodedPassword, request.name());
         userRepository.save(user);
         log.info("[사용자 관리] 유저 생성 완료 userEmail = {}", user.getEmail());
@@ -69,9 +76,18 @@ public class UserService {
         User findUser = getValidUserByUserId(userId);
         String encodedNewPassword = passwordEncoder.encode(request.password());
         findUser.updatePassword(encodedNewPassword);
+        try{
+            if (redisTemplate.delete(findUser.getEmail())) {
+                log.debug("[Redis] 임시 비밀번호 삭제 & 비밀번호 변경 완료");
+            }
+        } catch (Exception e){
+            log.warn("[Redis] 임시 비밀번호 삭제 실패 / 비밀번호는 변경 완료 email = {}", findUser.getEmail());
+        }
         log.info("[사용자 관리] 유저 비밀번호 변경 완료 userId = {}", userId);
     }
 
+    @Transactional(readOnly = true)
+    @Cacheable(value = "users", key = "#userId")
     public UserDto findUser(UUID userId) {
         log.info("[사용자 관리] 회원 정보 조회 동작 userId = {}", userId);
         User findUser = getValidUserByUserId(userId);
@@ -81,20 +97,22 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = "users", key = "#userId", beforeInvocation = false)
     public void updateRole(UUID userId, UserRoleUpdateRequest request) {
         log.info("[사용자 관리] 회원 권한 수정 동작 userId = {}", userId);
         User findUser = getValidUserByUserId(userId);
+        Role beforeRole = findUser.getRole();
         log.debug("[사용자 관리] 회원 권한 수정 {} -> {}", findUser.getRole(), request.role());
         findUser.updateRole(request.role());
 
         removeToken(findUser.getId());
 
-        // **추후 이벤트가 정해지면 수정하겠습니다**
-        // publisher.publishEvent(new UserRoleUpdateEvent(userMapper.toDto(findUser)));
+        publisher.publishEvent(new UserRoleUpdateEvent(UUID.randomUUID(), userId, beforeRole, request.role()));
         log.info("[사용자 관리] 회원 권한 수정 완료 userId = {}, Role = {}", userId, request.role());
     }
 
     @Transactional
+    @CacheEvict(value = "users", key = "#userId")
     public void updateLock(UUID userId, UserLockUpdateRequest request) {
         log.info("[사용자 관리] 회원 잠금상태 변경 동작 userId = {}", userId);
         User findUser = getValidUserByUserId(userId);
@@ -141,6 +159,7 @@ public class UserService {
     }
 
     @Transactional
+    @CachePut(value = "users", key = "#result.id")
     public UserDto updateProfile(UUID userId, UserUpdateRequest request, MultipartFile profileImage) {
         log.info("[사용자 관리] 유저 프로필 업데이트 실행 userId = {}", userId);
         User findUser = getValidUserByUserId(userId);
@@ -164,7 +183,7 @@ public class UserService {
         return userMapper.toDto(findUser);
     }
 
-    private void validateEmail(String email) {
+    private void checkEmailDuplicate(String email) {
         if (userRepository.existsByEmail(email)) {
             log.warn("[사용자 관리] 이메일 중복 가입 email = {}", email);
             throw new UserEmailAlreadyExistsException(UserErrorCode.EMAIL_ALREADY_EXISTS, Map.of("email", email));

@@ -6,9 +6,11 @@ import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.auth.InvalidTokenException;
+import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.mail.service.MailService;
 import com.codeit.mopl.mail.utils.PasswordUtils;
-import com.codeit.mopl.security.jwt.JwtTokenProvider;
+import com.codeit.mopl.mail.utils.RedisStoreUtils;
+import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import jakarta.mail.MessagingException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,13 +21,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.*;
+import static org.mockito.BDDMockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +41,8 @@ public class AuthServiceTest {
     private PasswordUtils passwordUtils;
     @Mock
     private MailService mailService;
+    @Mock
+    private RedisStoreUtils redisStoreUtils;
 
     @InjectMocks
     private AuthService authService;
@@ -49,8 +54,9 @@ public class AuthServiceTest {
         ResetPasswordRequest request = new ResetPasswordRequest("test@test.com");
         User findUser = new User("test@test.com","password","test");
         String tempPw = "TempPW1234";
-        given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(findUser));
+        given(userRepository.existsByEmail("test@test.com")).willReturn(true);
         given(passwordUtils.makeTempPassword()).willReturn(tempPw);
+        doNothing().when(redisStoreUtils).storeTempPassword("test@test.com", tempPw);
         doNothing().when(mailService).sendMail("test@test.com",tempPw);
 
         // when
@@ -66,12 +72,16 @@ public class AuthServiceTest {
         // given
         ResetPasswordRequest request = new ResetPasswordRequest("test@test.com");
         String tempPw = "TempPW1234";
-        given(userRepository.findByEmail(request.email())).willReturn(Optional.empty());
-
+        given(userRepository.existsByEmail(request.email())).willReturn(false);
         // when
-        authService.resetPassword(request);
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () ->
+                authService.resetPassword(request)
+        );
 
         // then
+        assertEquals(HttpStatus.NOT_FOUND, exception.getErrorCode().getStatus());
+        then(passwordUtils).should(times(0)).makeTempPassword();
+        then(redisStoreUtils).should(times(0)).storeTempPassword(request.email(),tempPw);
         then(mailService).should(times(0)).sendMail(request.email(), tempPw);
     }
 

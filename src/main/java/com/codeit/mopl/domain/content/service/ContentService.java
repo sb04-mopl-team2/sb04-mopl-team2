@@ -38,9 +38,7 @@ public class ContentService {
     content.setThumbnailUrl(thumbnailUrl);
 
     Content savedContent = contentRepository.save(content);
-    Long watcherCount = getWatcherCount();
-
-    ContentDto dto = contentMapper.toDto(savedContent, watcherCount);
+    ContentDto dto = contentMapper.toDto(savedContent);
 
     log.info("[콘텐츠 생성 완료] id={}, title={}", dto.id(), dto.title());
     return dto;
@@ -69,8 +67,7 @@ public class ContentService {
         }
     );
 
-    Long watcherCount = getWatcherCount();
-    ContentDto dto = contentMapper.toDto(content, watcherCount);
+     ContentDto dto = contentMapper.toDto(content);
 
     log.info("[콘텐츠 단건 조회 완료] id={}, title={}", dto.id(), dto.title());
     return dto;
@@ -97,9 +94,7 @@ public class ContentService {
       content.setThumbnailUrl(thumbnailUrl);
       log.debug("[콘텐츠 썸네일 업데이트] contentId={}, thumbnailUrl={}", contentId, thumbnailUrl);
     }
-
-    Long watcherCount = getWatcherCount();
-    ContentDto dto = contentMapper.toDto(content, watcherCount);
+    ContentDto dto = contentMapper.toDto(content);
 
     log.info("[콘텐츠 수정 완료] id={}, title={}", dto.id(), dto.title());
     return dto;

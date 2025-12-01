@@ -76,6 +76,9 @@ public class WebSocketEventListener {
       // disconnect any other watching session for user (1 session per user)
       watchingSessionRepository.deleteByUserId(user.getId());
 
+      //실시간 시청자 숫자증가 업데이트
+      contentRepository.incrementWatcherCount(content.getId());
+
       // create new WatchingSession and save to repository
       WatchingSession watchingSession = new WatchingSession();
       watchingSession.setUser(user);
@@ -119,6 +122,10 @@ public class WebSocketEventListener {
         );
     watchingSessionRepository.deleteById(watchingSessionId);
     long watcherCount = watchingSessionRepository.countByContentId(UUID.fromString(contentId));
+
+    //실시간 시청자 숫자감소 업데이트
+    Content content = watchingSession.getContent();
+    contentRepository.decrementWatcherCount(content.getId());
 
     // payload
     WatchingSessionChange watchingSessionChange = getWatchingSessionChange(

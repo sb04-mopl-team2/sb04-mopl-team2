@@ -2,8 +2,6 @@ package com.codeit.mopl.domain.content.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -17,8 +15,6 @@ import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
-import com.codeit.mopl.domain.content.entity.SortBy;
-import com.codeit.mopl.domain.content.entity.SortDirection;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import java.util.Arrays;
@@ -82,7 +78,7 @@ class ContentServiceTest {
 
     given(contentMapper.fromCreateRequest(request)).willReturn(content);
     given(contentRepository.save(any(Content.class))).willReturn(savedContent);
-    given(contentMapper.toDto(savedContent, 0L)).willReturn(contentDto);
+    given(contentMapper.toDto(savedContent)).willReturn(contentDto);
 
     // when
     ContentDto result = contentService.createContent(request, thumbnail);
@@ -100,8 +96,8 @@ class ContentServiceTest {
     ContentSearchRequest request = new ContentSearchRequest();
     request.setCursor("cursor123");
     request.setLimit(10);
-    request.setSortBy(SortBy.CREATED_AT);
-    request.setSortDirection(SortDirection.ASCENDING);
+    request.setSortBy("createdAt");
+    request.setSortDirection("ASCENDING");
 
     CursorResponseContentDto mockedResponse =
         new CursorResponseContentDto(
@@ -149,7 +145,7 @@ class ContentServiceTest {
     );
 
     given(contentRepository.findById(contentId)).willReturn(Optional.of(content));
-    given(contentMapper.toDto(content, 0L)).willReturn(contentDto);
+    given(contentMapper.toDto(content)).willReturn(contentDto);
 
     // when
     ContentDto result = contentService.findContent(contentId);
@@ -160,7 +156,7 @@ class ContentServiceTest {
     assertThat(result.title()).isEqualTo("테스트 컨텐츠");
 
     verify(contentRepository).findById(contentId);
-    verify(contentMapper).toDto(content, 0L);
+    verify(contentMapper).toDto(content);
   }
 
   @Test
@@ -197,7 +193,7 @@ class ContentServiceTest {
         watcherCount
     );
     // contentMapper.toDto 호출을 넓게 매칭(anyLong)해서 고정된 DTO 반환
-    given(contentMapper.toDto(eq(content), anyLong())).willReturn(expectedDto);
+    given(contentMapper.toDto(content)).willReturn(expectedDto);
 
     // when
     ContentDto result = contentService.updateContent(contentId, request, null); // thumbnail = null
@@ -209,7 +205,7 @@ class ContentServiceTest {
     assertThat(result.tags()).containsExactly("tagA", "tagB");
 
     verify(contentRepository).findById(contentId);
-    verify(contentMapper).toDto(eq(content), anyLong());
+    verify(contentMapper).toDto(content);
   }
 
   @Test

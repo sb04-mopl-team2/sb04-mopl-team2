@@ -1,27 +1,17 @@
 package com.codeit.mopl.event.watchingsession;
 
-import com.codeit.mopl.domain.content.dto.response.ContentSummary;
-import com.codeit.mopl.domain.content.entity.Content;
-import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
-import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
-import com.codeit.mopl.domain.watchingsession.entity.enums.ChangeType;
-import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSessionChange;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.mopl.domain.watchingsession.service.WatchingSessionService;
-import com.codeit.mopl.exception.content.ContentErrorCode;
-import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.exception.watchingsession.UserNotAuthenticatedException;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
-import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
 import com.codeit.mopl.security.CustomUserDetails;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +20,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 
@@ -101,7 +90,6 @@ public class WebSocketEventListener {
       log.warn("[WebsocketEventListener] SessionDisconnectEvent: watchingSessionId = {}, contentId = {}", watchingSessionId, contentId);
       return;
     }
-    // get user, watchingsession, watcherCount
     User user = getUser(accessor, sessionId);
     log.info("[WebsocketEventListener] SessionDisconnectEvent: 서비스에서 DB 삭제 시작: watchingSessionId={}", watchingSessionId);
     WatchingSessionChange watchingSessionChange = service.leaveSession(user, watchingSessionId, contentId);
@@ -147,6 +135,5 @@ public class WebSocketEventListener {
         throw new IllegalArgumentException("컨텐츠 아이디 파싱 오류", e);
       }
   }
-
 
 }

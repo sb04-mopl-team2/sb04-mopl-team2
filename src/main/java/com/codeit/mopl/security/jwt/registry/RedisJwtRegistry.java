@@ -8,9 +8,11 @@ import com.codeit.mopl.security.jwt.JwtInformation;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.provider.RedisLockProvider;
 import com.nimbusds.jose.JOSEException;
+import io.lettuce.core.RedisConnectionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
@@ -46,24 +48,57 @@ public class RedisJwtRegistry implements JwtRegistry {
         String userKey = getUserKey(jwtInformation.getUserDto().id());
         String lockKey = jwtInformation.getUserDto().id().toString();
 
-        redisLockProvider.acquireLock(lockKey);
+        boolean lockAcquired = false;
+
         try {
-            Object oldestToken = redisTemplate.opsForValue().get(userKey);
-            if (oldestToken instanceof JwtInformation oldToken) {
-                removeTokenIndex(oldToken.getAccessToken(), oldToken.getRefreshToken());
+            try {
+                redisLockProvider.acquireLock(lockKey);
+                lockAcquired = true;
+            } catch (Exception e) {
+                if (isRedisDown(e)) {
+                    log.error("[Redis] Redis가 동작 중이 아님, lock 획득 실패 userId={}",
+                            jwtInformation.getUserDto().id(), e);
+                    return;
+                }
+                throw e;
             }
 
-            redisTemplate.opsForValue().set(userKey, jwtInformation);
-            redisTemplate.expire(userKey, DEFAULT_TTL);
-            addTokenIndex(jwtInformation.getAccessToken(), jwtInformation.getRefreshToken());
+            try {
+                Object oldestToken = redisTemplate.opsForValue().get(userKey);
+                if (oldestToken instanceof JwtInformation oldToken) {
+                    removeTokenIndex(oldToken.getAccessToken(), oldToken.getRefreshToken());
+                }
+
+                redisTemplate.opsForValue().set(userKey, jwtInformation);
+                redisTemplate.expire(userKey, DEFAULT_TTL);
+                addTokenIndex(jwtInformation.getAccessToken(), jwtInformation.getRefreshToken());
+
+            } catch (Exception e) {
+                if (isRedisDown(e)) {
+                    log.error("[Redis] Redis가 동작 중이 아님. userId={}",
+                            jwtInformation.getUserDto().id(), e);
+                } else {
+                    throw e;
+                }
+            }
+
+        } finally {
+            if (lockAcquired) {
+                try {
+                    redisLockProvider.releaseLock(lockKey);
+                } catch (Exception e) {
+                    if (isRedisDown(e)) {
+                        log.error("[Redis] Redis가 동작 중이 아님, lock 해제 실패 userId={}",
+                                jwtInformation.getUserDto().id(), e);
+                    } else {
+                        throw e;
+                    }
+                }
+            }
             eventPublisher.publishEvent(
                     new UserLogInOutEvent(jwtInformation.getUserDto().id(), true)
             );
-
-        } finally {
-            redisLockProvider.releaseLock(lockKey);
         }
-
     }
 
     @Override
@@ -71,38 +106,103 @@ public class RedisJwtRegistry implements JwtRegistry {
         String userKey = getUserKey(userId);
         String lockKey = userId.toString();
 
-        redisLockProvider.acquireLock(lockKey);
-        try {
-            Object objToken = redisTemplate.opsForValue().get(userKey);
-            if (objToken instanceof JwtInformation token) {
-                removeTokenIndex(token.getAccessToken(), token.getRefreshToken());
-            }
+        boolean lockAcquired = false;
 
-            redisTemplate.delete(userKey);
-            eventPublisher.publishEvent(new UserLogInOutEvent(userId, false));
+        try {
+            redisLockProvider.acquireLock(lockKey);
+            lockAcquired = true;
+        } catch (Exception e) {
+            if (isRedisDown(e)) {
+                log.error("[Redis] Redis가 동작 중이 아님, lock 획득 실패 userId={}", userId, e);
+                return;
+            }
+            throw e;
+        }
+
+        try {
+            try {
+                Object objToken = redisTemplate.opsForValue().get(userKey);
+                if (objToken instanceof JwtInformation token) {
+                    removeTokenIndex(token.getAccessToken(), token.getRefreshToken());
+                }
+
+                redisTemplate.delete(userKey);
+            } catch (Exception e) {
+                if (isRedisDown(e)) {
+                    log.error("[Redis] Redis가 동작중이 아님, 토큰 정리 스킵 userId={}", userId, e);
+                } else {
+                    throw e;
+                }
+            }
         } finally {
-            redisLockProvider.releaseLock(lockKey);
+            if (lockAcquired) {
+                try {
+                    redisLockProvider.releaseLock(lockKey);
+                } catch (Exception e) {
+                    if (isRedisDown(e)) {
+                        log.error("[Redis] Redis가 동작중이 아님, lock 해제 실패 userId={}", userId, e);
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+            eventPublisher.publishEvent(new UserLogInOutEvent(userId, false));
         }
     }
 
     @Override
     public boolean hasActiveJwtInformationByUserId(UUID userId) {
         String userKey = getUserKey(userId);
-        return redisTemplate.opsForValue().get(userKey) != null;
+        try {
+            return redisTemplate.opsForValue().get(userKey) != null;
+        } catch (Exception e) {
+            if (isRedisDown(e)) {
+                log.error("[Redis] Redis가 동작 중이 아님, userId={}", userId, e);
+                return false;
+            }
+            log.error("[Redis] Redis 동작 중 예상치 못한 예외, userId={}", userId, e);
+            return false;
+        }
     }
 
     @Override
     public boolean hasActiveJwtInformationByAccessToken(String accessToken) {
-        return Boolean.TRUE.equals(
-                redisTemplate.opsForSet().isMember(ACCESS_TOKEN_INDEX_KEY, accessToken)
-        );
+        try {
+            return Boolean.TRUE.equals(
+                    redisTemplate.opsForSet().isMember(ACCESS_TOKEN_INDEX_KEY, accessToken)
+            );
+        } catch (Exception e) {
+            if (isRedisDown(e)) {
+                log.error("[Redis] Redis가 동작 중이 아님, AccessToken 검증만 실행", e);
+                try {
+                    return jwtTokenProvider.validateAccessToken(accessToken);
+                } catch (JOSEException jse) {
+                    return false;
+                }
+            }
+            log.error("[Redis] AccessToken 검증 중 예기치 못한 예외", e);
+            return false;
+        }
     }
 
     @Override
     public boolean hasActiveJwtInformationByRefreshToken(String refreshToken) {
-        return Boolean.TRUE.equals(
-                redisTemplate.opsForSet().isMember(REFRESH_TOKEN_INDEX_KEY, refreshToken)
-        );
+        try {
+            return Boolean.TRUE.equals(
+                    redisTemplate.opsForSet().isMember(REFRESH_TOKEN_INDEX_KEY, refreshToken)
+            );
+        } catch (Exception e) {
+            if (isRedisDown(e)) {
+                log.error("[Redis] Redis가 동작중이 아님, RefreshToken 검증만 실행", e);
+                try {
+                    return jwtTokenProvider.validateRefreshToken(refreshToken);
+                } catch (JOSEException jse) {
+                    return false;
+                }
+            }
+            log.error("[Redis] RefreshToken 검증 중 예기치 못한 예외", e);
+            return false;
+        }
     }
 
     @Retryable(retryFor = RedisLockProvider.RedisLockAcquisitionException.class, maxAttempts = 10,
@@ -112,22 +212,58 @@ public class RedisJwtRegistry implements JwtRegistry {
         String userKey = getUserKey(newJwtInformation.getUserDto().id());
         String lockKey = newJwtInformation.getUserDto().id().toString();
 
-        redisLockProvider.acquireLock(lockKey);
+        boolean lockAcquired = false;
+
         try {
-            Object oldToken = redisTemplate.opsForValue().get(userKey);
-            if(!(oldToken instanceof JwtInformation jwtInformation)) {
-                throw new JwtInformationNotFoundException(AuthErrorCode.JWT_INFORMATION_NOT_FOUND, Map.of("userKey",userKey));
+            try {
+                redisLockProvider.acquireLock(lockKey);
+                lockAcquired = true;
+            } catch (Exception e) {
+                if (isRedisDown(e)) {
+                    log.error("[Redis] Redis가 동작 중이 아님, lock 획득 실패 userId={}",
+                            newJwtInformation.getUserDto().id(), e);
+                    return;
+                }
+                throw e;
             }
-            if (!jwtInformation.getRefreshToken().equals(refreshToken)) {
-                throw new RefreshTokenMismatchException(AuthErrorCode.REFRESH_TOKEN_MISMATCH, Map.of("userKey",userKey));
+
+            try {
+                Object oldToken = redisTemplate.opsForValue().get(userKey);
+                if (!(oldToken instanceof JwtInformation jwtInformation)) {
+                    throw new JwtInformationNotFoundException(AuthErrorCode.JWT_INFORMATION_NOT_FOUND, Map.of("userKey", userKey));
+                }
+                if (!jwtInformation.getRefreshToken().equals(refreshToken)) {
+                    throw new RefreshTokenMismatchException(AuthErrorCode.REFRESH_TOKEN_MISMATCH, Map.of("userKey", userKey));
+                }
+
+                removeTokenIndex(jwtInformation.getAccessToken(), jwtInformation.getRefreshToken());
+                jwtInformation.rotate(newJwtInformation.getAccessToken(), newJwtInformation.getRefreshToken());
+                redisTemplate.opsForValue().set(userKey, jwtInformation);
+                addTokenIndex(newJwtInformation.getAccessToken(), newJwtInformation.getRefreshToken());
+                redisTemplate.expire(userKey, DEFAULT_TTL);
+
+            } catch (Exception e) {
+                if (isRedisDown(e)) {
+                    log.error("[Redis] Redis가 동작 중이 아님, userId={}",
+                            newJwtInformation.getUserDto().id(), e);
+                    return;
+                }
+                throw e;
             }
-            removeTokenIndex(jwtInformation.getAccessToken(), jwtInformation.getRefreshToken());
-            jwtInformation.rotate(newJwtInformation.getAccessToken(), newJwtInformation.getRefreshToken());
-            redisTemplate.opsForValue().set(userKey, jwtInformation);
-            addTokenIndex(newJwtInformation.getAccessToken(), newJwtInformation.getRefreshToken());
-            redisTemplate.expire(userKey, DEFAULT_TTL);
+
         } finally {
-            redisLockProvider.releaseLock(lockKey);
+            if (lockAcquired) {
+                try {
+                    redisLockProvider.releaseLock(lockKey);
+                } catch (Exception e) {
+                    if (isRedisDown(e)) {
+                        log.error("[Redis] Redis가 동작 중이 아님, lock 해제 실패 userId={}",
+                                newJwtInformation.getUserDto().id(), e);
+                    } else {
+                        throw e;
+                    }
+                }
+            }
         }
     }
 
@@ -138,24 +274,37 @@ public class RedisJwtRegistry implements JwtRegistry {
                 .match(USER_JWT_KEY_PREFIX + "*")
                 .count(100)
                 .build();
+
         try (Cursor<String> cursor = redisTemplate.scan(options)) {
             while (cursor.hasNext()) {
                 String userKey = cursor.next();
                 try {
                     Object token = redisTemplate.opsForValue().get(userKey);
                     if (token instanceof JwtInformation jwtInformation) {
-                        boolean isExpired = !jwtTokenProvider.validateAccessToken(jwtInformation.getAccessToken()) ||
-                                !jwtTokenProvider.validateRefreshToken(jwtInformation.getRefreshToken());
+                        boolean isExpired =
+                                !jwtTokenProvider.validateAccessToken(jwtInformation.getAccessToken()) ||
+                                        !jwtTokenProvider.validateRefreshToken(jwtInformation.getRefreshToken());
                         if (isExpired) {
                             removeTokenIndex(jwtInformation.getAccessToken(), jwtInformation.getRefreshToken());
                             redisTemplate.delete(userKey);
                         }
                     }
                 } catch (Exception e) {
-                    log.warn("[Redis] token 정리 중 예외 발생, 정리스킵 userKey = {}, msg = {}", userKey, e.getMessage());
+                    if (isRedisDown(e)) {
+                        log.warn("[Redis] Redis가 동작 중이 아님, key={} 정리 스킵", userKey, e);
+                        break;
+                    }
+                    log.warn("[Redis] Token 정리 중 예외 발생, 정리 스킵 userKey = {}, msg = {}",
+                            userKey, e.getMessage());
                     redisTemplate.delete(userKey);
                 }
             }
+        } catch (Exception e) {
+            if (isRedisDown(e)) {
+                log.warn("[Redis] Redis가 동작 중이 아님, 전체 정리 작업 스킵", e);
+                return;
+            }
+            throw e;
         }
     }
 
@@ -171,5 +320,16 @@ public class RedisJwtRegistry implements JwtRegistry {
     private void removeTokenIndex(String accessToken, String refreshToken) {
         redisTemplate.opsForSet().remove(ACCESS_TOKEN_INDEX_KEY, accessToken);
         redisTemplate.opsForSet().remove(REFRESH_TOKEN_INDEX_KEY, refreshToken);
+    }
+
+    private boolean isRedisDown(Throwable e) {
+        while (e != null) {
+            if (e instanceof RedisConnectionFailureException ||
+                    e instanceof RedisConnectionException) {
+                return true;
+            }
+            e = e.getCause();
+        }
+        return false;
     }
 }

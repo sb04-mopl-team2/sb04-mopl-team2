@@ -95,7 +95,7 @@ public class WebSocketEventListener {
     UUID userId = getUserId(accessor, sessionId);
 
     // check for other sessions
-    if (userWatchingOnOtherSession(userId, contentId)) return;
+    if (userWatchingOnOtherSession(userId, contentId, watchingSessionId)) return;
 
     accessor.getSessionAttributes().remove("watchingSessionId");
     accessor.getSessionAttributes().remove("watchingContentId");
@@ -126,7 +126,7 @@ public class WebSocketEventListener {
     }
 
     UUID userId = getUserId(accessor, sessionId);
-    if (userWatchingOnOtherSession(userId, contentId)) {
+    if (userWatchingOnOtherSession(userId, contentId, watchingSessionId)) {
       return;
     }
 
@@ -137,7 +137,7 @@ public class WebSocketEventListener {
 
   // ================================== helper methods ==================================
 
-  private boolean userWatchingOnOtherSession(UUID userId, UUID contentId) {
+  private boolean userWatchingOnOtherSession(UUID userId, UUID contentId, UUID currentSessionId) {
     User foundUser = userRepository.findById(userId)
         .orElseThrow(() -> new UserNotFoundException(
             UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
@@ -149,6 +149,9 @@ public class WebSocketEventListener {
     if (userSessions.isEmpty()) return false;
 
     for (SimpSession s : userSessions) {
+      if (s.getId().equals(currentSessionId.toString())) {
+        continue;
+      }
       for (SimpSubscription sub : s.getSubscriptions()) {
         String payloadDestination = String.format("/sub/contents/%s/watch", contentId);
         if (sub.getDestination().equals(payloadDestination)) return true;

@@ -147,6 +147,7 @@ public class WatchingSessionService {
     Optional<WatchingSession> existingSession = watchingSessionRepository
         .findByUserIdAndContentId(userId, contentId);
 
+    // 웹소켓 조회용
     if (existingSession.isPresent()) {
       WatchingSession session = existingSession.get();
       session.getContent().getTags().size();
@@ -156,6 +157,7 @@ public class WatchingSessionService {
       return session;
     }
 
+    // GET 메소드로 인해 새로 생성
     watchingSessionRepository.deleteByUserId(userId);
     watchingSessionRepository.flush();
 

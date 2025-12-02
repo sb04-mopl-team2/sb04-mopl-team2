@@ -52,12 +52,10 @@ public class WebSocketEventListener {
     StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
     String sessionId = accessor.getSessionId();
     String destination = accessor.getDestination();
-
-    log.info("[WebsocketEventListener] handleSessionSubscribe 시작 - sessionId: {}, destination: {}", sessionId, destination);
-
     if (destination == null) return;
-
     if (destination.startsWith("/sub/contents/") && destination.endsWith("/watch")) {
+      log.info("[WebsocketEventListener] handleSessionSubscribe 시작 - sessionId: {}, destination: {}",
+          sessionId, destination);
       String contentId = getContentId(destination);
       UUID userId = getUserId(accessor, sessionId);
       UUID contentUUID = UUID.fromString(contentId);
@@ -72,12 +70,10 @@ public class WebSocketEventListener {
       String payloadDestination = String.format("/sub/contents/%s/watch", contentId);
       messagingTemplate.convertAndSend(payloadDestination, watchingSessionChange);
 
-      } else {
-      // 예외 케이스 - HTTP 요청 없이 소켓만 연결된 경우
-      log.warn("[WebsocketEventListener] DB에 시청 세션이 없습니다. Controller 로직이 먼저 실행되어야 합니다.");
+      log.info("[WebsocketEventListener] handleSessionSubscribe 완료 - sessionId: {}, destination: {}",
+          sessionId, destination);
     }
   }
-
   /*
     실시간 채팅 UI에 유저 퇴장 바로 업데이트
     - 페이지 이동(뒤로 가기) 시 퇴장 처리

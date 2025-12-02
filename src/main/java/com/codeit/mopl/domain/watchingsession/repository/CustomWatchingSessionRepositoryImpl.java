@@ -40,8 +40,8 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
         .join(watchingSession.content, content).fetchJoin()
         .where(
             watchingSession.content.id.eq(contentId), // contentId match
-            userIdExist(userId), // filter -> if userId exist
-            watcherNameExist(watcherNameLike), //filter -> if name exist
+//            userIdExist(userId), // filter -> if userId exist
+//            watcherNameExist(watcherNameLike), //filter -> if name exist
             cursorCondition(cursor, idAfter, sortDirection)
         )
         .orderBy(getSortOrder(sortDirection))
@@ -93,9 +93,9 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
         .select(watchingSession.count())
         .from(watchingSession)
         .where(
-            watchingSession.content.id.eq(contentId),
-            userIdExist(userId),
-            watcherNameExist(watcherNameLike)
+            watchingSession.content.id.eq(contentId)
+//            userIdExist(userId),
+//            watcherNameExist(watcherNameLike)
         )
         .fetchOne();
     return count != null ? count : 0L;

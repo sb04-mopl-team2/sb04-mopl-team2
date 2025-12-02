@@ -125,11 +125,11 @@ public class WatchingSessionService {
       웹소켓용 이벤크 기반 함수들
    */
   @Transactional
-  public WatchingSessionChange joinSession(UUID userId, String contentId) {
+  public WatchingSessionChange joinSession(UUID userId, UUID contentId) {
     WatchingSession session = ensureSessionExists(userId, contentId);
 
     Long watcherCount = watchingSessionRepository.countByContentId(
-        UUID.fromString(contentId));
+        contentId);
 
     return getWatchingSessionChange(
         session,
@@ -139,9 +139,8 @@ public class WatchingSessionService {
   }
 
   @Transactional
-  public WatchingSession ensureSessionExists(UUID userId, String contentId) {
-    UUID contentUUID = UUID.fromString(contentId);
-    Content content = contentRepository.findById(contentUUID)
+  public WatchingSession ensureSessionExists(UUID userId, UUID contentId) {
+    Content content = contentRepository.findById(contentId)
         .orElseThrow(() -> new ContentNotFoundException(
             ContentErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId)));
 
@@ -150,7 +149,7 @@ public class WatchingSessionService {
             UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
 
     Optional<WatchingSession> existingSession = watchingSessionRepository
-        .findByUserIdAndContentId(userId, contentUUID);
+        .findByUserIdAndContentId(userId, contentId);
 
     if (existingSession.isPresent()) {
       WatchingSession session = existingSession.get();
@@ -176,11 +175,15 @@ public class WatchingSessionService {
   }
 
   @Transactional
-  public WatchingSessionChange leaveSession(User user, UUID watchingSessionId, UUID contentId) {
+  public WatchingSessionChange leaveSession(UUID userId, UUID watchingSessionId, UUID contentId) {
     WatchingSession watchingSession = watchingSessionRepository.findById(watchingSessionId)
         .orElseThrow(() -> new WatchingSessionNotFoundException(
             WatchingSessionErrorCode.WATCHING_SESSION_NOT_FOUND, Map.of("watchingSessionId", watchingSessionId))
         );
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new UserNotFoundException(
+            UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
+
     watchingSession.getContent().getTags().size();
     watchingSession.getUser();
     watchingSessionRepository.deleteById(watchingSessionId);
@@ -188,10 +191,10 @@ public class WatchingSessionService {
 
     // payload
     return getWatchingSessionChange(
-        watchingSession, user, ChangeType.LEAVE, watcherCount);
+        watchingSession, user, ChangeType.LEAVE, watcherCount );
   }
 
-  private WatchingSessionChange getWatchingSessionChange(
+  public WatchingSessionChange getWatchingSessionChange(
       WatchingSession savedWatchingSession, User user, ChangeType changeType, Long watcherCount) {
     Content content = savedWatchingSession.getContent();
 

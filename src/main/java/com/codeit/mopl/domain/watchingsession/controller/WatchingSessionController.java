@@ -54,7 +54,7 @@ public class WatchingSessionController {
     log.info("[실시간 세션] 특정 콘텐츠의 시청 세션 목록 요청 수신. contentId = {}", contentId);
     UserDto user = userDetails.getUser();
 
-    watchingSessionService.joinSession(user.id(), contentId.toString());
+    watchingSessionService.joinSession(user.id(), contentId);
 
     CursorResponseWatchingSessionDto response = watchingSessionService.getWatchingSessions(
         userDetails.getUser().id(),

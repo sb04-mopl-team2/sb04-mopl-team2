@@ -152,7 +152,7 @@ public class WatchingSessionServiceTest {
       );
     });
     verify(contentRepository, times(1)).existsById(contentId);
-    verify(watchingSessionRepository, times(0)).getWatcherCount(userId, null);
+    verify(watchingSessionRepository, times(0)).getWatcherCount(contentId, null);
     verify(watchingSessionMapper, times(0)).toDto(any());
   }
 

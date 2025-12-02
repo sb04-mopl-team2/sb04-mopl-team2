@@ -25,6 +25,22 @@ public class SseService {
   public SseEmitter connect(UUID receiverId, UUID lastEventId) {
     log.info("[SSE] SSE 연결 시작, receiverId = {}, lastEventId = {}", receiverId, lastEventId);
 
+    List<SseEmitter> oldEmitters = sseEmitterRegistry.getData().get(receiverId);
+    if (oldEmitters != null) {
+      for (SseEmitter old : oldEmitters) {
+        try {
+          old.send(SseEmitter.event()
+              .name("ping")
+              .data("check"));
+        } catch (Exception ex) {
+          old.complete();
+          sseEmitterRegistry.removeEmitter(receiverId, old);
+          log.info("[SSE] 기존 dead emitter 제거, receiverId={}, emitter={}",
+              receiverId, System.identityHashCode(old));
+        }
+      }
+    }
+
     SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
 
     // 저장

@@ -36,11 +36,15 @@ public class WebSocketEventListener {
   private final SimpMessagingTemplate messagingTemplate;
   private final SimpUserRegistry userRegistry;
 
-  /*
+  /**
      콘텐츠 시청 세션: 누가 시청 세션에 들어오고 나가는지 (참가자 목록) 업데이트를 받기 위해
      - 엔드포인트: SUBSCRIBE /sub/contents/{contentId}/watch
      - 페이로드: WatchingSessionChange
      - 참고 - https://hong-good.tistory.com/7
+   **/
+
+  /*
+    실시간 채팅 UI에 유저 참여 (추가) 바로 업데이트
    */
   @EventListener
   public void handleSessionSubscribe(SessionSubscribeEvent event) {
@@ -78,6 +82,11 @@ public class WebSocketEventListener {
       log.warn("[WebsocketEventListener] DB에 시청 세션이 없습니다. Controller 로직이 먼저 실행되어야 합니다.");
     }
   }
+
+  /*
+    실시간 채팅 UI에 유저 퇴장 바로 업데이트
+    - 페이지 이동(뒤로 가기) 시 퇴장 처리
+   */
   @EventListener
   public void handleSessionUnSubscribe(SessionUnsubscribeEvent event) {
     StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
@@ -96,11 +105,19 @@ public class WebSocketEventListener {
       log.warn("[WebsocketEventListener] SessionUnsubscribeEvent: watchingSessionId = {}, contentId = {}", watchingSessionId, contentId);
       return;
     }
+    accessor.getSessionAttributes().remove("watchingSessionId");
+    accessor.getSessionAttributes().remove("watchingContentId");
+    log.info("[WebsocketEventListener] SessionUnsubscribeEvent 완료 - 속성 제거됨");
+
     processLeave(watchingSessionId, userId, contentId);
     log.info("[WebsocketEventListener] SessionUnsubscribeEvent 완료 - sessionId: {}, watchingSessionId: {}, contentId: {}",
         sessionId, watchingSessionId, contentId);
   }
 
+  /*
+    웹소켓 연결이 끊일 때 대비하는 용도
+    - 크롬 닫힘, 탭 닫기(강제 종료)
+   */
   @EventListener
   public void handleSessionDisconnect(SessionDisconnectEvent event) {
     StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
@@ -123,6 +140,7 @@ public class WebSocketEventListener {
   }
 
   // ================================== helper methods ==================================
+
   private boolean userWatchingOnOtherSession(UUID userId, UUID contentId) {
     User foundUser = userRepository.findById(userId)
         .orElseThrow(() -> new UserNotFoundException(

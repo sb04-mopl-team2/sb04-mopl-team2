@@ -2,6 +2,7 @@ package com.codeit.mopl.sse.service;
 
 import com.codeit.mopl.sse.SseMessage;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -49,7 +50,6 @@ public class SseService {
     } catch (Exception e) {
       log.warn("[SSE] SSE 이벤트 전송 실패, receiverId = {}, errorMessage = {}", receiverId, e.getMessage());
       sseEmitterRegistry.removeEmitter(receiverId, emitter);
-      return emitter;
     }
 
     if (lastEventId != null) {
@@ -71,7 +71,7 @@ public class SseService {
       return;
     }
 
-    for (SseEmitter emitter : emitters) {
+    for (SseEmitter emitter : List.copyOf(emitters)) {
       try {
         emitter.send(
             SseEmitter.event()
@@ -83,12 +83,21 @@ public class SseService {
         log.debug("[SSE] SSE 이벤트 전송 성공 receiverId = {}, eventId = {}, eventName = {}",
             receiverId, saved.getEventId(), saved.getEventName());
 
-      } catch (Exception e) {
-        log.warn("[SSE] SSE 이벤트 전송 실패 receiverId = {}, reason = {}", receiverId, e.getMessage());
+      } catch (IOException | IllegalStateException e) {
+        // 클라이언트가 탭 닫음 / 네트워크 끊김 같은 정상 종료 케이스
+        log.info("[SSE] 클라이언트 연결 종료로 전송 실패, receiverId = {}, eventId = {}, reason = {}",
+            receiverId, saved.getEventId(), e.getMessage());
         sseEmitterRegistry.removeEmitter(receiverId, emitter);
-        return;
+
+      } catch (Exception e) {
+        // 진짜 이상한 케이스만 에러로
+        log.error("[SSE] 예기치 못한 SSE 전송 예외, receiverId = {}, eventId = {}",
+            receiverId, saved.getEventId(), e);
+        sseEmitterRegistry.removeEmitter(receiverId, emitter);
       }
+      // 여기서 return 하지 말고 다음 emitter들도 계속 시도
     }
+
     log.info("[SSE] SSE 이벤트 전송 종료");
   }
 

@@ -46,9 +46,7 @@ public class SseService {
     try {
       String eventId = UUID.randomUUID().toString();
       emitter.send(SseEmitter.event()
-          .id(eventId)
-          .name("connect")
-          .data("connected"));
+          .name("ping"));
       log.info("[SSE] connect 이벤트 전송 성공, receiverId = {}, eventId = {}", receiverId, eventId);
     } catch (Exception e) {
       log.warn("[SSE] SSE 이벤트 전송 실패, receiverId = {}, errorMessage = {}", receiverId, e.getMessage());

@@ -2,10 +2,8 @@ package com.codeit.mopl.sse.service;
 
 import com.codeit.mopl.sse.SseMessage;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +49,7 @@ public class SseService {
     } catch (Exception e) {
       log.warn("[SSE] SSE 이벤트 전송 실패, receiverId = {}, errorMessage = {}", receiverId, e.getMessage());
       sseEmitterRegistry.removeEmitter(receiverId, emitter);
+      return emitter;
     }
 
     if (lastEventId != null) {
@@ -87,6 +86,7 @@ public class SseService {
       } catch (Exception e) {
         log.warn("[SSE] SSE 이벤트 전송 실패 receiverId = {}, reason = {}", receiverId, e.getMessage());
         sseEmitterRegistry.removeEmitter(receiverId, emitter);
+        return;
       }
     }
     log.info("[SSE] SSE 이벤트 전송 종료");

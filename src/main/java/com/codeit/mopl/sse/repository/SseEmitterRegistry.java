@@ -3,7 +3,6 @@ package com.codeit.mopl.sse.repository;
 import com.codeit.mopl.sse.SseMessage;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +12,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.Getter;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -60,7 +58,11 @@ public class SseEmitterRegistry {
     Deque<UUID> eventIdQueue = queuesByReceiverId.get(receiverId);
     List<SseMessage> result = new ArrayList<>();
 
-    boolean foundLast = false;
+    if (eventIdQueue == null) {
+      return result;
+    }
+
+      boolean foundLast = false;
 
     for (UUID eventId : eventIdQueue) {
       if (!foundLast) {

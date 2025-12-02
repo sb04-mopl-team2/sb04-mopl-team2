@@ -79,7 +79,6 @@ public class WatchingSessionService {
     int effectiveLimit = (limit != null) ? limit : 20;
     int internalLimit = effectiveLimit + 1;
     List<WatchingSession> watchingSessions = watchingSessionRepository.findWatchingSessions(
-        userId,
         contentId,
         watcherNameLike,
         cursor,
@@ -88,7 +87,6 @@ public class WatchingSessionService {
         sortDirection,
         sortBy);
     long totalCount = watchingSessionRepository.getWatcherCount(
-        userId,
         contentId,
         watcherNameLike
     );

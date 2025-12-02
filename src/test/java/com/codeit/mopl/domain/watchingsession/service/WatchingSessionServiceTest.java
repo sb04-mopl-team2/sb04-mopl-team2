@@ -112,7 +112,7 @@ public class WatchingSessionServiceTest {
     UUID contentId = UUID.randomUUID();
     WatchingSessionDto watchingSessionDto = mock(WatchingSessionDto.class);
     when(watchingSessionRepository.findWatchingSessions(
-        any(), any(), any(), any(), any(),
+        any(), any(), any(), any(),
         eq(11), // internal limit
         any(), any()
     )).thenReturn(List.of(entity));
@@ -123,7 +123,7 @@ public class WatchingSessionServiceTest {
     );
     when(contentRepository.existsById(contentId)).thenReturn(true);
     when(watchingSessionMapper.toDto(entity)).thenReturn(watchingSessionDto);
-    when(watchingSessionRepository.getWatcherCount(userId,contentId, null)).thenReturn(1L);
+    when(watchingSessionRepository.getWatcherCount(contentId, null)).thenReturn(1L);
 
     // when
     CursorResponseWatchingSessionDto result = watchingSessionService.getWatchingSessions(userId, contentId,
@@ -132,7 +132,7 @@ public class WatchingSessionServiceTest {
 
     // then
     assertEquals(expectedDto, result);
-    verify(watchingSessionRepository, times(1)).getWatcherCount(userId, contentId, null);
+    verify(watchingSessionRepository, times(1)).getWatcherCount(contentId, null);
     verify(watchingSessionMapper, times(1)).toDto(any());
   }
 
@@ -152,7 +152,7 @@ public class WatchingSessionServiceTest {
       );
     });
     verify(contentRepository, times(1)).existsById(contentId);
-    verify(watchingSessionRepository, times(0)).getWatcherCount(contentId, userId, null);
+    verify(watchingSessionRepository, times(0)).getWatcherCount(userId, null);
     verify(watchingSessionMapper, times(0)).toDto(any());
   }
 
@@ -177,7 +177,7 @@ public class WatchingSessionServiceTest {
     mutableList.add(entity2);
 
     when(watchingSessionRepository.findWatchingSessions(
-        any(), any(), any(), any(), any(),
+        any(), any(), any(), any(),
         eq(2), // internal limit (1 + 1)
         any(), any()
     )).thenReturn(mutableList);
@@ -186,7 +186,7 @@ public class WatchingSessionServiceTest {
     WatchingSessionDto watchingSessionDto = mock(WatchingSessionDto.class);
     when(contentRepository.existsById(contentId)).thenReturn(true);
     when(watchingSessionMapper.toDto(entity)).thenReturn(watchingSessionDto);
-    when(watchingSessionRepository.getWatcherCount(userId, contentId, null)).thenReturn(2L);
+    when(watchingSessionRepository.getWatcherCount(contentId, null)).thenReturn(2L);
 
     // expected response
     CursorResponseWatchingSessionDto expectedDto = new CursorResponseWatchingSessionDto(
@@ -208,7 +208,7 @@ public class WatchingSessionServiceTest {
     // then
     assertThat(result).usingRecursiveComparison().isEqualTo(expectedDto);
     verify(watchingSessionRepository, times(1)).getWatcherCount(
-        userId, contentId, null);
+        contentId, null);
     verify(watchingSessionMapper, times(1)).toDto(any());
   }
 }

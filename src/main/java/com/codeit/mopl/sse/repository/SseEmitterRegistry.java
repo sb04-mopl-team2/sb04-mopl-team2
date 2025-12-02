@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Component
-public class  SseEmitterRegistry {
+public class SseEmitterRegistry {
 
   @Getter
   private final ConcurrentMap<UUID, List<SseEmitter>> data = new ConcurrentHashMap<>();

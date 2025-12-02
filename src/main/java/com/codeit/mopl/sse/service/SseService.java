@@ -53,6 +53,10 @@ public class SseService {
       sseEmitterRegistry.removeEmitter(receiverId, emitter);
     }
 
+    if (lastEventId != null) {
+      reSend(receiverId, lastEventId, emitter);
+    }
+
     log.info("[SSE] SSE 연결 종료, receiverId = {}, emitter = {}", receiverId, System.identityHashCode(emitter));
     return emitter;
   }
@@ -86,6 +90,35 @@ public class SseService {
       }
     }
     log.info("[SSE] SSE 이벤트 전송 종료");
+  }
+
+  public void reSend(UUID receiverId, UUID lastEventId, SseEmitter emitter) {
+    log.info("[SSE] SSE 이벤트 재전송 시작, receiverId = {}, lastEventId = {}", receiverId, lastEventId);
+    List<SseMessage> newEvents = sseEmitterRegistry.getNewEvents(receiverId, lastEventId);
+
+    if (newEvents.isEmpty()) {
+      log.info("[SSE] 재전송할 신규 이벤트 없음, receiverId = {}, lastEventId = {}", receiverId, lastEventId);
+      return;
+    }
+
+    for (SseMessage message : newEvents) {
+      try {
+        emitter.send(
+            SseEmitter.event()
+                .id(message.getEventId().toString())
+                .name(message.getEventName())
+                .data(message.getData())
+        );
+
+        log.debug("[SSE] SSE 이벤트 재전송 성공 receiverId = {}, eventId = {}, eventName = {}",
+            receiverId, message.getEventId(), message.getEventName());
+
+      } catch (Exception e) {
+        log.warn("[SSE] SSE 이벤트 재전송 실패 receiverId = {}, reason = {}", receiverId, e.getMessage());
+        sseEmitterRegistry.removeEmitter(receiverId, emitter);
+      }
+    }
+    log.info("[SSE] SSE 이벤트 재전송 종료, receiverId = {}, lastEventId = {}", receiverId, lastEventId);
   }
 
   @Scheduled(fixedDelay = 1000 * 60 * 30) // 30분마다 실행

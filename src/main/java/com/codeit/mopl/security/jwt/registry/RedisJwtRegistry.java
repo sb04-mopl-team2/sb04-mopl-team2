@@ -109,17 +109,16 @@ public class RedisJwtRegistry implements JwtRegistry {
         boolean lockAcquired = false;
 
         try {
-            redisLockProvider.acquireLock(lockKey);
-            lockAcquired = true;
-        } catch (Exception e) {
-            if (isRedisDown(e)) {
-                log.error("[Redis] Redis가 동작 중이 아님, lock 획득 실패 userId={}", userId, e);
-                return;
+            try {
+                redisLockProvider.acquireLock(lockKey);
+                lockAcquired = true;
+            } catch (Exception e) {
+                if (isRedisDown(e)) {
+                    log.error("[Redis] Redis가 동작 중이 아님, lock 획득 실패 userId={}", userId, e);
+                    return;
+                }
+                throw e;
             }
-            throw e;
-        }
-
-        try {
             try {
                 Object objToken = redisTemplate.opsForValue().get(userKey);
                 if (objToken instanceof JwtInformation token) {
@@ -296,7 +295,6 @@ public class RedisJwtRegistry implements JwtRegistry {
                     }
                     log.warn("[Redis] Token 정리 중 예외 발생, 정리 스킵 userKey = {}, msg = {}",
                             userKey, e.getMessage());
-                    redisTemplate.delete(userKey);
                 }
             }
         } catch (Exception e) {

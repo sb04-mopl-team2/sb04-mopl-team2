@@ -15,7 +15,6 @@ import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.codeit.mopl.exception.follow.*;
-import com.codeit.mopl.exception.user.UserIdIsNullException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +24,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
@@ -183,24 +181,17 @@ class FollowServiceTest {
     }
 
     @Test
-    @DisplayName("팔로워 증가 이벤트 처리 실패 - followId가 null이 될 수 없음")
-    void processFollowerIncrease_FollowIdNull_ThrowsException() {
-        // given
-
-        // when & then
-        assertThatThrownBy(() -> followService.processFollowerIncrease(null, null))
-                .isInstanceOf(FollowIdIsNullException.class);
-    }
-
-    @Test
-    @DisplayName("팔로워 증가 이벤트 처리 실패 - followeeId가 null이 될 수 없음")
-    void processFollowerIncrease_FolloweeIdNull_ThrowsException() {
+    @DisplayName("팔로워 증가 이벤트 처리 실패 - followeeId에 해당하는 유저가 없음")
+    void processFollowerIncrease_UserNotFound_ThrowsException() {
         // given
         UUID followId = UUID.randomUUID();
+        UUID followeeId = UUID.randomUUID();
+
+        given(userRepository.findById(eq(followeeId))).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> followService.processFollowerIncrease(followId, null))
-                .isInstanceOf(UserIdIsNullException.class);
+        assertThatThrownBy(() -> followService.processFollowerIncrease(followId, followeeId))
+                .isInstanceOf(UserNotFoundException.class);
     }
 
     @Test
@@ -213,7 +204,8 @@ class FollowServiceTest {
         ReflectionTestUtils.setField(followee, "id", followeeId);
         followee.setFollowerCount(1L);
 
-        given(processedEventRepository.save(any(ProcessedEvent.class))).willThrow(DataIntegrityViolationException.class);
+        given(processedEventRepository.existsByEventIdAndEventType(eq(followId), eq(EventType.FOLLOWER_INCREASE)))
+                .willReturn(true);
 
         // when
         followService.processFollowerIncrease(followId, followeeId);
@@ -221,6 +213,7 @@ class FollowServiceTest {
         // then
         assertThat(followee.getFollowerCount()).isEqualTo(1L);
         verify(userRepository, never()).findById(eq(followeeId));
+        verify(processedEventRepository, never()).save(any(ProcessedEvent.class));
     }
 
     @Test
@@ -400,28 +393,6 @@ class FollowServiceTest {
     }
 
     @Test
-    @DisplayName("팔로우 감소 이벤트 처리 실패 - followId가 null이 될 수 없음")
-    void processFollowerDecrease_FollowIdIsNull_ThrowsException() {
-        // given
-
-        // when & then
-        assertThatThrownBy(() -> followService.processFollowerDecrease(null, null))
-                .isInstanceOf(FollowIdIsNullException.class);
-    }
-
-    @Test
-    @DisplayName("팔로우 감소 이벤트 처리 실패 - followeeId가 null이 될 수 없음")
-    void processFollowerDecrease_UserIdIsNull_ThrowsException() {
-        // given
-        UUID followId = UUID.randomUUID();
-
-        // when & then
-        assertThatThrownBy(() -> followService.processFollowerDecrease(followId, null))
-                .isInstanceOf(UserIdIsNullException.class);
-        verify(processedEventRepository, times(1)).save(any(ProcessedEvent.class));
-    }
-
-    @Test
     @DisplayName("팔로우 감소 이벤트 처리 실패 - followeeId에 해당하는 유저가 없음")
     void processFollowerDecrease_UserNotFound_ThrowsException() {
         // given
@@ -431,7 +402,6 @@ class FollowServiceTest {
         // when & then
         assertThatThrownBy(() -> followService.processFollowerDecrease(followId, followeeId))
                 .isInstanceOf(UserNotFoundException.class);
-        verify(processedEventRepository, times(1)).save(any(ProcessedEvent.class));
     }
 
     @Test
@@ -449,7 +419,6 @@ class FollowServiceTest {
         // when & then
         assertThatThrownBy(() -> followService.processFollowerDecrease(followId, followeeId))
                 .isInstanceOf(FollowerCountCannotBeNegativeException.class);
-        verify(processedEventRepository, times(1)).save(any(ProcessedEvent.class));
     }
 
     @Test
@@ -462,7 +431,8 @@ class FollowServiceTest {
         ReflectionTestUtils.setField(followee, "id", followeeId);
         followee.setFollowerCount(1L);
 
-        given(processedEventRepository.save(any(ProcessedEvent.class))).willThrow(DataIntegrityViolationException.class);
+        given(processedEventRepository.existsByEventIdAndEventType(eq(followId), eq(EventType.FOLLOWER_DECREASE)))
+                .willReturn(true);
 
         // when
         followService.processFollowerDecrease(followId, followeeId);
@@ -470,5 +440,6 @@ class FollowServiceTest {
         // then
         assertThat(followee.getFollowerCount()).isEqualTo(1L);
         verify(userRepository, never()).findById(eq(followeeId));
+        verify(processedEventRepository, never()).save(any(ProcessedEvent.class));
     }
 }

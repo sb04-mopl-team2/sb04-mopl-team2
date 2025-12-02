@@ -16,6 +16,11 @@ spring:
     init:
       mode: never
 
+  data:
+    redis:
+      ssl:
+        enabled: true
+
   kafka:
     bootstrap-servers: ${CONFLUENT_BOOTSTRAP_SERVERS}
 

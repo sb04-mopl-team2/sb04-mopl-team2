@@ -57,14 +57,8 @@ public class WebSocketEventListener {
 
     if (destination == null) return;
 
-    String contentId;
     if (destination.startsWith("/sub/contents/") && destination.endsWith("/watch")) {
-      contentId = getContentId(destination);
-    } else {
-      return;
-    }
-
-    if (contentId != null) {
+      String contentId = getContentId(destination);
       UUID userId = getUserId(accessor, sessionId);
       UUID contentUUID = UUID.fromString(contentId);
 
@@ -107,10 +101,6 @@ public class WebSocketEventListener {
     // check for other sessions
     if (userWatchingOnOtherSession(userId, contentId)) return;
 
-    if (watchingSessionId == null || contentId == null) {
-      log.warn("[WebsocketEventListener] SessionUnsubscribeEvent: watchingSessionId = {}, contentId = {}", watchingSessionId, contentId);
-      return;
-    }
     accessor.getSessionAttributes().remove("watchingSessionId");
     accessor.getSessionAttributes().remove("watchingContentId");
     log.info("[WebsocketEventListener] SessionUnsubscribeEvent 완료 - 속성 제거됨");
@@ -140,6 +130,10 @@ public class WebSocketEventListener {
     }
 
     UUID userId = getUserId(accessor, sessionId);
+    if (userWatchingOnOtherSession(userId, contentId)) {
+      return;
+    }
+
     processLeave(watchingSessionId, userId, contentId);
     log.info("[WebsocketEventListener] SessionDisconnectEvent 완료 - sessionId: {}, watchingSessionId: {}, contentId: {}",
         sessionId, watchingSessionId, contentId);

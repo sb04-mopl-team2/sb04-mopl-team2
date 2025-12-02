@@ -59,7 +59,6 @@ public class WatchingSessionService {
 
   @Transactional(readOnly = true)
   public CursorResponseWatchingSessionDto getWatchingSessions(
-      UUID userId,
       UUID contentId,
       String watcherNameLike,
       String cursor,
@@ -69,8 +68,8 @@ public class WatchingSessionService {
       SortBy sortBy
   ) {
     log.info(
-        "[실시간 세션] 서비스: 특정 콘텐츠의 시청 세션 목록 조회 시작. contentId = {}, userId = {}",
-        contentId, userId
+        "[실시간 세션] 서비스: 특정 콘텐츠의 시청 세션 목록 조회 시작. contentId = {}, watcherNameLike = {}",
+        contentId, watcherNameLike
     );
     if (!contentRepository.existsById(contentId)) {
       throw new ContentNotFoundException(
@@ -103,8 +102,7 @@ public class WatchingSessionService {
       watchingSessions.remove(effectiveLimit);
     }
     CursorResponseWatchingSessionDto response = new CursorResponseWatchingSessionDto(
-        watchingSessions.stream()
-            .map(watchingSessionMapper::toDto).toList(),
+        watchingSessions.stream().map(watchingSessionMapper::toDto).toList(),
         nextCursor,
         nextIdAfter,
         hasNext,
@@ -113,8 +111,8 @@ public class WatchingSessionService {
         sortDirection
     );
     log.info(
-        "[실시간 세션] 서비스: 특정 콘텐츠의 시청 세션 목록 조회 완료. contentId = {}, items = {}",
-        contentId, response.data().size()
+        "[실시간 세션] 서비스: 특정 콘텐츠의 시청 세션 목록 조회 완료. contentId = {}, watcherNameLike = {}, items = {}",
+        contentId, watcherNameLike, response.data().size()
     );
     return response;
   }

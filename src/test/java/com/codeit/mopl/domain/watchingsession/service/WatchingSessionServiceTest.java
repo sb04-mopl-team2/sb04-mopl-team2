@@ -87,20 +87,6 @@ public class WatchingSessionServiceTest {
     verify(watchingSessionRepository).findByUserId(userId);
   }
 
-  @Test
-  @DisplayName("UserId의 watchingsession이 존재하지 않으면 실패")
-  void getByNonExistentUserIdFailure() {
-    // given
-    UUID userId = UUID.randomUUID();
-    when(watchingSessionRepository.findByUserId(userId)).thenReturn(Optional.empty());
-
-    // when & then
-    WatchingSessionDto result = watchingSessionService.getByUserId(userId);
-    assertNull(result);
-    verify(watchingSessionRepository, times(1)).findByUserId(userId);
-    verify(watchingSessionMapper, times(0)).toDto(any());
-  }
-
   /*
     public CursorResponseWatchingSessionDto getWatchingSessions(..)
    */
@@ -108,7 +94,6 @@ public class WatchingSessionServiceTest {
   @DisplayName("특정 콘텐츠의 시청 세션 목록 조회 성공")
   void getByContentIdSuccess() {
     // given
-    UUID userId = UUID.randomUUID();
     UUID contentId = UUID.randomUUID();
     WatchingSessionDto watchingSessionDto = mock(WatchingSessionDto.class);
     when(watchingSessionRepository.findWatchingSessions(
@@ -126,8 +111,8 @@ public class WatchingSessionServiceTest {
     when(watchingSessionRepository.getWatcherCount(contentId, null)).thenReturn(1L);
 
     // when
-    CursorResponseWatchingSessionDto result = watchingSessionService.getWatchingSessions(userId, contentId,
-        null, null, null,
+    CursorResponseWatchingSessionDto result = watchingSessionService.getWatchingSessions(
+        contentId,null, null, null,
         10, SortDirection.ASCENDING, SortBy.CREATED_AT);
 
     // then
@@ -140,13 +125,12 @@ public class WatchingSessionServiceTest {
   @DisplayName("존재하지 않는 ContentId면 실패")
   void getByNonExistentContentIdFailure() {
     // given
-    UUID userId = UUID.randomUUID();
     UUID contentId = UUID.randomUUID();
 
     // when & then
     assertThrows(ContentNotFoundException.class, () -> {
       watchingSessionService.getWatchingSessions(
-          userId, contentId,
+          contentId,
           null, null, null,
           10, SortDirection.ASCENDING, SortBy.CREATED_AT
       );
@@ -160,7 +144,6 @@ public class WatchingSessionServiceTest {
   @DisplayName("hasNext를 가진 특정 콘텐츠의 시청 세션 목록 조회 성공")
   void getWithHasNextWatchingSessionSuccess() {
     // given
-    UUID userId = UUID.randomUUID();
     UUID contentId = UUID.randomUUID();
     User user2 = new User("test2@test.com", "pw", "test2");
     // entity2 setup
@@ -199,10 +182,8 @@ public class WatchingSessionServiceTest {
 
     // when
     CursorResponseWatchingSessionDto result = watchingSessionService.getWatchingSessions(
-        userId, contentId,
-        null, null, null,
-        1,
-        SortDirection.ASCENDING, SortBy.CREATED_AT
+        contentId,null, null, null,
+        1, SortDirection.ASCENDING, SortBy.CREATED_AT
     );
 
     // then

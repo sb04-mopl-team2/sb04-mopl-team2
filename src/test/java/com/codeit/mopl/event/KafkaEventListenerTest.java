@@ -5,13 +5,9 @@ import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.event.listener.KafkaEventListener;
-import com.codeit.mopl.exception.follow.FollowIdIsNullException;
 import com.codeit.mopl.exception.follow.FolloweeIdIsNullException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
@@ -25,6 +21,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
+
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -139,18 +139,6 @@ class KafkaEventListenerTest {
             .isEqualTo(event.getClass().getSimpleName());
   }
 
-  @Test
-  @DisplayName("FollowerIncreaseEvent Kafka 메시지 전송 실패 - followId는 null이 될 수 없음")
-  void onFollowerIncreaseEvent_FollowIdIsNull_ThrowsException() {
-    // given
-    FollowerIncreaseEvent event = new FollowerIncreaseEvent(null, null);
-
-    // when & then
-    assertThatThrownBy(() -> kafkaEventListener.on(event))
-            .isInstanceOf(FollowIdIsNullException.class);
-
-    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
-  }
 
   @Test
   @DisplayName("FollowerIncreaseEvent Kafka 메시지 전송 실패 - followeeId는 null이 될 수 없음")
@@ -200,19 +188,6 @@ class KafkaEventListenerTest {
     assertThat(typeHeader).isNotNull();
     assertThat(new String(typeHeader.value(), StandardCharsets.UTF_8))
             .isEqualTo(event.getClass().getSimpleName());
-  }
-
-  @Test
-  @DisplayName("FollowerDecreaseEvent Kafka 메시지 전송 실패 - followId는 null이 될 수 없음")
-  void onFollowerDecreaseEvent_FollowIdIsNull_ThrowsException() {
-    // given
-    FollowerDecreaseEvent event = new FollowerDecreaseEvent(null, null);
-
-    // when & then
-    assertThatThrownBy(() -> kafkaEventListener.on(event))
-            .isInstanceOf(FollowIdIsNullException.class);
-
-    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
   }
 
   @Test

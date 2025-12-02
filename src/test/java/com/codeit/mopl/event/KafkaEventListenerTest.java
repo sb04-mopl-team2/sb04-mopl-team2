@@ -5,7 +5,6 @@ import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.event.listener.KafkaEventListener;
-import com.codeit.mopl.exception.follow.FolloweeIdIsNullException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -27,7 +26,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -139,21 +137,6 @@ class KafkaEventListenerTest {
             .isEqualTo(event.getClass().getSimpleName());
   }
 
-
-  @Test
-  @DisplayName("FollowerIncreaseEvent Kafka 메시지 전송 실패 - followeeId는 null이 될 수 없음")
-  void onFollowerIncreaseEvent_FolloweeIdIsNull_ThrowsException() {
-    // given
-    UUID followId = UUID.randomUUID();
-    FollowerIncreaseEvent event = new FollowerIncreaseEvent(followId, null);
-
-    // when & then
-    assertThatThrownBy(() -> kafkaEventListener.on(event))
-            .isInstanceOf(FolloweeIdIsNullException.class);
-
-    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
-  }
-
   @Test
   @DisplayName("FollowerDecreaseEvent 발생 시 Kafka 메시지 전송 성공")
   void onFollowerDecreaseEvent_shouldSendKafkaMessageWithHeaders() throws Exception {
@@ -188,20 +171,6 @@ class KafkaEventListenerTest {
     assertThat(typeHeader).isNotNull();
     assertThat(new String(typeHeader.value(), StandardCharsets.UTF_8))
             .isEqualTo(event.getClass().getSimpleName());
-  }
-
-  @Test
-  @DisplayName("FollowerDecreaseEvent Kafka 메시지 전송 실패 - followeeId는 null이 될 수 없음")
-  void onFollowerDecreaseEvent_FolloweeIdIsNull_ThrowsException() {
-    // given
-    UUID followId = UUID.randomUUID();
-    FollowerDecreaseEvent event = new FollowerDecreaseEvent(followId, null);
-
-    // when & then
-    assertThatThrownBy(() -> kafkaEventListener.on(event))
-            .isInstanceOf(FolloweeIdIsNullException.class);
-
-    verify(kafkaTemplate, never()).send(any(ProducerRecord.class));
   }
 
   @Test

@@ -399,6 +399,8 @@ class FollowServiceTest {
         UUID followId = UUID.randomUUID();
         UUID followeeId = UUID.randomUUID();
 
+        given(userRepository.findById(eq(followeeId))).willReturn(Optional.empty());
+
         // when & then
         assertThatThrownBy(() -> followService.processFollowerDecrease(followId, followeeId))
                 .isInstanceOf(UserNotFoundException.class);

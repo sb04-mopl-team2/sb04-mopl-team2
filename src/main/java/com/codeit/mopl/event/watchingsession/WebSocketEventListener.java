@@ -19,6 +19,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.simp.user.SimpSession;
 import org.springframework.messaging.simp.user.SimpSubscription;
+import org.springframework.messaging.simp.user.SimpUser;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -96,6 +97,11 @@ public class WebSocketEventListener {
     log.info("[WebsocketEventListener] SessionUnsubscribeEvent 시작 - sessionId: {}, watchingSessionId: {}, contentId: {}",
         sessionId, watchingSessionId, contentId);
 
+    if (watchingSessionId == null || contentId == null) {
+      log.warn("[WebsocketEventListener] SessionUnsubscribeEvent: watchingSessionId = {}, contentId = {}", watchingSessionId, contentId);
+      return;
+    }
+
     UUID userId = getUserId(accessor, sessionId);
 
     // check for other sessions
@@ -147,7 +153,9 @@ public class WebSocketEventListener {
             UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
 
     String username = foundUser.getEmail();
-    Set<SimpSession> userSessions = userRegistry.getUser(username).getSessions();
+    SimpUser simpUser = userRegistry.getUser(username);
+    if (simpUser == null) return false;
+    Set<SimpSession> userSessions = simpUser.getSessions();
     if (userSessions.isEmpty()) return false;
 
     for (SimpSession s : userSessions) {

@@ -1,6 +1,28 @@
 package com.codeit.mopl.domain.content.entity;
 
+import com.codeit.mopl.exception.content.InvalidSortDirectionException;
+import java.util.Map;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
 public enum SortDirection {
-  ASCENDING,
-  DESCENDING
+  ASCENDING("ASCENDING"),
+  DESCENDING("DESCENDING");
+
+  private final String value;
+
+  public static SortDirection fromValue(String value) {
+    if (value == null) {
+      throw new InvalidSortDirectionException(Map.of("inputValue", "null"));
+    }
+
+    for (SortDirection direction : values()) {
+      if (direction.value.equalsIgnoreCase(value)) {
+        return direction;
+      }
+    }
+    throw new InvalidSortDirectionException(Map.of("inputValue", value));
+  }
 }

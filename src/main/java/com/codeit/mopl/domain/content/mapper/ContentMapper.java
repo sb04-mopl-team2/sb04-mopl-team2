@@ -14,14 +14,13 @@ public interface ContentMapper {
   @Mapping(target = "contentType", source = "request", qualifiedByName = "mappingContentType")
   @Mapping(target = "averageRating", constant = "0.0")
   @Mapping(target = "reviewCount", constant = "0")
+  @Mapping(target = "watcherCount", constant = "0")
   @Mapping(target = "thumbnailUrl", ignore = true)
-  @Mapping(target = "watcherCount", ignore = true)
   @Mapping(target = "updatedAt", ignore = true)
   Content fromCreateRequest(ContentCreateRequest request);
 
   @Mapping(target = "type", expression = "java(content.getContentType().getType())")
-  @Mapping(target = "watcherCount", source = "watcherCount")
-  ContentDto toDto(Content content, Long watcherCount);
+  ContentDto toDto(Content content);
 
   @Named("mappingContentType")
   default ContentType mappingContentType(ContentCreateRequest request) {

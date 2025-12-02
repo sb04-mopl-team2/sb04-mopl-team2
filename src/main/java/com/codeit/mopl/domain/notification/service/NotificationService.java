@@ -7,8 +7,8 @@ import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
-import com.codeit.mopl.domain.notification.exception.NotificationForbidden;
-import com.codeit.mopl.domain.notification.exception.NotificationNotFoundException;
+import com.codeit.mopl.exception.notification.NotificationForbidden;
+import com.codeit.mopl.exception.notification.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
 import com.codeit.mopl.domain.user.entity.User;
@@ -70,7 +70,7 @@ public class NotificationService {
     if (notificationList.isEmpty()) {
       log.debug("[알림] 알림 리스트가 비었음, userId = {}", userId);
       CursorResponseNotificationDto cursorResponseNotificationDto = new CursorResponseNotificationDto(
-          null, null, null, false, 0L, responseSortBy, SortDirection.DESCENDING);
+          List.of(), null, null, false, 0L, responseSortBy, SortDirection.DESCENDING);
 
       log.info("[알림] 알림 조회 종료, userId = {}, notificationListSize = {}, hasNext = {}, totalCount = {}",
           userId, 0L, cursorResponseNotificationDto.hasNext(), cursorResponseNotificationDto.totalCount());

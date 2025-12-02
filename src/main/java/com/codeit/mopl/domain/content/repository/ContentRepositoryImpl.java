@@ -84,7 +84,7 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
         .fetchOne();
 
     List<ContentDto> data = contents.stream()
-        .map(c -> mapper.toDto(c, 0L))
+        .map(mapper::toDto)
         .toList();
 
     return new CursorResponseContentDto(

@@ -15,7 +15,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RequiredArgsConstructor
 public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessionRepository {
 
@@ -32,7 +34,8 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
       SortDirection sortDirection,
       SortBy sortBy // createdAt
   ) {
-    return jpaQueryFactory.selectFrom(watchingSession)
+    log.info("[실시간 세션] 레포지토리에서 조회 시작. userId = {}, contentId = {} ", userId, contentId);
+    List<WatchingSession> results = jpaQueryFactory.selectFrom(watchingSession)
         .join(watchingSession.user, user).fetchJoin()
         .join(watchingSession.content, content).fetchJoin()
         .where(
@@ -44,6 +47,11 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
         .orderBy(getSortOrder(sortDirection))
         .limit(limit)
         .fetch();
+
+    log.info("[실시간 세션] 레포지토리에서 찾는 watchingsession 반환 완료. userId = {}, contentId = {}, 갯수 = {} ",
+        userId, contentId, results.size());
+    return results;
+
   }
 
   private BooleanExpression cursorCondition(String cursor, UUID idAfter, SortDirection sortDirection) {
@@ -93,7 +101,7 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
     return count != null ? count : 0L;
   }
 
-  // boolean expressions
+  // boolean expressions for get watcherCount
   public BooleanExpression watcherNameExist(String watcherNameLike) {
     return watcherNameLike != null && !watcherNameLike.isBlank()
         ? watchingSession.user.name.containsIgnoreCase(watcherNameLike)

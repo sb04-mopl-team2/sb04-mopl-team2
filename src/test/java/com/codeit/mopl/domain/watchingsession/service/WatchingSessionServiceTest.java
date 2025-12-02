@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.watchingsession.service;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -19,10 +20,7 @@ import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
 import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
-import com.codeit.mopl.exception.user.UserNotFoundException;
-import com.codeit.mopl.exception.watchingsession.ContentNotFoundException;
-import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
-import java.time.LocalDate;
+import com.codeit.mopl.exception.content.ContentNotFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,9 +95,8 @@ public class WatchingSessionServiceTest {
     when(watchingSessionRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
     // when & then
-    assertThrows(WatchingSessionNotFoundException.class, () -> {
-      watchingSessionService.getByUserId(userId);
-    });
+    WatchingSessionDto result = watchingSessionService.getByUserId(userId);
+    assertNull(result);
     verify(watchingSessionRepository, times(1)).findByUserId(userId);
     verify(watchingSessionMapper, times(0)).toDto(any());
   }
@@ -122,7 +119,7 @@ public class WatchingSessionServiceTest {
     CursorResponseWatchingSessionDto expectedDto = new CursorResponseWatchingSessionDto(
         List.of(watchingSessionDto),
         null, null, false,
-        1L, SortBy.CREATED_AT, SortDirection.ASCENDING
+        1L, SortBy.CREATED_AT.getType(), SortDirection.ASCENDING
     );
     when(contentRepository.existsById(contentId)).thenReturn(true);
     when(watchingSessionMapper.toDto(entity)).thenReturn(watchingSessionDto);
@@ -197,7 +194,7 @@ public class WatchingSessionServiceTest {
         entity2Time.toString(),
         entity2Id,
         true,
-        2L, SortBy.CREATED_AT, SortDirection.ASCENDING
+        2L, SortBy.CREATED_AT.getType(), SortDirection.ASCENDING
     );
 
     // when

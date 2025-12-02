@@ -22,7 +22,7 @@ public class FollowEventKafkaConsumer {
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "mopl-follower-increase", groupId = "mopl-follow", concurrency = "3")
-    public void onFollowIncrease(String kafkaEventJson, Acknowledgment ack) {
+    public void onFollowerIncrease(String kafkaEventJson, Acknowledgment ack) {
         try {
             FollowerIncreaseEvent event = objectMapper.readValue(kafkaEventJson, FollowerIncreaseEvent.class);
             UUID followId = event.followId();
@@ -39,7 +39,7 @@ public class FollowEventKafkaConsumer {
     }
 
     @KafkaListener(topics = "mopl-follower-decrease", groupId = "mopl-follow", concurrency = "3")
-    public void onFollowDecrease(String kafkaEventJson, Acknowledgment ack) {
+    public void onFollowerDecrease(String kafkaEventJson, Acknowledgment ack) {
         try {
             FollowerDecreaseEvent event = objectMapper.readValue(kafkaEventJson, FollowerDecreaseEvent.class);
             UUID followId = event.followId();

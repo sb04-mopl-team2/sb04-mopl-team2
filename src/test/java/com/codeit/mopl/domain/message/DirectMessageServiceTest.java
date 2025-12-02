@@ -1,10 +1,13 @@
 package com.codeit.mopl.domain.message;
 
 import com.codeit.mopl.domain.base.BaseEntity;
+import com.codeit.mopl.domain.message.conversation.entity.Conversation;
 import com.codeit.mopl.domain.message.conversation.entity.SortBy;
+import com.codeit.mopl.domain.message.conversation.repository.ConversationRepository;
 import com.codeit.mopl.domain.message.directmessage.dto.CursorResponseDirectMessageDto;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageSearchCond;
+import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageSendRequest;
 import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
 import com.codeit.mopl.domain.message.directmessage.mapper.DirectMessageMapper;
 import com.codeit.mopl.domain.message.directmessage.repository.DirectMessageRepository;
@@ -13,6 +16,7 @@ import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,22 +24,29 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 
 @ExtendWith(MockitoExtension.class)
 public class DirectMessageServiceTest {
     @Mock private DirectMessageRepository directMessageRepository;
     @Mock private DirectMessageMapper directMessageMapper;
+    @Mock private ConversationRepository conversationRepository;
     @Mock private UserRepository userRepository;
     @InjectMocks private DirectMessageService directMessageService;
 
@@ -43,6 +54,98 @@ public class DirectMessageServiceTest {
     @DisplayName("createDM()")
     class createDirectMessage {
 
+        @Test
+        @DisplayName("정상 요청 시 DM을 저장함")
+        void shouldSaveDirectMessage() {
+            UUID loginUserId = UUID.randomUUID();
+            User localUser = new User();
+            setId(localUser, loginUserId);
+            UserSummary sender = new UserSummary(loginUserId,"test1","test1");
+
+            UUID receiverUserId = UUID.randomUUID();
+            User receiverUser = new User();
+            setId(receiverUser, receiverUserId);
+            UserSummary receiver = new UserSummary(receiverUserId,"test2","test2");
+
+            UUID conversationId = UUID.randomUUID();
+            DirectMessageSendRequest request = new DirectMessageSendRequest(
+                    conversationId,
+                    receiverUserId,
+                    "test"
+            );
+            Conversation conversation = Conversation.builder()
+                    .user(localUser)
+                    .with(receiverUser)
+                    .hasUnread(false)
+                    .messages(null)
+                    .build();
+            given(conversationRepository.findById(conversationId)).willReturn(Optional.of(conversation));
+            given(userRepository.findById(loginUserId)).willReturn(Optional.of(localUser));
+            given(userRepository.findById(receiverUserId)).willReturn(Optional.of(receiverUser));
+
+            DirectMessage message = DirectMessage.builder()
+                    .sender(localUser)
+                    .receiver(receiverUser)
+                    .conversation(conversation)
+                    .content("test")
+                    .isRead(false)
+                    .build();
+            given(directMessageRepository.save(any(DirectMessage.class)))
+                    .willReturn(message);            given(directMessageMapper.toDirectMessageDto(message))
+                    .willReturn(new DirectMessageDto(
+                       message.getId(),
+                       conversationId,
+                       LocalDateTime.now(),
+                       sender,
+                       receiver,
+                       message.getContent()
+                    ));
+            //when
+            DirectMessageDto result = directMessageService.saveDirectMessage(loginUserId, request);
+
+            //then
+            verify(conversationRepository).findById(conversationId);
+            verify(userRepository).findById(loginUserId);
+            verify(userRepository).findById(receiverUserId);
+            verify(directMessageMapper).toDirectMessageDto(message);
+            verify(directMessageRepository).save(any(DirectMessage.class));
+        }
+
+        @Test
+        @DisplayName("상대 유저가 존재하지 않는 경우 예외 발생")
+        void shouldThrowExceptionWhenUserNotFound() {
+            UUID loginUserId = UUID.randomUUID();
+            User localUser = new User();
+            setId(localUser, loginUserId);
+
+            UUID nonExistentUserId = UUID.randomUUID();
+            User nonExistentUser = new User();
+            setId(nonExistentUser, nonExistentUserId);
+            given(userRepository.findById(loginUserId)).willReturn(Optional.of(localUser));
+            given(userRepository.findById(nonExistentUserId)).willReturn(Optional.empty());
+
+            UUID conversationId = UUID.randomUUID();
+            DirectMessageSendRequest request = new DirectMessageSendRequest(
+                    conversationId,
+                    nonExistentUserId,
+                    "test"
+            );
+            Conversation conversation = Conversation.builder()
+                    .user(localUser)
+                    .with(nonExistentUser)
+                    .hasUnread(false)
+                    .messages(null)
+                    .build();
+            given(conversationRepository.findById(conversationId)).willReturn(Optional.of(conversation));
+
+            //when&then
+            assertThrows(UserNotFoundException.class,
+                    ()-> directMessageService.saveDirectMessage(loginUserId,request));
+            verify(userRepository).findById(loginUserId);
+            verify(userRepository).findById(nonExistentUserId);
+            verify(conversationRepository).findById(conversationId);
+            verify(directMessageRepository,never()).save(any(DirectMessage.class));
+        }
     }
 
     @Nested
@@ -71,13 +174,24 @@ public class DirectMessageServiceTest {
             UserSummary receiver = new UserSummary(withUserId, "test2", "test2");
             UUID conversationId = UUID.randomUUID();
 
+            Conversation conversation = Conversation.builder()
+                    .user(loginUser)
+                    .with(withUser)
+                    .hasUnread(false)
+                    .messages(null)
+                    .build();
+
+            given(conversationRepository.findById(conversationId))
+                    .willReturn(Optional.of(conversation));
+
             DirectMessage directMessage = DirectMessage.builder()
                     .receiver(loginUser)
                     .sender(withUser)
                     .isRead(false)
                     .content("content")
                     .build();
-            given(directMessageRepository.findMessagesBefore(any(UUID.class), nullable(String.class), nullable(UUID.class)))
+            Pageable pageable = PageRequest.of(0, cond.getLimit() + 1);
+            given(directMessageRepository.findMessagesBefore(any(UUID.class), nullable(LocalDateTime.class), nullable(UUID.class), any(Pageable.class)))
                     .willReturn(Arrays.asList(directMessage));
             given(directMessageMapper.toDirectMessageDto(directMessage))
                     .willReturn(new DirectMessageDto(
@@ -121,10 +235,21 @@ public class DirectMessageServiceTest {
             setId(withUser, withUserId);
             UUID conversationId = UUID.randomUUID();
 
+            Conversation conversation = Conversation.builder()
+                    .user(loginUser)
+                    .with(withUser)
+                    .hasUnread(false)
+                    .messages(null)
+                    .build();
+
+            given(conversationRepository.findById(conversationId))
+                    .willReturn(Optional.of(conversation));
+
             given(directMessageRepository.findMessagesBefore(
                     any(UUID.class),
-                    nullable(String.class),
-                    nullable(UUID.class)
+                    nullable(LocalDateTime.class),
+                    nullable(UUID.class),
+                    any(Pageable.class)
             )).willReturn(Collections.emptyList());
 
             //when
@@ -152,6 +277,26 @@ public class DirectMessageServiceTest {
                     .isRead(false)
                     .build();
             setId(after1, after1Id);
+
+            UUID loginUserId = UUID.randomUUID();
+            User loginUser = new User();
+            setId(loginUser, loginUserId);
+            UserSummary userA = new UserSummary(loginUserId, "test1", "test1");
+            UUID withUserId = UUID.randomUUID();
+            User withUser = new User();
+            setId(withUser, withUserId);
+            UserSummary userB = new UserSummary(withUserId, "test2", "test2");
+
+            Conversation conversation = Conversation.builder()
+                    .user(loginUser)
+                    .with(withUser)
+                    .hasUnread(false)
+                    .messages(null)
+                    .build();
+
+            given(conversationRepository.findById(conversationId))
+                    .willReturn(Optional.of(conversation));
+
             DirectMessage after2 = DirectMessage.builder()
                     .content("msg2")
                     .isRead(false)
@@ -159,16 +304,17 @@ public class DirectMessageServiceTest {
             setId(after2, after2Id);
             given(directMessageRepository.findMessagesBefore(
                     any(UUID.class),
-                    nullable(String.class),
-                    nullable(UUID.class)
+                    nullable(LocalDateTime.class),
+                    nullable(UUID.class),
+                    any(Pageable.class)
             )).willReturn(Arrays.asList(after1, after2));
             given(directMessageMapper.toDirectMessageDto(after1))
                     .willReturn(new DirectMessageDto(
                             after1Id,
                             conversationId,
                             after1.getCreatedAt(),
-                            null,
-                            null,
+                            userA,
+                            userB,
                             "msg1"
                     ));
             given(directMessageMapper.toDirectMessageDto(after2))
@@ -176,19 +322,20 @@ public class DirectMessageServiceTest {
                             after2Id,
                             conversationId,
                             after2.getCreatedAt(),
-                            null,
-                            null,
+                            userB,
+                            userA,
                             "msg2"
                     ));
             given(directMessageRepository.countAllByConversationId(conversationId))
             .willReturn(2L);
             //when
-            CursorResponseDirectMessageDto result = directMessageService.getDirectMessages(UUID.randomUUID(),conversationId,cond);
+            CursorResponseDirectMessageDto result = directMessageService.getDirectMessages(loginUserId,conversationId,cond);
             //then
             assertThat(result.totalCount()).isEqualTo(2);
             assertThat(result.data().get(0).id()).isEqualTo(after1.getId());
             assertThat(result.data().get(1).id()).isEqualTo(after2.getId());
         }
+
 
     }
 

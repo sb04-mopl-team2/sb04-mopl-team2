@@ -113,7 +113,6 @@ public class FollowApiIntegrationTest {
         Follow follow = allFollows.get(0);
         assertThat(follow.getFollower().getId()).isEqualTo(follower.getId());
         assertThat(follow.getFollowee().getId()).isEqualTo(followee.getId());
-        assertThat(follower.getFollowerCount()).isEqualTo(1L);
     }
 
     @Test

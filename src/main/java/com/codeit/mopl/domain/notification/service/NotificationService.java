@@ -151,7 +151,7 @@ public class NotificationService {
     log.info("[알림] SSE 전송 호출 시작, notificationDto = {}", notificationDto);
 
     UUID receiverId = notificationDto.receiverId();
-    String eventName = "notification";
+    String eventName = "notifications";
     Object data = notificationDto;
     sseService.send(receiverId, eventName, data);
     log.info("[알림] SSE 전송 호출 종료, notificationDto = {}", notificationDto);

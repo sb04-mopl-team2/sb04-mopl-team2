@@ -166,7 +166,7 @@ public class WatchingSessionControllerTest {
         SortBy.CREATED_AT.getType(), SortDirection.ASCENDING
     );
     when(watchingSessionService.getWatchingSessions(
-        any(UUID.class), eq(contentId),
+        eq(contentId),
         any(), any(), any(), anyInt(), any(), any()
     )).thenReturn(cursorResponseWatchingSessionDto);
 
@@ -204,7 +204,6 @@ public class WatchingSessionControllerTest {
     // given
     UUID contentId = UUID.randomUUID();
     given(watchingSessionService.getWatchingSessions(
-        any(UUID.class),
         eq(contentId),
         any(), any(), any(),
         anyInt(), any(), any()

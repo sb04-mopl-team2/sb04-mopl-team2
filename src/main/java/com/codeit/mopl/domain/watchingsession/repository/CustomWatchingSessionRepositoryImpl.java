@@ -25,7 +25,6 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
 
   @Override
   public List<WatchingSession> findWatchingSessions(
-      UUID userId,
       UUID contentId,
       String watcherNameLike, // (optional)
       String cursor, // (optional) createdAt timestamp
@@ -34,13 +33,12 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
       SortDirection sortDirection,
       SortBy sortBy // createdAt
   ) {
-    log.info("[실시간 세션] 레포지토리에서 조회 시작. userId = {}, contentId = {} ", userId, contentId);
+    log.info("[실시간 세션] 레포지토리에서 조회 시작. contentId = {} ", contentId);
     List<WatchingSession> results = jpaQueryFactory.selectFrom(watchingSession)
         .join(watchingSession.user, user).fetchJoin()
         .join(watchingSession.content, content).fetchJoin()
         .where(
             watchingSession.content.id.eq(contentId), // contentId match
-            userIdExist(userId), // filter -> if userId exist
             watcherNameExist(watcherNameLike), //filter -> if name exist
             cursorCondition(cursor, idAfter, sortDirection)
         )
@@ -48,8 +46,8 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
         .limit(limit)
         .fetch();
 
-    log.info("[실시간 세션] 레포지토리에서 찾는 watchingsession 반환 완료. userId = {}, contentId = {}, 갯수 = {} ",
-        userId, contentId, results.size());
+    log.info("[실시간 세션] 레포지토리에서 찾는 watchingsession 반환 완료. contentId = {}, 갯수 = {} ",
+        contentId, results.size());
     return results;
 
   }
@@ -88,14 +86,13 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
 
   // returns watcherCount == totalCount
   @Override
-  public long getWatcherCount(UUID userId, UUID contentId, String watcherNameLike) {
+  public long getWatcherCount(UUID contentId, String watcherNameLike) {
     Long count = jpaQueryFactory
         .select(watchingSession.count())
         .from(watchingSession)
         .where(
             watchingSession.content.id.eq(contentId),
-            userIdExist(userId),
-            watcherNameExist(watcherNameLike)
+            watcherNameExist(watcherNameLike) //
         )
         .fetchOne();
     return count != null ? count : 0L;
@@ -105,12 +102,6 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
   public BooleanExpression watcherNameExist(String watcherNameLike) {
     return watcherNameLike != null && !watcherNameLike.isBlank()
         ? watchingSession.user.name.containsIgnoreCase(watcherNameLike)
-        : null;
-  }
-
-  public BooleanExpression userIdExist(UUID userId) {
-    return userId != null
-        ? watchingSession.user.id.eq(userId)
         : null;
   }
 }

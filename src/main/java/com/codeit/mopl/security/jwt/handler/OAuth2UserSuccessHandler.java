@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,11 +63,14 @@ public class OAuth2UserSuccessHandler extends SimpleUrlAuthenticationSuccessHand
         JwtDto jwtDto = new JwtDto(userDto, accessToken);
 
         // RefreshToken Cookie
-        Cookie refreshTokenCookie = new Cookie("REFRESH_TOKEN", refreshToken);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(expiration * 60);
-        refreshTokenCookie.setHttpOnly(true);
-        response.addCookie(refreshTokenCookie);
+        ResponseCookie cookie = ResponseCookie.from("REFRESH_TOKEN", refreshToken)
+                .path("/")
+                .maxAge(Duration.ofMinutes(expiration))
+                .httpOnly(true)
+                .sameSite("Strict")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         String redirectUri = createURI().toString();
 

@@ -43,9 +43,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource(
-        properties = "spring.cache.type=none"
-)
 public class UserE2ETest {
 
     @Autowired

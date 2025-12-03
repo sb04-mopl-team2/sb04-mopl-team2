@@ -28,7 +28,7 @@ public class CacheConfig extends CachingConfigurerSupport {
         ObjectMapper redisObjectMapper = objectMapper.copy();
         redisObjectMapper.activateDefaultTyping(
                 LaissezFaireSubTypeValidator.instance,
-                ObjectMapper.DefaultTyping.NON_FINAL,
+                ObjectMapper.DefaultTyping.EVERYTHING,
                 JsonTypeInfo.As.PROPERTY
         );
 

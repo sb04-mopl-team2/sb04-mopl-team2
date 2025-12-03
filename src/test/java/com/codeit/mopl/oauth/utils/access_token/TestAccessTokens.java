@@ -1,4 +1,4 @@
-package com.codeit.mopl.oatuh.utils.access_token;
+package com.codeit.mopl.oauth.utils.access_token;
 
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 

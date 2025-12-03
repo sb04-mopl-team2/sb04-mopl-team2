@@ -1,6 +1,6 @@
 server:
   port: 8081
-  host: http://mopl-alb-998609682.ap-northeast-2.elb.amazonaws.com
+  host: ${HOST}
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL}
@@ -47,7 +47,7 @@ spring:
           kakao:
             client-id: ${OAUTH2_KAKAO_CLIENT_ID}
             client-secret: ${OAUTH2_KAKAO_CLIENT_SECRET}
-            redirect-uri: http://mopl-alb-998609682.ap-northeast-2.elb.amazonaws.com/login/oauth2/code/kakao
+            redirect-uri: ${server.host}/login/oauth2/code/kakao
             scope:
               - profile_nickname
               - profile_image

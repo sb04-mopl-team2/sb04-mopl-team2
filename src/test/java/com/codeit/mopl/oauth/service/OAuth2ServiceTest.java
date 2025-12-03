@@ -1,12 +1,11 @@
-package com.codeit.mopl.oatuh.service;
+package com.codeit.mopl.oauth.service;
 
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.service.UserService;
 import com.codeit.mopl.exception.user.NotSupportedSocialLoginException;
-import com.codeit.mopl.oatuh.utils.TestOAuth2UserRequests;
-import com.codeit.mopl.oatuh.utils.oauth2_user.TestOAuth2Users;
-import com.codeit.mopl.oauth.service.OAuth2UserService;
+import com.codeit.mopl.oauth.utils.TestOAuth2UserRequests;
+import com.codeit.mopl.oauth.utils.oauth2_user.TestOAuth2Users;
 import com.codeit.mopl.security.CustomUserDetails;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -83,7 +81,7 @@ public class OAuth2ServiceTest {
         NotSupportedSocialLoginException exception = assertThrows(NotSupportedSocialLoginException.class, () -> {
             oAuth2UserService.loadUser(request);
         });
-        assertEquals("지원하지 않는 소설 로그인입니다.",exception.getErrorCode().getMessage());
+        assertEquals("지원하지 않는 소셜 로그인입니다.",exception.getErrorCode().getMessage());
         assertEquals("github",exception.getDetails().get("site"));
     }
 }

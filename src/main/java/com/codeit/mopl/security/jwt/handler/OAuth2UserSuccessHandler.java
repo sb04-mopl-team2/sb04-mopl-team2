@@ -63,6 +63,7 @@ public class OAuth2UserSuccessHandler extends SimpleUrlAuthenticationSuccessHand
         Cookie refreshTokenCookie = new Cookie("REFRESH_TOKEN", refreshToken);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(expiration * 60);
+        refreshTokenCookie.setHttpOnly(true);
         response.addCookie(refreshTokenCookie);
 
         String redirectUri = createURI().toString();

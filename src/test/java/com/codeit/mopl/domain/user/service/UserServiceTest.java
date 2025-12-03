@@ -421,9 +421,17 @@ public class UserServiceTest {
         given(passwordUtils.makeTempPassword()).willReturn(password);
         given(passwordEncoder.encode(password)).willReturn(encodedPassword);
         User user = new User(email,encodedPassword,name,profileImageUrl);
-        UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@gmail.com", "소셜로그인", "https://googleImage.example.com", Role.USER, false);
-        given(userRepository.save(user)).willReturn(user);
-        given(userMapper.toDto(user)).willReturn(userDto);
+        UserDto userDto = new UserDto(
+                UUID.randomUUID(),
+                LocalDateTime.now(),
+                "test@gmail.com",
+                "소셜로그인",
+                "https://googleImage.example.com",
+                Role.USER,
+                false
+        );
+        given(userRepository.save(any(User.class))).willReturn(user);
+        given(userMapper.toDto(any(User.class))).willReturn(userDto);
 
         // when
         UserDto response = userService.findOrCreateOAuth2User(email,name,profileImageUrl);

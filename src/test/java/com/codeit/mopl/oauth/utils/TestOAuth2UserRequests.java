@@ -1,7 +1,7 @@
-package com.codeit.mopl.oatuh.utils;
+package com.codeit.mopl.oauth.utils;
 
-import com.codeit.mopl.oatuh.utils.access_token.TestAccessTokens;
-import com.codeit.mopl.oatuh.utils.clientRegistration.TestClientRegistrations;
+import com.codeit.mopl.oauth.utils.access_token.TestAccessTokens;
+import com.codeit.mopl.oauth.utils.clientRegistration.TestClientRegistrations;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 
 public class TestOAuth2UserRequests {

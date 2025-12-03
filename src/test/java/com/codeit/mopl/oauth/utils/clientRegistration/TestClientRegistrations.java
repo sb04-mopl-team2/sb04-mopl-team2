@@ -1,4 +1,4 @@
-package com.codeit.mopl.oatuh.utils.clientRegistration;
+package com.codeit.mopl.oauth.utils.clientRegistration;
 
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;

@@ -1,4 +1,4 @@
-package com.codeit.mopl.oatuh.utils.oauth2_user;
+package com.codeit.mopl.oauth.utils.oauth2_user;
 
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;

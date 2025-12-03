@@ -56,22 +56,22 @@ public class FollowApiIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private CacheManager cacheManager;
+//    @Autowired
+//    private CacheManager cacheManager;
 
     private User follower;
     private User followee;
 
     private CustomUserDetails followerUserDetails;
 
-    @TestConfiguration
-    static class TestCacheConfig {
-
-        @Bean
-        public CacheManager cacheManager() {
-            return new ConcurrentMapCacheManager("notifications:first-page");
-        }
-    }
+//    @TestConfiguration
+//    static class TestCacheConfig {
+//
+//        @Bean
+//        public CacheManager cacheManager() {
+//            return new ConcurrentMapCacheManager("notifications:first-page");
+//        }
+//    }
 
     @BeforeEach
     void setUp() {

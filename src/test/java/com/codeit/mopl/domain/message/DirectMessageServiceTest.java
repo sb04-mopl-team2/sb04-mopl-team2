@@ -24,6 +24,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -48,6 +49,7 @@ public class DirectMessageServiceTest {
     @Mock private DirectMessageMapper directMessageMapper;
     @Mock private ConversationRepository conversationRepository;
     @Mock private UserRepository userRepository;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @InjectMocks private DirectMessageService directMessageService;
 
     @Nested

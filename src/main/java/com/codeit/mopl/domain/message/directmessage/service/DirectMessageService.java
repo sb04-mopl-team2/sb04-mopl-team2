@@ -13,12 +13,14 @@ import com.codeit.mopl.domain.message.directmessage.repository.DirectMessageRepo
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.event.DirectMessageCreateEvent;
 import com.codeit.mopl.exception.message.conversation.ConversationForbiddenException;
 import com.codeit.mopl.exception.message.conversation.ConversationNotFound;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,8 @@ public class DirectMessageService {
     private final DirectMessageMapper directMessageMapper;
     private final ConversationRepository conversationRepository;
     private final UserRepository userRepository;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public CursorResponseDirectMessageDto getDirectMessages(UUID loginUserId,
@@ -174,6 +178,10 @@ public class DirectMessageService {
                 .isRead(false)
                 .build()
         );
-        return directMessageMapper.toDirectMessageDto(directMessage);
+
+        DirectMessageDto directMessageDto = directMessageMapper.toDirectMessageDto(directMessage);
+        eventPublisher.publishEvent(new DirectMessageCreateEvent(directMessageDto));
+
+        return directMessageDto;
     }
 }

@@ -28,6 +28,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -201,4 +202,64 @@ public class FollowApiIntegrationTest {
         resultActions
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    @DisplayName("팔로우 여부 조회 성공 통합 테스트")
+    void isFollowedByMe_Success() throws Exception {
+        // given
+        UUID followeeId = followee.getId();
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/followed-by-me")
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId.toString())
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("팔로우 여부 조회 실패 - 유효하지 않은 요청")
+    void isFollowedByMe_Failure_InvalidRequest() throws Exception {
+        // given
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/followed-by-me")
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", "1234")
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("팔로우 여부 조회 실패 - 존재하지 않는 유저")
+    void isFollowedByMe_Failure_UserNotFound() throws Exception {
+        // given
+        UUID followeeId = UUID.randomUUID();
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/followed-by-me")
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId.toString())
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound());
+    }
+
 }

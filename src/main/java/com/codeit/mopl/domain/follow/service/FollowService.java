@@ -7,6 +7,7 @@ import com.codeit.mopl.domain.follow.mapper.FollowMapper;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.entity.EventType;
@@ -17,6 +18,7 @@ import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.codeit.mopl.exception.follow.*;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -160,5 +162,18 @@ public class FollowService {
 
     private String getFollowNotificationTitle(String followerName) {
         return followerName + "님이 나를 팔로우했어요.";
+    }
+
+    public void newPlaylist(Playlist playlist) {
+        log.info("[팔로우 관리] 플레이리스트 생성시 팔로워 알림 송신 시작 : playListId = {}",playlist.getId());
+        UUID ownerId = playlist.getUser().getId();
+        List<Follow> followList = followRepository.findByFolloweeId(ownerId);
+
+        for (Follow follow : followList) {
+            UUID receiverId = follow.getFollower().getId();
+            String title = follow.getFollowee().getName() + "님이 새로운 플레이리스트: " + playlist.getTitle() + "를 만들었어요!";
+            notificationService.createNotification(receiverId, title, "", Level.INFO);
+        }
+        log.info("[팔로우 관리] 플레이리스트 생성시 팔로워 알림 송신 완료 : playListId = {}",playlist.getId());
     }
 }

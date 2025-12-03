@@ -1,13 +1,16 @@
 package com.codeit.mopl.event.consumer;
 
+import com.codeit.mopl.domain.follow.service.FollowService;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.DirectMessageCreateEvent;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
+import com.codeit.mopl.event.event.PlayListCreateEvent;
 import com.codeit.mopl.event.event.UserLogInOutEvent;
 import com.codeit.mopl.event.event.UserRoleUpdateEvent;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
@@ -32,6 +35,7 @@ import org.springframework.stereotype.Component;
 public class KafkaConsumer {
     private final ObjectMapper objectMapper;
     private final NotificationService notificationService;
+    private final FollowService followService;
     private final ProcessedEventRepository processedEventRepository;
     private final SseService sseService;
     private final SseEmitterRegistry sseEmitterRegistry;
@@ -129,7 +133,7 @@ public class KafkaConsumer {
             processedEventRepository.save(new ProcessedEvent(directMessageDto.id(), EventType.DIRECT_MESSAGE_CREATED));
             ack.acknowledge();
         } catch (JsonProcessingException e) {
-            log.error("[Kafka] DM 생성 역직렬화 실패: {}", kafkaEventJson, e);
+            log.error("[Kafka] DM 생성 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
         } catch (Exception e) {
             log.error("[Kafka] DM 생성 이벤트 처리 실패: {}", kafkaEventJson, e);
@@ -137,4 +141,29 @@ public class KafkaConsumer {
         }
     }
 
+    @Transactional
+    @KafkaListener(topics = "mopl-playList-create", groupId = "mopl-notification", concurrency = "3")
+    public void onPlayListCreated(String kafkaEventJson, Acknowledgment ack) {
+        try {
+            PlayListCreateEvent event = objectMapper.readValue(kafkaEventJson, PlayListCreateEvent.class);
+            Playlist playlist = event.playlist();
+
+            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(playlist.getId(), EventType.PLAY_LIST_CREATED);
+            if (processedEvent.isPresent()) {
+                log.warn("[Kafka] 플레이리스트 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                ack.acknowledge();
+                return;
+            }
+
+            followService.newPlaylist(playlist);
+            processedEventRepository.save(new ProcessedEvent(playlist.getId(), EventType.PLAY_LIST_CREATED));
+            ack.acknowledge();
+        } catch (JsonProcessingException e) {
+            log.error("[Kafka] 플레이리스트 생성 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
+            ack.acknowledge();
+        } catch (Exception e) {
+            log.error("[Kafka] 플레이리스트 생성 이벤트 처리 실패: {}", kafkaEventJson, e);
+            throw e;
+        }
+    }
 }

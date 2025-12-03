@@ -11,6 +11,7 @@ import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.playlist.subscription.repository.SubscriptionRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.event.PlayListCreateEvent;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
 import com.codeit.mopl.exception.playlist.PlaylistUpdateForbiddenException;
 import com.codeit.mopl.exception.user.UserErrorCode;
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,12 +34,16 @@ public class PlaylistService {
     private final PlaylistRepository playlistRepository;
     private final UserRepository userRepository;
     private final PlaylistMapper playlistMapper;
+    private final ApplicationEventPublisher eventPublisher;
     private final SubscriptionRepository subscriptionRepository;
 
+    public PlaylistService(UserRepository userRepository, PlaylistRepository playlistRepository, PlaylistMapper playlistMapper,
+        ApplicationEventPublisher eventPublisher) {
     public PlaylistService(UserRepository userRepository, PlaylistRepository playlistRepository, PlaylistMapper playlistMapper, SubscriptionRepository subscriptionRepository) {
         this.userRepository = userRepository;
         this.playlistRepository = playlistRepository;
         this.playlistMapper = playlistMapper;
+        this.eventPublisher = eventPublisher;
         this.subscriptionRepository = subscriptionRepository;
     }
 
@@ -59,6 +65,7 @@ public class PlaylistService {
             .build();
 
         Playlist saved = playlistRepository.save(playlist);
+        eventPublisher.publishEvent(new PlayListCreateEvent(saved));
         log.info("[플레이리스트] 플레이리스트 생성 완료 - 플레이리스트 제목 = {}", saved.getTitle());
         return playlistMapper.toPlaylistDto(saved);
     }

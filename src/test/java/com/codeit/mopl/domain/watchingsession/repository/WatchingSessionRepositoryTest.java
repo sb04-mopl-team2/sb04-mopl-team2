@@ -82,10 +82,26 @@ public class WatchingSessionRepositoryTest {
    */
   @Test
   @DisplayName("contentId로 성공적으로 조회")
+  void getWatchingSessionsWithContentIdWithoutCursorOrIdAfterSuccessful() {
+    // when
+    List<WatchingSession> nameResults = watchingSessionRepository.findWatchingSessions(
+        content.getId(),    // contentId
+        null,         // watcherNameLike
+        null,               // cursor
+        null,               // idAfter
+        10,                 // limit
+        SortDirection.DESCENDING,
+        SortBy.CREATED_AT
+    );
+    //then
+    assertThat(nameResults).hasSize(2);
+  }
+
+  @Test
+  @DisplayName("contentId와 watcherNameLike로 성공적으로 조회")
   void getWatchingSessionsWithoutCursorOrIdAfterSuccessful() {
     // when
     List<WatchingSession> nameResults = watchingSessionRepository.findWatchingSessions(
-        null,         // userId
         content.getId(),    // contentId
         "testName",         // watcherNameLike
         null,               // cursor
@@ -104,7 +120,6 @@ public class WatchingSessionRepositoryTest {
   void getEmptyListWithNonExistentContentIdSuccessful() {
     // when
     List<WatchingSession> nameResults = watchingSessionRepository.findWatchingSessions(
-        null,         // userId
         UUID.randomUUID(),  // contentId
         "testName",         // watcherNameLike
         null,               // cursor
@@ -118,31 +133,10 @@ public class WatchingSessionRepositoryTest {
   }
 
   @Test
-  @DisplayName("userId로 리스트 조회와 반환")
-  void getListUserIdSuccessful() {
-    // when
-    List<WatchingSession> results = watchingSessionRepository.findWatchingSessions(
-        user1.getId(),         // userId
-        content.getId(),  // contentId
-        null,         // watcherNameLike
-        null,               // cursor
-        null,               // idAfter
-        10,                 // limit
-        SortDirection.DESCENDING,
-        SortBy.CREATED_AT
-    );
-    // then
-    assertThat(results).hasSize(1);
-    assertThat(results.get(0).getId()).isEqualTo(w1.getId());
-    assertThat(results.get(0).getUser().getId()).isEqualTo(user1.getId());
-  }
-
-  @Test
   @DisplayName("ASCENDING 리스트 반환 확인")
   void getByContentIdAscSuccessful() {
     // when
     List<WatchingSession> results = watchingSessionRepository.findWatchingSessions(
-        null,         // userId
         content.getId(),  // contentId
         null,         // watcherNameLike
         null,               // cursor
@@ -162,7 +156,6 @@ public class WatchingSessionRepositoryTest {
   void getByContentIdDescSuccessful() {
     // when
     List<WatchingSession> results = watchingSessionRepository.findWatchingSessions(
-        null,         // userId
         content.getId(),  // contentId
         null,         // watcherNameLike
         null,               // cursor
@@ -182,7 +175,6 @@ public class WatchingSessionRepositoryTest {
   void getWatchingSessionsWithCursorPaginationSuccessful() {
     // 1st page
     List<WatchingSession> page1 = watchingSessionRepository.findWatchingSessions(
-        null,
         content.getId(),
         null,
         null,
@@ -199,7 +191,6 @@ public class WatchingSessionRepositoryTest {
     String cursorTimestamp = firstResult.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     UUID cursorId = firstResult.getId();
     List<WatchingSession> page2 = watchingSessionRepository.findWatchingSessions(
-        null,
         content.getId(),
         null,
         cursorTimestamp, // last elem timestamp
@@ -239,7 +230,7 @@ public class WatchingSessionRepositoryTest {
 
     // get top 1
     List<WatchingSession> page1 = watchingSessionRepository.findWatchingSessions(
-        null, content.getId(), null,
+        content.getId(), null,
         null, null, 1,
         SortDirection.DESCENDING, SortBy.CREATED_AT
     );
@@ -250,7 +241,7 @@ public class WatchingSessionRepositoryTest {
     // use 1st item as cursor
     String cursorTime = first.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     List<WatchingSession> page2 = watchingSessionRepository.findWatchingSessions(
-        null, content.getId(), null,
+        content.getId(), null,
         cursorTime,
         first.getId(),
         1,
@@ -267,27 +258,23 @@ public class WatchingSessionRepositoryTest {
   @Test
   @DisplayName("WatcherCount 조회")
   void getWatcherCount() {
-    // when & then - total count
+    // when & then - with userId1
     Long result1 = watchingSessionRepository.getWatcherCount(
-        null,
         content.getId(),
         null
     );
     assertThat(result1).isEqualTo(2L);
 
-    // when & then - with userId1
     Long result2 = watchingSessionRepository.getWatcherCount(
-        user1.getId(),
         content.getId(),
-        null
+        "testName"
     );
     assertThat(result2).isEqualTo(1L);
 
     // when & then - non existing name
     Long result3 = watchingSessionRepository.getWatcherCount(
-        UUID.randomUUID(),
         content.getId(),
-        "nonExistingName"
+        "nonExisting"
     );
     assertThat(result3).isEqualTo(0L);
   }

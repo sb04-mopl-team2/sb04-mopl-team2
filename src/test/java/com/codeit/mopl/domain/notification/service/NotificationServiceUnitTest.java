@@ -301,7 +301,7 @@ class NotificationServiceUnitTest {
     notificationService.sendNotification(notificationDto);
 
     // then
-    verify(sseService).send(eq(receiverId), eq("notification"), eq(notificationDto));
+    verify(sseService).send(eq(receiverId), eq("notifications"), eq(notificationDto));
   }
   // ---- 테스트용 헬퍼 메소드들 ----
   private Notification createNotification(String title, LocalDateTime createdAt) {

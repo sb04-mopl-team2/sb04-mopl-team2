@@ -81,6 +81,14 @@ public class KafkaEventListener {
         send("mopl-playList-create", key, event);
     }
 
+    @Async("taskExecutor")
+    @TransactionalEventListener
+    public void on(WatchingSessionCreateEvent event){
+        log.info("kafka WatchingSessionCreate Event");
+        String key = event.watchingSession().getId().toString();
+        send("mopl-watchingSession-create", key, event);
+    }
+
     private void send(String topic, String key, Object payload) {
         try {
             String json = objectMapper.writeValueAsString(payload);

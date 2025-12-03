@@ -6,6 +6,7 @@ import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
+import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.DirectMessageCreateEvent;
@@ -13,11 +14,11 @@ import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.event.event.PlayListCreateEvent;
 import com.codeit.mopl.event.event.UserLogInOutEvent;
 import com.codeit.mopl.event.event.UserRoleUpdateEvent;
+import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
 import com.codeit.mopl.sse.service.SseService;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
@@ -155,7 +156,7 @@ public class KafkaConsumer {
                 return;
             }
 
-            followService.newPlaylist(playlist);
+            followService.notifyFollowersOnPlaylistCreated(playlist);
             processedEventRepository.save(new ProcessedEvent(playlist.getId(), EventType.PLAY_LIST_CREATED));
             ack.acknowledge();
         } catch (JsonProcessingException e) {
@@ -163,6 +164,32 @@ public class KafkaConsumer {
             ack.acknowledge();
         } catch (Exception e) {
             log.error("[Kafka] 플레이리스트 생성 이벤트 처리 실패: {}", kafkaEventJson, e);
+            throw e;
+        }
+    }
+
+    @Transactional
+    @KafkaListener(topics = "mopl-watchingSession-create", groupId = "mopl-notification", concurrency = "3")
+    public void onWatchingSessionCreated(String kafkaEventJson, Acknowledgment ack) {
+        try {
+            WatchingSessionCreateEvent event = objectMapper.readValue(kafkaEventJson, WatchingSessionCreateEvent.class);
+            WatchingSession watchingSession = event.watchingSession();
+
+            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(watchingSession.getId(), EventType.WATCH_SESSION_CREATED);
+            if (processedEvent.isPresent()) {
+                log.warn("[Kafka] WatchingSession 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                ack.acknowledge();
+                return;
+            }
+
+            followService.notifyFollowersOnWatchingEvent(watchingSession);
+            processedEventRepository.save(new ProcessedEvent(watchingSession.getId(), EventType.WATCH_SESSION_CREATED));
+            ack.acknowledge();
+        } catch (JsonProcessingException e) {
+            log.error("[Kafka] WatchingSession 생성 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
+            ack.acknowledge();
+        } catch (Exception e) {
+            log.error("[Kafka] WatchingSession 생성 이벤트 처리 실패: {}", kafkaEventJson, e);
             throw e;
         }
     }

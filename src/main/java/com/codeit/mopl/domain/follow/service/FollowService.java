@@ -10,6 +10,7 @@ import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
@@ -164,8 +165,8 @@ public class FollowService {
         return followerName + "님이 나를 팔로우했어요.";
     }
 
-    public void newPlaylist(Playlist playlist) {
-        log.info("[팔로우 관리] 플레이리스트 생성시 팔로워 알림 송신 시작 : playListId = {}",playlist.getId());
+    public void notifyFollowersOnPlaylistCreated(Playlist playlist) {
+        log.info("[팔로우 관리] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 시작 : playListId = {}",playlist.getId());
         UUID ownerId = playlist.getUser().getId();
         List<Follow> followList = followRepository.findByFolloweeId(ownerId);
 
@@ -174,6 +175,20 @@ public class FollowService {
             String title = follow.getFollowee().getName() + "님이 새로운 플레이리스트: " + playlist.getTitle() + "를 만들었어요!";
             notificationService.createNotification(receiverId, title, "", Level.INFO);
         }
-        log.info("[팔로우 관리] 플레이리스트 생성시 팔로워 알림 송신 완료 : playListId = {}",playlist.getId());
+        log.info("[팔로우 관리] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 완료 : playListId = {}",playlist.getId());
     }
+
+    public void notifyFollowersOnWatchingEvent(WatchingSession watchingSession) {
+        log.info("[팔로우 관리] 팔로우한 유저가 실시간 콘텐츠 시청시 팔로워 알림 송신 시작 : watchingSessionId = {}", watchingSession.getId());
+        UUID ownerId = watchingSession.getUser().getId();
+        List<Follow> followList = followRepository.findByFolloweeId(ownerId);
+
+        for (Follow follow : followList) {
+            UUID receiverId = follow.getFollower().getId();
+            String title = follow.getFollowee().getName() + "님이 " + watchingSession.getContent().getTitle() + "를 보고있어요!";
+            notificationService.createNotification(receiverId, title, "", Level.INFO);
+        }
+        log.info("[팔로우 관리] 팔로우한 유저가 실시간 콘텐츠 시청시 알림 송신 완료 : watchingSessionId = {}", watchingSession.getId());
+    }
+
 }

@@ -58,11 +58,11 @@ public class ConversationController {
     }
 
     @GetMapping("/with")
-    public ResponseEntity<ConversationDto> getConversationByUserId(@RequestParam UUID withUserId,
+    public ResponseEntity<ConversationDto> getConversationByUserId(@RequestParam("withUserId") UUID userId,
                                                                    @AuthenticationPrincipal CustomUserDetails loginUser) {
-        log.info("[메세지] 특정 사용자와의 채팅방 조회 요청 - withUserId = {}", withUserId);
-        ConversationDto response = conversationService.getConversationByUserId(loginUser.getUser().id(), withUserId);
-        log.info("[메세지] 특정 사용자와의 채팅방 조회 응답 - withUserId = {}", withUserId);
+        log.info("[메세지] 특정 사용자와의 채팅방 조회 요청 - withUserId = {}", userId);
+        ConversationDto response = conversationService.getConversationByUserId(loginUser.getUser().id(), userId);
+        log.info("[메세지] 특정 사용자와의 채팅방 조회 응답 - withUserId = {}", userId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

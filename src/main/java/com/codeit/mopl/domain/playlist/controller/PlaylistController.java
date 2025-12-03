@@ -37,19 +37,21 @@ public class PlaylistController {
     }
 
     @GetMapping
-    public ResponseEntity<CursorResponsePlaylistDto> getPlaylists(@Validated @ModelAttribute PlaylistSearchCond request) {
+    public ResponseEntity<CursorResponsePlaylistDto> getPlaylists(@Validated @ModelAttribute PlaylistSearchCond request,
+                                                                  @AuthenticationPrincipal CustomUserDetails loginUser) {
         log.info("[플레이리스트] 플레이리스트 목록 조회 요청 - keyword = {}, ownerId = {}, subscriberId = {}, cursor = {}",
                 request.getKeywordLike(), request.getOwnerIdEqual(), request.getSubscriberIdEqual(), request.getCursor());
-        CursorResponsePlaylistDto response = playlistService.getAllPlaylists(request);
+        CursorResponsePlaylistDto response = playlistService.getAllPlaylists(loginUser.getUser().id(),request);
         log.info("[플레이리스트] 플레이리스트 목록 조회 응답 - totalCount={}, hasNext={}, nextCursor={}",
                 response.totalCount(), response.hasNext(), response.nextCursor());
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/{playlistId}")
-    public ResponseEntity<PlaylistDto> getPlaylist(@PathVariable UUID playlistId) {
+    public ResponseEntity<PlaylistDto> getPlaylist(@PathVariable UUID playlistId,
+                                                   @AuthenticationPrincipal CustomUserDetails loginUser) {
         log.info("[플레이리스트] 플레이리스트 단건 조회 요청 - playlistId = {}", playlistId);
-        PlaylistDto response = playlistService.getPlaylist(playlistId);
+        PlaylistDto response = playlistService.getPlaylist(loginUser.getUser().id(),playlistId);
         log.info("[플레이리스트] 플레이리스트 단건 조회 응답 - playlistId = {}", response.id());
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -100,7 +102,7 @@ public class PlaylistController {
         log.info("[플레이리스트] 플레이리스트 구독 처리 요청 - playlistId = {}, userId = {}", playlistId, loginUser.getUser().id());
         subscriptionService.subscribe(playlistId, loginUser.getUser().id());
         log.info("[플레이리스트] 플레이리스트 구독 처리 응답 - playlistId = {}, userId = {}", playlistId, loginUser.getUser().id());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{playlistId}/subscription")
@@ -109,6 +111,6 @@ public class PlaylistController {
         log.info("[플레이리스트] 플레이리스트 구독 취소 처리 요청 - playlistId = {}, userId = {}", playlistId, loginUser.getUser().id());
         subscriptionService.unsubscribe(playlistId, loginUser.getUser().id());
         log.info("[플레이리스트] 플레이리스트 구독 취소 처리 응답 - playlistId = {}", playlistId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }

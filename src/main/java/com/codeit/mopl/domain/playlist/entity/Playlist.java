@@ -52,4 +52,8 @@ public class Playlist extends UpdatableEntity {
             this.subscriberCount--;
         }
     }
+
+    public boolean isSubscribedByMe() {
+        return subscribedByMe;
+    }
 }

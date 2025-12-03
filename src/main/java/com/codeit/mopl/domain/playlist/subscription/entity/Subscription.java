@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 public class Subscription extends UpdatableEntity {
 
     @ManyToOne
+    @JoinColumn(name = "playlist_id", nullable = false)
     private Playlist playlist;
 
     @ManyToOne

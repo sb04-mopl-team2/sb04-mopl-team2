@@ -8,6 +8,7 @@ import com.codeit.mopl.domain.playlist.dto.PlaylistUpdateRequest;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.mapper.PlaylistMapper;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
+import com.codeit.mopl.domain.playlist.subscription.repository.SubscriptionRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
@@ -31,11 +32,13 @@ public class PlaylistService {
     private final PlaylistRepository playlistRepository;
     private final UserRepository userRepository;
     private final PlaylistMapper playlistMapper;
+    private final SubscriptionRepository subscriptionRepository;
 
-    public PlaylistService(UserRepository userRepository, PlaylistRepository playlistRepository, PlaylistMapper playlistMapper) {
+    public PlaylistService(UserRepository userRepository, PlaylistRepository playlistRepository, PlaylistMapper playlistMapper, SubscriptionRepository subscriptionRepository) {
         this.userRepository = userRepository;
         this.playlistRepository = playlistRepository;
         this.playlistMapper = playlistMapper;
+        this.subscriptionRepository = subscriptionRepository;
     }
 
     public PlaylistDto createPlaylist(UUID ownerId, PlaylistCreateRequest request) {
@@ -61,7 +64,7 @@ public class PlaylistService {
     }
 
     @Transactional(readOnly = true)
-    public CursorResponsePlaylistDto getAllPlaylists(PlaylistSearchCond cond) {
+    public CursorResponsePlaylistDto getAllPlaylists(UUID loginUserId,PlaylistSearchCond cond) {
         log.info("[플레이리스트] 플레이리스트 목록 조회 시작");
         List<Playlist> playlists = playlistRepository.findAllByCond(cond);
 
@@ -88,6 +91,11 @@ public class PlaylistService {
         String nextCursor = hasNext ? lastPlaylist.getCreatedAt().toString() : null;
         UUID nextIdAfter = hasNext ? lastPlaylist.getId() : null;
 
+        for (Playlist playlist : resultPlaylists) {
+            boolean subscribed = subscriptionRepository.existsBySubscriberIdAndPlaylistId(loginUserId, playlist.getId());
+            playlist.setSubscribedByMe(subscribed);
+        }
+
         List<PlaylistDto> playlistDtos =
             resultPlaylists.stream().map(playlistMapper::toPlaylistDto).collect(Collectors.toList());
 
@@ -105,13 +113,17 @@ public class PlaylistService {
     }
 
     @Transactional(readOnly = true)
-    public PlaylistDto getPlaylist(UUID playlistId) {
+    public PlaylistDto getPlaylist(UUID loginUserId,UUID playlistId) {
         log.info("[플레이리스트] 플레이리스트 단건 조회 시작 - playlistId = {}", playlistId);
         Playlist playlist = playlistRepository.findById(playlistId)
             .orElseThrow(() -> {
                 log.warn("[플레이리스트] 플레이리스트 조회 실패 - 플레이리스트가 존재하지 않음 - playlistId = {}", playlistId);
                 return PlaylistNotFoundException.withId(playlistId);
             });
+
+        boolean subscribed = subscriptionRepository.existsBySubscriberIdAndPlaylistId(loginUserId, playlistId);
+        playlist.setSubscribedByMe(subscribed);
+
         log.info("[플레이리스트] 플레이리스트 단건 조회 완료 - playlistId = {}", playlistId);
         return playlistMapper.toPlaylistDto(playlist);
     }
@@ -145,6 +157,8 @@ public class PlaylistService {
             log.warn("[플레이리스트] 플레이리스트 삭제 실패 - 권한 없음 - userId = {}", requestUserId);
             throw new PlaylistUpdateForbiddenException(playlistId);
         }
+
+        subscriptionRepository.deleteByPlaylistId(playlistId);
         playlistRepository.deleteById(playlistId);
         log.info("[플레이리스트] 플레이리스트 삭제 완료 - playlistId = {}", playlistId);
     }

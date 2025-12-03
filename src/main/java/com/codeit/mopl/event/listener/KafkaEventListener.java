@@ -28,6 +28,7 @@ public class KafkaEventListener {
     @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(NotificationCreateEvent event) {
+        log.info("kafka NotificationCreate Event");
         String key = Optional.ofNullable(event.notificationDto().id())
                 .map(Object::toString)
                 .orElse(null);
@@ -62,6 +63,14 @@ public class KafkaEventListener {
         log.info("kafka UserLogInOut Event");
         String key = event.userId().toString();
         send("mopl-user-login-out", key, event);
+    }
+
+    @Async("taskExecutor")
+    @TransactionalEventListener
+    public void on(DirectMessageCreateEvent event){
+        log.info("kafka DirectMessageCreate Event");
+        String key = event.directMessageDto().id().toString();
+        send("mopl-directMessage-create", key, event);
     }
 
     private void send(String topic, String key, Object payload) {

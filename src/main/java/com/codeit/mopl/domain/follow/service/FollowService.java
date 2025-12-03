@@ -16,14 +16,11 @@ import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.codeit.mopl.exception.follow.*;
 import com.codeit.mopl.exception.user.UserErrorCode;
-import com.codeit.mopl.exception.user.UserIdIsNullException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
@@ -75,11 +72,14 @@ public class FollowService {
     public void processFollowerIncrease(UUID followId, UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작: followId = {}, followeeId = {}", followId, followeeId);
         // 이미 처리된 이벤트면 early return
-        if(checkAndMarkAsProcessed(followId, EventType.FOLLOWER_INCREASE)) {
+        if (isAlreadyProcessed(followId, EventType.FOLLOWER_INCREASE)) {
             return;
         }
         User followee = getUserById(followeeId);
         followee.increaseFollowerCount();
+
+        ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_INCREASE);
+        processedEventRepository.save(processedEvent);
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료: followId = {}, followeeId = {}", followId, followeeId);
     }
 
@@ -125,13 +125,16 @@ public class FollowService {
     public void processFollowerDecrease(UUID followId, UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 시작: followId = {}, followeeId = {}", followId, followeeId);
         // 이미 처리된 이벤트면 early return
-        if (checkAndMarkAsProcessed(followId, EventType.FOLLOWER_DECREASE)) {
+        if (isAlreadyProcessed(followId, EventType.FOLLOWER_DECREASE)) {
             return;
         }
         User followee = getUserById(followeeId);
         long followerCount = followee.getFollowerCount();
         detectFollowerCountIsNegative(followeeId, followerCount);
         followee.decreaseFollowerCount();
+
+        ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_DECREASE);
+        processedEventRepository.save(processedEvent);
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 완료: followId = {}, followeeId = {}", followId, followeeId);
     }
 
@@ -142,25 +145,15 @@ public class FollowService {
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    protected boolean checkAndMarkAsProcessed(UUID followId, EventType eventType) {
-        if (followId == null) {
-            throw FollowIdIsNullException.withDetails();
-        }
-        ProcessedEvent processedEvent = new ProcessedEvent(followId, eventType);
-        try {
-            processedEventRepository.save(processedEvent);
-            return false;
-        } catch (DataIntegrityViolationException e) {
-            log.warn("[팔로우 관리] 이벤트 처리 중단 - 이미 처리된 이벤트입니다: eventId = {}, eventType = {}", followId, eventType);
-            return true;
-        }
+    private boolean isAlreadyProcessed(UUID followId, EventType eventType) {
+       boolean isProcessed = processedEventRepository.existsByEventIdAndEventType(followId, eventType);
+       if (isProcessed) {
+           log.warn("[팔로우 관리] 이벤트 처리 중단 - 이미 처리된 이벤트입니다: eventId = {}, eventType = {}", followId, eventType);
+       }
+       return isProcessed;
     }
 
     private User getUserById(UUID userId) {
-        if (userId == null) {
-            throw new UserIdIsNullException(UserErrorCode.USER_ID_IS_NULL, Map.of("userId", "null"));
-        }
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
     }

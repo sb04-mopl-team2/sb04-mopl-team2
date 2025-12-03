@@ -90,8 +90,8 @@ public class DirectMessageService {
             log.info("[메세지] 해당 채팅방의 DM 목록 조회 완료 - conversationId = {}, totalCount = {}", conversationId, totalCount);
                 return new CursorResponseDirectMessageDto(
                         directMessageDtos,
-                        null,
-                        null,
+                        nextCursor,
+                        nextAfter,
                         hasNext,
                         totalCount,
                         cond.getSortBy(),

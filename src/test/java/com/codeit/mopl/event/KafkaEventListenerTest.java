@@ -1,12 +1,23 @@
 package com.codeit.mopl.event;
 
+import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
+import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.event.consumer.KafkaConsumer;
+import com.codeit.mopl.event.entity.EventType;
+import com.codeit.mopl.event.entity.ProcessedEvent;
+import com.codeit.mopl.event.event.DirectMessageCreateEvent;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.event.listener.KafkaEventListener;
+import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
@@ -15,15 +26,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.SendResult;
 
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,6 +49,18 @@ class KafkaEventListenerTest {
   private ObjectMapper objectMapper;
 
   private KafkaEventListener kafkaEventListener;
+
+  @Mock
+  private ProcessedEventRepository processedEventRepository;
+
+  @Mock
+  private Acknowledgment ack;
+
+  @Mock
+  private NotificationService notificationService;
+
+  @InjectMocks
+  private KafkaConsumer kafkaConsumer;
 
   @BeforeEach
   void setUp() {
@@ -213,5 +235,84 @@ class KafkaEventListenerTest {
     // then
     verify(kafkaTemplate).send(any(ProducerRecord.class));
     assertThat(future.isCompletedExceptionally()).isTrue();
+  }
+
+  @Test
+  @DisplayName("DM 생성 이벤트가 처음 처리되는 경우: 알림 전송, ProcessedEvent 저장, ack 호출")
+  void onDirectMessageCreated_firstTime_shouldSendNotificationAndSaveProcessedEventAndAck()
+      throws Exception {
+
+    // given
+    String kafkaEventJson = "{\"test\":\"json\"}";
+
+    DirectMessageDto dto = mock(DirectMessageDto.class);
+    UUID dmId = UUID.randomUUID();
+    when(dto.id()).thenReturn(dmId);
+
+    DirectMessageCreateEvent event = mock(DirectMessageCreateEvent.class);
+    when(event.directMessageDto()).thenReturn(dto);
+
+    when(objectMapper.readValue(kafkaEventJson, DirectMessageCreateEvent.class))
+        .thenReturn(event);
+
+    when(processedEventRepository.findByEventIdAndEventType(dmId, EventType.DIRECT_MESSAGE_CREATED))
+        .thenReturn(Optional.empty());
+
+    // when
+    kafkaConsumer.onDirectMessageCreated(kafkaEventJson, ack);
+
+    // then
+    // 1) 이미 처리 여부 조회
+    verify(processedEventRepository, times(1))
+        .findByEventIdAndEventType(dmId, EventType.DIRECT_MESSAGE_CREATED);
+
+    // 2) 알림 서비스 호출
+    verify(notificationService, times(1)).sendDirectMessage(dto);
+
+    // 3) ProcessedEvent 저장 내용 검증
+    ArgumentCaptor<ProcessedEvent> processedEventCaptor =
+        ArgumentCaptor.forClass(ProcessedEvent.class);
+
+    verify(processedEventRepository, times(1))
+        .save(processedEventCaptor.capture());
+
+    ProcessedEvent saved = processedEventCaptor.getValue();
+    assertThat(saved.getEventId()).isEqualTo(dmId);
+    assertThat(saved.getEventType()).isEqualTo(EventType.DIRECT_MESSAGE_CREATED);
+
+    // 4) ack 호출
+    verify(ack, times(1)).acknowledge();
+  }
+
+  @Test
+  @DisplayName("이미 처리된 DM 생성 이벤트이면 다시 처리하지 않고 ack만 호출")
+  void onDirectMessageCreated_alreadyProcessed_shouldOnlyAck() throws Exception {
+    // given
+    String kafkaEventJson = "{\"test\":\"json\"}";
+
+    DirectMessageDto dto = mock(DirectMessageDto.class);
+    UUID dmId = UUID.randomUUID();
+    when(dto.id()).thenReturn(dmId);
+
+    DirectMessageCreateEvent event = mock(DirectMessageCreateEvent.class);
+    when(event.directMessageDto()).thenReturn(dto);
+
+    when(objectMapper.readValue(kafkaEventJson, DirectMessageCreateEvent.class))
+        .thenReturn(event);
+
+    ProcessedEvent existing = new ProcessedEvent(dmId, EventType.DIRECT_MESSAGE_CREATED);
+    when(processedEventRepository.findByEventIdAndEventType(dmId, EventType.DIRECT_MESSAGE_CREATED))
+        .thenReturn(Optional.of(existing));
+
+    // when
+    kafkaConsumer.onDirectMessageCreated(kafkaEventJson, ack);
+
+    // then
+    // 알림 및 save 는 호출되지 않는다
+    verify(notificationService, never()).sendDirectMessage(any());
+    verify(processedEventRepository, never()).save(any());
+
+    // ack 는 호출됨
+    verify(ack, times(1)).acknowledge();
   }
 }

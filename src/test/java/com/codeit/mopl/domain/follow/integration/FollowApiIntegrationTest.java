@@ -16,10 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Transactional
+@ActiveProfiles("test")
 public class FollowApiIntegrationTest {
 
     @Autowired
@@ -56,22 +53,10 @@ public class FollowApiIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-//    @Autowired
-//    private CacheManager cacheManager;
-
     private User follower;
     private User followee;
 
     private CustomUserDetails followerUserDetails;
-
-//    @TestConfiguration
-//    static class TestCacheConfig {
-//
-//        @Bean
-//        public CacheManager cacheManager() {
-//            return new ConcurrentMapCacheManager("notifications:first-page");
-//        }
-//    }
 
     @BeforeEach
     void setUp() {

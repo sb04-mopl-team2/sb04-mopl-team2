@@ -19,7 +19,7 @@ public class MovieService {
   @Async("taskExecutor")
   public void runInitialDataLoad() {
     LocalDate endDate = LocalDate.now();
-    LocalDate startDate = endDate.minusYears(1);
+    LocalDate startDate = endDate.minusMonths(6);
 
     log.info("=== 초기 데이터 수집 시작 ===");
     log.info("수집 기간: {} ~ {}", startDate, endDate);

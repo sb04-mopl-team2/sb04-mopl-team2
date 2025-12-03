@@ -19,7 +19,6 @@ import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,24 +58,6 @@ public class DirectMessageService {
 
         List<DirectMessage> directMessages;
         Pageable pageable = PageRequest.of(0, cond.getLimit() + 1);
-//        LocalDateTime cursor = null;
-//        if (cond.getCursor() != null) {
-//            cursor = LocalDateTime.parse(cond.getCursor());
-//        }
-//        if (cond.getSortDirection() ==SortDirection.DESCENDING) {
-//            directMessages = directMessageRepository.findMessagesBefore(
-//                    conversationId,
-//                    cursor,
-//                    cond.getIdAfter(),
-//                    pageable
-//            );
-//        } else {
-//            directMessages = directMessageRepository.findMessagesAfter(
-//                    conversationId,
-//                    cursor,
-//                    cond.getIdAfter(),
-//                    pageable
-//            );
 
         // 첫 페이지 조회(cursor 없는 조회)
         if (cond.getCursor() == null) {

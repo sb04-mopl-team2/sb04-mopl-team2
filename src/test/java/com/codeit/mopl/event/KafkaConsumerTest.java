@@ -1,5 +1,6 @@
 package com.codeit.mopl.event;
 
+import com.codeit.mopl.domain.follow.service.FollowService;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.event.consumer.KafkaConsumer;
@@ -53,11 +54,14 @@ class KafkaConsumerTest {
   @Mock
   private SseEmitterRegistry sseEmitterRegistry;
 
+  @Mock
+  private FollowService followService;
+
   private KafkaConsumer kafkaConsumer;
 
   @BeforeEach
   void setUp() {
-    kafkaConsumer = new KafkaConsumer(objectMapper, notificationService, processedEventRepository,sseService, sseEmitterRegistry);
+    kafkaConsumer = new KafkaConsumer(objectMapper, notificationService, followService, processedEventRepository, sseService, sseEmitterRegistry);
   }
 
   @Test

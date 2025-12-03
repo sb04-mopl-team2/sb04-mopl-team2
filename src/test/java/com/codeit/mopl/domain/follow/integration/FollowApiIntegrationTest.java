@@ -57,6 +57,9 @@ public class FollowApiIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     private User follower;
     private User followee;
 

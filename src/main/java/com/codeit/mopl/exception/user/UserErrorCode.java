@@ -13,7 +13,8 @@ public enum UserErrorCode implements ErrorCodeInterface {
     USER_ID_IS_NULL(HttpStatus.BAD_REQUEST, "유효한 userId가 아닙니다."),
     TEMP_PASSWORD_STORE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "임시 비밀번호 저장에 실패했습니다."),
     LOGIN_FAIL(HttpStatus.UNAUTHORIZED, "로그인에 실패했습니다."),
-    MAIL_SEND_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "메일 전송에 실패했습니다."),;
+    MAIL_SEND_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "메일 전송에 실패했습니다."),
+    NOT_SUPPORTED_SOCIAL_LOGIN(HttpStatus.UNAUTHORIZED, "지원하지 않는 소설 로그인입니다.");
 
     private final HttpStatus status;
     private final String message;

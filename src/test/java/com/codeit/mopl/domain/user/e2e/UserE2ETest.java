@@ -10,6 +10,10 @@ import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.mail.utils.PasswordUtils;
+import com.codeit.mopl.oatuh.utils.TestOAuth2UserRequests;
+import com.codeit.mopl.oatuh.utils.oauth2_user.TestOAuth2Users;
+import com.codeit.mopl.oauth.service.OAuth2UserService;
+import com.codeit.mopl.security.CustomUserDetails;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.AfterEach;
@@ -17,15 +21,20 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.*;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -34,8 +43,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -65,6 +73,12 @@ public class UserE2ETest {
 
     @MockitoBean
     private PasswordUtils passwordUtils;
+
+    @MockitoBean
+    private KafkaTemplate<String, String> kafkaTemplate;
+
+    @MockitoSpyBean
+    private OAuth2UserService oAuth2UserService;
 
     private HttpHeaders defaultHeaders = new HttpHeaders();
 
@@ -560,6 +574,54 @@ public class UserE2ETest {
 
         assertEquals(HttpStatus.UNAUTHORIZED, loginJwtDto.getStatusCode());
         assertNotNull(redisTemplate.opsForValue().get(signInRequest.username()));  // redis key 삭제 확인 - 삭제되지 않아야 함
+    }
+
+    @DisplayName("구글 소셜 로그인 첫 시도 시 유저가 생성되고 CustomUserDetails를 반환한다")
+    @Test
+    void TryFirstSocialLoginShouldSuccessWhenGoogle() {
+        // given
+        OAuth2UserRequest request = TestOAuth2UserRequests.googleRequest();
+        OAuth2User googleUser = TestOAuth2Users.googleUser();
+        willReturn(googleUser).given(oAuth2UserService).loadUserFromParent(request);
+        given(passwordUtils.makeTempPassword()).willReturn("randomPw");
+        // when
+        OAuth2User result = oAuth2UserService.loadUser(request);
+
+        // then
+        assertNotNull(result);
+
+        CustomUserDetails principal = (CustomUserDetails) result;
+
+        assertEquals("test@gmail.com", principal.getUser().email());
+        assertEquals("홍길동", principal.getUser().name());
+
+        User saved = userRepository.findByEmail("test@gmail.com").orElse(null);
+        assertNotNull(saved);
+        assertEquals("홍길동", saved.getName());
+    }
+
+    @DisplayName("카카오 소셜 로그인 첫 시도 시 유저가 생성되고 CustomUserDetails를 반환한다")
+    @Test
+    void TryFirstSocialLoginShouldSuccessWhenKakao() {
+        // given
+        OAuth2UserRequest request = TestOAuth2UserRequests.kakaoRequest();
+        OAuth2User googleUser = TestOAuth2Users.kakaoUser();
+        willReturn(googleUser).given(oAuth2UserService).loadUserFromParent(request);
+        given(passwordUtils.makeTempPassword()).willReturn("randomPw");
+        // when
+        OAuth2User result = oAuth2UserService.loadUser(request);
+
+        // then
+        assertNotNull(result);
+
+        CustomUserDetails principal = (CustomUserDetails) result;
+
+        assertEquals("홍길동_9876543210@kakao.com", principal.getUser().email());
+        assertEquals("홍길동", principal.getUser().name());
+
+        User saved = userRepository.findByEmail("홍길동_9876543210@kakao.com").orElse(null);
+        assertNotNull(saved);
+        assertEquals("홍길동", saved.getName());
     }
 
     private HttpEntity<MultiValueMap<String, String>> getSignInRequest(SignInRequest signInRequest) {

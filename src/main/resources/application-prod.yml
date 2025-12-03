@@ -1,6 +1,6 @@
 server:
   port: 8081
-
+  host: http://mopl-alb-998609682.ap-northeast-2.elb.amazonaws.com
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL}
@@ -32,6 +32,27 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            clientId: ${OAUTH2_GOOGLE_CLIENT_ID}
+            clientSecret: ${OAUTH2_GOOGLE_CLIENT_SECRET}
+          kakao:
+            client-id: ${OAUTH2_KAKAO_CLIENT_ID}
+            client-secret: ${OAUTH2_KAKAO_CLIENT_SECRET}
+            redirect-uri: http://mopl-alb-998609682.ap-northeast-2.elb.amazonaws.com/login/oauth2/code/kakao
+            scope:
+              - profile_nickname
+              - profile_image
+
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
 
 management:
   endpoint:

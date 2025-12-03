@@ -3,12 +3,14 @@ package com.codeit.mopl.domain.follow.controller;
 import com.codeit.mopl.domain.follow.dto.FollowDto;
 import com.codeit.mopl.domain.follow.dto.FollowRequest;
 import com.codeit.mopl.domain.follow.service.FollowService;
+import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.security.CustomUserDetails;
 import com.codeit.mopl.security.config.TestSecurityConfig;
+import com.codeit.mopl.security.jwt.handler.OAuth2UserSuccessHandler;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
@@ -22,6 +24,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -75,6 +78,15 @@ class FollowControllerTest {
 
     @MockitoBean
     private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    @MockitoBean
+    private OAuth2UserService oAuth2UserService;
+
+    @MockitoBean
+    private OAuth2UserSuccessHandler oAuth2UserSuccessHandler;
+
+    @MockitoBean
+    private ClientRegistrationRepository clientRegistrationRepository;
 
     @Test
     @DisplayName("팔로우 성공 테스트")

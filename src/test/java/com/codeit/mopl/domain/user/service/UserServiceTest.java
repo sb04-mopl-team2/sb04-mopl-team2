@@ -11,6 +11,7 @@ import com.codeit.mopl.event.event.UserRoleUpdateEvent;
 import com.codeit.mopl.exception.user.NotImageContentException;
 import com.codeit.mopl.exception.user.UserEmailAlreadyExistsException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import com.codeit.mopl.mail.utils.PasswordUtils;
 import com.codeit.mopl.s3.S3Storage;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import org.junit.jupiter.api.DisplayName;
@@ -66,6 +67,9 @@ public class UserServiceTest {
 
     @Mock
     private ApplicationEventPublisher publisher;
+
+    @Mock
+    private PasswordUtils passwordUtils;
 
     @InjectMocks
     private UserService userService;
@@ -401,5 +405,54 @@ public class UserServiceTest {
 
         // then
         assertEquals("유저를 찾을 수 없습니다.", exception.getErrorCode().getMessage());
+    }
+
+    @DisplayName("소셜 로그인은 email, name, profileImageUrl을 받는다 " +
+            "최초 시도 시 유저를 생성하고 반환한다.")
+    @Test
+    void createUserShouldSucceedWhenTryFirstSocialLogin() {
+        // given
+        String email = "test@gmail.com";
+        String name = "소셜로그인";
+        String profileImageUrl = "https://googleImage.example.com";
+        String password = "randomPassword";
+        String encodedPassword = "encodedPassword";
+        given(userRepository.existsByEmail(email)).willReturn(false);
+        given(passwordUtils.makeTempPassword()).willReturn(password);
+        given(passwordEncoder.encode(password)).willReturn(encodedPassword);
+        User user = new User(email,encodedPassword,name,profileImageUrl);
+        UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@gmail.com", "소셜로그인", "https://googleImage.example.com", Role.USER, false);
+        given(userRepository.save(user)).willReturn(user);
+        given(userMapper.toDto(user)).willReturn(userDto);
+
+        // when
+        UserDto response = userService.findOrCreateOAuth2User(email,name,profileImageUrl);
+
+        // then
+        assertEquals(email, response.email());
+        assertEquals(name, response.name());
+        assertEquals(profileImageUrl, response.profileImageUrl());
+    }
+
+    @DisplayName("소셜 로그인 계정이 존재하면 유저를 생성하지 않고 해당 유저를 찾아서 반환한다")
+    @Test
+    void findUserShouldSucceedWhenTrySocialLogin() {
+        // given
+        String email = "test@gmail.com";
+        String name = "소셜로그인";
+        String profileImageUrl = "https://googleImage.example.com";
+        given(userRepository.existsByEmail(email)).willReturn(true);
+        User user = new User(email,"password",name,profileImageUrl);
+        given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
+        UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@gmail.com", "소셜로그인", "https://googleImage.example.com", Role.USER, false);
+        given(userMapper.toDto(user)).willReturn(userDto);
+
+        // when
+        UserDto response = userService.findOrCreateOAuth2User(email,name,profileImageUrl);
+
+        // then
+        assertEquals(email, response.email());
+        assertEquals(name, response.name());
+        assertEquals(profileImageUrl, response.profileImageUrl());
     }
 }

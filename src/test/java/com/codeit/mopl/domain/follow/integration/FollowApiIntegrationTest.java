@@ -16,6 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -57,6 +61,15 @@ public class FollowApiIntegrationTest {
     private User followee;
 
     private CustomUserDetails followerUserDetails;
+
+    @TestConfiguration
+    static class TestCacheConfig {
+
+        @Bean
+        public CacheManager cacheManager() {
+            return new ConcurrentMapCacheManager("notifications:first-page");
+        }
+    }
 
     @BeforeEach
     void setUp() {
@@ -133,7 +146,8 @@ public class FollowApiIntegrationTest {
 
         // then
         resultActions
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -154,7 +168,8 @@ public class FollowApiIntegrationTest {
 
         // then
         resultActions
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -178,7 +193,8 @@ public class FollowApiIntegrationTest {
 
         // then
         resultActions
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -199,6 +215,7 @@ public class FollowApiIntegrationTest {
 
         // then
         resultActions
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists());
     }
 }

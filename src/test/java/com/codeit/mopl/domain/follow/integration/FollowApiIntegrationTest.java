@@ -29,8 +29,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -206,7 +205,7 @@ public class FollowApiIntegrationTest {
     }
 
     @Test
-    @DisplayName("팔로우 여부 조회 성공 통합 테스트")
+    @DisplayName("팔로우 여부 조회 성공 통합 테스트 - 팔로우 상태 아님")
     void isFollowedByMe_Success() throws Exception {
         // given
         UUID followeeId = followee.getId();
@@ -222,7 +221,8 @@ public class FollowApiIntegrationTest {
 
         // then
         resultActions
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"));
     }
 
     @Test
@@ -236,7 +236,6 @@ public class FollowApiIntegrationTest {
                         .with(csrf())
                         .with(user(followerUserDetails))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param("followeeId", "1234")
         );
 
         // then
@@ -261,7 +260,8 @@ public class FollowApiIntegrationTest {
 
         // then
         resultActions
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists());
     }
 
 }

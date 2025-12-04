@@ -10,6 +10,8 @@ import com.codeit.mopl.event.event.DirectMessageCreateEvent;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
+import com.codeit.mopl.event.event.PlayListCreateEvent;
+import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
 import com.codeit.mopl.event.listener.KafkaEventListener;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -58,6 +60,18 @@ class KafkaEventListenerTest {
 
   @Mock
   private NotificationService notificationService;
+
+  @Mock
+  private DirectMessageCreateEvent directMessageCreateEvent;
+
+  @Mock
+  private DirectMessageDto directMessageDto;
+
+  @Mock
+  private PlayListCreateEvent playListCreateEvent;
+
+  @Mock
+  private WatchingSessionCreateEvent watchingSessionCreateEvent;
 
   @InjectMocks
   private KafkaConsumer kafkaConsumer;
@@ -315,4 +329,201 @@ class KafkaEventListenerTest {
     // ack 는 호출됨
     verify(ack, times(1)).acknowledge();
   }
+
+  @Test
+  @DisplayName("DM 이벤트 - id 가 있으면 id.toString() 을 key 로, JSON value 를 보낸다")
+  void onDirectMessageCreateEvent_withId() throws Exception {
+    // given
+    UUID dmId = UUID.randomUUID();
+
+    when(directMessageCreateEvent.directMessageDto())
+        .thenReturn(directMessageDto);
+    when(directMessageDto.id())
+        .thenReturn(dmId);
+
+    String expectedJson = "{\"event\":\"dm\"}";
+    when(objectMapper.writeValueAsString(directMessageCreateEvent))
+        .thenReturn(expectedJson);
+
+    @SuppressWarnings("unchecked")
+    CompletableFuture<SendResult<String, String>> future =
+        (CompletableFuture<SendResult<String, String>>) mock(CompletableFuture.class);
+    when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(future);
+
+    // when
+    kafkaEventListener.on(directMessageCreateEvent);
+
+    // then
+    ArgumentCaptor<ProducerRecord<String, String>> captor =
+        ArgumentCaptor.forClass(ProducerRecord.class);
+
+    verify(kafkaTemplate).send(captor.capture());
+    ProducerRecord<String, String> record = captor.getValue();
+
+    assertThat(record.topic()).isEqualTo("mopl-directMessage-create");
+    assertThat(record.key()).isEqualTo(dmId.toString());
+    assertThat(record.value()).isEqualTo(expectedJson);
+  }
+
+  @Test
+  @DisplayName("DM 이벤트 - id 가 null 이면 key 에 null 로 보낸다")
+  void onDirectMessageCreateEvent_withoutId() throws Exception {
+    // given
+    when(directMessageCreateEvent.directMessageDto())
+        .thenReturn(directMessageDto);
+    when(directMessageDto.id())
+        .thenReturn(null);
+
+    String expectedJson = "{\"event\":\"dm\"}";
+    when(objectMapper.writeValueAsString(directMessageCreateEvent))
+        .thenReturn(expectedJson);
+
+    @SuppressWarnings("unchecked")
+    CompletableFuture<SendResult<String, String>> future =
+        (CompletableFuture<SendResult<String, String>>) mock(CompletableFuture.class);
+    when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(future);
+
+    // when
+    kafkaEventListener.on(directMessageCreateEvent);
+
+    // then
+    ArgumentCaptor<ProducerRecord<String, String>> captor =
+        ArgumentCaptor.forClass(ProducerRecord.class);
+
+    verify(kafkaTemplate).send(captor.capture());
+    ProducerRecord<String, String> record = captor.getValue();
+
+    assertThat(record.topic()).isEqualTo("mopl-directMessage-create");
+    assertThat(record.key()).isNull();                // ★ key null 확인
+    assertThat(record.value()).isEqualTo(expectedJson);
+  }
+
+  @Test
+  @DisplayName("플레이리스트 이벤트 - playListId 가 있으면 id.toString() 을 key 로 보낸다")
+  void onPlayListCreateEvent_withId() throws Exception {
+    // given
+    UUID playlistId = UUID.randomUUID();
+
+    when(playListCreateEvent.playListId())
+        .thenReturn(playlistId);
+
+    String expectedJson = "{\"event\":\"playlist\"}";
+    when(objectMapper.writeValueAsString(playListCreateEvent))
+        .thenReturn(expectedJson);
+
+    @SuppressWarnings("unchecked")
+    CompletableFuture<SendResult<String, String>> future =
+        (CompletableFuture<SendResult<String, String>>) mock(CompletableFuture.class);
+    when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(future);
+
+    // when
+    kafkaEventListener.on(playListCreateEvent);
+
+    // then
+    ArgumentCaptor<ProducerRecord<String, String>> captor =
+        ArgumentCaptor.forClass(ProducerRecord.class);
+
+    verify(kafkaTemplate).send(captor.capture());
+    ProducerRecord<String, String> record = captor.getValue();
+
+    assertThat(record.topic()).isEqualTo("mopl-playList-create");
+    assertThat(record.key()).isEqualTo(playlistId.toString());
+    assertThat(record.value()).isEqualTo(expectedJson);
+  }
+
+  @Test
+  @DisplayName("플레이리스트 이벤트 - playListId 가 null 이면 key 에 null 로 보낸다")
+  void onPlayListCreateEvent_withoutId() throws Exception {
+    // given
+    when(playListCreateEvent.playListId())
+        .thenReturn(null);
+
+    String expectedJson = "{\"event\":\"playlist\"}";
+    when(objectMapper.writeValueAsString(playListCreateEvent))
+        .thenReturn(expectedJson);
+
+    @SuppressWarnings("unchecked")
+    CompletableFuture<SendResult<String, String>> future =
+        (CompletableFuture<SendResult<String, String>>) mock(CompletableFuture.class);
+    when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(future);
+
+    // when
+    kafkaEventListener.on(playListCreateEvent);
+
+    // then
+    ArgumentCaptor<ProducerRecord<String, String>> captor =
+        ArgumentCaptor.forClass(ProducerRecord.class);
+
+    verify(kafkaTemplate).send(captor.capture());
+    ProducerRecord<String, String> record = captor.getValue();
+
+    assertThat(record.topic()).isEqualTo("mopl-playList-create");
+    assertThat(record.key()).isNull();
+    assertThat(record.value()).isEqualTo(expectedJson);
+  }
+
+  @Test
+  @DisplayName("WatchingSession 이벤트 - watchingSessionId 가 있으면 id.toString() 을 key 로 보낸다")
+  void onWatchingSessionCreateEvent_withId() throws Exception {
+    // given
+    UUID watchingSessionId = UUID.randomUUID();
+
+    when(watchingSessionCreateEvent.watchingSessionId())
+        .thenReturn(watchingSessionId);
+
+    String expectedJson = "{\"event\":\"watching\"}";
+    when(objectMapper.writeValueAsString(watchingSessionCreateEvent))
+        .thenReturn(expectedJson);
+
+    @SuppressWarnings("unchecked")
+    CompletableFuture<SendResult<String, String>> future =
+        (CompletableFuture<SendResult<String, String>>) mock(CompletableFuture.class);
+    when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(future);
+
+    // when
+    kafkaEventListener.on(watchingSessionCreateEvent);
+
+    // then
+    ArgumentCaptor<ProducerRecord<String, String>> captor =
+        ArgumentCaptor.forClass(ProducerRecord.class);
+
+    verify(kafkaTemplate).send(captor.capture());
+    ProducerRecord<String, String> record = captor.getValue();
+
+    assertThat(record.topic()).isEqualTo("mopl-watchingSession-create");
+    assertThat(record.key()).isEqualTo(watchingSessionId.toString());
+    assertThat(record.value()).isEqualTo(expectedJson);
+  }
+
+  @Test
+  @DisplayName("WatchingSession 이벤트 - watchingSessionId 가 null 이면 key 에 null 로 보낸다")
+  void onWatchingSessionCreateEvent_withoutId() throws Exception {
+    // given
+    when(watchingSessionCreateEvent.watchingSessionId())
+        .thenReturn(null);
+
+    String expectedJson = "{\"event\":\"watching\"}";
+    when(objectMapper.writeValueAsString(watchingSessionCreateEvent))
+        .thenReturn(expectedJson);
+
+    @SuppressWarnings("unchecked")
+    CompletableFuture<SendResult<String, String>> future =
+        (CompletableFuture<SendResult<String, String>>) mock(CompletableFuture.class);
+    when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(future);
+
+    // when
+    kafkaEventListener.on(watchingSessionCreateEvent);
+
+    // then
+    ArgumentCaptor<ProducerRecord<String, String>> captor =
+        ArgumentCaptor.forClass(ProducerRecord.class);
+
+    verify(kafkaTemplate).send(captor.capture());
+    ProducerRecord<String, String> record = captor.getValue();
+
+    assertThat(record.topic()).isEqualTo("mopl-watchingSession-create");
+    assertThat(record.key()).isNull();
+    assertThat(record.value()).isEqualTo(expectedJson);
+  }
+
 }

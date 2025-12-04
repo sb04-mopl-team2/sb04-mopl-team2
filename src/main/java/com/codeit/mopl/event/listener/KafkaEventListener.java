@@ -79,7 +79,7 @@ public class KafkaEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(PlayListCreateEvent event){
         log.info("kafka PlayListCreate Event");
-        String key = Optional.ofNullable(event.playlist().getId())
+        String key = Optional.ofNullable(event.playListId())
             .map(Object::toString)
             .orElse(null);
         send("mopl-playList-create", key, event);
@@ -89,7 +89,7 @@ public class KafkaEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(WatchingSessionCreateEvent event){
         log.info("kafka WatchingSessionCreate Event");
-        String key = Optional.ofNullable(event.watchingSession().getId())
+        String key = Optional.ofNullable(event.watchingSessionId())
             .map(Object::toString)
             .orElse(null);
         send("mopl-watchingSession-create", key, event);

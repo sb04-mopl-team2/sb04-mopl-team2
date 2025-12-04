@@ -1,7 +1,7 @@
 package com.codeit.mopl.event.event;
 
-import com.codeit.mopl.domain.playlist.entity.Playlist;
+import java.util.UUID;
 
-public record PlayListCreateEvent(Playlist playlist){
+public record PlayListCreateEvent(UUID playListId, UUID ownerId, String title){
 
 }

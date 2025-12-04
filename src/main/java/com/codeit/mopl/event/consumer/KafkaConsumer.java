@@ -147,17 +147,16 @@ public class KafkaConsumer {
     public void onPlayListCreated(String kafkaEventJson, Acknowledgment ack) {
         try {
             PlayListCreateEvent event = objectMapper.readValue(kafkaEventJson, PlayListCreateEvent.class);
-            Playlist playlist = event.playlist();
 
-            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(playlist.getId(), EventType.PLAY_LIST_CREATED);
+            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(event.playListId(), EventType.PLAY_LIST_CREATED);
             if (processedEvent.isPresent()) {
-                log.warn("[Kafka] 이미 처리된 플레이리스트 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                log.warn("[Kafka] 플레이리스트 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
                 ack.acknowledge();
                 return;
             }
 
-            followService.notifyFollowersOnPlaylistCreated(playlist);
-            processedEventRepository.save(new ProcessedEvent(playlist.getId(), EventType.PLAY_LIST_CREATED));
+            followService.notifyFollowersOnPlaylistCreated(event);
+            processedEventRepository.save(new ProcessedEvent(event.playListId(), EventType.PLAY_LIST_CREATED));
             ack.acknowledge();
         } catch (JsonProcessingException e) {
             log.error("[Kafka] 플레이리스트 생성 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
@@ -173,17 +172,16 @@ public class KafkaConsumer {
     public void onWatchingSessionCreated(String kafkaEventJson, Acknowledgment ack) {
         try {
             WatchingSessionCreateEvent event = objectMapper.readValue(kafkaEventJson, WatchingSessionCreateEvent.class);
-            WatchingSession watchingSession = event.watchingSession();
 
-            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(watchingSession.getId(), EventType.WATCH_SESSION_CREATED);
+            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(event.watchingSessionId(), EventType.WATCH_SESSION_CREATED);
             if (processedEvent.isPresent()) {
-                log.warn("[Kafka] 이미 처리된 WatchingSession 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                log.warn("[Kafka] WatchingSession 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
                 ack.acknowledge();
                 return;
             }
 
-            followService.notifyFollowersOnWatchingEvent(watchingSession);
-            processedEventRepository.save(new ProcessedEvent(watchingSession.getId(), EventType.WATCH_SESSION_CREATED));
+            followService.notifyFollowersOnWatchingEvent(event);
+            processedEventRepository.save(new ProcessedEvent(event.watchingSessionId(), EventType.WATCH_SESSION_CREATED));
             ack.acknowledge();
         } catch (JsonProcessingException e) {
             log.error("[Kafka] WatchingSession 생성 이벤트 역직렬화 실패: {}", kafkaEventJson, e);

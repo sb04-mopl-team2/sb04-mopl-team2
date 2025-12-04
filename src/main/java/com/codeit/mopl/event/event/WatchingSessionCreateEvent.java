@@ -1,7 +1,7 @@
 package com.codeit.mopl.event.event;
 
-import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
+import java.util.UUID;
 
-public record WatchingSessionCreateEvent(WatchingSession watchingSession){
+public record WatchingSessionCreateEvent(UUID watchingSessionId, UUID ownerId, String watchingSessionContentTitle){
 
 }

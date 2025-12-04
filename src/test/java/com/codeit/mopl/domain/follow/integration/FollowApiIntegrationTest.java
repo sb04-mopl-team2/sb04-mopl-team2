@@ -287,4 +287,64 @@ public class FollowApiIntegrationTest {
                 .andExpect(jsonPath("$.message").exists());
     }
 
+    @Test
+    @DisplayName("팔로워 수 조회 성공 통합 테스트")
+    void getFollowerCount_Success() throws Exception {
+        // given
+        UUID followeeId = followee.getId();
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/count")
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId.toString())
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(content().string("0"));
+    }
+
+    @Test
+    @DisplayName("팔로워 수 조회 실패 - 유효하지 않은 요청")
+    void getFollowerCount_Failure_InvalidRequest() throws Exception {
+        // given
+        UUID followeeId = followee.getId();
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/count")
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("팔로워 수 조회 실패 - 존재하지 않는 유저")
+    void getFollowerCount_Failure_UserNotFound() throws Exception {
+        // given
+        UUID followeeId = UUID.randomUUID();
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/count")
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId.toString())
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists());
+    }
 }

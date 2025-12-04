@@ -44,10 +44,11 @@ spring:
           google:
             clientId: ${OAUTH2_GOOGLE_CLIENT_ID}
             clientSecret: ${OAUTH2_GOOGLE_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
           kakao:
             client-id: ${OAUTH2_KAKAO_CLIENT_ID}
             client-secret: ${OAUTH2_KAKAO_CLIENT_SECRET}
-            redirect-uri: ${server.host}/login/oauth2/code/kakao
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope:
               - profile_nickname
               - profile_image

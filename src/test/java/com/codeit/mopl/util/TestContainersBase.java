@@ -10,7 +10,6 @@ import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
-@Profile("test")
 public abstract class TestContainersBase {
 
     @Container

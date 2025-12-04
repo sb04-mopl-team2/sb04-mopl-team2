@@ -91,6 +91,10 @@ dependencies {
 
     // oauth
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    // test containers
+    testImplementation "org.testcontainers:junit-jupiter"
+    testImplementation "org.testcontainers:kafka"
 }
 
 tasks.named('test') {

@@ -297,14 +297,17 @@ public class FollowApiIntegrationTest {
         // when
         ResultActions resultActions = mockMvc.perform(
                 delete("/api/follows/" + followId.toString())
-                .with(csrf())
-                .with(user(followerUserDetails))
-                .contentType(MediaType.APPLICATION_JSON)
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
         );
 
         // then
         resultActions
                 .andExpect(status().isNoContent());
+
+        List<Follow> allFollows = followRepository.findAll();
+        assertThat(allFollows).isEmpty();
     }
 
     @Test
@@ -350,6 +353,7 @@ public class FollowApiIntegrationTest {
     void deleteFollow_Failure_FollowDeleteForbidden() throws Exception {
         // given
         User other = new User("other@test.com", "password", "other");
+        other.setRole(Role.USER);
         userRepository.saveAndFlush(other);
 
         Follow follow = new Follow(other, followee);

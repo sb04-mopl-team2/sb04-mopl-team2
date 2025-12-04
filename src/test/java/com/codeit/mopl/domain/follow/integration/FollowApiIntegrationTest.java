@@ -205,8 +205,8 @@ public class FollowApiIntegrationTest {
     }
 
     @Test
-    @DisplayName("팔로우 여부 조회 성공 통합 테스트 - 팔로우 없음")
-    void isFollowedByMe_Success_IsFollowedByMe() throws Exception {
+    @DisplayName("팔로우 여부 조회 성공 통합 테스트 - 팔로우 상태 아님")
+    void isFollowedByMe_Success_isNotFollowedByMe() throws Exception {
         // given
         UUID followeeId = followee.getId();
 
@@ -226,8 +226,8 @@ public class FollowApiIntegrationTest {
     }
 
     @Test
-    @DisplayName("팔로우 여부 조회 성공 통합 테스트 - 팔로우 있음")
-    void isFollowedByMe_Success_NotFollowedByMe() throws Exception {
+    @DisplayName("팔로우 여부 조회 성공 통합 테스트 - 팔로우 상태임")
+    void isFollowedByMe_Success_isFollowedByMe() throws Exception {
         // given
         UUID followeeId = followee.getId();
         Follow follow = new Follow(follower, followee);
@@ -259,7 +259,6 @@ public class FollowApiIntegrationTest {
                         .with(csrf())
                         .with(user(followerUserDetails))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param("followeeId", "1234")
         );
 
         // then
@@ -284,7 +283,8 @@ public class FollowApiIntegrationTest {
 
         // then
         resultActions
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists());
     }
 
 }

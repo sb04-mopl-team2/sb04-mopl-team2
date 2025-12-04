@@ -104,6 +104,10 @@ public class PlaylistRepositoryImpl implements CustomPlaylistRepository {
         QPlaylist playlist = QPlaylist.playlist;
         boolean isAscending = sortDirection == SortDirection.ASCENDING;
 
+        if (sortBy == null) {
+            return playlist.createdAt.desc();
+        }
+
         return switch (sortBy) {
             case UPDATED_AT ->
                     isAscending ? playlist.updatedAt.asc() : playlist.updatedAt.desc();

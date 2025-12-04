@@ -1,6 +1,6 @@
 server:
   port: 8081
-  host: ${HOST}
+
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL}

@@ -151,7 +151,7 @@ public class KafkaConsumer {
 
             Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(playlist.getId(), EventType.PLAY_LIST_CREATED);
             if (processedEvent.isPresent()) {
-                log.warn("[Kafka] 플레이리스트 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                log.warn("[Kafka] 이미 처리된 플레이리스트 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
                 ack.acknowledge();
                 return;
             }
@@ -177,7 +177,7 @@ public class KafkaConsumer {
 
             Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(watchingSession.getId(), EventType.WATCH_SESSION_CREATED);
             if (processedEvent.isPresent()) {
-                log.warn("[Kafka] WatchingSession 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                log.warn("[Kafka] 이미 처리된 WatchingSession 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
                 ack.acknowledge();
                 return;
             }

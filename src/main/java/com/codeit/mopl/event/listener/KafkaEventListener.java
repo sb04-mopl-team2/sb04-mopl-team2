@@ -66,7 +66,7 @@ public class KafkaEventListener {
     }
 
     @Async("taskExecutor")
-    @TransactionalEventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(DirectMessageCreateEvent event){
         log.info("kafka DirectMessageCreate Event");
         String key = event.directMessageDto().id().toString();
@@ -74,7 +74,7 @@ public class KafkaEventListener {
     }
 
     @Async("taskExecutor")
-    @TransactionalEventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(PlayListCreateEvent event){
         log.info("kafka PlayListCreate Event");
         String key = event.playlist().getId().toString();
@@ -82,7 +82,7 @@ public class KafkaEventListener {
     }
 
     @Async("taskExecutor")
-    @TransactionalEventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(WatchingSessionCreateEvent event){
         log.info("kafka WatchingSessionCreate Event");
         String key = event.watchingSession().getId().toString();

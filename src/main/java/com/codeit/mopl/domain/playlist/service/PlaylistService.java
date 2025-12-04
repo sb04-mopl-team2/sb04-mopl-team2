@@ -63,7 +63,7 @@ public class PlaylistService {
             .build();
 
         Playlist saved = playlistRepository.save(playlist);
-        eventPublisher.publishEvent(new PlayListCreateEvent(saved.getId(), saved.getUser().getId(), saved.getTitle()));
+        eventPublisher.publishEvent(new PlayListCreateEvent(saved.getId(), ownerId, saved.getTitle()));
         log.info("[플레이리스트] 플레이리스트 생성 완료 - 플레이리스트 제목 = {}", saved.getTitle());
         return playlistMapper.toPlaylistDto(saved);
     }

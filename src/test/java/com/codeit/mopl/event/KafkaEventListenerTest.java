@@ -613,5 +613,55 @@ class KafkaEventListenerTest {
     verify(ack, times(1)).acknowledge();
   }
 
+  @Test
+  @DisplayName("이미 처리된 플레이리스트 생성 이벤트이면 다시 처리하지 않고 ack만 호출")
+  void onPlayListCreated_alreadyProcessed_shouldOnlyAck() throws Exception {
+    // given
+    String kafkaEventJson = "{\"test\":\"json\"}";
+    UUID playlistId = UUID.randomUUID();
 
+    PlayListCreateEvent event = mock(PlayListCreateEvent.class);
+    when(event.playListId()).thenReturn(playlistId);
+
+    when(objectMapper.readValue(kafkaEventJson, PlayListCreateEvent.class))
+        .thenReturn(event);
+
+    ProcessedEvent existing = new ProcessedEvent(playlistId, EventType.PLAY_LIST_CREATED);
+    when(processedEventRepository.findByEventIdAndEventType(playlistId, EventType.PLAY_LIST_CREATED))
+        .thenReturn(Optional.of(existing));
+
+    // when
+    kafkaConsumer.onPlayListCreated(kafkaEventJson, ack);
+
+    // then
+    verify(followService, never()).notifyFollowersOnPlaylistCreated(any());
+    verify(processedEventRepository, never()).save(any());
+    verify(ack, times(1)).acknowledge();
+  }
+
+  @Test
+  @DisplayName("이미 처리된 시청 세션 시작 이벤트이면 다시 처리하지 않고 ack만 호출")
+  void onWatchingSessionCreated_alreadyProcessed_shouldOnlyAck() throws Exception {
+    // given
+    String kafkaEventJson = "{\"test\":\"json\"}";
+    UUID watchingSessionId = UUID.randomUUID();
+
+    WatchingSessionCreateEvent event = mock(WatchingSessionCreateEvent.class);
+    when(event.watchingSessionId()).thenReturn(watchingSessionId);
+
+    when(objectMapper.readValue(kafkaEventJson, WatchingSessionCreateEvent.class))
+        .thenReturn(event);
+
+    ProcessedEvent existing = new ProcessedEvent(watchingSessionId, EventType.WATCH_SESSION_CREATED);
+    when(processedEventRepository.findByEventIdAndEventType(watchingSessionId, EventType.WATCH_SESSION_CREATED))
+        .thenReturn(Optional.of(existing));
+
+    // when
+    kafkaConsumer.onWatchingSessionCreated(kafkaEventJson, ack);
+
+    // then
+    verify(followService, never()).notifyFollowersOnWatchingEvent(any());
+    verify(processedEventRepository, never()).save(any());
+    verify(ack, times(1)).acknowledge();
+  }
 }

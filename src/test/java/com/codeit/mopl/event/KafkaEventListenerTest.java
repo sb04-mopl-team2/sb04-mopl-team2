@@ -1,9 +1,12 @@
 package com.codeit.mopl.event;
 
+import com.codeit.mopl.domain.follow.entity.Follow;
+import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.follow.service.FollowService;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.event.consumer.KafkaConsumer;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
@@ -18,6 +21,7 @@ import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -79,6 +83,9 @@ class KafkaEventListenerTest {
 
   @Mock
   private FollowService followService;
+
+  @Mock
+  private FollowRepository followRepository;
 
   @BeforeEach
   void setUp() {
@@ -529,5 +536,82 @@ class KafkaEventListenerTest {
     assertThat(record.key()).isNull();
     assertThat(record.value()).isEqualTo(expectedJson);
   }
+
+  @Test
+  @DisplayName("플레이리스트 생성 이벤트 처음 처리: 팔로워 알림 전송, ProcessedEvent 저장, ack 호출")
+  void onPlayListCreated_firstTime_shouldNotifyFollowersAndSaveProcessedEventAndAck() throws Exception {
+    // given
+    String kafkaEventJson = "{\"test\":\"json\"}";
+    UUID playlistId = UUID.randomUUID();
+
+    PlayListCreateEvent event = mock(PlayListCreateEvent.class);
+    when(event.playListId()).thenReturn(playlistId);
+
+    when(objectMapper.readValue(kafkaEventJson, PlayListCreateEvent.class))
+        .thenReturn(event);
+
+    // 아직 처리되지 않은 이벤트
+    when(processedEventRepository.findByEventIdAndEventType(
+        playlistId, EventType.PLAY_LIST_CREATED))
+        .thenReturn(Optional.empty());
+
+    // when
+    kafkaConsumer.onPlayListCreated(kafkaEventJson, ack);
+
+    // then
+    // 1) idempotency 조회
+    verify(processedEventRepository, times(1))
+        .findByEventIdAndEventType(playlistId, EventType.PLAY_LIST_CREATED);
+
+    // 2) 팔로워 알림 위임
+    verify(followService, times(1))
+        .notifyFollowersOnPlaylistCreated(event);
+
+    // 3) ProcessedEvent 저장
+    verify(processedEventRepository, times(1))
+        .save(any(ProcessedEvent.class));
+
+    // 4) ack 호출
+    verify(ack, times(1)).acknowledge();
+  }
+
+  @Test
+  @DisplayName("시청 세션 시작 이벤트 처음 처리: 팔로워 알림 전송, ProcessedEvent 저장, ack 호출")
+  void onWatchingSessionCreated_firstTime_shouldNotifyFollowersAndSaveProcessedEventAndAck() throws Exception {
+    // given
+    String kafkaEventJson = "{\"test\":\"json\"}";
+    UUID watchingSessionId = UUID.randomUUID();
+
+    WatchingSessionCreateEvent event = mock(WatchingSessionCreateEvent.class);
+    when(event.watchingSessionId()).thenReturn(watchingSessionId);
+
+    when(objectMapper.readValue(kafkaEventJson, WatchingSessionCreateEvent.class))
+        .thenReturn(event);
+
+    // 아직 처리되지 않은 이벤트
+    when(processedEventRepository.findByEventIdAndEventType(
+        watchingSessionId, EventType.WATCH_SESSION_CREATED))
+        .thenReturn(Optional.empty());
+
+    // when
+    kafkaConsumer.onWatchingSessionCreated(kafkaEventJson, ack);
+
+    // then
+    // 1) idempotency 조회
+    verify(processedEventRepository, times(1))
+        .findByEventIdAndEventType(watchingSessionId, EventType.WATCH_SESSION_CREATED);
+
+    // 2) 팔로워 알림 위임
+    verify(followService, times(1))
+        .notifyFollowersOnWatchingEvent(event);
+
+    // 3) ProcessedEvent 저장
+    verify(processedEventRepository, times(1))
+        .save(any(ProcessedEvent.class));
+
+    // 4) ack 호출
+    verify(ack, times(1)).acknowledge();
+  }
+
 
 }

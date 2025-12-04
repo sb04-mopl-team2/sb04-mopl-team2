@@ -170,7 +170,7 @@ public class WatchingSessionService {
     WatchingSession saved = watchingSessionRepository.save(watchingSession);
     saved.getContent().getTags().size();
 
-    eventPublisher.publishEvent(new WatchingSessionCreateEvent(watchingSession.getId(), userId, watchingSession.getContent().getTitle()));
+    eventPublisher.publishEvent(new WatchingSessionCreateEvent(saved.getId(), userId, saved.getContent().getTitle()));
 
     log.info("[실시간 세션] 서비스: 새로운 세션 생성 - sessionId = {}, title = {}, tagsNum = {}",
         saved.getId(), saved.getContent().getTitle(), saved.getContent().getTags().size());

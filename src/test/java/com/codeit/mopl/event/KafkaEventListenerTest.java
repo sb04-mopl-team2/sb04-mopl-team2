@@ -1,5 +1,6 @@
 package com.codeit.mopl.event;
 
+import com.codeit.mopl.domain.follow.service.FollowService;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.service.NotificationService;
@@ -75,6 +76,9 @@ class KafkaEventListenerTest {
 
   @InjectMocks
   private KafkaConsumer kafkaConsumer;
+
+  @Mock
+  private FollowService followService;
 
   @BeforeEach
   void setUp() {

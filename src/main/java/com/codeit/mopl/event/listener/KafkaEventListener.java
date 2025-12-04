@@ -69,7 +69,9 @@ public class KafkaEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(DirectMessageCreateEvent event){
         log.info("kafka DirectMessageCreate Event");
-        String key = event.directMessageDto().id().toString();
+        String key = Optional.ofNullable(event.directMessageDto().id())
+            .map(Object::toString)
+            .orElse(null);
         send("mopl-directMessage-create", key, event);
     }
 
@@ -77,7 +79,9 @@ public class KafkaEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(PlayListCreateEvent event){
         log.info("kafka PlayListCreate Event");
-        String key = event.playlist().getId().toString();
+        String key = Optional.ofNullable(event.playlist().getId())
+            .map(Object::toString)
+            .orElse(null);
         send("mopl-playList-create", key, event);
     }
 
@@ -85,7 +89,9 @@ public class KafkaEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(WatchingSessionCreateEvent event){
         log.info("kafka WatchingSessionCreate Event");
-        String key = event.watchingSession().getId().toString();
+        String key = Optional.ofNullable(event.watchingSession().getId())
+            .map(Object::toString)
+            .orElse(null);
         send("mopl-watchingSession-create", key, event);
     }
 

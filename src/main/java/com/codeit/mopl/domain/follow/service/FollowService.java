@@ -7,16 +7,21 @@ import com.codeit.mopl.domain.follow.mapper.FollowMapper;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
+import com.codeit.mopl.event.event.PlayListCreateEvent;
+import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.codeit.mopl.exception.follow.*;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -161,4 +166,31 @@ public class FollowService {
     private String getFollowNotificationTitle(String followerName) {
         return followerName + "님이 나를 팔로우했어요.";
     }
+
+    public void notifyFollowersOnPlaylistCreated(PlayListCreateEvent playListCreateEvent) {
+        log.info("[팔로우 관리] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 시작 : playListId = {}", playListCreateEvent.playListId());
+        UUID ownerId = playListCreateEvent.ownerId();
+        List<Follow> followList = followRepository.findByFolloweeId(ownerId);
+
+        for (Follow follow : followList) {
+            UUID receiverId = follow.getFollower().getId();
+            String title = follow.getFollowee().getName() + "님이 새로운 플레이리스트: " + playListCreateEvent.title() + "를 만들었어요!";
+            notificationService.createNotification(receiverId, title, "", Level.INFO);
+        }
+        log.info("[팔로우 관리] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 완료 : playListId = {}", playListCreateEvent.playListId());
+    }
+
+    public void notifyFollowersOnWatchingEvent(WatchingSessionCreateEvent watchingSessionCreateEvent) {
+        log.info("[팔로우 관리] 팔로우한 유저가 실시간 콘텐츠 시청시 팔로워 알림 송신 시작 : watchingSessionId = {}", watchingSessionCreateEvent.watchingSessionId());
+        UUID ownerId = watchingSessionCreateEvent.ownerId();
+        List<Follow> followList = followRepository.findByFolloweeId(ownerId);
+
+        for (Follow follow : followList) {
+            UUID receiverId = follow.getFollower().getId();
+            String title = follow.getFollowee().getName() + "님이 " + watchingSessionCreateEvent.watchingSessionContentTitle() + "를 보고있어요!";
+            notificationService.createNotification(receiverId, title, "", Level.INFO);
+        }
+        log.info("[팔로우 관리] 팔로우한 유저가 실시간 콘텐츠 시청시 알림 송신 완료 : watchingSessionId = {}", watchingSessionCreateEvent.watchingSessionId());
+    }
+
 }

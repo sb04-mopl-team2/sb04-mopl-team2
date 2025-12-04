@@ -15,6 +15,7 @@ import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
 import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
+import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
 import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.user.UserErrorCode;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.codeit.mopl.exception.user.UserNotFoundException;
@@ -43,6 +45,7 @@ public class WatchingSessionService {
   private final WatchingSessionMapper watchingSessionMapper;
   private final ContentRepository contentRepository;
   private final UserRepository userRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   /*
     조회용 함수들
@@ -166,6 +169,9 @@ public class WatchingSessionService {
     watchingSession.setContent(content);
     WatchingSession saved = watchingSessionRepository.save(watchingSession);
     saved.getContent().getTags().size();
+
+    eventPublisher.publishEvent(new WatchingSessionCreateEvent(saved.getId(), userId, saved.getContent().getTitle()));
+
     log.info("[실시간 세션] 서비스: 새로운 세션 생성 - sessionId = {}, title = {}, tagsNum = {}",
         saved.getId(), saved.getContent().getTitle(), saved.getContent().getTags().size());
 

@@ -226,6 +226,7 @@ public class SecurityConfig {
                 .getBuilder("google")
                 .clientId(googleClientProp.clientId())
                 .clientSecret(googleClientProp.clientSecret())
+                .redirectUri(googleClientProp.redirectUri())
                 .scope("email", "profile")
                 .build();
     }

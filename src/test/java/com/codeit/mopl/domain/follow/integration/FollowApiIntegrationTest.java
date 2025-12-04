@@ -312,7 +312,6 @@ public class FollowApiIntegrationTest {
     @DisplayName("팔로워 수 조회 실패 - 유효하지 않은 요청")
     void getFollowerCount_Failure_InvalidRequest() throws Exception {
         // given
-        UUID followeeId = followee.getId();
 
         // when
         ResultActions resultActions = mockMvc.perform(

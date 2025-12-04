@@ -2,11 +2,13 @@ package com.codeit.mopl.domain.auth.controller;
 
 import com.codeit.mopl.domain.auth.dto.request.ResetPasswordRequest;
 import com.codeit.mopl.domain.auth.service.AuthService;
+import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.user.service.UserService;
 import com.codeit.mopl.security.config.TestSecurityConfig;
 import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
+import com.codeit.mopl.security.jwt.handler.OAuth2UserSuccessHandler;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +19,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -56,6 +59,15 @@ public class AuthControllerTest {
 
     @MockitoBean
     private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    @MockitoBean
+    private OAuth2UserService oAuth2UserService;
+
+    @MockitoBean
+    private OAuth2UserSuccessHandler oAuth2UserSuccessHandler;
+
+    @MockitoBean
+    private ClientRegistrationRepository clientRegistrationRepository;
 
     @DisplayName("이메일 포맷의 request가 들어오면 동작한다.")
     @Test

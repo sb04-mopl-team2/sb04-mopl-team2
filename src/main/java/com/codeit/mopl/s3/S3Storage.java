@@ -12,6 +12,7 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -79,6 +80,13 @@ public class S3Storage {
     }
 
     public String getPresignedUrl(String key) {
+        if (!StringUtils.hasText(key)) {
+            return null;
+        }
+        if (key.startsWith("http://") || key.startsWith("https://")) {
+            return key;
+        }
+
         String contentType = getContentTypeFromS3(key);
 
         GetObjectRequest getReq = GetObjectRequest.builder()

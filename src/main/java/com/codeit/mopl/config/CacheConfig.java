@@ -2,9 +2,15 @@ package com.codeit.mopl.config;
 
 import java.time.Duration;
 
+import com.codeit.mopl.domain.notification.dto.NotificationDto;
+import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.impl.StdTypeResolverBuilder;
 import io.lettuce.core.RedisConnectionException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
@@ -26,11 +32,10 @@ public class CacheConfig extends CachingConfigurerSupport {
     @Bean
     public RedisCacheConfiguration redisCacheConfiguration(ObjectMapper objectMapper) {
         ObjectMapper redisObjectMapper = objectMapper.copy();
-        redisObjectMapper.activateDefaultTyping(
-                LaissezFaireSubTypeValidator.instance,
-                ObjectMapper.DefaultTyping.NON_FINAL,
-                JsonTypeInfo.As.PROPERTY
-        );
+        RecordSupportingTypeResolver typeResolver = new RecordSupportingTypeResolver(ObjectMapper.DefaultTyping.NON_FINAL, redisObjectMapper.getPolymorphicTypeValidator());
+        StdTypeResolverBuilder initializedResolver = typeResolver.init(JsonTypeInfo.Id.CLASS, null);
+        initializedResolver = initializedResolver.inclusion(JsonTypeInfo.As.PROPERTY);
+        redisObjectMapper.setDefaultTyping(initializedResolver);
 
         return RedisCacheConfiguration.defaultCacheConfig()
                 .serializeValuesWith(
@@ -96,5 +101,23 @@ public class CacheConfig extends CachingConfigurerSupport {
                 return false;
             }
         };
+    }
+
+    public class RecordSupportingTypeResolver extends ObjectMapper.DefaultTypeResolverBuilder {
+
+        public RecordSupportingTypeResolver(ObjectMapper.DefaultTyping t, PolymorphicTypeValidator ptv) {
+            super(t, ptv);
+        }
+
+        @Override
+        public boolean useForType(JavaType t) {
+            boolean isRecord = t.getRawClass().isRecord();
+            boolean superResult = super.useForType(t);
+
+            if (isRecord) {
+                return true;
+            }
+            return superResult;
+        }
     }
 }

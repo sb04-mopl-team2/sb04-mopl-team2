@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.user.controller;
 
+import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.domain.user.dto.request.*;
 import com.codeit.mopl.domain.user.dto.response.CursorResponseUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
@@ -10,6 +11,7 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.user.service.UserService;
 import com.codeit.mopl.security.config.TestSecurityConfig;
 import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
+import com.codeit.mopl.security.jwt.handler.OAuth2UserSuccessHandler;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import com.codeit.mopl.util.WithCustomMockUser;
@@ -23,6 +25,7 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.mock.web.MockPart;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -68,6 +71,15 @@ public class UserControllerTest {
 
     @MockitoBean
     private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    @MockitoBean
+    private OAuth2UserService oAuth2UserService;
+
+    @MockitoBean
+    private OAuth2UserSuccessHandler oAuth2UserSuccessHandler;
+
+    @MockitoBean
+    private ClientRegistrationRepository clientRegistrationRepository;
 
     private static final UUID TEST_UUID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     private static final UserDto USER_DTO = new UserDto(TEST_UUID,LocalDateTime.now(),"test@test.com","testName",null,Role.USER,false);

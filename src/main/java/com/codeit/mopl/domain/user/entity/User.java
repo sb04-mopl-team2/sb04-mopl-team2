@@ -47,6 +47,11 @@ public class User extends UpdatableEntity {
         this.followerCount = 0;
     }
 
+    public User(String email, String password, String name, String profileImageUrl) {
+        this(email,password,name);
+        this.profileImageUrl = profileImageUrl;
+    }
+
     public void updateRole(Role role) {
         this.role = role;
     }

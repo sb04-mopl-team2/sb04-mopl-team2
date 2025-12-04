@@ -39,10 +39,6 @@ public class OAuth2UserSuccessHandler extends SimpleUrlAuthenticationSuccessHand
 
     @Value("${jwt.refresh-token-expiration-minutes}")
     private int expiration;
-    @Value("${server.host:localhost}")
-    private String host;
-    @Value("${server.port:8080}")
-    private int port;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -72,7 +68,7 @@ public class OAuth2UserSuccessHandler extends SimpleUrlAuthenticationSuccessHand
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        String redirectUri = createURI().toString();
+        String redirectUri = "/";
 
         getRedirectStrategy().sendRedirect(request, response, redirectUri);
     }
@@ -95,15 +91,5 @@ public class OAuth2UserSuccessHandler extends SimpleUrlAuthenticationSuccessHand
         String subject = username;
 
         return jwtTokenProvider.generateRefreshToken(claims, subject);
-    }
-
-    private URI createURI() {
-        return UriComponentsBuilder
-                .newInstance()
-                .scheme("http")
-                .host(host)
-                .port(port)
-                .build()
-                .toUri();
     }
 }

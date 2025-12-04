@@ -58,7 +58,7 @@ public class ConversationController {
     }
 
     @GetMapping("/with")
-    public ResponseEntity<ConversationDto> getConversationByUserId(@RequestParam("withUserId") UUID userId,
+    public ResponseEntity<ConversationDto> getConversationByUserId(@RequestParam UUID userId,
                                                                    @AuthenticationPrincipal CustomUserDetails loginUser) {
         log.info("[메세지] 특정 사용자와의 채팅방 조회 요청 - withUserId = {}", userId);
         ConversationDto response = conversationService.getConversationByUserId(loginUser.getUser().id(), userId);

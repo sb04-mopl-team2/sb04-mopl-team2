@@ -37,7 +37,6 @@ public class NotificationService {
   private final SseService sseService;
   private final UserRepository userRepository;
   private final ApplicationEventPublisher eventPublisher;
-
   private final StringRedisTemplate stringRedisTemplate;
 
   public static final String NOTIFICATIONS_FIRST_PAGE = "notifications:first-page";

@@ -206,7 +206,7 @@ public class FollowApiIntegrationTest {
 
     @Test
     @DisplayName("팔로우 여부 조회 성공 통합 테스트 - 팔로우 상태 아님")
-    void isFollowedByMe_Success() throws Exception {
+    void isFollowedByMe_Success_isNotFollowedByMe() throws Exception {
         // given
         UUID followeeId = followee.getId();
 
@@ -223,6 +223,29 @@ public class FollowApiIntegrationTest {
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(content().string("false"));
+    }
+
+    @Test
+    @DisplayName("팔로우 여부 조회 성공 통합 테스트 - 팔로우 상태임")
+    void isFollowedByMe_Success_isFollowedByMe() throws Exception {
+        // given
+        UUID followeeId = followee.getId();
+        Follow follow = new Follow(follower, followee);
+        followRepository.saveAndFlush(follow);
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/followed-by-me")
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId.toString())
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
     }
 
     @Test

@@ -134,8 +134,8 @@ public class PlaylistRepositoryTest {
     }
 
     @Test
-    @DisplayName("cursorLessThen - cursor 보다 createdAt이 과거인 playlist만 조회함")
-    void findAllWithCursorLessThen() {
+    @DisplayName("cursorLessThan - cursor 보다 createdAt이 과거인 playlist만 조회함")
+    void findAllWithCursorLessThan() {
         //given
         //createdAt을 강제로 세팅해줌
         ReflectionTestUtils.setField(playlist1, "createdAt", LocalDateTime.now().minusDays(1));
@@ -169,7 +169,7 @@ public class PlaylistRepositoryTest {
         em.flush();
         em.clear();
 
-        // 첫 페이지 조회 (limit = 2)
+        // 첫 페이지 조회 (limit = 1)
         PlaylistSearchCond cond = new PlaylistSearchCond();
         cond.setLimit(1);
         cond.setSortBy(SortBy.UPDATED_AT);

@@ -29,8 +29,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -206,8 +205,8 @@ public class FollowApiIntegrationTest {
     }
 
     @Test
-    @DisplayName("팔로우 여부 조회 성공 통합 테스트")
-    void isFollowedByMe_Success() throws Exception {
+    @DisplayName("팔로우 여부 조회 성공 통합 테스트 - 팔로우 없음")
+    void isFollowedByMe_Success_IsFollowedByMe() throws Exception {
         // given
         UUID followeeId = followee.getId();
 
@@ -222,7 +221,31 @@ public class FollowApiIntegrationTest {
 
         // then
         resultActions
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"));
+    }
+
+    @Test
+    @DisplayName("팔로우 여부 조회 성공 통합 테스트 - 팔로우 있음")
+    void isFollowedByMe_Success_NotFollowedByMe() throws Exception {
+        // given
+        UUID followeeId = followee.getId();
+        Follow follow = new Follow(follower, followee);
+        followRepository.saveAndFlush(follow);
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/followed-by-me")
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId.toString())
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
     }
 
     @Test

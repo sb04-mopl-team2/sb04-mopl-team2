@@ -51,6 +51,11 @@ jobs:
           MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
           TMDB_API_TOKEN: ${{ secrets.TMDB_API_TOKEN }}
           TMDB_BASE_URL: ${{ secrets.TMDB_BASE_URL }}
+          OAUTH2_GOOGLE_CLIENT_ID: ${{ secrets.OAUTH2_GOOGLE_CLIENT_ID }}
+          OAUTH2_GOOGLE_CLIENT_SECRET: ${{ secrets.OAUTH2_GOOGLE_CLIENT_SECRET }}
+          OAUTH2_KAKAO_CLIENT_ID: ${{ secrets.OAUTH2_KAKAO_CLIENT_ID }}
+          OAUTH2_KAKAO_CLIENT_SECRET: ${{ secrets.OAUTH2_KAKAO_CLIENT_SECRET }}
+          HOST: ${{ secrets.HOST }}
         run: ./gradlew clean test -Dspring.profiles.active=test jacocoTestReport
 
       - name: Upload coverage reports to Codecov

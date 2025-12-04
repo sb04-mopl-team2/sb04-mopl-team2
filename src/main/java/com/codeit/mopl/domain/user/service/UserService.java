@@ -13,6 +13,7 @@ import com.codeit.mopl.exception.user.NotImageContentException;
 import com.codeit.mopl.exception.user.UserEmailAlreadyExistsException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import com.codeit.mopl.mail.utils.PasswordUtils;
 import com.codeit.mopl.s3.S3Storage;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,7 @@ public class UserService {
     private final JwtRegistry jwtRegistry;
     private final S3Storage s3Storage;
     private final StringRedisTemplate redisTemplate;
+    private final PasswordUtils passwordUtils;
 
     @Transactional
     @CachePut(value = "users", key = "#result.id")
@@ -181,6 +183,19 @@ public class UserService {
         });
         userRepository.save(findUser);
         return userMapper.toDto(findUser);
+    }
+
+    public UserDto findOrCreateOAuth2User(String email, String name, String profileImageUrl) {
+        log.info("[사용자 관리] 소셜 로그인 시도 email = {}", email);
+        if (userRepository.existsByEmail(email)) {
+            return userMapper.toDto(findUserByEmail(email));
+        }
+        log.info("[사용자 관리] 소셜 로그인 계정 생성 email = {}", email);
+        String randomPassword = passwordUtils.makeTempPassword();
+        String encodedPassword = passwordEncoder.encode(randomPassword);  // 사용하지 않는 비밀번호
+        User user = new User(email,encodedPassword, name, profileImageUrl);
+        log.info("[사용자 관리] 소셜 로그인 계정 생성 완료 email = {}", email);
+        return userMapper.toDto(userRepository.save(user));
     }
 
     private void checkEmailDuplicate(String email) {

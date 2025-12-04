@@ -96,7 +96,7 @@ class NotificationServiceUnitTest {
     );
 
     // then
-    assertThat(result.data()).isNull();
+    assertThat(result.data()).hasSize(0);
     assertThat(result.nextCursor()).isNull();
     assertThat(result.nextIdAfter()).isNull();
     assertThat(result.hasNext()).isFalse();

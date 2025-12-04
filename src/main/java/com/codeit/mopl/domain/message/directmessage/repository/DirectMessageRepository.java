@@ -16,6 +16,17 @@ public interface DirectMessageRepository extends JpaRepository<DirectMessage, UU
 
     boolean existsByConversationIdAndReceiverIdAndIsReadFalse(UUID conversationId, UUID receiverId);
 
+
+    @Query("""
+    SELECT dm FROM DirectMessage dm
+    WHERE dm.conversation.id = :conversationId
+    ORDER BY dm.createdAt DESC, dm.id DESC
+""")
+    List<DirectMessage> findFirstPage(
+            @Param("conversationId") UUID conversationId,
+            Pageable pageable
+    );
+
     @Query("""
        SELECT dm FROM DirectMessage dm
        WHERE dm.conversation.id = :conversationId

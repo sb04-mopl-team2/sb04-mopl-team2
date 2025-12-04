@@ -9,43 +9,39 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    env:
+      DOCKER_HOST: unix:///var/run/docker.sock
+      TESTCONTAINERS_RYUK_DISABLED: true
+
+#    services:
+#      redis:
+#        image: redis:7.2-alpine
+#        ports:
+#          - 6379:6379
+#        options: >-
+#          --health-cmd "redis-cli ping"
+#          --health-interval 5s
+#          --health-timeout 5s
+#          --health-retries 5
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Check runner info
+      - name: Docker Debug
         run: |
-          echo "Runner: $(uname -a)"
-          echo "Java home before setup: $JAVA_HOME"
+          docker version
+          docker info
 
-      - name: Check Docker availability (basic)
-        run: |
-          echo "=== docker version ==="
-          docker version || true
-          echo "=== docker info ==="
-          docker info || true
-          echo "=== docker ps ==="
-          docker ps -a || true
-          echo "=== quick docker run hello-world ==="
-          docker run --rm hello-world || true
-
-      - name: JDK 17
+      - name: JDK 17S
         uses: actions/setup-java@v3
         with:
           java-version: 17
           distribution: 'temurin'
 
-      - name: Grant execute to gradlew
+      - name: 테스트 권한 부여
         run: chmod +x ./gradlew
 
-      # Optional: show Gradle and Java versions
-      - name: Java & Gradle versions
-        run: |
-          java -version
-          ./gradlew -v
-
-      - name: Run tests with Testcontainers debug logs
-        # Testcontainers debug 출력, 그리고 fail 시에도 콘솔에 남기기 위해 소유 환경 변수와 system properties를 설정
+      - name: 빌드 (테스트 생략)
         env:
           AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
           AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
@@ -69,28 +65,7 @@ jobs:
           OAUTH2_KAKAO_CLIENT_ID: ${{ secrets.OAUTH2_KAKAO_CLIENT_ID }}
           OAUTH2_KAKAO_CLIENT_SECRET: ${{ secrets.OAUTH2_KAKAO_CLIENT_SECRET }}
           HOST: ${{ secrets.HOST }}
-          # Testcontainers specific debug
-          ORG_TESTCONTAINERS_DEBUG: "true"
-          TESTCONTAINERS_RYUK_DISABLED: "false"
-        # Gradle 실행: Testcontainers 로그 레벨 높이기 위한 JVM system properties 전달
-        run: |
-          ./gradlew clean test \
-            -Dspring.profiles.active=test \
-            -Dorg.testcontainers=DEBUG \
-            -Dorg.slf4j.simpleLogger.log.org.testcontainers=DEBUG \
-            -Dorg.slf4j.simpleLogger.defaultLogLevel=info \
-            --no-daemon \
-            --stacktrace || echo "Gradle exited with non-zero status"
-
-      - name: Dump possible test failure details (tests, surefire/junit reports)
-        if: always()
-        run: |
-          echo "=== ls build/test-results ==="
-          ls -la build/test-results || true
-          echo "=== ls build/reports/tests ==="
-          ls -la build/reports/tests || true
-          echo "=== tail test console logs if exist ==="
-          find build -type f -name "*.log" -maxdepth 4 -print -exec sed -n '1,200p' {} \; || true
+        run: ./gradlew clean test -Dspring.profiles.active=test jacocoTestReport
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5

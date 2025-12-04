@@ -37,9 +37,7 @@ public class PlaylistService {
     private final ApplicationEventPublisher eventPublisher;
     private final SubscriptionRepository subscriptionRepository;
 
-    public PlaylistService(UserRepository userRepository, PlaylistRepository playlistRepository, PlaylistMapper playlistMapper,
-        ApplicationEventPublisher eventPublisher) {
-    public PlaylistService(UserRepository userRepository, PlaylistRepository playlistRepository, PlaylistMapper playlistMapper, SubscriptionRepository subscriptionRepository) {
+    public PlaylistService(UserRepository userRepository, PlaylistRepository playlistRepository, PlaylistMapper playlistMapper, ApplicationEventPublisher eventPublisher, SubscriptionRepository subscriptionRepository) {
         this.userRepository = userRepository;
         this.playlistRepository = playlistRepository;
         this.playlistMapper = playlistMapper;

@@ -7,8 +7,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Service;
 
-// Individual server -> Redis database
-// pushes to topic
+// 각각의 서버 -> Redis DB
+// Topic으로 푸쉬
 @Slf4j
 @Service
 @RequiredArgsConstructor

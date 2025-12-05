@@ -9,7 +9,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 /*
-   Class that receives messages published in Redis Channel
+   Redis 채널에 publish된 메세지를 받는 클래스
  */
 @Slf4j
 @Service

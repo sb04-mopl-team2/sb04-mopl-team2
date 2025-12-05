@@ -9,7 +9,6 @@ import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.exception.watchingsession.UserNotAuthenticatedException;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
-import com.codeit.mopl.domain.watchingsession.service.RedisPublisher;
 import com.codeit.mopl.security.CustomUserDetails;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +16,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.simp.user.SimpSession;
 import org.springframework.messaging.simp.user.SimpSubscription;
@@ -65,6 +63,7 @@ public class WebSocketEventListener {
 
       WatchingSessionChange watchingSessionChange = service.joinSession(userId, contentUUID);
 
+
       accessor.getSessionAttributes().put("watchingSessionId", watchingSessionChange.watchingSession().id());
       accessor.getSessionAttributes().put("watchingContentId", contentUUID);
       log.info("[WebsocketEventListener] handleSessionSubscribe accessor에 값 넣어줌 - watchingSessionId: {}, contentUUID: {}",
@@ -98,12 +97,13 @@ public class WebSocketEventListener {
 
     UUID userId = getUserId(accessor, sessionId);
 
-    // check for other sessions
+    // 다른 열린 세션 체크
     if (userWatchingOnOtherSession(userId, contentId, watchingSessionId)) return;
 
     accessor.getSessionAttributes().remove("watchingSessionId");
     accessor.getSessionAttributes().remove("watchingContentId");
     log.info("[WebsocketEventListener] SessionUnsubscribeEvent 완료 - 속성 제거됨");
+
 
     processLeave(watchingSessionId, userId, contentId);
     log.info("[WebsocketEventListener] SessionUnsubscribeEvent 완료 - sessionId: {}, watchingSessionId: {}, contentId: {}",
@@ -140,7 +140,7 @@ public class WebSocketEventListener {
         sessionId, watchingSessionId, contentId);
   }
 
-  // ================================== helper methods ==================================
+  // ================================== 헬퍼 메서드 ==================================
 
   private boolean userWatchingOnOtherSession(UUID userId, UUID contentId, UUID currentSessionId) {
     User foundUser = userRepository.findById(userId)
@@ -177,7 +177,6 @@ public class WebSocketEventListener {
     String payloadDestination = String.format("/sub/contents/%s/watch", contentId);
 //    messagingTemplate.convertAndSend(payloadDestination, watchingSessionChange);
     redisPublisher.convertAndSend(payloadDestination, watchingSessionChange);
-
 
     log.info("[WebsocketEventListener] processLeave 완료 - userId: {}, contentId: {}, watcherCount: {}",
         userId, contentId, watcherCount);

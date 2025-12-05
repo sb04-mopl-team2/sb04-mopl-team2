@@ -19,6 +19,7 @@ import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
 import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.user.UserErrorCode;
+import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
 import java.time.LocalDateTime;
@@ -31,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.codeit.mopl.exception.user.UserNotFoundException;
 
 /*
    Controller에서 불려지는 조회용 함수들
@@ -85,7 +85,7 @@ public class WatchingSessionService {
         watcherNameLike,
         cursor,
         idAfter,
-        internalLimit, // for cursor
+        internalLimit, // 커서
         sortDirection,
         sortBy);
     long totalCount = watchingSessionRepository.getWatcherCount(
@@ -97,11 +97,10 @@ public class WatchingSessionService {
     UUID nextIdAfter = null;
     boolean hasNext = watchingSessions.size() > effectiveLimit;
     if (hasNext) {
-      // get extra & get nextCursor, nextIdAfter
       WatchingSession lastWatchingSession = watchingSessions.get(effectiveLimit);
       nextCursor = lastWatchingSession.getCreatedAt().toString();
       nextIdAfter = lastWatchingSession.getId();
-      // remove the extra
+      // 여분 제거
       watchingSessions.remove(effectiveLimit);
     }
     CursorResponseWatchingSessionDto response = new CursorResponseWatchingSessionDto(
@@ -160,6 +159,7 @@ public class WatchingSessionService {
       return session;
     }
 
+
     // GET 메소드로 인해 새로 생성
     watchingSessionRepository.deleteByUserId(userId);
     watchingSessionRepository.flush();
@@ -169,6 +169,9 @@ public class WatchingSessionService {
     watchingSession.setContent(content);
     WatchingSession saved = watchingSessionRepository.save(watchingSession);
     saved.getContent().getTags().size();
+
+    // 콘텐츠 watcherCount 증가
+    contentRepository.incrementWatcherCount(content.getId());
 
     eventPublisher.publishEvent(new WatchingSessionCreateEvent(saved.getId(), userId, saved.getContent().getTitle()));
 
@@ -193,7 +196,10 @@ public class WatchingSessionService {
     watchingSessionRepository.deleteById(watchingSessionId);
     long watcherCount = watchingSessionRepository.countByContentId(contentId);
 
-    // payload
+    // 콘텐츠 watcherCount 감소
+    contentRepository.decrementWatcherCount(contentId);
+
+    // 페이로드 보내기
     return getWatchingSessionChange(
         watchingSession, user, ChangeType.LEAVE, watcherCount );
   }

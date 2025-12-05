@@ -4,10 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
@@ -22,19 +19,16 @@ import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.review.ReviewDuplicateException;
-import com.codeit.mopl.exception.review.ReviewNotFoundException;
 import com.codeit.mopl.exception.review.ReviewForbiddenException;
+import com.codeit.mopl.exception.review.ReviewNotFoundException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -87,7 +81,7 @@ class ReviewServiceTest {
 
     // then
     assertThat(result.data()).isNotNull();
-    assertThat(result.data()).isEmpty();            // ✔ null → empty list 로 변경됨
+    assertThat(result.data()).isEmpty();
     assertThat(result.hasNext()).isFalse();
     assertThat(result.totalCount()).isZero();
     assertThat(result.nextCursor()).isNull();
@@ -95,7 +89,6 @@ class ReviewServiceTest {
     assertThat(result.sortBy()).isEqualTo(sortBy.toString());
     assertThat(result.sortDirection()).isEqualTo(sortDirection.toString());
 
-    // ✔ 빈 결과일 때 totalCount 조회 안 하는지 검증
     verify(reviewRepository, never()).countByContentIdAndIsDeleted(any(), any());
   }
 
@@ -224,7 +217,7 @@ class ReviewServiceTest {
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(contentRepository.findById(contentId)).thenReturn(Optional.of(content));
     when(reviewRepository.findByUserAndContent(user, content))
-    .thenReturn(Optional.empty());
+        .thenReturn(Optional.empty());
     when(reviewRepository.save(any(Review.class))).thenReturn(review);
     when(reviewMapper.toDto(any(Review.class))).thenReturn(dto);
 
@@ -391,6 +384,7 @@ class ReviewServiceTest {
     verify(reviewRepository, never()).save(any());
     verify(reviewMapper, never()).toDto(any());
   }
+
   @Test
   @DisplayName("리뷰 삭제 - 작성자가 본인 리뷰를 삭제하면 isDeleted=true로 저장된다")
   void deleteReview_whenUserIsOwner_shouldSoftDeleteReview()  {
@@ -462,13 +456,154 @@ class ReviewServiceTest {
     verify(reviewRepository, never()).save(any());
   }
 
+  @Test
+  @DisplayName("리뷰 생성 시 Content의 평균 평점과 리뷰 수가 갱신된다")
+  void createReview_shouldUpdateContentAverageAndCount() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID contentId = UUID.randomUUID();
+    String text = "리뷰1";
+    double rating = 4.0;
+
+    User user = new User();
+    Content content = new Content();
+    content.setAverageRating(0.0);
+    content.setReviewCount(0);
+
+    Review review = new Review(user, content, text, rating, false);
+    ReviewDto dto = new ReviewDto(
+        UUID.randomUUID(),
+        contentId,
+        null,
+        text,
+        rating
+    );
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(contentRepository.findById(contentId)).thenReturn(Optional.of(content));
+    when(reviewRepository.findByUserAndContent(user, content)).thenReturn(Optional.empty());
+    when(reviewRepository.save(any(Review.class))).thenReturn(review);
+    when(reviewMapper.toDto(any(Review.class))).thenReturn(dto);
+
+    // when
+    reviewService.createReview(userId, contentId, text, rating);
+
+    // then
+    assertThat(content.getReviewCount()).isEqualTo(1);
+    assertThat(content.getAverageRating()).isEqualTo(4.0);
+    verify(contentRepository).save(content);
+  }
+
+  @Test
+  @DisplayName("리뷰 수정 시 Content의 평균 평점이 기존 리뷰 점수를 반영해서 갱신된다")
+  void updateReview_shouldUpdateContentAverage() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID reviewId = UUID.randomUUID();
+
+    // 컨텐츠: 현재 평균 4.0, 리뷰 개수 2 (예: 점수 3, 5 라고 가정)
+    Content content = new Content();
+    content.setAverageRating(4.0);
+    content.setReviewCount(2);
+
+    User author = mock(User.class);
+    when(author.getId()).thenReturn(userId);
+
+    // 이 리뷰의 기존 점수는 3.0 → 새 점수를 5.0으로 수정한다고 가정
+    Review review = new Review(author, content, "old", 3.0, false);
+
+    String newText = "수정된 리뷰";
+    double newRating = 5.0;
+
+    ReviewDto dto = new ReviewDto(
+        reviewId,
+        UUID.randomUUID(),
+        null,
+        newText,
+        newRating
+    );
+
+    when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
+    when(reviewRepository.save(any(Review.class))).thenReturn(review);
+    when(reviewMapper.toDto(any(Review.class))).thenReturn(dto);
+
+    // when
+    reviewService.updateReview(userId, reviewId, newText, newRating);
+
+    // then
+    // 총합: 4.0 * 2 = 8.0 → -3.0 + 5.0 = 10.0 → /2 = 5.0
+    assertThat(content.getReviewCount()).isEqualTo(2);
+    assertThat(content.getAverageRating()).isEqualTo(5.0);
+    verify(contentRepository).save(content);
+  }
+
+  @Test
+  @DisplayName("리뷰 삭제 시 Content의 평균 평점과 리뷰 수가 감소한다 (리뷰 2개 이상일 때)")
+  void deleteReview_shouldUpdateContentAverageAndCount_whenMoreThanOneReview() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID reviewId = UUID.randomUUID();
+
+    // 컨텐츠: 평균 4.0, 리뷰 수 2 (점수 3, 5)
+    Content content = new Content();
+    content.setAverageRating(4.0);
+    content.setReviewCount(2);
+
+    User author = mock(User.class);
+    when(author.getId()).thenReturn(userId);
+
+    // 삭제할 리뷰 점수: 5.0 이라고 가정
+    Review review = new Review(author, content, "to delete", 5.0, false);
+
+    when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
+    when(reviewRepository.save(any(Review.class))).thenReturn(review);
+
+    // when
+    reviewService.deleteReview(userId, reviewId);
+
+    // then
+    // 총합: 4.0 * 2 = 8.0 → -5.0 = 3.0, 리뷰 수 1 → 평균 3.0
+    assertThat(review.getIsDeleted()).isTrue();
+    assertThat(content.getReviewCount()).isEqualTo(1);
+    assertThat(content.getAverageRating()).isEqualTo(3.0);
+    verify(contentRepository).save(content);
+  }
+
+  @Test
+  @DisplayName("리뷰 삭제 시 마지막 리뷰라면 Content의 평점은 0.0, 리뷰 수는 0으로 초기화된다")
+  void deleteReview_shouldResetContentWhenLastReview() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID reviewId = UUID.randomUUID();
+
+    // 컨텐츠: 리뷰 1개, 평균 4.0 (리뷰 점수도 4.0이라고 가정)
+    Content content = new Content();
+    content.setAverageRating(4.0);
+    content.setReviewCount(1);
+
+    User author = mock(User.class);
+    when(author.getId()).thenReturn(userId);
+
+    Review review = new Review(author, content, "to delete", 4.0, false);
+
+    when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
+    when(reviewRepository.save(any(Review.class))).thenReturn(review);
+
+    // when
+    reviewService.deleteReview(userId, reviewId);
+
+    // then
+    assertThat(review.getIsDeleted()).isTrue();
+    assertThat(content.getReviewCount()).isEqualTo(0);
+    assertThat(content.getAverageRating()).isEqualTo(0.0);
+    verify(contentRepository).save(content);
+  }
 
   private Review createReview(UUID id, LocalDateTime createdAt) {
     Review review = new Review();
     review.setText("sample");
     review.setRating(4.0);
 
-    // DeletableEntity의 id, createdAt 같은 필드는 Reflection으로 세팅
     ReflectionTestUtils.setField(review, "id", id);
     ReflectionTestUtils.setField(review, "createdAt", createdAt);
 

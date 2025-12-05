@@ -104,8 +104,6 @@ public class ReviewService {
     applyReviewDeleted(content, rating);
     contentRepository.save(content);
 
-    contentRepository.save(content);
-
     evictFirstPageCacheByContentId(review.getContent().getId());
     log.info("[리뷰] 리뷰 삭제 종료, reviewId = {}", reviewId);
   }

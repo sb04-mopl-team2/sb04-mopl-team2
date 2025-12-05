@@ -1,8 +1,8 @@
 package com.codeit.mopl.domain.watchingsession.service;
 
 import com.codeit.mopl.domain.watchingsession.dto.MessagePayload;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Service;
@@ -11,11 +11,18 @@ import org.springframework.stereotype.Service;
 // Topic으로 푸쉬
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class RedisPublisher {
-
   private final RedisTemplate<String, Object> redisTemplate;
   private final ChannelTopic topic;
+
+  public RedisPublisher(
+      @Qualifier("websocketChatRedisTemplate")
+      RedisTemplate<String, Object> redisTemplate,
+      ChannelTopic topic
+  ) {
+    this.redisTemplate = redisTemplate;
+    this.topic = topic;
+  }
 
   // Object -> contentChatDto, WatchingSessionChange
   public void convertAndSend(String destination, Object object) {

@@ -73,7 +73,7 @@ public class WatchingSessionRepositoryTest {
     ReflectionTestUtils.setField(w2, "createdAt", localDateTime2);
     em.flush();
 
-    // clear cache
+    // cache 클리어
     em.clear();
   }
 
@@ -86,7 +86,7 @@ public class WatchingSessionRepositoryTest {
     // when
     List<WatchingSession> nameResults = watchingSessionRepository.findWatchingSessions(
         content.getId(),    // contentId
-        null,         // watcherNameLike
+        null,               // watcherNameLike
         null,               // cursor
         null,               // idAfter
         10,                 // limit
@@ -138,10 +138,10 @@ public class WatchingSessionRepositoryTest {
     // when
     List<WatchingSession> results = watchingSessionRepository.findWatchingSessions(
         content.getId(),  // contentId
-        null,         // watcherNameLike
-        null,               // cursor
-        null,               // idAfter
-        10,                 // limit
+        null,             // watcherNameLike
+        null,             // cursor
+        null,             // idAfter
+        10,               // limit
         SortDirection.ASCENDING,
         SortBy.CREATED_AT
     );
@@ -157,10 +157,10 @@ public class WatchingSessionRepositoryTest {
     // when
     List<WatchingSession> results = watchingSessionRepository.findWatchingSessions(
         content.getId(),  // contentId
-        null,         // watcherNameLike
-        null,               // cursor
-        null,               // idAfter
-        10,                 // limit
+        null,             // watcherNameLike
+        null,             // cursor
+        null,             // idAfter
+        10,               // limit
         SortDirection.DESCENDING,
         SortBy.CREATED_AT
     );
@@ -185,23 +185,23 @@ public class WatchingSessionRepositoryTest {
     );
     assertThat(page1).hasSize(1);
     WatchingSession firstResult = page1.get(0);
-    assertThat(firstResult.getId()).isEqualTo(w2.getId()); // get w2
+    assertThat(firstResult.getId()).isEqualTo(w2.getId()); // w2
 
-    // 2nd page (cursor test)
+    // 두번째 페이지
     String cursorTimestamp = firstResult.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     UUID cursorId = firstResult.getId();
     List<WatchingSession> page2 = watchingSessionRepository.findWatchingSessions(
         content.getId(),
         null,
-        cursorTimestamp, // last elem timestamp
-        cursorId,        // last elem id
+        cursorTimestamp, // 마지막 요소 timestamp
+        cursorId,        // 마지막 요소 id
         1,
         SortDirection.DESCENDING,
         SortBy.CREATED_AT
     );
 
     assertThat(page2).hasSize(1);
-    assertThat(page2.get(0).getId()).isEqualTo(w1.getId()); // get w1
+    assertThat(page2.get(0).getId()).isEqualTo(w1.getId()); // w1
   }
 
   @Test
@@ -215,7 +215,7 @@ public class WatchingSessionRepositoryTest {
     w3.setUser(user3);
     w3.setContent(content);
     em.persist(w3);
-    // same time as w2
+    // w2와 동일
     ReflectionTestUtils.setField(w3, "createdAt", w2.getCreatedAt());
     em.flush();
     em.clear();
@@ -228,7 +228,7 @@ public class WatchingSessionRepositoryTest {
     WatchingSession expectedFirst = allSessions.get(0);
     WatchingSession expectedSecond = allSessions.get(1);
 
-    // get top 1
+    // 탑 1 가져오기
     List<WatchingSession> page1 = watchingSessionRepository.findWatchingSessions(
         content.getId(), null,
         null, null, 1,
@@ -238,7 +238,7 @@ public class WatchingSessionRepositoryTest {
     assertThat(page1.get(0).getId()).isEqualTo(expectedFirst.getId());
     WatchingSession first = page1.get(0);
 
-    // use 1st item as cursor
+    // 1번쨰 아이템 커서로 사용
     String cursorTime = first.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     List<WatchingSession> page2 = watchingSessionRepository.findWatchingSessions(
         content.getId(), null,
@@ -252,13 +252,11 @@ public class WatchingSessionRepositoryTest {
     assertThat(page2.get(0).getId()).isEqualTo(expectedSecond.getId());
   }
 
-  /*
-    long getWatcherCount()
-   */
+
   @Test
   @DisplayName("WatcherCount 조회")
   void getWatcherCount() {
-    // when & then - with userId1
+    // when & then -  userId1
     Long result1 = watchingSessionRepository.getWatcherCount(
         content.getId(),
         null
@@ -271,7 +269,7 @@ public class WatchingSessionRepositoryTest {
     );
     assertThat(result2).isEqualTo(1L);
 
-    // when & then - non existing name
+    // when & then - 존재하지 않는 이름
     Long result3 = watchingSessionRepository.getWatcherCount(
         content.getId(),
         "nonExisting"

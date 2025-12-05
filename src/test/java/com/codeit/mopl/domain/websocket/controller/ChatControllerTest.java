@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.websocket.controller;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.verify;
+
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.watchingsession.controller.ChatController;

@@ -19,6 +19,7 @@ import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
 import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.user.UserErrorCode;
+import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
 import java.time.LocalDateTime;
@@ -31,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.codeit.mopl.exception.user.UserNotFoundException;
 
 /*
    Controller에서 불려지는 조회용 함수들

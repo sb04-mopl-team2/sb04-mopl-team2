@@ -4,9 +4,9 @@ import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.watchingsession.dto.ContentChatDto;
 import com.codeit.mopl.domain.watchingsession.entity.ContentChatSendRequest;
 import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
+import com.codeit.mopl.domain.watchingsession.service.RedisPublisher;
 import com.codeit.mopl.exception.watchingsession.UserNotAuthenticatedException;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
-import com.codeit.mopl.domain.watchingsession.service.RedisPublisher;
 import com.codeit.mopl.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -32,7 +32,7 @@ public class ChatController {
 //  private final SimpMessagingTemplate messagingTemplate;
   private final RedisPublisher redisPublisher;
 
-  // (adds /pub) client -> server
+  // (/pub 추가) client -> server
   // 엔드포인트: SEND /pub/contents/{contentId}/chat
   @MessageMapping("/contents/{contentId}/chat")
   public void sendChat(@DestinationVariable UUID contentId,

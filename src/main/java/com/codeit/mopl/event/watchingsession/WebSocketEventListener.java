@@ -42,7 +42,6 @@ public class WebSocketEventListener {
      콘텐츠 시청 세션: 누가 시청 세션에 들어오고 나가는지 (참가자 목록) 업데이트를 받기 위해
      - 엔드포인트: SUBSCRIBE /sub/contents/{contentId}/watch
      - 페이로드: WatchingSessionChange
-     - 참고 - https://hong-good.tistory.com/7
    **/
 
   /*

@@ -8,6 +8,7 @@ import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.watchingsession.controller.ChatController;
 import com.codeit.mopl.domain.watchingsession.dto.ContentChatDto;
 import com.codeit.mopl.domain.watchingsession.entity.ContentChatSendRequest;
+import com.codeit.mopl.domain.watchingsession.service.RedisPublisher;
 import com.codeit.mopl.security.CustomUserDetails;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -18,14 +19,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 @ExtendWith(MockitoExtension.class)
 public class ChatControllerTest {
 
   @Mock
-  private SimpMessagingTemplate simpMessagingTemplate;
+  private RedisPublisher redisPublisher;
 
   @InjectMocks
   private ChatController chatController;
@@ -65,7 +65,7 @@ public class ChatControllerTest {
     ArgumentCaptor<String> destinationCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<ContentChatDto> payloadCaptor = ArgumentCaptor.forClass(ContentChatDto.class);
 
-    verify(simpMessagingTemplate).convertAndSend(destinationCaptor.capture(), payloadCaptor.capture());
+    verify(redisPublisher).convertAndSend(destinationCaptor.capture(), payloadCaptor.capture());
     ContentChatDto sentMessage = payloadCaptor.getValue();
     String sentDestination = destinationCaptor.getValue();
 

@@ -19,9 +19,12 @@ import com.codeit.mopl.domain.notification.repository.NotificationRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
+import com.codeit.mopl.exception.user.UserErrorCode;
+import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.sse.service.SseService;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -200,7 +203,13 @@ public class NotificationService {
   }
 
   private Notification saveNotification(UUID userId, String title, String content, Level level) {
-    User user = userRepository.findById(userId).orElseThrow();
+    User user = userRepository.findById(userId)
+        .orElseThrow(() ->
+            new UserNotFoundException(
+                UserErrorCode.USER_NOT_FOUND,
+                Map.of("userId", userId)
+            )
+        );
 
     Notification notification = new Notification();
     notification.setUser(user);
@@ -225,7 +234,6 @@ public class NotificationService {
   }
 
   private void evictFirstPageCacheByUserId(UUID userId) {
-    // Redis 실제 키: notifications:first-page::{userId}:{limit}:{sortDirection}:{sortBy}
     String pattern = NOTIFICATIONS_FIRST_PAGE + "::" + userId + ":*";
 
     Set<String> keys = stringRedisTemplate.keys(pattern);

@@ -195,8 +195,9 @@ public class KafkaConsumer {
     @Transactional
     @KafkaListener(topics = "mopl-mail-send", groupId = "mopl-mail-send")
     public void onMailSend(String kafkaEventJson, Acknowledgment ack) throws MessagingException {
+        MailSendEvent event = null;
         try {
-            MailSendEvent event = objectMapper.readValue(kafkaEventJson, MailSendEvent.class);
+            event = objectMapper.readValue(kafkaEventJson, MailSendEvent.class);
 
             Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(event.eventId(), EventType.MAIL_SEND);
             if (processedEvent.isPresent()) {
@@ -211,14 +212,19 @@ public class KafkaConsumer {
             processedEventRepository.save(new ProcessedEvent(event.eventId(), EventType.MAIL_SEND));
             ack.acknowledge();
         } catch (JsonProcessingException e) {
-            log.error("[Kafka] WatchingSession 생성 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
+            log.error("[Kafka] 메일 발송 이벤트 역직렬화 실패", e);
             ack.acknowledge();
         } catch (MessagingException e) {
-            log.error("[Kafka] 메일 발송 실패: {}", kafkaEventJson, e);
+            log.error("[Kafka] 메일 발송 실패: eventId = {}, email = {}",
+                    event != null ? event.eventId() : "unknown",
+                    event != null ? event.email() : "unknown",
+                    e);
             throw e;
-        }
-        catch (Exception e) {
-            log.error("[Kafka] WatchingSession 생성 이벤트 처리 실패: {}", kafkaEventJson, e);
+        } catch (Exception e) {
+            log.error("[Kafka] 메일 발송 이벤트 처리 실패: eventId = {}, email = {}",
+                    event != null ? event.eventId() : "unknown",
+                    event != null ? event.email() : "unknown",
+                    e);
             throw e;
         }
     }

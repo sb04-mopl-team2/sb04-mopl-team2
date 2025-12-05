@@ -62,7 +62,6 @@ public class WebSocketEventListener {
 
       WatchingSessionChange watchingSessionChange = service.joinSession(userId, contentUUID);
 
-
       accessor.getSessionAttributes().put("watchingSessionId", watchingSessionChange.watchingSession().id());
       accessor.getSessionAttributes().put("watchingContentId", contentUUID);
       log.info("[WebsocketEventListener] handleSessionSubscribe accessor에 값 넣어줌 - watchingSessionId: {}, contentUUID: {}",

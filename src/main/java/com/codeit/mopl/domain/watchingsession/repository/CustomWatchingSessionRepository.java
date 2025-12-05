@@ -10,7 +10,6 @@ import java.util.UUID;
 public interface CustomWatchingSessionRepository {
 
   List<WatchingSession> findWatchingSessions(
-      UUID userId,
       UUID contentId,
       String watcherNameLike,
       String cursor,
@@ -21,7 +20,6 @@ public interface CustomWatchingSessionRepository {
   );
 
   long getWatcherCount(
-      UUID userId,
       UUID contentId,
       String watcherNameLike
   );

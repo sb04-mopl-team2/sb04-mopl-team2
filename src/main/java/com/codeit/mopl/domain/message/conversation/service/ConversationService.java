@@ -12,6 +12,7 @@ import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
 import com.codeit.mopl.domain.message.directmessage.mapper.DirectMessageMapper;
 import com.codeit.mopl.domain.message.directmessage.repository.DirectMessageRepository;
 import com.codeit.mopl.domain.user.entity.User;
+import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.message.conversation.ConversationDuplicateException;
 import com.codeit.mopl.exception.message.conversation.ConversationForbiddenException;
@@ -38,6 +39,7 @@ public class ConversationService {
     private final ConversationMapper conversationMapper;
     private final DirectMessageMapper directMessageMapper;
     private final DirectMessageRepository directMessageRepository;
+    private final UserMapper userMapper;
 
     public ConversationDto createConversation(UUID loginUserId, ConversationCreateRequest request) {
         UUID withUserId = request.withUserId();
@@ -82,7 +84,7 @@ public class ConversationService {
 
         Conversation saved = conversationRepository.save(conversation);
         log.info("[메세지] 채팅방 생성 완료 - conversationId = {}", saved.getId());
-        return conversationMapper.toConversationDto(saved, null);
+        return buildDtoWithLastMessage(saved, loginUserId);
     }
 
     @Transactional(readOnly = true)
@@ -114,7 +116,7 @@ public class ConversationService {
 
         List<ConversationDto> conversationDtos =
                 result.stream()
-                        .map(this::buildDtoWithLastMessage)
+                        .map(conversation -> buildDtoWithLastMessage(conversation, loginUserId))
                         .collect(Collectors.toList());
 
         long totalCount = conversationRepository.countAllByCond(cond);
@@ -149,7 +151,7 @@ public class ConversationService {
         }
 
         log.info("[메세지] 채팅방 정보 조회 완료 - conversationId = {}", conversationId);
-        return buildDtoWithLastMessage(conversation);
+        return buildDtoWithLastMessage(conversation, loginUserId);
     }
 
     @Transactional(readOnly = true)
@@ -170,7 +172,7 @@ public class ConversationService {
             throw ConversationForbiddenException.withId(loginUserId);
         }
         log.info("[메세지] 특정 사용자와의 채팅방 조회 완료 - withUserId = {}", withUserId);
-        return buildDtoWithLastMessage(conversation);
+        return buildDtoWithLastMessage(conversation, loginUserId);
     }
 
     public void markAsRead(UUID loginUserId,UUID conversationId, UUID directMessageId) {
@@ -186,6 +188,7 @@ public class ConversationService {
         if (!userA.equals(loginUserId) && !userB.equals(loginUserId)) {
             throw ConversationForbiddenException.withId(loginUserId);
         }
+        UUID receiverId = userA.equals(loginUserId) ? userB : userA;
 
         DirectMessage dm = directMessageRepository.findById(directMessageId)
                 .orElseThrow(()->{
@@ -198,7 +201,7 @@ public class ConversationService {
             throw DirectMessageNotFound.withId(directMessageId);
         }
 
-        if (!dm.getReceiver().getId().equals(loginUserId)) {
+        if (!dm.getReceiver().getId().equals(loginUserId) && !dm.getReceiver().getId().equals(receiverId)) {
             log.warn("[메세지] DM '읽음'처리 실패 - 메세지 수신자가 아님 - directMessageId = {}, loginUserId = {}", directMessageId, loginUserId);
             throw ConversationForbiddenException.withId(loginUserId);
         }
@@ -222,7 +225,7 @@ public class ConversationService {
 
 
     // 보조 메서드
-    private ConversationDto buildDtoWithLastMessage(Conversation conversation) {
+    private ConversationDto buildDtoWithLastMessage(Conversation conversation, UUID loginUserId) {
         List<DirectMessage> messages = conversation.getMessages();
         DirectMessage lastMessage =
                 (messages == null || messages.isEmpty()) ? null : messages.get(messages.size() - 1);
@@ -230,6 +233,25 @@ public class ConversationService {
         DirectMessageDto lastMessageDto =
                 lastMessage == null ? null : directMessageMapper.toDirectMessageDto(lastMessage);
 
-        return conversationMapper.toConversationDto(conversation, lastMessageDto);
+        // loginUserId를 기준으로 상대방 User 선택
+        User otherUser;
+        if (conversation.getUser().getId().equals(loginUserId)) {
+            // loginUserId가 user인 경우, 상대방은 with
+            otherUser = conversation.getWith();
+        } else {
+            // loginUserId가 with인 경우, 상대방은 user
+            otherUser = conversation.getUser();
+        }
+
+        // UserSummary로 변환
+        var otherUserSummary = userMapper.toSummary(otherUser);
+
+        // ConversationDto 생성
+        return new ConversationDto(
+                conversation.getId(),
+                otherUserSummary,
+                lastMessageDto,
+                conversation.isHasUnread()
+        );
     }
 }

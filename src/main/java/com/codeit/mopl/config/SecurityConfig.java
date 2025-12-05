@@ -1,21 +1,21 @@
 package com.codeit.mopl.config;
 
+import com.codeit.mopl.oauth.client.GoogleClientProperties;
+import com.codeit.mopl.oauth.client.KakaoClientProperties;
+import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.security.CustomUserDetailsService;
 import com.codeit.mopl.security.TempPasswordAuthenticationProvider;
-import com.codeit.mopl.security.jwt.registry.JwtRegistry;
-import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.filter.JwtAuthenticationFilter;
-import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
-import com.codeit.mopl.security.jwt.handler.JwtLoginSuccessHandler;
-import com.codeit.mopl.security.jwt.handler.JwtLogoutHandler;
-import com.codeit.mopl.security.jwt.handler.LoginFailureHandler;
+import com.codeit.mopl.security.jwt.handler.*;
+import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
+import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.function.Supplier;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,31 +23,39 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.oauth2.client.CommonOAuth2Provider;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
-import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.*;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
+import static org.springframework.security.config.Customizer.withDefaults;
+
 @Configuration
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
     @Value("${admin.email}")
     private String adminEmail;
@@ -56,6 +64,8 @@ public class SecurityConfig {
     @Value("${admin.password}")
     private String adminPassword;
 
+    private final GoogleClientProperties googleClientProp;
+    private final KakaoClientProperties kakaoClientProp;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
@@ -67,7 +77,9 @@ public class SecurityConfig {
                                            JwtLogoutHandler jwtLogoutHandler,
                                            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
                                            TempPasswordAuthenticationProvider tempPasswordAuthenticationProvider,
-                                           PasswordEncoder passwordEncoder) throws Exception {
+                                           PasswordEncoder passwordEncoder,
+                                           OAuth2UserSuccessHandler oAuth2UserSuccessHandler,
+                                           OAuth2UserService oAuth2UserService) throws Exception {
         http
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/api/batch/**")
@@ -91,13 +103,12 @@ public class SecurityConfig {
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .cors(Customizer.withDefaults())
+                .cors(withDefaults())
                 .exceptionHandling(ex -> ex
                                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                                 .accessDeniedHandler(new AccessDeniedHandlerImpl())
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/batch/init").permitAll() // 초기 데이터 세팅
                         .requestMatchers("/api/auth/csrf-token").permitAll()  // csrf-token 조회
                         .requestMatchers("/api/auth/sign-in").permitAll()  // 로그인
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()  // 회원가입
@@ -114,7 +125,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/contents/{contentId}").hasRole("ADMIN")  // 콘텐츠 삭제
                         .requestMatchers(HttpMethod.PATCH, "/api/contents/{contentId}").hasRole("ADMIN")  // 콘텐츠 수정
                         .anyRequest().authenticated()
-                );
+                )
+                .oauth2Login(oauth -> oauth
+                        .loginPage("/api/auth/sign-in")
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(oAuth2UserService))
+                        .successHandler(oAuth2UserSuccessHandler));
         AuthenticationManagerBuilder authBuilder =
                 http.getSharedObject(AuthenticationManagerBuilder.class);
 
@@ -194,5 +210,39 @@ public class SecurityConfig {
             userRepository.save(admin);
         }
         return new CustomUserDetailsService(userRepository, userMapper);
+    }
+
+    @Bean
+    public ClientRegistrationRepository clientRegistrationRepository() {
+        List<ClientRegistration> clientRegistrations = new ArrayList<>();
+        clientRegistrations.add(googleClientRegistration());
+        clientRegistrations.add(kakaoClientRegistration());
+        return new InMemoryClientRegistrationRepository(clientRegistrations);
+    }
+
+    private ClientRegistration googleClientRegistration() {
+        return CommonOAuth2Provider
+                .GOOGLE
+                .getBuilder("google")
+                .clientId(googleClientProp.clientId())
+                .clientSecret(googleClientProp.clientSecret())
+                .redirectUri(googleClientProp.redirectUri())
+                .scope("email", "profile")
+                .build();
+    }
+    private ClientRegistration kakaoClientRegistration() {
+        return ClientRegistration.withRegistrationId("kakao")
+                .clientId(kakaoClientProp.clientId())
+                .clientSecret(kakaoClientProp.clientSecret())
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .redirectUri(kakaoClientProp.redirectUri())
+                .scope(kakaoClientProp.scope())
+                .authorizationUri("https://kauth.kakao.com/oauth/authorize")
+                .tokenUri("https://kauth.kakao.com/oauth/token")
+                .userInfoUri("https://kapi.kakao.com/v2/user/me")
+                .userNameAttributeName("id")
+                .clientName("Kakao")
+                .build();
     }
 }

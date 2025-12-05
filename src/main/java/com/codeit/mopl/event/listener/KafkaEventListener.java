@@ -1,7 +1,6 @@
 package com.codeit.mopl.event.listener;
 
 import com.codeit.mopl.event.event.*;
-import com.codeit.mopl.exception.follow.FolloweeIdIsNullException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -30,6 +28,7 @@ public class KafkaEventListener {
     @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(NotificationCreateEvent event) {
+        log.info("kafka NotificationCreate Event");
         String key = Optional.ofNullable(event.notificationDto().id())
                 .map(Object::toString)
                 .orElse(null);
@@ -40,20 +39,14 @@ public class KafkaEventListener {
     @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(FollowerIncreaseEvent event) {
-        UUID followeeId = event.followeeId();
-        String key = Optional.ofNullable(followeeId)
-                .map(Object::toString)
-                .orElseThrow(FolloweeIdIsNullException::withDetails);
+        String key = event.followeeId().toString();
         send("mopl-follower-increase", key, event);
     }
 
     @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(FollowerDecreaseEvent event) {
-        UUID followeeId = event.followeeId();
-        String key = Optional.ofNullable(followeeId)
-                .map(Object::toString)
-                .orElseThrow(FolloweeIdIsNullException::withDetails);
+        String key = event.followeeId().toString();
         send("mopl-follower-decrease", key, event);
     }
 
@@ -70,6 +63,36 @@ public class KafkaEventListener {
         log.info("kafka UserLogInOut Event");
         String key = event.userId().toString();
         send("mopl-user-login-out", key, event);
+    }
+
+    @Async("taskExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void on(DirectMessageCreateEvent event){
+        log.info("kafka DirectMessageCreate Event");
+        String key = Optional.ofNullable(event.directMessageDto().id())
+            .map(Object::toString)
+            .orElse(null);
+        send("mopl-directMessage-create", key, event);
+    }
+
+    @Async("taskExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void on(PlayListCreateEvent event){
+        log.info("kafka PlayListCreate Event");
+        String key = Optional.ofNullable(event.playListId())
+            .map(Object::toString)
+            .orElse(null);
+        send("mopl-playList-create", key, event);
+    }
+
+    @Async("taskExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void on(WatchingSessionCreateEvent event){
+        log.info("kafka WatchingSessionCreate Event");
+        String key = Optional.ofNullable(event.watchingSessionId())
+            .map(Object::toString)
+            .orElse(null);
+        send("mopl-watchingSession-create", key, event);
     }
 
     private void send(String topic, String key, Object payload) {

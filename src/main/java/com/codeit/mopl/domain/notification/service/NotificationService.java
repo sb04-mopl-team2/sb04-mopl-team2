@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.notification.service;
 
+import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.entity.Level;
@@ -36,7 +37,6 @@ public class NotificationService {
   private final SseService sseService;
   private final UserRepository userRepository;
   private final ApplicationEventPublisher eventPublisher;
-
   private final StringRedisTemplate stringRedisTemplate;
 
   public static final String NOTIFICATIONS_FIRST_PAGE = "notifications:first-page";
@@ -148,13 +148,23 @@ public class NotificationService {
   }
 
   public void sendNotification(NotificationDto notificationDto) {
-    log.info("[알림] SSE 전송 호출 시작, notificationDto = {}", notificationDto);
+    log.info("[알림] 알림 생성 SSE 전송 호출 시작, notificationDto = {}", notificationDto);
 
     UUID receiverId = notificationDto.receiverId();
-    String eventName = "notification";
+    String eventName = "notifications";
     Object data = notificationDto;
     sseService.send(receiverId, eventName, data);
-    log.info("[알림] SSE 전송 호출 종료, notificationDto = {}", notificationDto);
+    log.info("[알림] 알림 생성 SSE 전송 호출 종료, notificationDto = {}", notificationDto);
+  }
+
+  public void sendDirectMessage(DirectMessageDto directMessageDto) {
+    log.info("[알림] DM 생성 SSE 전송 호출 시작, notificationDto = {}", directMessageDto);
+
+    UUID receiverId = directMessageDto.receiver().userId();
+    String eventName = "direct-messages";
+    Object data = directMessageDto;
+    sseService.send(receiverId, eventName, data);
+    log.info("[알림] DM 생성 SSE 전송 호출 종료, notificationDto = {}", directMessageDto);
   }
 
   private List<Notification> searchNotifications(

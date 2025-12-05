@@ -39,10 +39,7 @@ public class DirectMessageController {
                     Map.of("conversationId",conversationId));
         }
 
-        if (!conversationId.equals(request.conversationId())) {
-            throw new IllegalArgumentException("채팅방 ID가 일치하지 않습니다.");
-        }
-        DirectMessageDto dto = directMessageService.saveDirectMessage(userDetails.getUser().id(), request);
+        DirectMessageDto dto = directMessageService.saveDirectMessage(userDetails.getUser().id(),conversationId,request);
         messagingTemplate.convertAndSend(
                 "/sub/conversations/" + conversationId + "/direct-messages", dto);
     }

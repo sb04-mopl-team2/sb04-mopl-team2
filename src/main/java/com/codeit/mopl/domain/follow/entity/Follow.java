@@ -33,11 +33,10 @@ public class Follow extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private Status status;
+    private Status status = Status.PENDING;
 
     public Follow(User follower, User followee) {
         this.follower = follower;
         this.followee = followee;
-        this.status = Status.PENDING;
     }
 }

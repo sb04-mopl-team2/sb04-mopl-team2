@@ -34,7 +34,6 @@ import org.springframework.stereotype.Component;
 public class KafkaConsumer {
     private final ObjectMapper objectMapper;
     private final NotificationService notificationService;
-    private final FollowService followService;
     private final ProcessedEventRepository processedEventRepository;
     private final SseService sseService;
     private final SseEmitterRegistry sseEmitterRegistry;
@@ -155,7 +154,7 @@ public class KafkaConsumer {
                 return;
             }
 
-            followService.notifyFollowersOnPlaylistCreated(event);
+            notificationService.notifyFollowersOnPlaylistCreated(event);
             processedEventRepository.save(new ProcessedEvent(event.playListId(), EventType.PLAY_LIST_CREATED));
             ack.acknowledge();
         } catch (JsonProcessingException e) {
@@ -180,7 +179,7 @@ public class KafkaConsumer {
                 return;
             }
 
-            followService.notifyFollowersOnWatchingEvent(event);
+            notificationService.notifyFollowersOnWatchingEvent(event);
             processedEventRepository.save(new ProcessedEvent(event.watchingSessionId(), EventType.WATCH_SESSION_CREATED));
             ack.acknowledge();
         } catch (JsonProcessingException e) {

@@ -166,7 +166,7 @@ public class NotificationService {
     String eventName = "direct-messages";
     Object data = directMessageDto;
 
-    String title = "[DM] " + directMessageDto.receiver().name();
+    String title = "[DM] " + directMessageDto.sender().name();
     String content = directMessageDto.content();
     Level level = Level.INFO;
     createNotification(receiverId, title, content, level);

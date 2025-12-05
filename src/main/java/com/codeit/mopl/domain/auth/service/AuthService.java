@@ -8,9 +8,7 @@ import com.codeit.mopl.exception.auth.AuthErrorCode;
 import com.codeit.mopl.exception.auth.InvalidTokenException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
-import com.codeit.mopl.mail.service.MailService;
 import com.codeit.mopl.mail.utils.PasswordUtils;
-import com.codeit.mopl.mail.utils.RedisStoreUtils;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
@@ -30,9 +28,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final PasswordUtils passwordUtils;
-    private final MailService mailService;
-    private final RedisStoreUtils redisStoreUtils;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public String reissueAccessToken(Map<String, Object> claims, UserDto userDto) {
@@ -67,6 +63,6 @@ public class AuthService {
         }
         String tempPw = passwordUtils.makeTempPassword();
 
-        applicationEventPublisher.publishEvent(new MailSendEvent(UUID.randomUUID(), request.email(), tempPw));
+        publisher.publishEvent(new MailSendEvent(UUID.randomUUID(), request.email(), tempPw));
     }
 }

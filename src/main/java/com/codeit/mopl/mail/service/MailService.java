@@ -1,11 +1,7 @@
 package com.codeit.mopl.mail.service;
 
 import com.codeit.mopl.exception.user.MailSendFailException;
-import com.codeit.mopl.exception.user.TempPasswordStoreFailException;
 import com.codeit.mopl.exception.user.UserErrorCode;
-import com.codeit.mopl.mail.utils.RedisStoreUtils;
-import io.lettuce.core.RedisBusyException;
-import io.lettuce.core.RedisException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -16,11 +12,9 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j

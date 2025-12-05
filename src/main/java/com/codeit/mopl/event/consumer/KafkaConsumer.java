@@ -9,17 +9,15 @@ import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
-import com.codeit.mopl.event.event.DirectMessageCreateEvent;
-import com.codeit.mopl.event.event.NotificationCreateEvent;
-import com.codeit.mopl.event.event.PlayListCreateEvent;
-import com.codeit.mopl.event.event.UserLogInOutEvent;
-import com.codeit.mopl.event.event.UserRoleUpdateEvent;
-import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
+import com.codeit.mopl.event.event.*;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
+import com.codeit.mopl.mail.service.MailService;
+import com.codeit.mopl.mail.utils.RedisStoreUtils;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
 import com.codeit.mopl.sse.service.SseService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,6 +38,8 @@ public class KafkaConsumer {
     private final ProcessedEventRepository processedEventRepository;
     private final SseService sseService;
     private final SseEmitterRegistry sseEmitterRegistry;
+    private final MailService mailService;
+    private final RedisStoreUtils redisStoreUtils;
 
     @Transactional
     @KafkaListener(topics = "mopl-notification-create", groupId = "mopl-notification", concurrency = "3")
@@ -187,6 +187,37 @@ public class KafkaConsumer {
             log.error("[Kafka] WatchingSession 생성 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
         } catch (Exception e) {
+            log.error("[Kafka] WatchingSession 생성 이벤트 처리 실패: {}", kafkaEventJson, e);
+            throw e;
+        }
+    }
+
+    @Transactional
+    @KafkaListener(topics = "mopl-mail-send", groupId = "mopl-mail-send")
+    public void onMailSent(String kafkaEventJson, Acknowledgment ack) throws MessagingException {
+        try {
+            MailSendEvent event = objectMapper.readValue(kafkaEventJson, MailSendEvent.class);
+
+            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(event.eventId(), EventType.MAIL_SEND);
+            if (processedEvent.isPresent()) {
+                log.warn("[Kafka] 이미 처리된 이벤트입니다. eventId = {}, eventType = {}", processedEvent.get().getId(), processedEvent.get().getEventType());
+                ack.acknowledge();
+                return;
+            }
+            log.info("[REDIS] 임시 비밀번호 키 저장");
+            redisStoreUtils.storeTempPassword(event.email(), event.tempPw());
+            log.info("[이메일] 이메일 전송 email = {}", event.email());
+            mailService.sendMail(event.email(),event.tempPw());
+            processedEventRepository.save(new ProcessedEvent(event.eventId(), EventType.MAIL_SEND));
+            ack.acknowledge();
+        } catch (JsonProcessingException e) {
+            log.error("[Kafka] WatchingSession 생성 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
+            ack.acknowledge();
+        } catch (MessagingException e) {
+            log.error("[Kafka] 메일 발송 실패: {}", kafkaEventJson, e);
+            throw e;
+        }
+        catch (Exception e) {
             log.error("[Kafka] WatchingSession 생성 이벤트 처리 실패: {}", kafkaEventJson, e);
             throw e;
         }

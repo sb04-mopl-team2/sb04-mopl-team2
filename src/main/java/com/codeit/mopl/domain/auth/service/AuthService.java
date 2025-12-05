@@ -3,6 +3,7 @@ package com.codeit.mopl.domain.auth.service;
 import com.codeit.mopl.domain.auth.dto.request.ResetPasswordRequest;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.event.MailSendEvent;
 import com.codeit.mopl.exception.auth.AuthErrorCode;
 import com.codeit.mopl.exception.auth.InvalidTokenException;
 import com.codeit.mopl.exception.user.UserErrorCode;
@@ -14,11 +15,13 @@ import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +32,7 @@ public class AuthService {
     private final PasswordUtils passwordUtils;
     private final MailService mailService;
     private final RedisStoreUtils redisStoreUtils;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public String reissueAccessToken(Map<String, Object> claims, UserDto userDto) {
@@ -63,10 +67,6 @@ public class AuthService {
         }
         String tempPw = passwordUtils.makeTempPassword();
 
-        log.info("[REDIS] 임시 비밀번호 키 저장");
-        redisStoreUtils.storeTempPassword(request.email(), tempPw);
-
-        log.info("[이메일] 이메일 전송 email = {}", request.email());
-        mailService.sendMail(request.email(), tempPw);
+        applicationEventPublisher.publishEvent(new MailSendEvent(UUID.randomUUID(), request.email(), tempPw));
     }
 }

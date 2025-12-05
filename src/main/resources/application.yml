@@ -16,7 +16,9 @@ spring:
       enabled: false
     job:
       enabled: false
-
+  jpa:
+    properties:
+      hibernate.jdbc.lock_timeout: 3000
   # redis 설정
   data:
     redis:

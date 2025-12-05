@@ -31,8 +31,13 @@ public class Follow extends BaseEntity {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User followee;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private Status status;
+
     public Follow(User follower, User followee) {
         this.follower = follower;
         this.followee = followee;
+        this.status = Status.PENDING;
     }
 }

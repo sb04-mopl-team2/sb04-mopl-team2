@@ -216,7 +216,8 @@ class ReviewServiceTest {
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(contentRepository.findById(contentId)).thenReturn(Optional.of(content));
-    when(reviewRepository.findByUserAndContent(user, content))
+    // ✅ 변경: isDeleted=false 조건이 들어간 메서드 사용
+    when(reviewRepository.findByUserAndContentAndIsDeletedFalse(user, content))
         .thenReturn(Optional.empty());
     when(reviewRepository.save(any(Review.class))).thenReturn(review);
     when(reviewMapper.toDto(any(Review.class))).thenReturn(dto);
@@ -267,7 +268,9 @@ class ReviewServiceTest {
     UUID reviewId = UUID.randomUUID();
     Review duplicatedReview = mock(Review.class);
     when(duplicatedReview.getId()).thenReturn(reviewId);
-    when(reviewRepository.findByUserAndContent(user, content)).thenReturn(Optional.of(duplicatedReview));
+    // ✅ 변경: isDeleted=false 조건이 들어간 메서드 사용
+    when(reviewRepository.findByUserAndContentAndIsDeletedFalse(user, content))
+        .thenReturn(Optional.of(duplicatedReview));
 
     // when
     Runnable act = () ->
@@ -481,7 +484,9 @@ class ReviewServiceTest {
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(contentRepository.findById(contentId)).thenReturn(Optional.of(content));
-    when(reviewRepository.findByUserAndContent(user, content)).thenReturn(Optional.empty());
+    // ✅ 변경: 중복 체크 메서드
+    when(reviewRepository.findByUserAndContentAndIsDeletedFalse(user, content))
+        .thenReturn(Optional.empty());
     when(reviewRepository.save(any(Review.class))).thenReturn(review);
     when(reviewMapper.toDto(any(Review.class))).thenReturn(dto);
 

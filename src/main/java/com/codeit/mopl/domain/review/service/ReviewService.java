@@ -200,7 +200,7 @@ public class ReviewService {
   }
 
   private void checkReviewDuplicate(User user, Content content) {
-    Optional<Review> review = reviewRepository.findByUserAndContent(user, content);
+    Optional<Review> review = reviewRepository.findByUserAndContentAndIsDeletedFalse(user, content);
     if (review.isPresent()) {
       log.warn("[리뷰] 이미 리뷰가 존재합니다. reviewId = {}", review.get().getId());
       throw new ReviewDuplicateException(

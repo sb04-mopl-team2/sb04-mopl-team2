@@ -1,5 +1,7 @@
 package com.codeit.mopl.domain.notification.service;
 
+import com.codeit.mopl.domain.follow.entity.Follow;
+import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
@@ -8,6 +10,8 @@ import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
+import com.codeit.mopl.event.event.PlayListCreateEvent;
+import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
 import com.codeit.mopl.exception.notification.NotificationForbidden;
 import com.codeit.mopl.exception.notification.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
@@ -39,6 +43,7 @@ public class NotificationService {
   private final UserRepository userRepository;
   private final ApplicationEventPublisher eventPublisher;
   private final StringRedisTemplate stringRedisTemplate;
+  private final FollowRepository followRepository;
 
   public static final String NOTIFICATIONS_FIRST_PAGE = "notifications:first-page";
 
@@ -164,6 +169,34 @@ public class NotificationService {
     createNotification(receiverId, title, content, level);
     sseService.send(receiverId, eventName, data);
     log.info("[알림] DM 생성 SSE 전송 호출 종료, notificationDto = {}", directMessageDto);
+  }
+
+  @Transactional
+  public void notifyFollowersOnPlaylistCreated(PlayListCreateEvent playListCreateEvent) {
+    log.info("[팔로우 관리] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 시작 : playListId = {}", playListCreateEvent.playListId());
+    UUID ownerId = playListCreateEvent.ownerId();
+    List<Follow> followList = followRepository.findByFolloweeId(ownerId);
+
+    for (Follow follow : followList) {
+      UUID receiverId = follow.getFollower().getId();
+      String title = follow.getFollowee().getName() + "님이 새로운 플레이리스트: " + playListCreateEvent.title() + "를 만들었어요!";
+      createNotification(receiverId, title, "", Level.INFO);
+    }
+    log.info("[팔로우 관리] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 완료 : playListId = {}", playListCreateEvent.playListId());
+  }
+
+  @Transactional
+  public void notifyFollowersOnWatchingEvent(WatchingSessionCreateEvent watchingSessionCreateEvent) {
+    log.info("[팔로우 관리] 팔로우한 유저가 실시간 콘텐츠 시청시 팔로워 알림 송신 시작 : watchingSessionId = {}", watchingSessionCreateEvent.watchingSessionId());
+    UUID ownerId = watchingSessionCreateEvent.ownerId();
+    List<Follow> followList = followRepository.findByFolloweeId(ownerId);
+
+    for (Follow follow : followList) {
+      UUID receiverId = follow.getFollower().getId();
+      String title = follow.getFollowee().getName() + "님이 " + watchingSessionCreateEvent.watchingSessionContentTitle() + "를 보고있어요!";
+      createNotification(receiverId, title, "", Level.INFO);
+    }
+    log.info("[팔로우 관리] 팔로우한 유저가 실시간 콘텐츠 시청시 알림 송신 완료 : watchingSessionId = {}", watchingSessionCreateEvent.watchingSessionId());
   }
 
   private Notification saveNotification(UUID userId, String title, String content, Level level) {

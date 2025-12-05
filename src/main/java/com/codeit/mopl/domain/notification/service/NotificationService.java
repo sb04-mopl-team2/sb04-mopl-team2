@@ -16,6 +16,7 @@ import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.sse.service.SseService;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -131,19 +132,11 @@ public class NotificationService {
   @Transactional
   public void createNotification(UUID userId, String title, String content, Level level) {
     log.info("[알림] 알림 생성 시작, userId = {}, title = {}, content = {}, level = {}", userId, title, content, level);
-    User user = userRepository.findById(userId).orElseThrow(); // UserNotFoundException 추후에 추가하기
 
-    Notification notification = new Notification();
-    notification.setUser(user);
-    notification.setTitle(title);
-    notification.setContent(content);
-    notification.setLevel(level);
-    notificationRepository.save(notification);
-
+    Notification notification = saveNotification(userId, title, content, level);
     NotificationDto notificationDto = notificationMapper.toDto(notification);
     eventPublisher.publishEvent(new NotificationCreateEvent(notificationDto));
 
-    evictFirstPageCacheByUserId(userId);
     log.info("[알림] 알림 생성 종료, userId = {}, notificationId = {}", userId, notification.getId());
   }
 
@@ -157,14 +150,35 @@ public class NotificationService {
     log.info("[알림] 알림 생성 SSE 전송 호출 종료, notificationDto = {}", notificationDto);
   }
 
+  @Transactional
   public void sendDirectMessage(DirectMessageDto directMessageDto) {
     log.info("[알림] DM 생성 SSE 전송 호출 시작, notificationDto = {}", directMessageDto);
 
     UUID receiverId = directMessageDto.receiver().userId();
     String eventName = "direct-messages";
     Object data = directMessageDto;
+
+    String title = "[DM] " + directMessageDto.receiver().name();
+    String content = directMessageDto.content();
+    Level level = Level.INFO;
+    createNotification(receiverId, title, content, level);
     sseService.send(receiverId, eventName, data);
     log.info("[알림] DM 생성 SSE 전송 호출 종료, notificationDto = {}", directMessageDto);
+  }
+
+  private Notification saveNotification(UUID userId, String title, String content, Level level) {
+    User user = userRepository.findById(userId).orElseThrow();
+
+    Notification notification = new Notification();
+    notification.setUser(user);
+    notification.setTitle(title);
+    notification.setContent(content);
+    notification.setLevel(level);
+    notificationRepository.save(notification);
+
+    evictFirstPageCacheByUserId(userId);
+
+    return notification;
   }
 
   private List<Notification> searchNotifications(

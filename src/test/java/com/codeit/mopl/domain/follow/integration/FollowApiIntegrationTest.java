@@ -345,6 +345,7 @@ public class FollowApiIntegrationTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists());
     }
+
     @Test
     @DisplayName("팔로우 취소 성공 통합 테스트")
     void deleteFollow_Success() throws Exception {

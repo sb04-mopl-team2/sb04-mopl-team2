@@ -27,12 +27,12 @@ public class RedisPublisher {
   // Object -> contentChatDto, WatchingSessionChange
   public void convertAndSend(String destination, Object object) {
     log.info("[웹소켓 (Redis)] Topic publish 시작, destination = {}, topic = {}",
-        topic.getTopic(), destination);
+        destination, topic.getTopic());
     redisTemplate.convertAndSend(
         topic.getTopic(),
         new MessagePayload(destination, object)
     );
     log.info("[웹소켓 (Redis)] Topic publish 완료, destination = {}, topic = {}",
-        topic.getTopic(), destination);
+        destination, topic.getTopic());
   }
 }

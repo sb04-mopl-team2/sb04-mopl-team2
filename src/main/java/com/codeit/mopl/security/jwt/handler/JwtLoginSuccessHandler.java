@@ -14,12 +14,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,11 +62,14 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
         JwtDto jwtDto = new JwtDto(userDto, accessToken);
 
         // RefreshToken Cookie
-        Cookie refreshTokenCookie = new Cookie("REFRESH_TOKEN", refreshToken);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(expiration * 60);
-        response.addCookie(refreshTokenCookie);
+        ResponseCookie cookie = ResponseCookie.from("REFRESH_TOKEN", refreshToken)
+                .path("/")
+                .maxAge(Duration.ofMinutes(expiration))
+                .httpOnly(true)
+                .sameSite("Strict")
+                .build();
 
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         objectMapper.writeValue(response.getWriter(), jwtDto);

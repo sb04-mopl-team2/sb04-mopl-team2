@@ -194,7 +194,7 @@ public class KafkaConsumer {
 
     @Transactional
     @KafkaListener(topics = "mopl-mail-send", groupId = "mopl-mail-send")
-    public void onMailSent(String kafkaEventJson, Acknowledgment ack) throws MessagingException {
+    public void onMailSend(String kafkaEventJson, Acknowledgment ack) throws MessagingException {
         try {
             MailSendEvent event = objectMapper.readValue(kafkaEventJson, MailSendEvent.class);
 

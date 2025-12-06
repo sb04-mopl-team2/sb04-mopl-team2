@@ -4,6 +4,7 @@ import com.codeit.mopl.domain.follow.entity.Follow;
 
 import java.util.List;
 
+import com.codeit.mopl.domain.follow.entity.Status;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -21,4 +22,7 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT f FROM Follow f WHERE f.id = :id")
     Optional<Follow> findByIdForUpdate(@Param("id") UUID followId);
+
+    @Query("SELECT f FROM Follow f WHERE f.status = :status")
+    List<Follow> findByStatus(@Param("status") Status status);
 }

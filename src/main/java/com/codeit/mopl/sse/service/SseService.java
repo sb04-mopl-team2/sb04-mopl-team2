@@ -1,11 +1,13 @@
 package com.codeit.mopl.sse.service;
 
+import com.codeit.mopl.sse.SseCloseReason;
 import com.codeit.mopl.sse.SseMessage;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,39 +27,34 @@ public class SseService {
   public SseEmitter connect(UUID receiverId, UUID lastEventId) {
     log.info("[SSE] SSE 연결 시작, receiverId = {}, lastEventId = {}", receiverId, lastEventId);
 
-    List<SseEmitter> oldEmitters = sseEmitterRegistry.getData().get(receiverId);
-    if (oldEmitters != null) {
-      for (SseEmitter old : oldEmitters) {
-        try {
-          old.send(SseEmitter.event()
-              .name("ping")
-              .data("check"));
-        } catch (Exception ex) {
-          old.complete();
-          sseEmitterRegistry.removeEmitter(receiverId, old);
-          log.info("[SSE] 기존 dead emitter 제거, receiverId={}, emitter={}",
-              receiverId, System.identityHashCode(old));
-        }
-      }
-    }
-
     SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
 
-    // 저장
+    // 기본값은 "클라이언트가 끊었겠지"로 가정
+    AtomicReference<SseCloseReason> closeReason =
+        new AtomicReference<>(SseCloseReason.CLIENT_CLOSED);
+
+    // 레지스트리에 저장
     sseEmitterRegistry.addEmitter(receiverId, emitter);
 
-    // 해당 emitter 가 추후에 끊기거나 시간이 만료되면 자동으로 정리
+    emitter.onTimeout(() -> {
+      closeReason.set(SseCloseReason.TIMEOUT);
+      sseEmitterRegistry.removeEmitter(receiverId, emitter);
+      log.warn("[SSE] emitter timeout, receiverId = {}, emitter = {}",
+          receiverId, System.identityHashCode(emitter));
+    });
+
+    emitter.onError(ex -> {
+      closeReason.set(SseCloseReason.ERROR);
+      log.warn("[SSE] emitter error, receiverId = {}, emitter = {}, error = {}",
+          receiverId, System.identityHashCode(emitter), ex.toString());
+    });
+
     emitter.onCompletion(() -> {
       sseEmitterRegistry.removeEmitter(receiverId, emitter);
-      log.info("[SSE] emitter 만료, receiverId = {}, emitter = {}", receiverId, System.identityHashCode(emitter));
+      log.info("[SSE] emitter completion, receiverId = {}, emitter = {}, reason = {}",
+          receiverId, System.identityHashCode(emitter), closeReason.get());
     });
 
-    emitter.onTimeout(() -> {
-      sseEmitterRegistry.removeEmitter(receiverId, emitter);
-      log.warn("[SSE] emitter 시간 만료, receiverId = {}, emitter = {}", receiverId, System.identityHashCode(emitter));
-    });
-
-    // 연결 직후 더미 이벤트 한 번 보내기
     try {
       String eventId = UUID.randomUUID().toString();
       emitter.send(SseEmitter.event()

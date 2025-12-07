@@ -2,6 +2,9 @@ package com.codeit.mopl.config;
 
 import com.codeit.mopl.domain.watchingsession.dto.MessagePayload;
 import com.codeit.mopl.domain.watchingsession.service.RedisSubscriber;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,9 +16,6 @@ import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-/*
-    We register our class to which channels it will subscribe to messages
- */
 @Configuration
 @RequiredArgsConstructor
 public class RedisPubSubConfiguration {
@@ -23,21 +23,18 @@ public class RedisPubSubConfiguration {
   private final RedisConnectionFactory connectionFactory;
   private final RedisSubscriber redisSubscriber;
 
-  // topic
+  // 토픽
   @Bean
   public ChannelTopic chatTopic() {
     return new ChannelTopic("websocket-events");
   }
 
-  // Delegates the handling of messages to target listener methods
-  // onMessage() is in RedisSubscriber service
+  //  RedisSubscriber의 onMessage() -> 메세지 수신
   @Bean
   public MessageListenerAdapter listenerAdapter() {
     return new MessageListenerAdapter(redisSubscriber, "onMessage");
   }
 
-  // Container that handles the low level details of
-  // listening, converting and message dispatching
   @Bean
   public RedisMessageListenerContainer redisContainer() {
     RedisMessageListenerContainer container = new RedisMessageListenerContainer();
@@ -51,12 +48,16 @@ public class RedisPubSubConfiguration {
     RedisTemplate<String, Object> template = new RedisTemplate<>();
     template.setConnectionFactory(connectionFactory);
 
-    // 키를 위한 직렬화 설정 (StringRedisSerializer)
     template.setKeySerializer(new StringRedisSerializer());
     template.setHashKeySerializer(new StringRedisSerializer());
 
-    // 값을 위한 긱렬화 설정 (Jackson2JsonRedisSerializer)
-    Jackson2JsonRedisSerializer<MessagePayload> serializer = new Jackson2JsonRedisSerializer<>(MessagePayload.class);
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
+    objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+    Jackson2JsonRedisSerializer<MessagePayload> serializer =
+        new Jackson2JsonRedisSerializer<>(objectMapper, MessagePayload.class);
+
     template.setValueSerializer(serializer);
     template.setHashValueSerializer(serializer);
 

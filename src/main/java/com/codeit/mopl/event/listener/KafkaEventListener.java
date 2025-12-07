@@ -95,6 +95,16 @@ public class KafkaEventListener {
         send("mopl-watchingSession-create", key, event);
     }
 
+    @Async("mailExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void on(MailSendEvent event) {
+        log.info("[Kafka] MailSendEvent Event");
+        String key = Optional.ofNullable(event.email())
+                .map(Object::toString)
+                .orElse(null);
+        send("mopl-mail-send", key, event);
+    }
+
     private void send(String topic, String key, Object payload) {
         try {
             String json = objectMapper.writeValueAsString(payload);

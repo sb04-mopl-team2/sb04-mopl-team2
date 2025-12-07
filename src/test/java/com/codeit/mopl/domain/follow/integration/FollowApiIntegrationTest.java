@@ -27,8 +27,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -287,4 +286,152 @@ public class FollowApiIntegrationTest {
                 .andExpect(jsonPath("$.message").exists());
     }
 
+    @Test
+    @DisplayName("팔로워 수 조회 성공 통합 테스트")
+    void getFollowerCount_Success() throws Exception {
+        // given
+        UUID followeeId = followee.getId();
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/count")
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId.toString())
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(content().string("0"));
+    }
+
+    @Test
+    @DisplayName("팔로워 수 조회 실패 - 유효하지 않은 요청")
+    void getFollowerCount_Failure_InvalidRequest() throws Exception {
+        // given
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/count")
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("팔로워 수 조회 실패 - 존재하지 않는 유저")
+    void getFollowerCount_Failure_UserNotFound() throws Exception {
+        // given
+        UUID followeeId = UUID.randomUUID();
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/follows/count")
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("followeeId", followeeId.toString())
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    @DisplayName("팔로우 취소 성공 통합 테스트")
+    void deleteFollow_Success() throws Exception {
+        // given
+        Follow follow = new Follow(follower, followee);
+        followRepository.saveAndFlush(follow);
+        UUID followId = follow.getId();
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                delete("/api/follows/" + followId.toString())
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isNoContent());
+
+        List<Follow> allFollows = followRepository.findAll();
+        assertThat(allFollows).isEmpty();
+    }
+
+    @Test
+    @DisplayName("팔로우 취소 실패 - 유효하지 않은 요청")
+    void deleteFollow_Failure_InvalidRequest() throws Exception {
+        // given
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                delete("/api/follows/" + "1234")
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("팔로우 취소 실패 - 해당 팔로우를 찾을 수 없음")
+    void deleteFollow_Failure_FollowNotFound() throws Exception {
+        // given
+        UUID followId = UUID.randomUUID();
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                delete("/api/follows/" + followId)
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    @DisplayName("팔로우 취소 실패 - 팔로우한 본인이 아니면 팔로우 취소 할 수 없음")
+    void deleteFollow_Failure_FollowDeleteForbidden() throws Exception {
+        // given
+        User other = new User("other@test.com", "password", "other");
+        other.setRole(Role.USER);
+        userRepository.saveAndFlush(other);
+
+        Follow follow = new Follow(other, followee);
+        followRepository.saveAndFlush(follow);
+
+        UUID followId = follow.getId();
+
+        // when
+        ResultActions resultActions = mockMvc.perform(
+                delete("/api/follows/" + followId)
+                        .with(csrf())
+                        .with(user(followerUserDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").exists());
+    }
 }

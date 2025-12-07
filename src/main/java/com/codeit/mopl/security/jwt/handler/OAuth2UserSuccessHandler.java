@@ -34,20 +34,23 @@ import java.util.UUID;
 public class OAuth2UserSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final com.codeit.mopl.security.jwt.provider.JwtTokenProvider jwtTokenProvider;
     private final com.codeit.mopl.security.jwt.registry.JwtRegistry jwtRegistry;
-    private final UserService userService;
-    private final ObjectMapper objectMapper;
 
     @Value("${jwt.refresh-token-expiration-minutes}")
     private int expiration;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+        log.info("Authentication successful");
+        log.info("[OAuth2] SuccessHandler 진입: uri={}, Host={}",
+                request.getRequestURI(),
+                request.getHeader("Host"));
+
         CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
         UserDto userDto = principal.getUser();
         String email = userDto.email();
         List<String> authorities = List.of(String.valueOf(userDto.role()));
-        String accessToken = delegateAccessToken(userDto.id(), email, authorities);  // (6-1)
-        String refreshToken = delegateRefreshToken(userDto.id(), email, authorities);     // (6-2)
+        String accessToken = delegateAccessToken(userDto.id(), email, authorities);
+        String refreshToken = delegateRefreshToken(userDto.id(), email, authorities);
 
         JwtInformation jwtInformation = new JwtInformation(userDto, accessToken, refreshToken);
         if (jwtRegistry.hasActiveJwtInformationByUserId(userDto.id())) {
@@ -68,7 +71,19 @@ public class OAuth2UserSuccessHandler extends SimpleUrlAuthenticationSuccessHand
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
+
         String redirectUri = "/";
+        // 테스트
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        String forwardedHost  = request.getHeader("X-Forwarded-Host");
+        String host           = request.getHeader("Host");
+
+        String scheme = forwardedProto != null ? forwardedProto : request.getScheme();
+        String domain = forwardedHost != null ? forwardedHost : host;
+
+        String absoluteRedirectUrl = scheme + "://" + domain + redirectUri;
+
+        log.info("[OAuth2] 실제 최종 URL = {}", absoluteRedirectUrl);
 
         getRedirectStrategy().sendRedirect(request, response, redirectUri);
     }

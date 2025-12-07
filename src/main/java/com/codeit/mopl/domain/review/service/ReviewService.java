@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.review.service;
 
+import co.elastic.clients.elasticsearch.nodes.Ingest;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.domain.review.dto.CursorResponseReviewDto;
@@ -51,6 +52,10 @@ public class ReviewService {
     checkReviewDuplicate(user, content);
     Review review = new Review(user, content, text, rating, false);
     reviewRepository.save(review);
+
+    applyReviewCreated(content, rating);
+    contentRepository.save(content);
+
     log.info("[리뷰] 리뷰 생성 종료, userId = {}, contentId = {}, reviewId = {}", userId, contentId, review.getId());
     evictFirstPageCacheByContentId(contentId);
     return reviewMapper.toDto(review);
@@ -61,6 +66,8 @@ public class ReviewService {
     log.info("[리뷰] 리뷰 수정 시작, userId = {}, reviewId = {}, text = {}, rating = {}", userId, reviewId, text, rating);
 
     Review review = getValidReviewByReviewId(reviewId);
+    double originalRating = review.getRating();
+
     if (!review.getUser().getId().equals(userId)) {
       log.warn("[리뷰] 리뷰를 수정할 권한이 없습니다. reviewId = {}", reviewId);
       throw new ReviewForbiddenException(
@@ -69,6 +76,10 @@ public class ReviewService {
     review.setText(text);
     review.setRating(rating);
     reviewRepository.save(review);
+
+    Content content = review.getContent();
+    applyReviewUpdated(content, originalRating, rating);
+    contentRepository.save(content);
 
     log.info("[리뷰] 리뷰 수정 종료, reviewId = {}", reviewId);
     evictFirstPageCacheByContentId(review.getContent().getId());
@@ -86,6 +97,13 @@ public class ReviewService {
     }
     review.setIsDeleted(true);
     reviewRepository.save(review);
+
+    Content content = review.getContent();
+    double rating = review.getRating();
+
+    applyReviewDeleted(content, rating);
+    contentRepository.save(content);
+
     evictFirstPageCacheByContentId(review.getContent().getId());
     log.info("[리뷰] 리뷰 삭제 종료, reviewId = {}", reviewId);
   }
@@ -182,7 +200,7 @@ public class ReviewService {
   }
 
   private void checkReviewDuplicate(User user, Content content) {
-    Optional<Review> review = reviewRepository.findByUserAndContent(user, content);
+    Optional<Review> review = reviewRepository.findByUserAndContentAndIsDeletedFalse(user, content);
     if (review.isPresent()) {
       log.warn("[리뷰] 이미 리뷰가 존재합니다. reviewId = {}", review.get().getId());
       throw new ReviewDuplicateException(
@@ -199,4 +217,49 @@ public class ReviewService {
       log.info("[리뷰] 리뷰 조회 캐싱 초기화, contentId = {}, evictedKeys = {}", contentId, keys.size());
     }
   }
+
+  private void applyReviewCreated(Content content, double rating) {
+    int count = content.getReviewCount() == null ? 0 : content.getReviewCount();
+    double avg = content.getAverageRating() == null ? 0.0 : content.getAverageRating();
+
+    int newCount = count + 1;
+    double newAvg = (avg * count + rating) / newCount;
+
+    content.setReviewCount(newCount);
+    content.setAverageRating(newAvg);
+  }
+
+  private void applyReviewUpdated(Content content, double oldRating, double newRating) {
+    int count = content.getReviewCount() == null ? 0 : content.getReviewCount();
+    if (count <= 0) {
+      content.setReviewCount(1);
+      content.setAverageRating(newRating);
+      return;
+    }
+
+    double avg = content.getAverageRating() == null ? 0.0 : content.getAverageRating();
+    double total = avg * count - oldRating + newRating;
+    double newAvg = total / count;
+
+    content.setAverageRating(newAvg);
+  }
+
+  private void applyReviewDeleted(Content content, double rating) {
+    int count = content.getReviewCount() == null ? 0 : content.getReviewCount();
+    double avg = content.getAverageRating() == null ? 0.0 : content.getAverageRating();
+
+    if (count <= 1) {
+      content.setReviewCount(0);
+      content.setAverageRating(0.0);
+      return;
+    }
+
+    double total = avg * count - rating;
+    int newCount = count - 1;
+    double newAvg = total / newCount;
+
+    content.setReviewCount(newCount);
+    content.setAverageRating(newAvg);
+  }
+
 }

@@ -7,11 +7,10 @@ import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.event.consumer.KafkaConsumer;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
-import com.codeit.mopl.event.event.DirectMessageCreateEvent;
-import com.codeit.mopl.event.event.NotificationCreateEvent;
-import com.codeit.mopl.event.event.PlayListCreateEvent;
-import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
+import com.codeit.mopl.event.event.*;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
+import com.codeit.mopl.mail.service.MailService;
+import com.codeit.mopl.mail.utils.RedisStoreUtils;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
 import com.codeit.mopl.sse.service.SseService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,6 +24,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.kafka.support.Acknowledgment;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import jakarta.mail.MessagingException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -75,9 +75,15 @@ class KafkaConsumerTest {
   @Mock
   private WatchingSessionCreateEvent watchingSessionCreateEvent;
 
+  @Mock
+  private RedisStoreUtils redisStoreUtils;
+
+  @Mock
+  private MailService mailService;
+
   @BeforeEach
   void setUp() {
-    kafkaConsumer = new KafkaConsumer(objectMapper, notificationService, followService, processedEventRepository, sseService, sseEmitterRegistry);
+    kafkaConsumer = new KafkaConsumer(objectMapper, notificationService, followService, processedEventRepository, sseService, sseEmitterRegistry, mailService, redisStoreUtils);
   }
 
   @Test
@@ -472,6 +478,137 @@ class KafkaConsumerTest {
     assertThatThrownBy(() -> kafkaConsumer.onWatchingSessionCreated(json, ack))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("unexpected");
+
+    verify(ack, never()).acknowledge();
+  }
+
+  @Test
+  @DisplayName("메일 발송 - 아직 처리되지 않은 이벤트면 Redis 저장 및 메일 발송, processedEvent 저장, ack 호출")
+  void mailSend_success() throws Exception {
+    // given
+    String kafkaEventJson = "\"eventId\"=\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"";
+    MailSendEvent event = new MailSendEvent(
+            UUID.randomUUID(),
+            "test@example.com",
+            "tempPw"
+    );
+
+    when(objectMapper.readValue(kafkaEventJson, MailSendEvent.class))
+            .thenReturn(event);
+    when(processedEventRepository.findByEventIdAndEventType(event.eventId(), EventType.MAIL_SEND))
+            .thenReturn(Optional.empty());
+
+    // when
+    kafkaConsumer.onMailSend(kafkaEventJson, ack);
+
+    // then
+    verify(processedEventRepository).findByEventIdAndEventType(event.eventId(), EventType.MAIL_SEND);
+    verify(redisStoreUtils).storeTempPassword(anyString(),anyString());
+    verify(mailService).sendMail(anyString(),anyString());
+    verify(processedEventRepository).save(any(ProcessedEvent.class));
+    verify(ack).acknowledge();
+  }
+
+  @Test
+  @DisplayName("메일 발송 - 이미 처리된 이벤트면 이후 동작 안 하고 ack만 호출")
+  void onMailSend_idempotent() throws Exception {
+    // given
+    String kafkaEventJson = "\"eventId\"=\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"";
+    MailSendEvent event = new MailSendEvent(
+            UUID.randomUUID(),
+            "test@example.com",
+            "tempPw"
+    );
+
+    when(objectMapper.readValue(kafkaEventJson, MailSendEvent.class))
+            .thenReturn(event);
+
+    when(processedEventRepository.findByEventIdAndEventType(event.eventId(), EventType.MAIL_SEND))
+            .thenReturn(Optional.of(new ProcessedEvent(event.eventId(), EventType.MAIL_SEND)));
+
+    // when
+    kafkaConsumer.onMailSend(kafkaEventJson, ack);
+
+    // then
+    verify(processedEventRepository).findByEventIdAndEventType(event.eventId(), EventType.MAIL_SEND);
+    verify(mailService, never()).sendMail(anyString(),anyString());
+    verify(redisStoreUtils, never()).storeTempPassword(anyString(),anyString());
+    verify(processedEventRepository, never()).save(any());
+    verify(ack).acknowledge();
+  }
+
+  @Test
+  @DisplayName("메일 발송 - JSON 역직렬화 실패 시 이후 동작 없이 ack만 호출")
+  void onMailSend_jsonDeserializeFail() throws Exception {
+    // given
+    String invalidJson = "INVALID_JSON";
+
+    when(objectMapper.readValue(invalidJson, MailSendEvent.class))
+            .thenThrow(new JsonProcessingException("fail") {});
+
+    // when
+    kafkaConsumer.onMailSend(invalidJson, ack);
+
+    // then
+    verify(processedEventRepository, never()).findByEventIdAndEventType(any(), any());
+    verify(processedEventRepository, never()).save(any());
+    verify(mailService, never()).sendMail(anyString(),anyString());
+    verify(redisStoreUtils, never()).storeTempPassword(anyString(),anyString());
+    verify(ack).acknowledge();
+  }
+
+  @Test
+  @DisplayName("메일 발송 - 메일 발송 중 예외 발생 시 ack 호출 없이 예외 전파")
+  void onMailSend_messagingException() throws Exception {
+    // given
+    String kafkaEventJson = "\"eventId\"=\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"";
+    MailSendEvent event = new MailSendEvent(
+            UUID.randomUUID(),
+            "test@example.com",
+            "tempPw"
+    );
+
+    when(objectMapper.readValue(kafkaEventJson, MailSendEvent.class))
+            .thenReturn(event);
+
+    when(processedEventRepository.findByEventIdAndEventType(event.eventId(), EventType.MAIL_SEND))
+            .thenReturn(Optional.empty());
+
+    doThrow(new MessagingException("unexpected"))
+            .when(mailService).sendMail(anyString(),anyString());
+
+    // when & then
+    assertThatThrownBy(() -> kafkaConsumer.onMailSend(kafkaEventJson, ack))
+            .isInstanceOf(MessagingException.class)
+            .hasMessageContaining("unexpected");
+
+    verify(ack, never()).acknowledge();
+  }
+
+  @Test
+  @DisplayName("메일 발송 - 기타 예외 발생 시 ack 호출 없이 예외 전파")
+  void onMailSend_unexpectedException() throws Exception {
+    // given
+    String kafkaEventJson = "\"eventId\"=\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"";
+    MailSendEvent event = new MailSendEvent(
+            UUID.randomUUID(),
+            "test@example.com",
+            "tempPw"
+    );
+
+    when(objectMapper.readValue(kafkaEventJson, MailSendEvent.class))
+            .thenReturn(event);
+
+    when(processedEventRepository.findByEventIdAndEventType(event.eventId(), EventType.MAIL_SEND))
+            .thenReturn(Optional.empty());
+
+    doThrow(new RuntimeException("unexpected"))
+            .when(mailService).sendMail(anyString(),anyString());
+
+    // when & then
+    assertThatThrownBy(() -> kafkaConsumer.onMailSend(kafkaEventJson, ack))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("unexpected");
 
     verify(ack, never()).acknowledge();
   }

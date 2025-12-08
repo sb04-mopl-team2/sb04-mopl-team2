@@ -110,7 +110,12 @@ class FollowServiceTest {
         FollowerIncreaseEvent event = eventCaptor.getValue();
         assertThat(event.followeeId()).isEqualTo(followeeId);
 
-        verify(notificationService).createNotification(eq(followeeId), any(String.class), eq(""), eq(Level.INFO));
+        verify(notificationService).createNotification(
+            eq(followeeId),
+            anyString(),
+            contains(follower.getName()),
+            eq(Level.INFO)
+        );
     }
 
     @Test

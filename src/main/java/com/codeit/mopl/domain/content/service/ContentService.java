@@ -10,6 +10,9 @@ import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
+import com.codeit.mopl.search.ContentESRepository;
+import com.codeit.mopl.search.ElasticsearchProxy;
+import com.codeit.mopl.search.converter.ContentConverter;
 import jakarta.validation.Valid;
 import java.util.Map;
 import java.util.UUID;
@@ -27,6 +30,12 @@ public class ContentService {
   private final ContentRepository contentRepository;
   private final ContentMapper contentMapper;
 
+  // ES 관련
+  private final ElasticsearchProxy proxy;
+  private final ContentESRepository contentESRepository;
+  private final ContentConverter converter;
+
+
   @Transactional
   public ContentDto createContent(@Valid ContentCreateRequest request, MultipartFile thumbnail) {
     log.info("[콘텐츠 생성 시작] title={}", request.title());
@@ -40,6 +49,9 @@ public class ContentService {
     Content savedContent = contentRepository.save(content);
     ContentDto dto = contentMapper.toDto(savedContent);
 
+    // ES에 저장
+    contentESRepository.save(converter.convertToDocument(dto, savedContent.getCreatedAt()));
+
     log.info("[콘텐츠 생성 완료] id={}, title={}", dto.id(), dto.title());
     return dto;
   }
@@ -48,7 +60,9 @@ public class ContentService {
   public CursorResponseContentDto findContents(ContentSearchRequest request) {
     log.info("[콘텐츠 목록 조회 시작] request={}", request);
 
-    CursorResponseContentDto response = contentRepository.findContents(request.toCondition());
+//    CursorResponseContentDto response = contentRepository.findContents(request.toCondition());
+    CursorResponseContentDto response = proxy.search(request);
+
 
     log.info("[콘텐츠 목록 조회 완료] resultCount={}",
         response.data() != null ? response.data().size() : 0);
@@ -96,6 +110,9 @@ public class ContentService {
     }
     ContentDto dto = contentMapper.toDto(content);
 
+    // ES에 저장
+    contentESRepository.save(converter.convertToDocument(dto, content.getCreatedAt()));
+
     log.info("[콘텐츠 수정 완료] id={}, title={}", dto.id(), dto.title());
     return dto;
   }
@@ -113,6 +130,9 @@ public class ContentService {
     );
 
     contentRepository.delete(content);
+
+    // ES에 저장
+    contentESRepository.deleteById(String.valueOf(contentId));
 
     log.info("[콘텐츠 삭제 완료] contentId={}", contentId);
   }

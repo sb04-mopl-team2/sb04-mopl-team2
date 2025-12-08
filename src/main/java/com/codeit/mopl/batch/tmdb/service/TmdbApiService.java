@@ -3,7 +3,10 @@ package com.codeit.mopl.batch.tmdb.service;
 import com.codeit.mopl.batch.tmdb.dto.TmdbDiscoverMovieResponse;
 import com.codeit.mopl.batch.tmdb.mapper.TmdbMovieMapper;
 import com.codeit.mopl.domain.content.entity.Content;
+import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
+import com.codeit.mopl.search.ContentESRepository;
+import com.codeit.mopl.search.converter.ContentConverter;
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
@@ -29,6 +32,11 @@ public class TmdbApiService {
   private final TmdbMovieMapper tmdbMovieMapper;
   private final ContentRepository contentRepository;
 
+  private final ContentESRepository contentESRepository;
+  private final ContentConverter converter;
+  private final ContentMapper contentMapper;
+
+
   @Transactional
   public Mono<List<Content>> discoverMoviesFromDate(LocalDate from, int page) {
     log.info("[TMDB] 영화 조회 시작 from = {}, page = {}", from, page);
@@ -45,7 +53,12 @@ public class TmdbApiService {
         )
         .map(tmdbMovieMapper::toContent)
         .publishOn(Schedulers.boundedElastic())
-        .map(contentRepository::save)
+//        .map(contentRepository::save)
+        .map(c -> {
+          Content savedContent = contentRepository.save(c);
+          contentESRepository.save(converter.convertToDocument(contentMapper.toDto(savedContent), savedContent.getCreatedAt()));
+          return savedContent;
+        })
         .collectList()
         .doOnSuccess(list -> log.info("[TMDB] 영화 조회 완료 저장된 컨텐츠 수 = {}", list.size()));
   }
@@ -71,7 +84,11 @@ public class TmdbApiService {
           Flux.fromIterable(response.getResults())
               .map(tmdbMovieMapper::toContent)
               .publishOn(Schedulers.boundedElastic())
-              .doOnNext(contentRepository::save)
+//              .doOnNext(contentRepository::save)
+              .doOnNext(c -> {
+                Content savedContent = contentRepository.save(c);
+                contentESRepository.save(converter.convertToDocument(contentMapper.toDto(savedContent), savedContent.getCreatedAt()));
+              })
               .blockLast();
           log.info("[TMDB] 영화 조회 및 저장 완료 조회 수 = {}", response.getResults().size());
         });

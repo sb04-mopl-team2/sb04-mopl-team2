@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS notifications
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     level VARCHAR(20) NOT NULL,
-    followStatus VARCHAR(20) NOT NULL DEFAULT 'UNREAD',
+    status VARCHAR(20) NOT NULL DEFAULT 'UNREAD',
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );

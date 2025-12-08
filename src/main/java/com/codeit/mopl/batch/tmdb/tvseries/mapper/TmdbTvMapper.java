@@ -1,7 +1,7 @@
-package com.codeit.mopl.batch.tmdb.mapper;
+package com.codeit.mopl.batch.tmdb.tvseries.mapper;
 
-import com.codeit.mopl.batch.tmdb.MovieGenre;
-import com.codeit.mopl.batch.tmdb.dto.TmdbDiscoverMovieResponse;
+import com.codeit.mopl.batch.tmdb.tvseries.TvGenre;
+import com.codeit.mopl.batch.tmdb.tvseries.dto.TmdbDiscoverTvResponse;
 import com.codeit.mopl.domain.content.entity.Content;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -10,33 +10,35 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 @Mapper(componentModel = "spring")
-public interface TmdbMovieMapper {
+public interface TmdbTvMapper {
 
   String BASE_THUMBNAIL_URL = "https://image.tmdb.org/t/p/w500";
 
-  @Mapping(source = "title", target = "title")
+  @Mapping(source = "name", target = "title")
   @Mapping(source = "overview", target = "description")
   @Mapping(source = "posterPath", target = "thumbnailUrl", qualifiedByName = "buildThumbnailUrl")
   @Mapping(source = "genreIds", target = "tags", qualifiedByName = "mapGenresToTags")
-  @Mapping(target = "contentType", expression = "java(com.codeit.mopl.domain.content.entity.ContentType.MOVIE)")
+  @Mapping(target = "contentType", expression = "java(com.codeit.mopl.domain.content.entity.ContentType.TV)")
   @Mapping(target = "averageRating", ignore = true)
   @Mapping(target = "reviewCount", ignore = true)
   @Mapping(target = "updatedAt", ignore = true)
   @Mapping(target = "watcherCount", ignore = true)
-  Content toContent(TmdbDiscoverMovieResponse.Movie movie);
+  Content toContent(TmdbDiscoverTvResponse.TvShow tvShow);
 
   @Named("mapGenresToTags")
   default List<String> mapGenresToTags(List<Integer> genreIds) {
     if (genreIds == null) return List.of();
     return genreIds.stream()
-        .map(MovieGenre::fromId)
-        .map(MovieGenre::getTag)
+        .map(TvGenre::fromId)
+        .map(TvGenre::getTag)
         .collect(Collectors.toList());
   }
 
   @Named("buildThumbnailUrl")
   default String buildThumbnailUrl(String posterPath) {
-    if (posterPath == null || posterPath.isEmpty()) return "https://github.com/user-attachments/assets/746eaca8-f375-4d82-ba57-1d01f673f9a1";
+    if (posterPath == null || posterPath.isEmpty()) {
+      return "https://buly.kr/BIVulPE";
+    }
     return BASE_THUMBNAIL_URL + posterPath;
   }
 }

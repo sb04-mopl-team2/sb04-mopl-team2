@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
 
-import com.codeit.mopl.batch.tmdb.dto.TmdbDiscoverMovieResponse;
-import com.codeit.mopl.batch.tmdb.mapper.TmdbMovieMapper;
+import com.codeit.mopl.batch.tmdb.movie.dto.TmdbDiscoverMovieResponse;
+import com.codeit.mopl.batch.tmdb.movie.mapper.TmdbMovieMapper;
 import com.codeit.mopl.domain.content.ContentTestFactory;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;

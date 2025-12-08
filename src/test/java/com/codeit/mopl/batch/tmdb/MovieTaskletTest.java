@@ -6,8 +6,8 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-import com.codeit.mopl.batch.tmdb.config.MovieStepConfig;
-import com.codeit.mopl.batch.tmdb.dto.TmdbDiscoverMovieResponse;
+import com.codeit.mopl.batch.tmdb.movie.config.MovieStepConfig;
+import com.codeit.mopl.batch.tmdb.movie.dto.TmdbDiscoverMovieResponse;
 import com.codeit.mopl.batch.tmdb.service.TmdbApiService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

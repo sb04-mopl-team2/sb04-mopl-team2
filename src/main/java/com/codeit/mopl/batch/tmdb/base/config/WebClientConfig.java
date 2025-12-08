@@ -1,4 +1,4 @@
-package com.codeit.mopl.batch.tmdb.config;
+package com.codeit.mopl.batch.tmdb.base.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;

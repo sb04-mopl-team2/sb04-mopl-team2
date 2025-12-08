@@ -1,7 +1,7 @@
-package com.codeit.mopl.batch.tmdb.config;
+package com.codeit.mopl.batch.tmdb.tvseries.config;
 
-import com.codeit.mopl.batch.tmdb.dto.TmdbDiscoverMovieResponse;
-import com.codeit.mopl.batch.tmdb.service.TmdbApiService;
+import com.codeit.mopl.batch.tmdb.tvseries.dto.TmdbDiscoverTvResponse;
+import com.codeit.mopl.batch.tmdb.tvseries.service.TvApiService;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,37 +17,37 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class MovieStepConfig {
+public class TvStepConfig {
 
-  private final TmdbApiService tmdbApiService;
+  private final TvApiService tvApiService;
   private final JobRepository jobRepository;
   private final PlatformTransactionManager transactionManager;
 
   /**
-   * 매일 다음날 개봉 예정 영화 수집 Step
+   * 매일 다음날 방영 예정 TV 프로그램 수집 Step
    */
   @Bean
-  public Step dailyMovieUpdateStep() {
-    return new StepBuilder("dailyMovieUpdateStep", jobRepository)
-        .tasklet(dailyMovieUpdateTasklet(), transactionManager)
+  public Step dailyTvUpdateStep() {
+    return new StepBuilder("dailyTvUpdateStep", jobRepository)
+        .tasklet(dailyTvUpdateTasklet(), transactionManager)
         .build();
   }
 
   @Bean
-  public Tasklet dailyMovieUpdateTasklet() {
+  public Tasklet dailyTvUpdateTasklet() {
     return (contribution, chunkContext) -> {
-      // 다음날 개봉 예정작 조회
+      // 다음날 방영 예정작 조회
       LocalDate tomorrow = LocalDate.now().plusDays(1);
 
-      log.info("=== 일일 영화 데이터 업데이트 시작 ===");
+      log.info("=== 일일 TV 프로그램 데이터 업데이트 시작 ===");
       log.info("수집 대상 날짜: {}", tomorrow);
 
       // 첫 페이지 호출하면서 총 페이지 수도 함께 확인
-      TmdbDiscoverMovieResponse firstPageResponse =
-          tmdbApiService.discoverMoviesFromDateWithResponse(tomorrow, 1).block();
+      TmdbDiscoverTvResponse firstPageResponse =
+          tvApiService.discoverContentFromDateWithResponse(tomorrow, 1).block();
 
       if (firstPageResponse == null || firstPageResponse.getTotalPages() == 0) {
-        log.warn("날짜 {}의 개봉 예정작이 없습니다.", tomorrow);
+        log.warn("날짜 {}의 방영 예정작이 없습니다.", tomorrow);
         return RepeatStatus.FINISHED;
       }
 
@@ -56,11 +56,11 @@ public class MovieStepConfig {
 
       // 2페이지부터 나머지 수집
       for (int page = 2; page <= maxPages; page++) {
-        tmdbApiService.discoverMoviesFromDate(tomorrow, page).block();
+        tvApiService.discoverContentFromDate(tomorrow, page).block();
         Thread.sleep(1000);
       }
 
-      log.info("=== 일일 영화 데이터 업데이트 완료 ===");
+      log.info("=== 일일 TV 프로그램 데이터 업데이트 완료 ===");
       log.info("총 처리 페이지 수: {}", maxPages);
 
       return RepeatStatus.FINISHED;

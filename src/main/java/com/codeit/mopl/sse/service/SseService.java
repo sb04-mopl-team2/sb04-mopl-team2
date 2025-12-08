@@ -1,12 +1,13 @@
 package com.codeit.mopl.sse.service;
 
+import com.codeit.mopl.sse.SseCloseReason;
 import com.codeit.mopl.sse.SseMessage;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
-import java.util.Collection;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,31 +29,44 @@ public class SseService {
 
     SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
 
-    // 저장
+    // 기본값은 "클라이언트가 끊었겠지"로 가정
+    AtomicReference<SseCloseReason> closeReason =
+        new AtomicReference<>(SseCloseReason.CLIENT_CLOSED);
+
+    // 레지스트리에 저장
     sseEmitterRegistry.addEmitter(receiverId, emitter);
 
-    // 해당 emitter 가 추후에 끊기거나 시간이 만료되면 자동으로 정리
+    emitter.onTimeout(() -> {
+      closeReason.set(SseCloseReason.TIMEOUT);
+      sseEmitterRegistry.removeEmitter(receiverId, emitter);
+      log.warn("[SSE] emitter timeout, receiverId = {}, emitter = {}",
+          receiverId, System.identityHashCode(emitter));
+    });
+
+    emitter.onError(ex -> {
+      closeReason.set(SseCloseReason.ERROR);
+      log.warn("[SSE] emitter error, receiverId = {}, emitter = {}, error = {}",
+          receiverId, System.identityHashCode(emitter), ex.toString());
+    });
+
     emitter.onCompletion(() -> {
       sseEmitterRegistry.removeEmitter(receiverId, emitter);
-      log.info("[SSE] emitter 만료, receiverId = {}, emitter = {}", receiverId, System.identityHashCode(emitter));
+      log.info("[SSE] emitter completion, receiverId = {}, emitter = {}, reason = {}",
+          receiverId, System.identityHashCode(emitter), closeReason.get());
     });
 
-    emitter.onTimeout(() -> {
-      sseEmitterRegistry.removeEmitter(receiverId, emitter);
-      log.warn("[SSE] emitter 시간 만료, receiverId = {}, emitter = {}", receiverId, System.identityHashCode(emitter));
-    });
-
-    // 연결 직후 더미 이벤트 한 번 보내기
     try {
       String eventId = UUID.randomUUID().toString();
       emitter.send(SseEmitter.event()
-          .id(eventId)
-          .name("connect")
-          .data("connected"));
+          .name("ping"));
       log.info("[SSE] connect 이벤트 전송 성공, receiverId = {}, eventId = {}", receiverId, eventId);
     } catch (Exception e) {
       log.warn("[SSE] SSE 이벤트 전송 실패, receiverId = {}, errorMessage = {}", receiverId, e.getMessage());
       sseEmitterRegistry.removeEmitter(receiverId, emitter);
+    }
+
+    if (lastEventId != null) {
+      reSend(receiverId, lastEventId, emitter);
     }
 
     log.info("[SSE] SSE 연결 종료, receiverId = {}, emitter = {}", receiverId, System.identityHashCode(emitter));
@@ -70,7 +84,7 @@ public class SseService {
       return;
     }
 
-    for (SseEmitter emitter : emitters) {
+    for (SseEmitter emitter : List.copyOf(emitters)) {
       try {
         emitter.send(
             SseEmitter.event()
@@ -82,12 +96,51 @@ public class SseService {
         log.debug("[SSE] SSE 이벤트 전송 성공 receiverId = {}, eventId = {}, eventName = {}",
             receiverId, saved.getEventId(), saved.getEventName());
 
+      } catch (IOException | IllegalStateException e) {
+        // 클라이언트가 탭 닫음 / 네트워크 끊김 같은 정상 종료 케이스
+        log.info("[SSE] 클라이언트 연결 종료로 전송 실패, receiverId = {}, eventId = {}, reason = {}",
+            receiverId, saved.getEventId(), e.getMessage());
+        sseEmitterRegistry.removeEmitter(receiverId, emitter);
+
       } catch (Exception e) {
-        log.warn("[SSE] SSE 이벤트 전송 실패 receiverId = {}, reason = {}", receiverId, e.getMessage());
+        // 진짜 이상한 케이스만 에러로
+        log.error("[SSE] 예기치 못한 SSE 전송 예외, receiverId = {}, eventId = {}",
+            receiverId, saved.getEventId(), e);
+        sseEmitterRegistry.removeEmitter(receiverId, emitter);
+      }
+      // 여기서 return 하지 말고 다음 emitter들도 계속 시도
+    }
+
+    log.info("[SSE] SSE 이벤트 전송 종료");
+  }
+
+  public void reSend(UUID receiverId, UUID lastEventId, SseEmitter emitter) {
+    log.info("[SSE] SSE 이벤트 재전송 시작, receiverId = {}, lastEventId = {}", receiverId, lastEventId);
+    List<SseMessage> newEvents = sseEmitterRegistry.getNewEvents(receiverId, lastEventId);
+
+    if (newEvents.isEmpty()) {
+      log.info("[SSE] 재전송할 신규 이벤트 없음, receiverId = {}, lastEventId = {}", receiverId, lastEventId);
+      return;
+    }
+
+    for (SseMessage message : newEvents) {
+      try {
+        emitter.send(
+            SseEmitter.event()
+                .id(message.getEventId().toString())
+                .name(message.getEventName())
+                .data(message.getData())
+        );
+
+        log.debug("[SSE] SSE 이벤트 재전송 성공 receiverId = {}, eventId = {}, eventName = {}",
+            receiverId, message.getEventId(), message.getEventName());
+
+      } catch (Exception e) {
+        log.warn("[SSE] SSE 이벤트 재전송 실패 receiverId = {}, reason = {}", receiverId, e.getMessage());
         sseEmitterRegistry.removeEmitter(receiverId, emitter);
       }
     }
-    log.info("[SSE] SSE 이벤트 전송 종료");
+    log.info("[SSE] SSE 이벤트 재전송 종료, receiverId = {}, lastEventId = {}", receiverId, lastEventId);
   }
 
   @Scheduled(fixedDelay = 1000 * 60 * 30) // 30분마다 실행

@@ -9,9 +9,14 @@ import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.event.MailSendEvent;
 import com.codeit.mopl.mail.utils.PasswordUtils;
+import com.codeit.mopl.mail.utils.RedisStoreUtils;
+import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.internet.MimeMessage;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,19 +28,23 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.*;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -57,14 +66,23 @@ public class UserE2ETest {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    @MockitoBean
-    private ApplicationEventPublisher publisher;
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private RedisStoreUtils redisStoreUtils;
 
     @MockitoBean
     private JavaMailSender javaMailSender;
 
     @MockitoBean
     private PasswordUtils passwordUtils;
+
+    @MockitoBean
+    private KafkaTemplate<String, String> kafkaTemplate;
+
+    @MockitoSpyBean
+    private OAuth2UserService oAuth2UserService;
 
     private HttpHeaders defaultHeaders = new HttpHeaders();
 
@@ -73,7 +91,18 @@ public class UserE2ETest {
         MimeMessage message = Mockito.mock(MimeMessage.class);
         given(javaMailSender.createMimeMessage()).willReturn(message);
         willDoNothing().given(javaMailSender).send(any(MimeMessage.class));
-
+        given(kafkaTemplate.send(any(ProducerRecord.class)))
+                .willAnswer(invocation -> {
+                    ProducerRecord<String, String> record = invocation.getArgument(0);
+                    MailSendEvent event = objectMapper.readValue(
+                            record.value(),
+                            MailSendEvent.class
+                    );
+                    redisStoreUtils.storeTempPassword(event.email(), event.tempPw());
+                    CompletableFuture<SendResult<String, String>> future =
+                            CompletableFuture.completedFuture(Mockito.mock(SendResult.class));
+                    return future;
+                });
         if (!userRepository.existsByEmail("admin@admin.com")){
             User admin = new User("admin@admin.com",passwordEncoder.encode("admin!"),"admin");
             admin.setRole(Role.ADMIN);
@@ -498,8 +527,7 @@ public class UserE2ETest {
                 Void.class
         );
         assertEquals(HttpStatus.NO_CONTENT, resetPasswordResponse.getStatusCode());
-        verify(javaMailSender, times(1)).send(any(MimeMessage.class));
-        assertNotNull(redisTemplate.opsForValue().get(createdUser.getBody().email()));  // redis key 등록 확인
+        waitForTempPasswordStored("test@test.com");
 
         SignInRequest signInRequest = new SignInRequest("test@test.com", "tempPw");
         HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
@@ -537,11 +565,11 @@ public class UserE2ETest {
         HttpEntity<UserCreateRequest> httpEntity = new HttpEntity<>(request, defaultHeaders);
         ResponseEntity<UserDto> createdUser = rest.postForEntity("/api/users", httpEntity, UserDto.class);
 
-        assertEquals("test@test.com",createdUser.getBody().email());
+        assertEquals("test@test.com", createdUser.getBody().email());
         assertEquals(HttpStatus.CREATED, createdUser.getStatusCode());
 
         ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest("test@test.com");
-        HttpEntity<ResetPasswordRequest> resetPasswordHttpEntity = new HttpEntity<>(resetPasswordRequest,defaultHeaders);
+        HttpEntity<ResetPasswordRequest> resetPasswordHttpEntity = new HttpEntity<>(resetPasswordRequest, defaultHeaders);
 
         ResponseEntity<Void> resetPasswordResponse = rest.exchange(
                 "/api/auth/reset-password",
@@ -550,16 +578,14 @@ public class UserE2ETest {
                 Void.class
         );
         assertEquals(HttpStatus.NO_CONTENT, resetPasswordResponse.getStatusCode());
-        verify(javaMailSender, times(1)).send(any(MimeMessage.class));
-        assertNotNull(redisTemplate.opsForValue().get(createdUser.getBody().email()));  // redis key 등록 확인
-
+        waitForTempPasswordStored("test@test.com");
         SignInRequest signInRequest = new SignInRequest("test@test.com", "password");
         HttpEntity loginHttpEntity = getSignInRequest(signInRequest);
 
         ResponseEntity<JwtDto> loginJwtDto = rest.postForEntity("/api/auth/sign-in", loginHttpEntity, JwtDto.class);
 
         assertEquals(HttpStatus.UNAUTHORIZED, loginJwtDto.getStatusCode());
-        assertNotNull(redisTemplate.opsForValue().get(signInRequest.username()));  // redis key 삭제 확인 - 삭제되지 않아야 함
+        assertNotNull(redisTemplate.opsForValue().get(signInRequest.username()));
     }
 
     private HttpEntity<MultiValueMap<String, String>> getSignInRequest(SignInRequest signInRequest) {
@@ -592,5 +618,21 @@ public class UserE2ETest {
         refreshHeaders.add(HttpHeaders.COOKIE, xsrfCookie + "; " + refreshCookieValue);
         refreshHeaders.add("X-XSRF-TOKEN", defaultHeaders.getFirst("X-XSRF-TOKEN"));
         return refreshHeaders;
+    }
+
+    private void waitForTempPasswordStored(String key) {
+        for (int i = 0; i < 10; i++) {
+            String value = redisTemplate.opsForValue().get(key);
+            if (value != null) {
+                return;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                fail();
+            }
+        }
+        fail();
     }
 }

@@ -25,41 +25,38 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
 
   @Override
   public List<WatchingSession> findWatchingSessions(
-      UUID userId,
       UUID contentId,
       String watcherNameLike, // (optional)
-      String cursor, // (optional) createdAt timestamp
-      UUID idAfter, // (optional) ID of last item
+      String cursor, // (optional) createdAt 타임스탬프
+      UUID idAfter, // (optional) 마지막 아이템 UUID
       int limit,
       SortDirection sortDirection,
       SortBy sortBy // createdAt
   ) {
-    log.info("[실시간 세션] 레포지토리에서 조회 시작. userId = {}, contentId = {} ", userId, contentId);
+    log.info("[실시간 세션] 레포지토리에서 조회 시작. contentId = {} ", contentId);
     List<WatchingSession> results = jpaQueryFactory.selectFrom(watchingSession)
         .join(watchingSession.user, user).fetchJoin()
         .join(watchingSession.content, content).fetchJoin()
         .where(
-            watchingSession.content.id.eq(contentId), // contentId match
-            userIdExist(userId), // filter -> if userId exist
-            watcherNameExist(watcherNameLike), //filter -> if name exist
+            watchingSession.content.id.eq(contentId), // 컨텐츠 아이디 필터
+            watcherNameExist(watcherNameLike), // watcherNameLike로 필터
             cursorCondition(cursor, idAfter, sortDirection)
         )
         .orderBy(getSortOrder(sortDirection))
         .limit(limit)
         .fetch();
 
-    log.info("[실시간 세션] 레포지토리에서 찾는 watchingsession 반환 완료. userId = {}, contentId = {}, 갯수 = {} ",
-        userId, contentId, results.size());
+    log.info("[실시간 세션] 레포지토리에서 찾는 watchingsession 반환 완료. contentId = {}, 갯수 = {} ",
+        contentId, results.size());
     return results;
 
   }
 
   private BooleanExpression cursorCondition(String cursor, UUID idAfter, SortDirection sortDirection) {
 
-    // 1st page
+    // 첫번째 페이지 빠른 리턴
     if (cursor == null || idAfter == null) return null;
 
-    // only return according to the directions
     DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     LocalDateTime lastCreatedAt = LocalDateTime.parse(cursor, formatter);
 
@@ -78,7 +75,7 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
     }
   }
 
-  // sort by createdAt AND Id
+  // 정렬 createdAt AND Id
   private OrderSpecifier<?>[] getSortOrder(SortDirection sortDirection) {
     Order order = (sortDirection == SortDirection.ASCENDING) ? Order.ASC : Order.DESC;
     OrderSpecifier<?> sortByCreatedAt = new OrderSpecifier<>(order, watchingSession.createdAt);
@@ -86,31 +83,22 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
     return new OrderSpecifier[]{sortByCreatedAt, sortById};
   }
 
-  // returns watcherCount == totalCount
   @Override
-  public long getWatcherCount(UUID userId, UUID contentId, String watcherNameLike) {
+  public long getWatcherCount(UUID contentId, String watcherNameLike) {
     Long count = jpaQueryFactory
         .select(watchingSession.count())
         .from(watchingSession)
         .where(
             watchingSession.content.id.eq(contentId),
-            userIdExist(userId),
             watcherNameExist(watcherNameLike)
         )
         .fetchOne();
     return count != null ? count : 0L;
   }
 
-  // boolean expressions for get watcherCount
   public BooleanExpression watcherNameExist(String watcherNameLike) {
     return watcherNameLike != null && !watcherNameLike.isBlank()
         ? watchingSession.user.name.containsIgnoreCase(watcherNameLike)
-        : null;
-  }
-
-  public BooleanExpression userIdExist(UUID userId) {
-    return userId != null
-        ? watchingSession.user.id.eq(userId)
         : null;
   }
 }

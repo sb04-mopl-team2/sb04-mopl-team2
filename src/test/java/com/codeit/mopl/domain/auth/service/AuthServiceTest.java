@@ -5,6 +5,7 @@ import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.event.MailSendEvent;
 import com.codeit.mopl.exception.auth.InvalidTokenException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.mail.service.MailService;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
@@ -40,9 +42,7 @@ public class AuthServiceTest {
     @Mock
     private PasswordUtils passwordUtils;
     @Mock
-    private MailService mailService;
-    @Mock
-    private RedisStoreUtils redisStoreUtils;
+    private ApplicationEventPublisher publisher;
 
     @InjectMocks
     private AuthService authService;
@@ -52,18 +52,16 @@ public class AuthServiceTest {
     void resetPasswordShouldSucceedWhenExistsEmail() throws MessagingException {
         // given
         ResetPasswordRequest request = new ResetPasswordRequest("test@test.com");
-        User findUser = new User("test@test.com","password","test");
         String tempPw = "TempPW1234";
         given(userRepository.existsByEmail("test@test.com")).willReturn(true);
         given(passwordUtils.makeTempPassword()).willReturn(tempPw);
-        doNothing().when(redisStoreUtils).storeTempPassword("test@test.com", tempPw);
-        doNothing().when(mailService).sendMail("test@test.com",tempPw);
+        willDoNothing().given(publisher).publishEvent(any(MailSendEvent.class));
 
         // when
         authService.resetPassword(request);
 
         // then
-        verify(mailService).sendMail("test@test.com",tempPw);
+        verify(publisher).publishEvent(any(MailSendEvent.class));
     }
 
     @DisplayName("email이 주어졌는데 존재하지 않는 유저라면 아무 행동도 하지 않는다")
@@ -71,7 +69,6 @@ public class AuthServiceTest {
     void resetPasswordShouldFailWhenUserNotFoundByEmail() throws MessagingException {
         // given
         ResetPasswordRequest request = new ResetPasswordRequest("test@test.com");
-        String tempPw = "TempPW1234";
         given(userRepository.existsByEmail(request.email())).willReturn(false);
         // when
         UserNotFoundException exception = assertThrows(UserNotFoundException.class, () ->
@@ -81,8 +78,7 @@ public class AuthServiceTest {
         // then
         assertEquals(HttpStatus.NOT_FOUND, exception.getErrorCode().getStatus());
         then(passwordUtils).should(times(0)).makeTempPassword();
-        then(redisStoreUtils).should(times(0)).storeTempPassword(request.email(),tempPw);
-        then(mailService).should(times(0)).sendMail(request.email(), tempPw);
+        then(publisher).should(times(0)).publishEvent(any(MailSendEvent.class));
     }
 
     @DisplayName("유효기간이 만료되지 않았으면 액세스 토큰 재발급에 성공한다")

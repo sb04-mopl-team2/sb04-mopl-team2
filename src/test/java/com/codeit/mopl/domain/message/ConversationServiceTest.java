@@ -11,10 +11,12 @@ import com.codeit.mopl.domain.message.conversation.mapper.ConversationMapper;
 import com.codeit.mopl.domain.message.conversation.repository.ConversationRepository;
 import com.codeit.mopl.domain.message.conversation.service.ConversationService;
 import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
+import com.codeit.mopl.domain.message.directmessage.mapper.DirectMessageMapper;
 import com.codeit.mopl.domain.message.directmessage.repository.DirectMessageRepository;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
+import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.message.conversation.ConversationDuplicateException;
 import com.codeit.mopl.exception.message.conversation.ConversationForbiddenException;
@@ -45,6 +47,8 @@ public class ConversationServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private ConversationMapper conversationMapper;
     @Mock private DirectMessageRepository directMessageRepository;
+    @Mock private DirectMessageMapper directMessageMapper;
+    @Mock private UserMapper userMapper;
     @InjectMocks private ConversationService conversationService;
 
     @Nested
@@ -84,7 +88,6 @@ public class ConversationServiceTest {
             ConversationDto dto = new ConversationDto(conversationId, with, null, false);
             given(conversationRepository.save(any(Conversation.class)))
                     .willReturn(conversation);
-            given(conversationMapper.toConversationDto(conversation,null)).willReturn(dto);
 
             // when
             conversationService.createConversation(loginUserId,request);
@@ -186,28 +189,26 @@ public class ConversationServiceTest {
             Conversation conversation = Conversation.builder()
                     .user(loginUser)
                     .with(withUser)
+                    .messages(new ArrayList<>())
                     .build();
+            setId(conversation, conversationId);
+
             given(conversationRepository.findAllByCond(any(ConversationSearchCond.class)))
                     .willReturn(Arrays.asList(conversation));
-            given(conversationMapper.toConversationDto(conversation,null))
-                    .willReturn(new ConversationDto(
-                            conversationId,
-                            with,
-                            null,
-                            false
-                    ));
             given(conversationRepository.countAllByCond(any(ConversationSearchCond.class)))
             .willReturn(1L);
+
+            given(userMapper.toSummary(withUser)).willReturn(with);
 
             //when
             CursorResponseConversationDto result = conversationService.getAllConversations(loginUserId, cond);
 
             //then
             assertThat(result.totalCount()).isEqualTo(1);
+            assertThat(result.hasNext()).isEqualTo(false);
             assertThat(result.data().get(0).id()).isEqualTo(conversationId);
             assertThat(result.data().get(0).with()).isEqualTo(with);
-            assertThat(result.data().get(0).lastestMessage()).isEqualTo(null);
-            assertThat(result.data().get(0).hasUnread()).isEqualTo(false);
+            assertThat(result.data().get(0).lastestMessage()).isNull();
         }
 
         @Test
@@ -222,6 +223,8 @@ public class ConversationServiceTest {
             cond.setSortDirection(SortDirection.DESCENDING);
 
             UUID loginUserId = UUID.randomUUID();
+            User loginUser = new User();
+            setId(loginUser, loginUserId);
 
             UUID conversationId1 = UUID.randomUUID();
             UUID withUserId1 = UUID.randomUUID();
@@ -237,19 +240,26 @@ public class ConversationServiceTest {
 
             Conversation conversation1 = Conversation.builder()
                     .user(withUser1)
+                    .with(loginUser)
+                    .messages(new ArrayList<>())
                     .build();
+            setId(conversation1, conversationId1);
+
             Conversation conversation2 = Conversation.builder()
                     .user(withUser2)
+                    .with(loginUser)
+                    .messages(new ArrayList<>())
                     .build();
+            setId(conversation2, conversationId2);
+
             List<Conversation> conversations = Arrays.asList(conversation1, conversation2);
             given(conversationRepository.findAllByCond(any(ConversationSearchCond.class)))
                     .willReturn(conversations);
-            given(conversationMapper.toConversationDto(conversation1,null))
-                    .willReturn(new ConversationDto(conversationId1,with1,null,true));
-            given(conversationMapper.toConversationDto(conversation2,null))
-                    .willReturn(new ConversationDto(conversationId2,with2,null,true));
             given(conversationRepository.countAllByCond(any(ConversationSearchCond.class)))
                     .willReturn(2L);
+
+            given(userMapper.toSummary(withUser1)).willReturn(with1);
+            given(userMapper.toSummary(withUser2)).willReturn(with2);
 
             //when
             CursorResponseConversationDto result = conversationService.getAllConversations(loginUserId, cond);
@@ -259,7 +269,6 @@ public class ConversationServiceTest {
             assertThat(result.data().get(0).id()).isEqualTo(conversationId1);
             assertThat(result.data().get(1).id()).isEqualTo(conversationId2);
             assertThat(result.data().get(0).lastestMessage()).isEqualTo(null);
-            assertThat(result.data().get(0).hasUnread()).isEqualTo(true);
         }
 
         @Test
@@ -296,15 +305,17 @@ public class ConversationServiceTest {
             User withUser = new User();
             setId(withUser, withUserId);
             UserSummary with = new UserSummary(withUserId, "test", "test" );
-            Conversation conversation = new Conversation(
-                    loginUser,
-                    withUser,
-                    true,
-                    null
-            );
+
+            Conversation conversation = Conversation.builder()
+                    .user(withUser)
+                    .with(loginUser)
+                    .messages(new ArrayList<>())
+                    .hasUnread(true)
+                    .build();
+            setId(conversation, conversationId);
+
             given(conversationRepository.findById(conversationId)).willReturn(Optional.of(conversation));
-            given(conversationMapper.toConversationDto(conversation,null))
-            .willReturn(new ConversationDto(conversationId,with,null,true));
+            given(userMapper.toSummary(withUser)).willReturn(with);
 
             //when
             ConversationDto result = conversationService.getConversationById(loginUserId,conversationId);
@@ -312,6 +323,8 @@ public class ConversationServiceTest {
             //then
             assertThat(result.id()).isEqualTo(conversationId);
             assertThat(result.with()).isEqualTo(with);
+            assertThat(result.lastestMessage()).isNull();
+            assertThat(result.hasUnread()).isEqualTo(true);
         }
 
         @Test
@@ -348,14 +361,16 @@ public class ConversationServiceTest {
             Conversation conversation = Conversation.builder()
                     .user(loginUser)
                     .with(withUser)
+                    .messages(new ArrayList<>())
+                    .hasUnread(true)
                     .build();
+            setId(conversation, conversationId);
 
             UUID userA = loginUserId.compareTo(withUserId) < 0 ? loginUserId : withUserId;
             UUID userB = loginUserId.compareTo(withUserId) < 0 ? withUserId : loginUserId;
             given(conversationRepository.findByUser_IdAndWith_Id(userA, userB))
                     .willReturn(Optional.of(conversation));
-            given(conversationMapper.toConversationDto(conversation,null))
-                    .willReturn(new ConversationDto(conversationId,with,null,true));
+            given(userMapper.toSummary(withUser)).willReturn(with);
             // when
             ConversationDto result = conversationService.getConversationByUserId(loginUserId, withUserId);
 

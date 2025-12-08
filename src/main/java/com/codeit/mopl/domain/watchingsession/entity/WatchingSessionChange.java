@@ -5,7 +5,7 @@ import com.codeit.mopl.domain.watchingsession.entity.enums.ChangeType;
 
 public record WatchingSessionChange(
     ChangeType type,
-    WatchingSessionDto watchingSessionDto,
+    WatchingSessionDto watchingSession,
     Long watcherCount
 ) {
 

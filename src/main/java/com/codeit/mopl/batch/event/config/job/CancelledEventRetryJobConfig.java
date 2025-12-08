@@ -1,4 +1,4 @@
-package com.codeit.mopl.batch.eventretry.config.job;
+package com.codeit.mopl.batch.event.config.job;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
@@ -10,19 +10,18 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @RequiredArgsConstructor
-public class PendingEventRetryJobConfig {
+public class CancelledEventRetryJobConfig {
 
     private final JobRepository jobRepository;
-    private final Step retryFollowerIncreaseStep;
+    private final Step retryFollowerDecreaseStep;
 
     /*
-    *   팔로워 증가 재시도 Job
+    *  팔로워 감소 재시도 Job
     * */
     @Bean
-    public Job retryFollowerIncreaseJob() {
-        return new JobBuilder("retryFollowerIncreaseJob", jobRepository)
-                .start(retryFollowerIncreaseStep)
+    public Job retryFollowerDecreaseJob() {
+        return new JobBuilder("retryFollowerDecreaseJob", jobRepository)
+                .start(retryFollowerDecreaseStep)
                 .build();
     }
-
 }

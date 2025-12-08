@@ -1,4 +1,4 @@
-package com.codeit.mopl.batch.eventretry.service;
+package com.codeit.mopl.batch.event.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,27 +12,28 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FailedEventCleanupJobScheduler {
+public class CancelledEventRetryJobScheduler {
 
     private final JobLauncher jobLauncher;
-    private final Job failedFollowCleanupJob;
+    private final Job retryFollowerDecreaseJob;
 
     /*
-    *  FAILED 팔로우 삭제 스케줄러
+    *  팔로워 감소 재시도 스케줄러
     * */
-    @Scheduled(cron = "0 0 3 * * *")
-    public void runFailedFollowCleanupJob() {
+    @Scheduled(cron = "0 */5 * * * *")
+    public void runRetryFollowerDecreaseJob() {
         try {
-            log.info("=== FAILED 팔로우 삭제 시작 ===");
+            log.info("=== 팔로워 감소 재시도 시작 ===");
 
             JobParameters params = new JobParametersBuilder()
                     .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters();
 
-            jobLauncher.run(failedFollowCleanupJob, params);
-            log.info("=== FAILED 팔로우 삭제 완료 ===");
+            jobLauncher.run(retryFollowerDecreaseJob, params);
+            log.info("=== 팔로워 감소 재시도 완료 ===");
+
         } catch (Exception e) {
-            log.error("[배치] FAILED 팔로우 삭제 실패: errorMessage = {}", e.getMessage(), e);
+            log.error("[배치] 팔로워 감소 재시도 실패: errorMessage = {}", e.getMessage(), e);
         }
     }
 }

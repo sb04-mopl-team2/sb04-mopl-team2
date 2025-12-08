@@ -1,4 +1,4 @@
-package com.codeit.mopl.batch.eventretry.config.job;
+package com.codeit.mopl.batch.event.config.job;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;

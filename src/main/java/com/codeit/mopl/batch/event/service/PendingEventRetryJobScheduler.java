@@ -1,4 +1,4 @@
-package com.codeit.mopl.batch.eventretry.service;
+package com.codeit.mopl.batch.event.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

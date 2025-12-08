@@ -1,4 +1,4 @@
-package com.codeit.mopl.batch.eventretry.config.step;
+package com.codeit.mopl.batch.event.config.step;
 
 import com.codeit.mopl.domain.follow.entity.Follow;
 import com.codeit.mopl.domain.follow.entity.Status;

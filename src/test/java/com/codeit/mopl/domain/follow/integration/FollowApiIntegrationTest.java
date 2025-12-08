@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.follow.integration;
 
 import com.codeit.mopl.domain.follow.dto.FollowRequest;
 import com.codeit.mopl.domain.follow.entity.Follow;
+import com.codeit.mopl.domain.follow.entity.FollowStatus;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
@@ -366,8 +367,7 @@ public class FollowApiIntegrationTest {
         resultActions
                 .andExpect(status().isNoContent());
 
-        List<Follow> allFollows = followRepository.findAll();
-        assertThat(allFollows).isEmpty();
+        assertThat(follow.getFollowStatus()).isEqualTo(FollowStatus.CANCELLED);
     }
 
     @Test

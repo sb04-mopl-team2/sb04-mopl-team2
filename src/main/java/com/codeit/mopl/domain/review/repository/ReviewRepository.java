@@ -11,5 +11,7 @@ public interface ReviewRepository extends JpaRepository<Review, UUID>, CustomRev
   long countByContentIdAndIsDeleted(UUID contentId, Boolean isDeleted);
 
   Optional<Review> findByUserAndContent(User user, Content content);
+
+  Optional<Review> findByUserAndContentAndIsDeletedFalse(User user, Content content);
 }
 

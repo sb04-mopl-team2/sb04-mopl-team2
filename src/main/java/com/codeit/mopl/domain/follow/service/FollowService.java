@@ -3,14 +3,13 @@ package com.codeit.mopl.domain.follow.service;
 import com.codeit.mopl.domain.follow.dto.FollowDto;
 import com.codeit.mopl.domain.follow.dto.FollowRequest;
 import com.codeit.mopl.domain.follow.entity.Follow;
+import com.codeit.mopl.domain.follow.entity.Status;
 import com.codeit.mopl.domain.follow.mapper.FollowMapper;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
-import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
-import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
@@ -21,7 +20,9 @@ import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.codeit.mopl.exception.follow.*;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+
 import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -61,7 +62,8 @@ public class FollowService {
 
         User follower = getUserById(followerId);
         User followee = getUserById(followeeId);
-
+        
+        // 팔로우 저장, 증가 이벤트 발행
         Follow follow = new Follow(follower, followee);
         FollowDto dto = followMapper.toDto(followRepository.save(follow));
         eventPublisher.publishEvent(new FollowerIncreaseEvent(follow.getId(), followeeId));
@@ -80,9 +82,15 @@ public class FollowService {
         if (isAlreadyProcessed(followId, EventType.FOLLOWER_INCREASE)) {
             return;
         }
-        User followee = getUserById(followeeId);
+        // 비관적 락 적용: WRITE (follow -> user)
+        Follow follow = getFollowByIdWithWriteLock(followId);
+        User followee = getUserByIdWithWriteLock(followeeId);
+        
+        // 팔로워 수 증가, 상태 변경
         followee.increaseFollowerCount();
+        follow.setStatus(Status.CONFIRM);
 
+        // 처리된 이벤트 저장
         ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_INCREASE);
         processedEventRepository.save(processedEvent);
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료: followId = {}, followeeId = {}", followId, followeeId);
@@ -111,16 +119,18 @@ public class FollowService {
     @Transactional
     public void deleteFollow(UUID followId, UUID requesterId) {
         log.info("[팔로우 관리] 팔로우 삭제 시작: followId = {}, requesterId = {}", followId, requesterId);
-        Follow follow = followRepository.findById(followId)
-                .orElseThrow(() -> FollowNotFoundException.withId(followId));
+        // 비관적 락 적용: WRITE
+        Follow follow = getFollowByIdWithWriteLock(followId);
 
         // 팔로우한 본인이 아니면 팔로우 삭제 불가능
         UUID followerId = follow.getFollower().getId();
         if (!followerId.equals(requesterId)) {
             throw FollowDeleteForbiddenException.withIds(followId, followerId, requesterId);
         }
-
-        followRepository.delete(follow);
+        // 팔로우 상태 변경
+        follow.setStatus(Status.CANCELLED);
+        
+        // 팔로우 감소 이벤트 발행
         UUID followeeId = follow.getFollowee().getId();
         eventPublisher.publishEvent(new FollowerDecreaseEvent(follow.getId(), followeeId));
         log.info("[팔로우 관리] 팔로우 삭제 완료: followId = {}, followeeId = {}", followId, followeeId);
@@ -133,17 +143,24 @@ public class FollowService {
         if (isAlreadyProcessed(followId, EventType.FOLLOWER_DECREASE)) {
             return;
         }
-        User followee = getUserById(followeeId);
-        long followerCount = followee.getFollowerCount();
-        detectFollowerCountIsNegative(followeeId, followerCount);
-        followee.decreaseFollowerCount();
+        // 비관적 락 적용: WRITE
+        User followee = getUserByIdWithWriteLock(followeeId);
 
+        // followerCount가 0이하인지 검사
+        long followerCount = followee.getFollowerCount();
+        detectFollowerCountIsZeroOrNegative(followeeId, followerCount);
+        
+        // 팔로워 수 감소, 팔로우 객체 삭제
+        followee.decreaseFollowerCount();
+        followRepository.deleteById(followId);
+        
+        // 처리된 이벤트 저장
         ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_DECREASE);
         processedEventRepository.save(processedEvent);
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 완료: followId = {}, followeeId = {}", followId, followeeId);
     }
 
-    private void detectFollowerCountIsNegative(UUID followeeId, long followerCount) {
+    private void detectFollowerCountIsZeroOrNegative(UUID followeeId, long followerCount) {
         if (followerCount <= 0) {
             log.error("[팔로우 관리] 팔로우 감소 중단 - 팔로워 수가 0이하 입니다: followeeId = {}, followerCount = {}", followeeId, followerCount);
             throw FollowerCountCannotBeNegativeException.withFolloweeIdAndFollowerCount(followeeId, followerCount);
@@ -151,11 +168,11 @@ public class FollowService {
     }
 
     private boolean isAlreadyProcessed(UUID followId, EventType eventType) {
-       boolean isProcessed = processedEventRepository.existsByEventIdAndEventType(followId, eventType);
-       if (isProcessed) {
-           log.warn("[팔로우 관리] 이벤트 처리 중단 - 이미 처리된 이벤트입니다: eventId = {}, eventType = {}", followId, eventType);
-       }
-       return isProcessed;
+        boolean isProcessed = processedEventRepository.existsByEventIdAndEventType(followId, eventType);
+        if (isProcessed) {
+            log.warn("[팔로우 관리] 이벤트 처리 중단 - 이미 처리된 이벤트입니다: eventId = {}, eventType = {}", followId, eventType);
+        }
+        return isProcessed;
     }
 
     private User getUserById(UUID userId) {
@@ -163,34 +180,17 @@ public class FollowService {
                 .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
     }
 
+    private User getUserByIdWithWriteLock(UUID userId) {
+        return userRepository.findByIdForUpdate(userId)
+                .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
+    }
+
+    private Follow getFollowByIdWithWriteLock(UUID followId) {
+        return followRepository.findByIdForUpdate(followId)
+                .orElseThrow(() -> FollowNotFoundException.withId(followId));
+    }
+
     private String getFollowNotificationTitle(String followerName) {
         return followerName + "님이 나를 팔로우했어요.";
     }
-
-    public void notifyFollowersOnPlaylistCreated(PlayListCreateEvent playListCreateEvent) {
-        log.info("[팔로우 관리] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 시작 : playListId = {}", playListCreateEvent.playListId());
-        UUID ownerId = playListCreateEvent.ownerId();
-        List<Follow> followList = followRepository.findByFolloweeId(ownerId);
-
-        for (Follow follow : followList) {
-            UUID receiverId = follow.getFollower().getId();
-            String title = follow.getFollowee().getName() + "님이 새로운 플레이리스트: " + playListCreateEvent.title() + "를 만들었어요!";
-            notificationService.createNotification(receiverId, title, "", Level.INFO);
-        }
-        log.info("[팔로우 관리] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 완료 : playListId = {}", playListCreateEvent.playListId());
-    }
-
-    public void notifyFollowersOnWatchingEvent(WatchingSessionCreateEvent watchingSessionCreateEvent) {
-        log.info("[팔로우 관리] 팔로우한 유저가 실시간 콘텐츠 시청시 팔로워 알림 송신 시작 : watchingSessionId = {}", watchingSessionCreateEvent.watchingSessionId());
-        UUID ownerId = watchingSessionCreateEvent.ownerId();
-        List<Follow> followList = followRepository.findByFolloweeId(ownerId);
-
-        for (Follow follow : followList) {
-            UUID receiverId = follow.getFollower().getId();
-            String title = follow.getFollowee().getName() + "님이 " + watchingSessionCreateEvent.watchingSessionContentTitle() + "를 보고있어요!";
-            notificationService.createNotification(receiverId, title, "", Level.INFO);
-        }
-        log.info("[팔로우 관리] 팔로우한 유저가 실시간 콘텐츠 시청시 알림 송신 완료 : watchingSessionId = {}", watchingSessionCreateEvent.watchingSessionId());
-    }
-
 }

@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users
     profile_image_url TEXT,
     role VARCHAR(20) NOT NULL,
     locked BOOLEAN NOT NULL DEFAULT FALSE,
+    provider VARCHAR(50) NOT NULL DEFAULT 'LOCAL',
     follower_count BIGINT NOT NULL DEFAULT 0
     );
 

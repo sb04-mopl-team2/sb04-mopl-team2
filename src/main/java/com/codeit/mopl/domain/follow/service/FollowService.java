@@ -8,6 +8,8 @@ import com.codeit.mopl.domain.follow.mapper.FollowMapper;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.notification.template.NotificationContext;
+import com.codeit.mopl.domain.notification.template.NotificationTemplate;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.entity.EventType;
@@ -69,8 +71,16 @@ public class FollowService {
         eventPublisher.publishEvent(new FollowerIncreaseEvent(follow.getId(), followeeId));
 
         // 알람 발행
-        String title = getFollowNotificationTitle(follower.getName());
-        notificationService.createNotification(followeeId, title, "", Level.INFO);
+        NotificationContext notificationContext =
+            new NotificationContext(follower.getName(),null, null, null);
+
+        notificationService.createNotification(
+            followeeId,
+            NotificationTemplate.FOLLOW_CREATED.title(notificationContext),
+            NotificationTemplate.FOLLOW_CREATED.content(notificationContext),
+            Level.INFO
+        );
+
         log.info("[팔로우 관리] 팔로우 생성 완료: id = {}", dto.id());
         return dto;
     }
@@ -102,7 +112,7 @@ public class FollowService {
         if (!userRepository.existsById(followeeId)) {
             throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", followeeId));
         }
-        boolean isFollowed = followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
+       boolean isFollowed = followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
         log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 완료: followerId = {}, followeeId = {}, isFollowed = {}", followerId, followeeId, isFollowed);
         return isFollowed;
     }

@@ -2,6 +2,8 @@ package com.codeit.mopl.domain.playlist.subscription.service;
 
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.notification.template.NotificationContext;
+import com.codeit.mopl.domain.notification.template.NotificationTemplate;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.playlist.subscription.entity.Subscription;
@@ -72,10 +74,15 @@ public class SubscriptionService {
         log.info("[플레이리스트] 플레이리스트 구독 처리 완료 - playlistId = {}, subscriberId = {}", playlistId, subscriberId);
 
         // 플레이리스트 소유자에게 알림을 생성함(동기 처리)
-        String title = "플레이리스트에 새로운 구독자 알림";
-        String content = String.format("%s님이 '%s' 플레이리스트를 구독했어요.",
-                subscriber.getName(), playlist.getTitle());
-        notificationService.createNotification(ownerId, title, content, Level.INFO);
+        NotificationContext notificationContext =
+            new NotificationContext(subscriber.getName(),null, playlist.getTitle(), null);
+
+        notificationService.createNotification(
+            subscriberId,
+            NotificationTemplate.PLAYLIST_SUBSCRIBED.title(notificationContext),
+            NotificationTemplate.PLAYLIST_SUBSCRIBED.content(notificationContext),
+            Level.INFO
+        );
         log.info("[플레이리스트] 플레이리스트 구독 알림 생성 - playlistId = {}, subscriberId = {}", playlistId, subscriberId);
     }
 

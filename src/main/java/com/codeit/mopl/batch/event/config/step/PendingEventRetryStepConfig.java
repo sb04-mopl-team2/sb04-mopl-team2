@@ -1,7 +1,7 @@
 package com.codeit.mopl.batch.event.config.step;
 
 import com.codeit.mopl.domain.follow.entity.Follow;
-import com.codeit.mopl.domain.follow.entity.Status;
+import com.codeit.mopl.domain.follow.entity.FollowStatus;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.follow.service.FollowService;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +46,7 @@ public class PendingEventRetryStepConfig {
             int failureCount = 0;
 
             // PENDING 상태인 팔로우 객체 조회
-            List<Follow> follows = followRepository.findByStatus(Status.PENDING);
+            List<Follow> follows = followRepository.findByStatus(FollowStatus.PENDING);
 
             if (follows.isEmpty()) {
                 log.info("[배치] PENDING 상태인 팔로우 객체가 없습니다: follows = {}", follows);
@@ -62,7 +62,7 @@ public class PendingEventRetryStepConfig {
                     UUID followId = follow.getId();
                     UUID followeeId = follow.getFollowee().getId();
                     followService.processFollowerIncrease(followId, followeeId);
-                    follow.setStatus(Status.CONFIRM);
+                    follow.setFollowStatus(FollowStatus.CONFIRM);
                     follow.setRetryCount(0);
 
                 } catch (Exception e) {
@@ -70,7 +70,7 @@ public class PendingEventRetryStepConfig {
                     follow.increaseRetryCount();
 
                     if (follow.getRetryCount() == Follow.MAX_RETRY_COUNT) {
-                        follow.setStatus(Status.FAILED);
+                        follow.setFollowStatus(FollowStatus.FAILED);
                         log.warn("[배치] 최대 재시도 횟수 초과로 FAILED 상태로 전환: follow = {}", follow);
                     }
                     failureCount++;

@@ -20,7 +20,7 @@ public class FailedEventCleanupJobScheduler {
     /*
     *  FAILED 팔로우 삭제 스케줄러
     * */
-    @Scheduled(cron = "0 0 3 * * *")
+    @Scheduled(cron = "0 0 * * * *")
     public void runFailedFollowCleanupJob() {
         try {
             log.info("=== FAILED 팔로우 삭제 시작 ===");

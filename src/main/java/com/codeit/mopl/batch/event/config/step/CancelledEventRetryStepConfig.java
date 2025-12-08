@@ -1,7 +1,7 @@
 package com.codeit.mopl.batch.event.config.step;
 
 import com.codeit.mopl.domain.follow.entity.Follow;
-import com.codeit.mopl.domain.follow.entity.Status;
+import com.codeit.mopl.domain.follow.entity.FollowStatus;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.follow.service.FollowService;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +46,7 @@ public class CancelledEventRetryStepConfig {
             int failureCount = 0;
 
             // CANCELLED 상태인 팔로우 객체 조회
-            List<Follow> follows = followRepository.findByStatus(Status.CANCELLED);
+            List<Follow> follows = followRepository.findByStatus(FollowStatus.CANCELLED);
 
             if (follows.isEmpty()) {
                 log.info("[배치] CANCELLED 상태인 팔로우 객체가 없습니다: follows = {}", follows);
@@ -68,7 +68,7 @@ public class CancelledEventRetryStepConfig {
                     follow.increaseRetryCount();
 
                     if (follow.getRetryCount() == Follow.MAX_RETRY_COUNT) {
-                        follow.setStatus(Status.FAILED);
+                        follow.setFollowStatus(FollowStatus.FAILED);
                         log.warn("[배치] 최대 재시도 횟수 초과로 FAILED 상태로 전환: follow = {}", follow);
                     }
                     failureCount++;

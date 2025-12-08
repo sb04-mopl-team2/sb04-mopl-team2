@@ -35,7 +35,7 @@ public class Follow extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private Status status = Status.PENDING;
+    private FollowStatus followStatus = FollowStatus.PENDING;
 
     @Column(name = "retry_count", nullable = false)
     private int retryCount = 0;

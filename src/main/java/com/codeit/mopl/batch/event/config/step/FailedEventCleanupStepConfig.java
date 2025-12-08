@@ -1,7 +1,7 @@
 package com.codeit.mopl.batch.event.config.step;
 
 import com.codeit.mopl.domain.follow.entity.Follow;
-import com.codeit.mopl.domain.follow.entity.Status;
+import com.codeit.mopl.domain.follow.entity.FollowStatus;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +42,7 @@ public class FailedEventCleanupStepConfig {
             log.info("=== FAILED 팔로우 삭제 시작 ===");
 
             // FAILED 상태인 팔로우 객체 조회
-            List<Follow> follows = followRepository.findByStatus(Status.FAILED);
+            List<Follow> follows = followRepository.findByStatus(FollowStatus.FAILED);
 
             if (follows.isEmpty()) {
                 log.info("[배치] FAILED 상태인 팔로우 객체가 없습니다: follows = {}", follows);

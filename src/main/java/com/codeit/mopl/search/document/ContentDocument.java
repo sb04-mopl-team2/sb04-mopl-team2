@@ -12,13 +12,13 @@ import org.springframework.data.elasticsearch.annotations.Mapping;
 @Setter
 @Document(indexName = "content")
 @Mapping(mappingPath = "elasticsearch/content.json")
-public class ContentDocument extends AbstractDocument{
+public class ContentDocument extends AbstractDocument {
+  private String type;
   private String title;
   private String description;
   private String thumbnailUrl;
   private List<String> tags = new ArrayList<>();
-  private ContentType contentType;
   private Double averageRating = 0.0;
   private Integer reviewCount = 0;
-  private Integer watcherCount = 0;
+  private Long watcherCount = 0L;
 }

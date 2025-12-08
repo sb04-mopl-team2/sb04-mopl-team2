@@ -58,9 +58,6 @@ class KafkaConsumerTest {
   @Mock
   private SseEmitterRegistry sseEmitterRegistry;
 
-  @Mock
-  private FollowService followService;
-
   private KafkaConsumer kafkaConsumer;
 
   @Mock
@@ -83,7 +80,7 @@ class KafkaConsumerTest {
 
   @BeforeEach
   void setUp() {
-    kafkaConsumer = new KafkaConsumer(objectMapper, notificationService, followService, processedEventRepository, sseService, sseEmitterRegistry, mailService, redisStoreUtils);
+    kafkaConsumer = new KafkaConsumer(objectMapper, notificationService, processedEventRepository, sseService, sseEmitterRegistry, mailService, redisStoreUtils);
   }
 
   @Test
@@ -312,7 +309,7 @@ class KafkaConsumerTest {
 
     // then
     verify(processedEventRepository).findByEventIdAndEventType(playListId, EventType.PLAY_LIST_CREATED);
-    verify(followService).notifyFollowersOnPlaylistCreated(playListCreateEvent);
+    verify(notificationService).notifyFollowersOnPlaylistCreated(playListCreateEvent);
     verify(processedEventRepository).save(any(ProcessedEvent.class));
     verify(ack).acknowledge();
   }
@@ -337,7 +334,7 @@ class KafkaConsumerTest {
 
     // then
     verify(processedEventRepository).findByEventIdAndEventType(playListId, EventType.PLAY_LIST_CREATED);
-    verify(followService, never()).notifyFollowersOnPlaylistCreated(any());
+    verify(notificationService, never()).notifyFollowersOnPlaylistCreated(any());
     verify(processedEventRepository, never()).save(any());
     verify(ack).acknowledge();
   }
@@ -357,7 +354,7 @@ class KafkaConsumerTest {
     // then
     verify(processedEventRepository, never()).findByEventIdAndEventType(any(), any());
     verify(processedEventRepository, never()).save(any());
-    verify(followService, never()).notifyFollowersOnPlaylistCreated(any());
+    verify(notificationService, never()).notifyFollowersOnPlaylistCreated(any());
     verify(ack).acknowledge();
   }
 
@@ -377,7 +374,7 @@ class KafkaConsumerTest {
         .thenReturn(Optional.empty());
 
     doThrow(new RuntimeException("unexpected"))
-        .when(followService).notifyFollowersOnPlaylistCreated(playListCreateEvent);
+        .when(notificationService).notifyFollowersOnPlaylistCreated(playListCreateEvent);
 
     // when & then
     assertThatThrownBy(() -> kafkaConsumer.onPlayListCreated(json, ack))
@@ -407,7 +404,7 @@ class KafkaConsumerTest {
 
     // then
     verify(processedEventRepository).findByEventIdAndEventType(watchingSessionId, EventType.WATCH_SESSION_CREATED);
-    verify(followService).notifyFollowersOnWatchingEvent(watchingSessionCreateEvent);
+    verify(notificationService).notifyFollowersOnWatchingEvent(watchingSessionCreateEvent);
     verify(processedEventRepository).save(any(ProcessedEvent.class));
     verify(ack).acknowledge();
   }
@@ -432,7 +429,7 @@ class KafkaConsumerTest {
 
     // then
     verify(processedEventRepository).findByEventIdAndEventType(watchingSessionId, EventType.WATCH_SESSION_CREATED);
-    verify(followService, never()).notifyFollowersOnWatchingEvent(any());
+    verify(notificationService, never()).notifyFollowersOnWatchingEvent(any());
     verify(processedEventRepository, never()).save(any());
     verify(ack).acknowledge();
   }
@@ -452,7 +449,7 @@ class KafkaConsumerTest {
     // then
     verify(processedEventRepository, never()).findByEventIdAndEventType(any(), any());
     verify(processedEventRepository, never()).save(any());
-    verify(followService, never()).notifyFollowersOnWatchingEvent(any());
+    verify(notificationService, never()).notifyFollowersOnWatchingEvent(any());
     verify(ack).acknowledge();
   }
 
@@ -472,7 +469,7 @@ class KafkaConsumerTest {
         .thenReturn(Optional.empty());
 
     doThrow(new RuntimeException("unexpected"))
-        .when(followService).notifyFollowersOnWatchingEvent(watchingSessionCreateEvent);
+        .when(notificationService).notifyFollowersOnWatchingEvent(watchingSessionCreateEvent);
 
     // when & then
     assertThatThrownBy(() -> kafkaConsumer.onWatchingSessionCreated(json, ack))

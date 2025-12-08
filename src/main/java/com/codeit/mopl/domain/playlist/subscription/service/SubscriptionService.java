@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.playlist.subscription.service;
 
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.notification.template.NotificationMessage;
 import com.codeit.mopl.domain.notification.template.NotificationTemplate;
 import com.codeit.mopl.domain.notification.template.context.PlaylistSubscribedContext;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
@@ -78,11 +79,11 @@ public class SubscriptionService {
             new PlaylistSubscribedContext(subscriber.getName(), playlist.getTitle());
 
         NotificationTemplate template = NotificationTemplate.PLAYLIST_SUBSCRIBED;
-
+        NotificationMessage message = template.build(ctx);
         notificationService.createNotification(
             ownerId,
-            template.build(ctx).title(),
-            template.build(ctx).content(),
+            message.title(),
+            message.content(),
             Level.INFO
         );
         log.info("[플레이리스트] 플레이리스트 구독 알림 생성 - playlistId = {}, subscriberId = {}", playlistId, subscriberId);

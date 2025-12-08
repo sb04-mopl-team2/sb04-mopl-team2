@@ -4,6 +4,7 @@ import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.notification.template.NotificationMessage;
 import com.codeit.mopl.domain.notification.template.NotificationTemplate;
 import com.codeit.mopl.domain.notification.template.context.DirectMessageContext;
 import com.codeit.mopl.domain.notification.template.context.PlaylistContentAddedContext;
@@ -62,6 +63,7 @@ public class PlaylistItemService {
             new PlaylistContentAddedContext(playlist.getTitle(), content.getTitle());
 
         NotificationTemplate template = NotificationTemplate.PLAYLIST_CONTENT_ADDED;
+        NotificationMessage message = template.build(ctx);
 
         for (Subscription subscription : subscriptions) {
             UUID subscriberId = subscription.getSubscriber().getId();
@@ -70,8 +72,8 @@ public class PlaylistItemService {
             if (!subscriberId.equals(ownerId)) {
                 notificationService.createNotification(
                     subscriberId,
-                    template.build(ctx).title(),
-                    template.build(ctx).content(),
+                    message.title(),
+                    message.content(),
                     Level.INFO
                 );
             }

@@ -10,6 +10,7 @@ import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
+import com.codeit.mopl.domain.notification.template.NotificationMessage;
 import com.codeit.mopl.domain.notification.template.NotificationTemplate;
 import com.codeit.mopl.domain.notification.template.context.DirectMessageContext;
 import com.codeit.mopl.domain.notification.template.context.PlaylistCreatedContext;
@@ -173,11 +174,12 @@ public class NotificationService {
         new DirectMessageContext(directMessageDto.sender().name(), directMessageDto.content());
 
     NotificationTemplate template = NotificationTemplate.DM_CREATED;
+    NotificationMessage message = template.build(ctx);
 
     createNotification(
         receiverId,
-        template.build(ctx).title(),
-        template.build(ctx).content(),
+        message.title(),
+        message.content(),
         Level.INFO
     );
 
@@ -201,11 +203,12 @@ public class NotificationService {
           new PlaylistCreatedContext(username, playlistTitle);
 
       NotificationTemplate template = NotificationTemplate.PLAYLIST_CREATED;
+      NotificationMessage message = template.build(ctx);
 
       createNotification(
           receiverId,
-          template.build(ctx).title(),
-          template.build(ctx).content(),
+          message.title(),
+          message.content(),
           Level.INFO
       );
     }
@@ -228,11 +231,11 @@ public class NotificationService {
           new WatchingSessionStartedContext(username, contentTitle);
 
       NotificationTemplate template = NotificationTemplate.WATCHING_SESSION_STARTED;
-
+      NotificationMessage message = template.build(ctx);
       createNotification(
           receiverId,
-          template.build(ctx).title(),
-          template.build(ctx).content(),
+          message.title(),
+          message.content(),
           Level.INFO
       );
     }

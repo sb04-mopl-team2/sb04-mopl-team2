@@ -5,6 +5,7 @@ import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.notification.template.NotificationMessage;
 import com.codeit.mopl.domain.notification.template.NotificationTemplate;
 import com.codeit.mopl.domain.notification.template.context.DirectMessageContext;
 import com.codeit.mopl.domain.notification.template.context.RoleChangedContext;
@@ -86,11 +87,11 @@ public class KafkaConsumer {
                 new RoleChangedContext(event.beforeRole().name(), event.afterRole().name());
 
             NotificationTemplate template = NotificationTemplate.ROLE_CHANGED;
-
+            NotificationMessage message = template.build(ctx);
             notificationService.createNotification(
                 userId,
-                template.build(ctx).title(),
-                template.build(ctx).content(),
+                message.title(),
+                message.content(),
                 Level.INFO
             );
 

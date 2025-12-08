@@ -8,6 +8,7 @@ import com.codeit.mopl.domain.follow.mapper.FollowMapper;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.notification.template.NotificationMessage;
 import com.codeit.mopl.domain.notification.template.NotificationTemplate;
 import com.codeit.mopl.domain.notification.template.context.FollowCreatedContext;
 import com.codeit.mopl.domain.user.entity.User;
@@ -70,11 +71,11 @@ public class FollowService {
             new FollowCreatedContext(follower.getName());
 
         NotificationTemplate template = NotificationTemplate.FOLLOW_CREATED;
-
+        NotificationMessage message = template.build(ctx);
         notificationService.createNotification(
             followeeId,
-            template.build(ctx).title(),
-            template.build(ctx).content(),
+            message.title(),
+            message.content(),
             Level.INFO
         );
 

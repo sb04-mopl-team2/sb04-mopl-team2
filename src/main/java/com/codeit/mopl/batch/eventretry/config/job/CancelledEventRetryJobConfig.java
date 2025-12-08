@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 public class CancelledEventRetryJobConfig {
 
     private final JobRepository jobRepository;
-    private Step retryFollowerDecreaseStep;
+    private final Step retryFollowerDecreaseStep;
 
     /*
     *  팔로워 감소 재시도 Job

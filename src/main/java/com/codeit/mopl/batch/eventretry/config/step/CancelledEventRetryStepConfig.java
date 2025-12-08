@@ -43,7 +43,6 @@ public class CancelledEventRetryStepConfig {
     public Tasklet retryFollowerDecreaseTasklet() {
         return (contribution, chunkContext) -> {
             log.info("=== 팔로워 감소 재시도 시작 ===");
-            int successCount = 0;
             int failureCount = 0;
 
             // CANCELLED 상태인 팔로우 객체 조회
@@ -63,7 +62,6 @@ public class CancelledEventRetryStepConfig {
                     UUID followId = follow.getId();
                     UUID followeeId = follow.getFollowee().getId();
                     followService.processFollowerDecrease(followId, followeeId); // 팔로워 감소, 팔로우 객체 삭제
-                    successCount++;
 
                 } catch (Exception e) {
                     log.error("[배치] 팔로우 감소 재시도 실패: cancelledFollow = {}, errorMessage = {}", follow, e.getMessage(), e);
@@ -77,7 +75,7 @@ public class CancelledEventRetryStepConfig {
                 }
                 followRepository.save(follow);
             }
-            log.info("[배치] 팔로워 감소 재시도 처리 결과: total = {}, success = {}, failure = {}", totalCount, successCount, failureCount);
+            log.info("[배치] 팔로워 감소 재시도 처리 결과: total = {}, failure = {}", totalCount, failureCount);
             log.info("=== 팔로워 감소 재시도 완료 ===");
             return RepeatStatus.FINISHED;
         };

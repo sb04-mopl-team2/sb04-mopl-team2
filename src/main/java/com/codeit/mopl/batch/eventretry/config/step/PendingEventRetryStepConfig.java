@@ -43,7 +43,6 @@ public class PendingEventRetryStepConfig {
     public Tasklet retryFollowerIncreaseTasklet() {
         return (contribution, chunkContext) -> {
             log.info("=== 팔로워 증가 재시도 시작 ===");
-            int successCount = 0;
             int failureCount = 0;
 
             // PENDING 상태인 팔로우 객체 조회
@@ -65,7 +64,6 @@ public class PendingEventRetryStepConfig {
                     followService.processFollowerIncrease(followId, followeeId);
                     follow.setStatus(Status.CONFIRM);
                     follow.setRetryCount(0);
-                    successCount++;
 
                 } catch (Exception e) {
                     log.error("[배치] 팔로워 증가 재시도 실패: pendingFollow = {}, errorMessage = {}", follow, e.getMessage(), e);
@@ -80,7 +78,7 @@ public class PendingEventRetryStepConfig {
                 followRepository.save(follow);
             }
 
-            log.info("[배치] 팔로워 증가 재시도 처리 결과: total = {}, success = {}, failure = {}", totalCount, successCount, failureCount);
+            log.info("[배치] 팔로워 증가 재시도 처리 결과: total = {}, failure = {}", totalCount, failureCount);
             log.info("=== 팔로워 증가 재시도 완료 ===");
             return RepeatStatus.FINISHED;
         };

@@ -8,23 +8,18 @@ import com.codeit.mopl.domain.follow.mapper.FollowMapper;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
-import com.codeit.mopl.domain.notification.template.NotificationContext;
 import com.codeit.mopl.domain.notification.template.NotificationTemplate;
+import com.codeit.mopl.domain.notification.template.context.FollowCreatedContext;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
-import com.codeit.mopl.event.event.PlayListCreateEvent;
-import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.codeit.mopl.exception.follow.*;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
-
-import java.util.List;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -71,13 +66,15 @@ public class FollowService {
         eventPublisher.publishEvent(new FollowerIncreaseEvent(follow.getId(), followeeId));
 
         // 알람 발행
-        NotificationContext notificationContext =
-            new NotificationContext(follower.getName(),null, null, null);
+        FollowCreatedContext ctx =
+            new FollowCreatedContext(follower.getName());
+
+        NotificationTemplate template = NotificationTemplate.FOLLOW_CREATED;
 
         notificationService.createNotification(
             followeeId,
-            NotificationTemplate.FOLLOW_CREATED.title(notificationContext),
-            NotificationTemplate.FOLLOW_CREATED.content(notificationContext),
+            template.build(ctx).title(),
+            template.build(ctx).content(),
             Level.INFO
         );
 

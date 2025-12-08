@@ -5,6 +5,9 @@ import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.notification.template.NotificationTemplate;
+import com.codeit.mopl.domain.notification.template.context.DirectMessageContext;
+import com.codeit.mopl.domain.notification.template.context.RoleChangedContext;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.event.entity.EventType;
@@ -78,9 +81,19 @@ public class KafkaConsumer {
                 ack.acknowledge();
                 return;
             }
-            String title = "내 권한이 변경되었어요.";
-            String content = String.format("내 권한이 [%s]에서 [%s]로 변경되었어요.",event.beforeRole(), event.afterRole());
-            notificationService.createNotification(userId, title, content, Level.INFO);
+
+            RoleChangedContext ctx =
+                new RoleChangedContext(event.beforeRole().name(), event.afterRole().name());
+
+            NotificationTemplate template = NotificationTemplate.ROLE_CHANGED;
+
+            notificationService.createNotification(
+                userId,
+                template.build(ctx).title(),
+                template.build(ctx).content(),
+                Level.INFO
+            );
+
             processedEventRepository.save(new ProcessedEvent(event.eventId(), EventType.NOTIFICATION_CREATE));
             ack.acknowledge();
         } catch (JsonProcessingException e) {

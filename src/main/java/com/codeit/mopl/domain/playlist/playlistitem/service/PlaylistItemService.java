@@ -4,8 +4,9 @@ import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
-import com.codeit.mopl.domain.notification.template.NotificationContext;
 import com.codeit.mopl.domain.notification.template.NotificationTemplate;
+import com.codeit.mopl.domain.notification.template.context.DirectMessageContext;
+import com.codeit.mopl.domain.notification.template.context.PlaylistContentAddedContext;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.playlistitem.entity.PlaylistItem;
 import com.codeit.mopl.domain.playlist.playlistitem.repository.PlaylistItemRepository;
@@ -57,8 +58,10 @@ public class PlaylistItemService {
         // 구독자들에게 알림 생성함 (동기 처리)
         List<Subscription> subscriptions = subscriptionRepository.findByPlaylistId(playlistId);
 
-        NotificationContext notificationContext =
-            new NotificationContext(null, null, playlist.getTitle(), content.getTitle());
+        PlaylistContentAddedContext ctx =
+            new PlaylistContentAddedContext(playlist.getTitle(), content.getTitle());
+
+        NotificationTemplate template = NotificationTemplate.PLAYLIST_CONTENT_ADDED;
 
         for (Subscription subscription : subscriptions) {
             UUID subscriberId = subscription.getSubscriber().getId();
@@ -67,8 +70,8 @@ public class PlaylistItemService {
             if (!subscriberId.equals(ownerId)) {
                 notificationService.createNotification(
                     subscriberId,
-                    NotificationTemplate.SUBSCRIBED_PLAYLIST_CONTENT_ADDED.title(notificationContext),
-                    NotificationTemplate.SUBSCRIBED_PLAYLIST_CONTENT_ADDED.content(notificationContext),
+                    template.build(ctx).title(),
+                    template.build(ctx).content(),
                     Level.INFO
                 );
             }

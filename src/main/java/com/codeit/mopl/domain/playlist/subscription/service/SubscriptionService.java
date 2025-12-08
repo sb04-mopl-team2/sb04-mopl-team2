@@ -78,7 +78,7 @@ public class SubscriptionService {
             new NotificationContext(subscriber.getName(),null, playlist.getTitle(), null);
 
         notificationService.createNotification(
-            subscriberId,
+            ownerId,
             NotificationTemplate.PLAYLIST_SUBSCRIBED.title(notificationContext),
             NotificationTemplate.PLAYLIST_SUBSCRIBED.content(notificationContext),
             Level.INFO

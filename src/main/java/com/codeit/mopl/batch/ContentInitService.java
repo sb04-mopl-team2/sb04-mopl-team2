@@ -1,10 +1,11 @@
-package com.codeit.mopl.batch.tmdb.service;
+package com.codeit.mopl.batch;
 
 import com.codeit.mopl.batch.sportsdb.service.SportsService;
 import com.codeit.mopl.batch.tmdb.movie.service.MovieService;
 import com.codeit.mopl.batch.tmdb.tvseries.service.TvService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -18,8 +19,9 @@ public class ContentInitService {
 
   /**
    * Movie, TV, Sports 초기 데이터를 순차적으로 수집
-   * 비동기가 아닌 동기 방식으로 순차 실행
+   * 비동기 방식으로 백그라운드에서 실행
    */
+  @Async("taskExecutor")
   public void runInitialDataLoad() {
     log.info("=== 전체 컨텐츠 초기 데이터 수집 시작 (Movie + TV + Sports) ===");
 
@@ -49,7 +51,6 @@ public class ContentInitService {
 
     } catch (Exception e) {
       log.error("전체 컨텐츠 초기 데이터 수집 실패", e);
-      throw new RuntimeException("전체 컨텐츠 초기 데이터 수집 실패", e);
     }
   }
 }

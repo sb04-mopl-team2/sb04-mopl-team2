@@ -69,7 +69,7 @@ public class MovieService {
       log.error("영화 초기 데이터 수집 실패", e);
       throw new InitialDataLoadException(
           BatchErrorCode.INITIAL_DATA_LOAD_FAILED,
-          Map.of("errorMessage", e.getMessage())
+          Map.of("errorMessage", e.getMessage() != null ? e.getMessage() : "Unknown error")
       );
     }
   }

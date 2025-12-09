@@ -15,8 +15,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * TMDB API 호출의 공통 로직을 담은 추상 서비스
- * Movie와 TV 서비스가 이를 상속받아 구현
+ * TMDB API 호출의 공통 로직을 담은 추상 서비스 Movie와 TV 서비스가 이를 상속받아 구현
  *
  * @param <T> API 응답 아이템 타입 (Movie 또는 TV)
  * @param <R> API 응답 타입 (TmdbDiscoverResponse 구현체)
@@ -58,8 +57,7 @@ public abstract class AbstractTmdbApiService<T, R extends TmdbDiscoverResponse<T
   }
 
   /**
-   * 특정 날짜의 컨텐츠를 조회하고 저장 (응답 객체 반환)
-   * 첫 페이지 호출 시 totalPages 정보를 함께 반환받기 위해 사용
+   * 특정 날짜의 컨텐츠를 조회하고 저장 (응답 객체 반환) 첫 페이지 호출 시 totalPages 정보를 함께 반환받기 위해 사용
    *
    * @param from 조회 날짜
    * @param page 페이지 번호
@@ -73,25 +71,25 @@ public abstract class AbstractTmdbApiService<T, R extends TmdbDiscoverResponse<T
         .uri(uriBuilder -> buildDiscoverUri(uriBuilder, from, page))
         .retrieve()
         .bodyToMono(getResponseClass())
-        .publishOn(Schedulers.boundedElastic())
-        .doOnNext(response -> {
-          Flux.fromIterable(response.getResults())
+        .flatMap(response -> {
+          List<T> results = response.getResults() != null ? response.getResults() : List.of();
+          return Flux.fromIterable(results)
               .map(this::mapToContent)
               .publishOn(Schedulers.boundedElastic())
-              .doOnNext(contentRepository::save)
-              .blockLast();
-          log.info("[TMDB] {} 조회 및 저장 완료 조회 수 = {}",
-              getContentType(), response.getResults().size());
+              .map(contentRepository::save)
+              .collectList()
+              .doOnSuccess(saved -> log.info("[TMDB] {} 조회 및 저장 완료 조회 수 = {}",
+                  getContentType(), saved.size()))
+              .thenReturn(response);
         });
   }
 
   /**
-   * API 호출을 위한 URI 빌드
-   * 하위 클래스에서 구체적인 엔드포인트와 파라미터 구현
+   * API 호출을 위한 URI 빌드 하위 클래스에서 구체적인 엔드포인트와 파라미터 구현
    *
    * @param builder URI 빌더
-   * @param from 조회 날짜
-   * @param page 페이지 번호
+   * @param from    조회 날짜
+   * @param page    페이지 번호
    * @return 빌드된 URI
    */
   protected abstract URI buildDiscoverUri(UriBuilder builder, LocalDate from, int page);

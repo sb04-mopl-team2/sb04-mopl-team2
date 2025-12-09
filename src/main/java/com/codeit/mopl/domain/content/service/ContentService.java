@@ -8,8 +8,11 @@ import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
+import com.codeit.mopl.domain.user.entity.ImageContentType;
 import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
+import com.codeit.mopl.exception.content.InvalidImageFileException;
+import com.codeit.mopl.s3.S3Storage;
 import jakarta.validation.Valid;
 import java.util.Map;
 import java.util.UUID;
@@ -17,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
@@ -26,6 +30,7 @@ public class ContentService {
 
   private final ContentRepository contentRepository;
   private final ContentMapper contentMapper;
+  private final S3Storage s3Storage;
 
   @Transactional
   public ContentDto createContent(@Valid ContentCreateRequest request, MultipartFile thumbnail) {
@@ -125,11 +130,38 @@ public class ContentService {
   // S3 파일 업로드 이미지 생성 메서드 기능 완성 후 리팩토링 예정
   private String uploadThumbnail(MultipartFile thumbnail) {
     if (thumbnail == null || thumbnail.isEmpty()) {
-      log.debug("[썸네일 업로드 스킵] thumbnail이 없음");
-      return null;
+      log.debug("[썸네일 업로드] thumbnail이 없음");
+      return "https://buly.kr/BIVulPE";
     }
-    String imageUrl = "thumbnailUrl";
+
+    validateImage(thumbnail);
+    log.debug("[콘텐츠 관리] 썸네일 업로드 생성");
+    String extension = getFileExtension(thumbnail.getOriginalFilename());
+    String key = UUID.randomUUID() + extension;
+    s3Storage.upload(thumbnail,key);
+
+    String imageUrl = s3Storage.getPresignedUrl(key);
     log.debug("[썸네일 업로드 완료] imageUrl={}", imageUrl);
     return imageUrl;
+  }
+
+  private String getFileExtension(String filename) {
+    if (!StringUtils.hasText(filename)) {
+      throw new InvalidImageFileException(ContentErrorCode.INVALID_IMAGE_FILE, Map.of("filename", String.valueOf(filename)));
+    }
+    int dotIndex = filename.lastIndexOf(".");
+    if (dotIndex == -1 || dotIndex == filename.length() - 1) {
+      throw new InvalidImageFileException(ContentErrorCode.INVALID_IMAGE_FILE, Map.of("filename", filename));
+    }
+    return filename.substring(dotIndex);
+  }
+
+  private void validateImage(MultipartFile profileImage) {
+    if (profileImage.isEmpty()) {
+      throw new InvalidImageFileException(ContentErrorCode.INVALID_IMAGE_FILE, Map.of("file", "empty"));
+    }
+    if (!ImageContentType.isImage(profileImage.getContentType())) {
+      throw new InvalidImageFileException(ContentErrorCode.INVALID_IMAGE_FILE, Map.of("contentType",String.valueOf(profileImage.getContentType())));
+    }
   }
 }

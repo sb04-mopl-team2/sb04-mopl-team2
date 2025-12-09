@@ -30,6 +30,7 @@ public class Content extends UpdatableEntity {
   @Column(nullable = false, columnDefinition = "TEXT")
   private String description;
 
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String thumbnailUrl;
 
   @ElementCollection

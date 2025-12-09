@@ -1,6 +1,6 @@
 package com.codeit.mopl.batch.controller;
 
-import com.codeit.mopl.batch.tmdb.movie.service.MovieService;
+import com.codeit.mopl.batch.ContentInitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/batch")
 public class BatchController {
 
-  private final MovieService movieService;
+  private final ContentInitService contentInitService;
 
   @PostMapping("/init")
   public ResponseEntity<String> initData() {
-    movieService.runInitialDataLoad();
-    return ResponseEntity.ok("초기 데이터 수집 Job 실행 완료");
+    contentInitService.runInitialDataLoad();
+    return ResponseEntity.ok("초기 데이터 수집이 백그라운드에서 시작되었습니다.");
   }
 }
 

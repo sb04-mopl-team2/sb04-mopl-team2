@@ -12,6 +12,7 @@ import org.mapstruct.Named;
 @Mapper(componentModel = "spring")
 public interface TmdbMovieMapper {
 
+  String DEFAULT_THUMBNAIL_URL = "https://buly.kr/BIVulPE";
   String BASE_THUMBNAIL_URL = "https://image.tmdb.org/t/p/w500";
 
   @Mapping(source = "title", target = "title")
@@ -36,7 +37,7 @@ public interface TmdbMovieMapper {
 
   @Named("buildThumbnailUrl")
   default String buildThumbnailUrl(String posterPath) {
-    if (posterPath == null || posterPath.isEmpty()) return "https://buly.kr/BIVulPE";
+    if (posterPath == null || posterPath.isEmpty()) return DEFAULT_THUMBNAIL_URL;
     return BASE_THUMBNAIL_URL + posterPath;
   }
 }

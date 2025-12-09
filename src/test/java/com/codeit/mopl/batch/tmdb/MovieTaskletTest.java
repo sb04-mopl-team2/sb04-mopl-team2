@@ -8,7 +8,7 @@ import static org.mockito.Mockito.mock;
 
 import com.codeit.mopl.batch.tmdb.movie.config.MovieStepConfig;
 import com.codeit.mopl.batch.tmdb.movie.dto.TmdbDiscoverMovieResponse;
-import com.codeit.mopl.batch.tmdb.service.TmdbApiService;
+import com.codeit.mopl.batch.tmdb.movie.service.MovieApiService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,21 +17,21 @@ import reactor.core.publisher.Mono;
 
 public class MovieTaskletTest {
 
-  private TmdbApiService tmdbApiService;
+  private MovieApiService movieApiService;
   private MovieStepConfig stepConfig;
 
   @BeforeEach
   void setUp() {
     // 외부 API를 모킹
-    tmdbApiService = mock(TmdbApiService.class);
-    stepConfig = new MovieStepConfig(tmdbApiService, null, null);
+    movieApiService = mock(MovieApiService.class);
+    stepConfig = new MovieStepConfig(movieApiService, null, null);
   }
 
   @Test
   @DisplayName("일일 영화 업데이트 Tasklet이 정상적으로 실행되는지 확인")
   void dailyMovieUpdateTasklet_shouldRunSuccessfully() throws Exception {
     // given
-    given(tmdbApiService.discoverMoviesFromDateWithResponse(any(), anyInt()))
+    given(movieApiService.discoverContentFromDateWithResponse(any(), anyInt()))
         .willReturn(Mono.just(new TmdbDiscoverMovieResponse()));
 
     // when

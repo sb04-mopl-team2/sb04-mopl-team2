@@ -1,5 +1,7 @@
 package com.codeit.mopl.domain.playlist.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
@@ -10,6 +12,8 @@ import com.codeit.mopl.domain.playlist.playlistitem.entity.PlaylistItem;
 import com.codeit.mopl.domain.playlist.subscription.entity.Subscription;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.util.QueryDslConfig;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,11 +24,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import(QueryDslConfig.class)
@@ -57,7 +56,7 @@ public class PlaylistRepositoryTest {
         content2 = new Content();
         content2.setTitle("test content2");
         content2.setDescription("test content2");
-        content2.setContentType(ContentType.SPORT);
+        content2.setContentType(ContentType.SPORTS);
         em.persistAndFlush(content2);
 
         playlist1 = new Playlist();

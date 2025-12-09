@@ -6,6 +6,7 @@ import static org.mockito.Mockito.any;
 
 import com.codeit.mopl.batch.tmdb.movie.dto.TmdbDiscoverMovieResponse;
 import com.codeit.mopl.batch.tmdb.movie.mapper.TmdbMovieMapper;
+import com.codeit.mopl.batch.tmdb.movie.service.MovieApiService;
 import com.codeit.mopl.domain.content.ContentTestFactory;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
@@ -27,7 +28,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 @ExtendWith(MockitoExtension.class)
-class TmdbApiServiceTest {
+class MovieApiServiceTest {
 
   private MockWebServer mockWebServer;
 
@@ -38,7 +39,7 @@ class TmdbApiServiceTest {
   private ContentRepository contentRepository;
 
   @InjectMocks
-  private TmdbApiService tmdbApiService;
+  private MovieApiService movieApiService;
 
   @BeforeEach
   void setUp() throws Exception {
@@ -49,7 +50,7 @@ class TmdbApiServiceTest {
         .baseUrl(mockWebServer.url("/").toString())
         .build();
 
-    tmdbApiService = new TmdbApiService(webClient, movieMapper, contentRepository);
+    movieApiService = new MovieApiService(webClient, contentRepository, movieMapper);
   }
 
   @AfterEach
@@ -59,7 +60,8 @@ class TmdbApiServiceTest {
 
   @Test
   @DisplayName("콘텐츠 수집을 위한 api 호출 검증")
-  void discoverMoviesFromDate() {
+  void discoverContentFromDate() {
+    // given
     String mockJson = """
             {
               "page": 1,
@@ -98,7 +100,7 @@ class TmdbApiServiceTest {
     given(contentRepository.save(expectedContent)).willReturn(expectedContent);
 
     // when
-    Mono<List<Content>> result = tmdbApiService.discoverMoviesFromDate(LocalDate.now(), 1);
+    Mono<List<Content>> result = movieApiService.discoverContentFromDate(LocalDate.now(), 1);
 
     // then
     StepVerifier.create(result)

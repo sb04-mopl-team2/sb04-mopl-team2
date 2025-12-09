@@ -1,7 +1,7 @@
 package com.codeit.mopl.batch.tmdb.tvseries.mapper;
 
 import com.codeit.mopl.batch.tmdb.tvseries.TvGenre;
-import com.codeit.mopl.batch.tmdb.tvseries.dto.TmdbDiscoverTvResponse;
+import com.codeit.mopl.batch.tmdb.tvseries.dto.TmdbDiscoverTvResponse.TvShow;
 import com.codeit.mopl.domain.content.entity.Content;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,6 +11,8 @@ import org.mapstruct.Named;
 
 @Mapper(componentModel = "spring")
 public interface TmdbTvMapper {
+
+  String DEFAULT_THUMBNAIL_URL = "https://buly.kr/BIVulPE";
 
   String BASE_THUMBNAIL_URL = "https://image.tmdb.org/t/p/w500";
 
@@ -23,7 +25,7 @@ public interface TmdbTvMapper {
   @Mapping(target = "reviewCount", ignore = true)
   @Mapping(target = "updatedAt", ignore = true)
   @Mapping(target = "watcherCount", ignore = true)
-  Content toContent(TmdbDiscoverTvResponse.TvShow tvShow);
+  Content toContent(TvShow tvShow);
 
   @Named("mapGenresToTags")
   default List<String> mapGenresToTags(List<Integer> genreIds) {
@@ -37,7 +39,7 @@ public interface TmdbTvMapper {
   @Named("buildThumbnailUrl")
   default String buildThumbnailUrl(String posterPath) {
     if (posterPath == null || posterPath.isEmpty()) {
-      return "https://buly.kr/BIVulPE";
+      return DEFAULT_THUMBNAIL_URL;
     }
     return BASE_THUMBNAIL_URL + posterPath;
   }

@@ -1,4 +1,4 @@
-package com.codeit.mopl.betterKorean;
+package com.codeit.mopl.config.betterKorean;
 
 import java.util.ArrayList;
 import java.util.Arrays;

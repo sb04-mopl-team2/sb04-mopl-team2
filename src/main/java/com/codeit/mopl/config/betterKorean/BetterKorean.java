@@ -1,4 +1,4 @@
-package com.codeit.mopl.betterKorean;
+package com.codeit.mopl.config.betterKorean;
 
 
 public class BetterKorean {

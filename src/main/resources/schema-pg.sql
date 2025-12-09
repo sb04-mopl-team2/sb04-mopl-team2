@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS follows
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     follower_id UUID NOT NULL,
     followee_id UUID NOT NULL,
-    followStatus VARCHAR(255) NOT NULL DEFAULT 'PENDING',
+    follow_status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
     retry_count INT NOT NULL DEFAULT 0,
 
     FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,

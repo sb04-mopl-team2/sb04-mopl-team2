@@ -1,7 +1,9 @@
 package com.codeit.mopl.batch.sportsdb.config;
 
 import com.codeit.mopl.batch.sportsdb.service.SportsDbApiService;
+import com.codeit.mopl.domain.content.entity.Content;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Step;
@@ -42,7 +44,7 @@ public class SportsStepConfig {
       log.info("수집 대상 날짜: {}", tomorrow);
 
       // 해당 날짜의 축구 경기 조회 및 저장
-      var savedContents = sportsDbApiService.fetchSoccerEventsByDate(tomorrow).block();
+      List<Content> savedContents = sportsDbApiService.fetchSoccerEventsByDate(tomorrow).block();
 
       if (savedContents == null || savedContents.isEmpty()) {
         log.warn("날짜 {}의 축구 경기 정보가 없습니다.", tomorrow);

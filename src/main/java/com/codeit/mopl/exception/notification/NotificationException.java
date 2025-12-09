@@ -1,33 +1,15 @@
 package com.codeit.mopl.exception.notification;
 
 
+import com.codeit.mopl.exception.global.MoplException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
 
 @Getter
-public class NotificationException extends RuntimeException {
-
-    private final Instant timestamp;
-    private final NotificationErrorCode notificationErrorCode;
-    private final Map<String, Object> details;
-
-    public NotificationException(NotificationErrorCode notificationErrorCode) {
-        super(notificationErrorCode.getMessage());
-        this.timestamp = Instant.now();
-        this.notificationErrorCode = notificationErrorCode;
-        this.details = new HashMap<>();
-    }
-
-    public NotificationException(NotificationErrorCode notificationErrorCode, Throwable cause) {
-        super(notificationErrorCode.getMessage(), cause);
-        this.timestamp = Instant.now();
-        this.notificationErrorCode = notificationErrorCode;
-        this.details = new HashMap<>();
-    }
-
-    public void addDetail(String key, Object value) {
-        this.details.put(key, value);
+public class NotificationException extends MoplException {
+    public NotificationException(NotificationErrorCode notificationErrorCode, Map<String, Object> details) {
+        super(notificationErrorCode, details);
     }
 }

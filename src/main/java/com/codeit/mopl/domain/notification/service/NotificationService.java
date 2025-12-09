@@ -17,6 +17,7 @@ import com.codeit.mopl.domain.notification.template.context.PlaylistCreatedConte
 import com.codeit.mopl.domain.notification.template.context.WatchingSessionStartedContext;
 import com.codeit.mopl.event.event.PlayListCreateEvent;
 import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
+import com.codeit.mopl.exception.notification.NotificationErrorCode;
 import com.codeit.mopl.exception.notification.NotificationForbidden;
 import com.codeit.mopl.exception.notification.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
@@ -40,6 +41,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
+@Transactional
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -53,13 +55,15 @@ public class NotificationService {
   private final FollowRepository followRepository;
 
   public static final String NOTIFICATIONS_FIRST_PAGE = "notifications:first-page";
+  public static final String EVENT_NOTIFICATIONS = "notifications";
+  public static final String EVENT_DIRECT_MESSAGES = "direct-messages";
 
+  @Transactional(readOnly = true)
   @Cacheable(
       cacheNames = NOTIFICATIONS_FIRST_PAGE,
       key = "T(java.lang.String).format('%s:%s:%s:%s', #userId, #limit, #sortDirection, #sortBy)",
       condition = "#cursor == null && #idAfter == null"
   )
-  @Transactional(readOnly = true)
   public CursorResponseNotificationDto getNotifications(
       UUID userId,
       String cursor,
@@ -104,34 +108,24 @@ public class NotificationService {
 
     long totalCount = getTotalCount(userId);
 
-    log.info("[알림] 알림 조회 종료, userId = {}, notificationListSize = {}, hasNext = {}, totalCount = {}",
-        userId, data.size(), hasNext, totalCount);
-
     CursorResponseNotificationDto cursorResponseNotificationDto = new CursorResponseNotificationDto(
         data, nextCursor, nextIdAfter, hasNext, totalCount, responseSortBy, sortDirection);
 
-    log.info("[알림] 알림 조회 종료, userId={}, resultSize={}, hasNext={}, totalCount={}",
-        userId, cursorResponseNotificationDto.data().size(), cursorResponseNotificationDto.hasNext(), cursorResponseNotificationDto.totalCount());
+    log.info("[알림] 알림 조회 종료, userId = {}, size = {}, hasNext = {}, totalCount = {}",
+        userId, data.size(), hasNext, totalCount);
 
     return cursorResponseNotificationDto;
   }
 
-  @Transactional
   public void deleteNotification(UUID userId, UUID notificationId) {
-
     log.info("[알림] 알림 삭제 시작, userId = {}, notificationId = {}", userId, notificationId);
-
-    Notification notification = notificationRepository.findById(notificationId)
-        .orElseThrow(() -> {
-          log.warn("[알림] 알림 삭제 실패, 알림을 찾을 수 없음, notificationId = {}", notificationId);
-          return new NotificationNotFoundException();
-        });
+    Notification notification = getOwnedNotification(userId, notificationId);
 
     UUID ownerId = notification.getUser().getId();
     if (!ownerId.equals(userId)) {
       log.warn("[알림] 알림 삭제 실패, 알림을 삭제할 권한이 없음, userId = {}, notificationId = {}, ownerId = {}",
           userId, notificationId, ownerId);
-      throw new NotificationForbidden();
+      throw new NotificationForbidden(NotificationErrorCode.NOTIFICATION_FORBIDDEN, Map.of("notificationId", notificationId));
     }
 
     notification.setStatus(Status.READ);
@@ -141,7 +135,6 @@ public class NotificationService {
     log.info("[알림] 알림 삭제 종료, notificationId={}", notificationId);
   }
 
-  @Transactional
   public void createNotification(UUID userId, String title, String content, Level level) {
     log.info("[알림] 알림 생성 시작, userId = {}, title = {}, content = {}, level = {}", userId, title, content, level);
 
@@ -156,19 +149,14 @@ public class NotificationService {
     log.info("[알림] 알림 생성 SSE 전송 호출 시작, notificationDto = {}", notificationDto);
 
     UUID receiverId = notificationDto.receiverId();
-    String eventName = "notifications";
-    Object data = notificationDto;
-    sseService.send(receiverId, eventName, data);
+    sseService.send(receiverId, EVENT_NOTIFICATIONS, notificationDto);
     log.info("[알림] 알림 생성 SSE 전송 호출 종료, notificationDto = {}", notificationDto);
   }
 
-  @Transactional
   public void sendDirectMessage(DirectMessageDto directMessageDto) {
     log.info("[알림] DM 생성 SSE 전송 호출 시작, notificationDto = {}", directMessageDto);
 
     UUID receiverId = directMessageDto.receiver().userId();
-    String eventName = "direct-messages";
-    Object data = directMessageDto;
 
     DirectMessageContext ctx =
         new DirectMessageContext(directMessageDto.sender().name(), directMessageDto.content());
@@ -183,11 +171,10 @@ public class NotificationService {
         Level.INFO
     );
 
-    sseService.send(receiverId, eventName, data);
+    sseService.send(receiverId, EVENT_DIRECT_MESSAGES, directMessageDto);
     log.info("[알림] DM 생성 SSE 전송 호출 종료, notificationDto = {}", directMessageDto);
   }
 
-  @Transactional
   public void notifyFollowersOnPlaylistCreated(PlayListCreateEvent playListCreateEvent) {
     log.info("[알림] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 시작 : playListId = {}", playListCreateEvent.playListId());
     UUID ownerId = playListCreateEvent.ownerId();
@@ -215,7 +202,6 @@ public class NotificationService {
     log.info("[알림] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 완료 : playListId = {}", playListCreateEvent.playListId());
   }
 
-  @Transactional
   public void notifyFollowersOnWatchingEvent(WatchingSessionCreateEvent watchingSessionCreateEvent) {
     log.info("[알림] 팔로우한 유저가 실시간 콘텐츠 시청시 팔로워 알림 송신 시작 : watchingSessionId = {}", watchingSessionCreateEvent.watchingSessionId());
     UUID ownerId = watchingSessionCreateEvent.ownerId();
@@ -282,5 +268,22 @@ public class NotificationService {
       stringRedisTemplate.delete(keys);
       log.info("[알림] 알림 조회 캐싱 초기화, userId = {}, evictedKeys = {}", userId, keys.size());
     }
+  }
+
+  private Notification getOwnedNotification(UUID userId, UUID notificationId) {
+    Notification notification = notificationRepository.findById(notificationId)
+        .orElseThrow(() -> {
+          log.warn("[알림] 알림 조회 실패, 알림을 찾을 수 없음, notificationId = {}", notificationId);
+          return new NotificationNotFoundException(NotificationErrorCode.NOTIFICATION_NOT_FOUND, Map.of("notificationId", notificationId));
+        });
+
+    UUID ownerId = notification.getUser().getId();
+    if (!ownerId.equals(userId)) {
+      log.warn("[알림] 권한 없음, userId = {}, notificationId = {}, ownerId = {}",
+          userId, notificationId, ownerId);
+      throw new NotificationForbidden(NotificationErrorCode.NOTIFICATION_FORBIDDEN, Map.of("userId", userId, "notificationId", notificationId));
+    }
+
+    return notification;
   }
 }

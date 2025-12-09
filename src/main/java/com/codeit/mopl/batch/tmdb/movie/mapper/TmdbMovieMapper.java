@@ -1,7 +1,7 @@
-package com.codeit.mopl.batch.tmdb.mapper;
+package com.codeit.mopl.batch.tmdb.movie.mapper;
 
-import com.codeit.mopl.batch.tmdb.MovieGenre;
-import com.codeit.mopl.batch.tmdb.dto.TmdbDiscoverMovieResponse;
+import com.codeit.mopl.batch.tmdb.movie.MovieGenre;
+import com.codeit.mopl.batch.tmdb.movie.dto.TmdbDiscoverMovieResponse;
 import com.codeit.mopl.domain.content.entity.Content;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,6 +12,7 @@ import org.mapstruct.Named;
 @Mapper(componentModel = "spring")
 public interface TmdbMovieMapper {
 
+  String DEFAULT_THUMBNAIL_URL = "https://buly.kr/BIVulPE";
   String BASE_THUMBNAIL_URL = "https://image.tmdb.org/t/p/w500";
 
   @Mapping(source = "title", target = "title")
@@ -36,7 +37,7 @@ public interface TmdbMovieMapper {
 
   @Named("buildThumbnailUrl")
   default String buildThumbnailUrl(String posterPath) {
-    if (posterPath == null || posterPath.isEmpty()) return "https://buly.kr/BIVulPE";
+    if (posterPath == null || posterPath.isEmpty()) return DEFAULT_THUMBNAIL_URL;
     return BASE_THUMBNAIL_URL + posterPath;
   }
 }

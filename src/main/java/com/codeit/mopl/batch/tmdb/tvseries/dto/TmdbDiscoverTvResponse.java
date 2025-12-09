@@ -1,5 +1,7 @@
-package com.codeit.mopl.batch.tmdb.dto;
+package com.codeit.mopl.batch.tmdb.tvseries.dto;
 
+import com.codeit.mopl.batch.tmdb.base.dto.TmdbDiscoverResponse;
+import com.codeit.mopl.batch.tmdb.tvseries.dto.TmdbDiscoverTvResponse.TvShow;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import lombok.Getter;
@@ -7,11 +9,11 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class TmdbDiscoverMovieResponse {
+public class TmdbDiscoverTvResponse implements TmdbDiscoverResponse<TvShow> {
 
   private int page;
 
-  private List<Movie> results;
+  private List<TvShow> results;
 
   @JsonProperty("total_pages")
   private int totalPages;
@@ -21,7 +23,7 @@ public class TmdbDiscoverMovieResponse {
 
   @Getter
   @Setter
-  public static class Movie {
+  public static class TvShow {
 
     private boolean adult;
 
@@ -33,11 +35,14 @@ public class TmdbDiscoverMovieResponse {
 
     private int id;
 
+    @JsonProperty("origin_country")
+    private List<String> originCountry;
+
     @JsonProperty("original_language")
     private String originalLanguage;
 
-    @JsonProperty("original_title")
-    private String originalTitle;
+    @JsonProperty("original_name")
+    private String originalName;
 
     private String overview;
 
@@ -46,12 +51,10 @@ public class TmdbDiscoverMovieResponse {
     @JsonProperty("poster_path")
     private String posterPath;
 
-    @JsonProperty("release_date")
-    private String releaseDate;
+    @JsonProperty("first_air_date")
+    private String firstAirDate;
 
-    private String title;
-
-    private boolean video;
+    private String name;
 
     @JsonProperty("vote_average")
     private double voteAverage;

@@ -1,4 +1,4 @@
-package com.codeit.mopl.batch.tmdb;
+package com.codeit.mopl.batch.tmdb.movie;
 
 import java.util.Arrays;
 import lombok.Getter;

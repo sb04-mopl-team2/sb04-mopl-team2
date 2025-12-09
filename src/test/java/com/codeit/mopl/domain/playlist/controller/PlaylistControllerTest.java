@@ -549,10 +549,10 @@ public class PlaylistControllerTest {
     @Test
     @DisplayName("플레이리스트에서 콘텐츠 삭제 - 해당 콘텐츠가 플레이리스트 내 존재하지 않으면 404예외 발생함")
     void deleteContentFromPlaylistFailWithPlaylistItemNotFound() throws Exception {
-        //when
+        //given
         UUID playlistId = UUID.randomUUID();
         UUID contentId = UUID.randomUUID();
-        doThrow(PlaylistItemNotFoundException.withId(playlistId))
+        doThrow(PlaylistItemNotFoundException.withId(contentId))
                 .when(playlistItemService)
                 .deleteContent(any(UUID.class),any(UUID.class),any(UUID.class));
         //when

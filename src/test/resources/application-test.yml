@@ -23,6 +23,20 @@ spring:
       mode: always
       schema-locations: classpath:schema-h2.sql
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: mopl-notification
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        enable.auto.commit: false
+    listener:
+      ack-mode: MANUAL
 admin:
   email: ${ADMIN_EMAIL}
   name: ${ADMIN_NAME}

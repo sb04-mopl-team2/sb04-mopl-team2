@@ -48,5 +48,8 @@ USER app
 # 포트 노출
 EXPOSE 8081
 
+# JVM 메모리 제한 (ECS 137 OOM 방지)
+ENV JAVA_TOOL_OPTIONS="-Xms512m -Xmx1536m"
+
 # 실행 명령
 ENTRYPOINT ["sh", "-c", "java ${JVM_OPTS} -jar app.jar"]

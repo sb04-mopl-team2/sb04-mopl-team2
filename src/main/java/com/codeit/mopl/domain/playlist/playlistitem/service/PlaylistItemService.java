@@ -10,6 +10,8 @@ import com.codeit.mopl.domain.playlist.playlistitem.repository.PlaylistItemRepos
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.playlist.subscription.entity.Subscription;
 import com.codeit.mopl.domain.playlist.subscription.repository.SubscriptionRepository;
+import com.codeit.mopl.exception.content.ContentErrorCode;
+import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.playlist.PlaylistItemNotFoundException;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
 import com.codeit.mopl.exception.playlist.PlaylistUpdateForbiddenException;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -42,7 +45,10 @@ public class PlaylistItemService {
                     return PlaylistNotFoundException.withId(playlistId);
                 });
         Content content = contentRepository.findById(contentId)
-                .orElseThrow(()-> new EntityNotFoundException("커스텀 예외 추가되면 대체 예정"));
+                .orElseThrow(()-> {
+                    log.warn("[플레이리스트] 플레이리스트에 콘텐츠 추가 실패 - 콘텐츠가 존재하지 않음 - contentId = {}", contentId);
+                    return new ContentNotFoundException(ContentErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId));
+                });
 
         if (!ownerId.equals(playlist.getUser().getId())) {
             log.warn("[플레이리스트] 플레이리스트 콘텐츠 추가 실패 - 플레이리스트 변경 권한 없음 - userId = {}", ownerId);

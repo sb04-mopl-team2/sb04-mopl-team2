@@ -9,7 +9,7 @@ import java.util.UUID;
 public class SubscriptionNotFoundException extends PlaylistException {
     private SubscriptionNotFoundException() { super(PlaylistErrorCode.SUBSCRIPTION_NOT_FOUND, new HashMap<>());}
 
-    public static SubscriptionNotFoundException withId(UUID subscriberId, UUID playlistId) {
+    public static SubscriptionNotFoundException withId(UUID playlistId, UUID subscriberId) {
         SubscriptionNotFoundException ex = new SubscriptionNotFoundException();
         ex.getDetails().put("playlistId", playlistId);
         ex.getDetails().put("subscriberId", subscriberId);

@@ -1,20 +1,29 @@
 package com.codeit.mopl.config;
 
-import com.codeit.mopl.oauth.client.GoogleClientProperties;
-import com.codeit.mopl.oauth.client.KakaoClientProperties;
-import com.codeit.mopl.oauth.service.OAuth2UserService;
+import static org.springframework.security.config.Customizer.withDefaults;
+
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.oauth.client.GoogleClientProperties;
+import com.codeit.mopl.oauth.client.KakaoClientProperties;
+import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.security.CustomUserDetailsService;
 import com.codeit.mopl.security.TempPasswordAuthenticationProvider;
 import com.codeit.mopl.security.jwt.filter.JwtAuthenticationFilter;
-import com.codeit.mopl.security.jwt.handler.*;
+import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
+import com.codeit.mopl.security.jwt.handler.JwtLoginSuccessHandler;
+import com.codeit.mopl.security.jwt.handler.JwtLogoutHandler;
+import com.codeit.mopl.security.jwt.handler.LoginFailureHandler;
+import com.codeit.mopl.security.jwt.handler.OAuth2UserSuccessHandler;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -43,15 +52,13 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
-import org.springframework.security.web.csrf.*;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.util.StringUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Supplier;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableMethodSecurity
@@ -109,6 +116,7 @@ public class SecurityConfig {
                                 .accessDeniedHandler(new AccessDeniedHandlerImpl())
                 )
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/api/batch/init").permitAll() //초기 데이터 세팅
                         .requestMatchers("/api/auth/csrf-token").permitAll()  // csrf-token 조회
                         .requestMatchers("/api/auth/sign-in").permitAll()  // 로그인
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()  // 회원가입

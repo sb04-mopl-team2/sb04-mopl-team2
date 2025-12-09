@@ -2,7 +2,6 @@ package com.codeit.mopl.domain.watchingsession.service;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -10,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.domain.user.entity.User;
@@ -98,7 +98,7 @@ public class WatchingSessionServiceTest {
     WatchingSessionDto watchingSessionDto = mock(WatchingSessionDto.class);
     when(watchingSessionRepository.findWatchingSessions(
         any(), any(), any(), any(),
-        eq(11), // internal limit
+        eq(11),
         any(), any()
     )).thenReturn(List.of(entity));
     CursorResponseWatchingSessionDto expectedDto = new CursorResponseWatchingSessionDto(
@@ -146,7 +146,7 @@ public class WatchingSessionServiceTest {
     // given
     UUID contentId = UUID.randomUUID();
     User user2 = new User("test2@test.com", "pw", "test2");
-    // entity2 setup
+    // entity2
     WatchingSession entity2 = new WatchingSession();
     entity2.setUser(user2);
     entity2.setContent(content);
@@ -165,13 +165,12 @@ public class WatchingSessionServiceTest {
         any(), any()
     )).thenReturn(mutableList);
 
-    // mapper, count
     WatchingSessionDto watchingSessionDto = mock(WatchingSessionDto.class);
     when(contentRepository.existsById(contentId)).thenReturn(true);
     when(watchingSessionMapper.toDto(entity)).thenReturn(watchingSessionDto);
     when(watchingSessionRepository.getWatcherCount(contentId, null)).thenReturn(2L);
 
-    // expected response
+    // 예상 응답
     CursorResponseWatchingSessionDto expectedDto = new CursorResponseWatchingSessionDto(
         List.of(watchingSessionDto),
         entity2Time.toString(),

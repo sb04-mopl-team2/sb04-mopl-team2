@@ -16,7 +16,9 @@ spring:
       enabled: false
     job:
       enabled: false
-
+  jpa:
+    properties:
+      hibernate.jdbc.lock_timeout: 3000
   # redis 설정
   data:
     redis:
@@ -101,6 +103,11 @@ tmdb:
   api:
     token: ${TMDB_API_TOKEN}
   base-url: ${TMDB_BASE_URL}
+
+sportsdb:
+  base-url: ${SPORTSDB_BASE_URL}
+  api:
+    key: ${SPORTSDB_API_KEY}
 
 mail:
   host: ${MAIL_HOST}

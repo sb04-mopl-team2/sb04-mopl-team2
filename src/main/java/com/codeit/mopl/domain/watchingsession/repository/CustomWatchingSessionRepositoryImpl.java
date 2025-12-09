@@ -27,8 +27,8 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
   public List<WatchingSession> findWatchingSessions(
       UUID contentId,
       String watcherNameLike, // (optional)
-      String cursor, // (optional) createdAt timestamp
-      UUID idAfter, // (optional) ID of last item
+      String cursor, // (optional) createdAt 타임스탬프
+      UUID idAfter, // (optional) 마지막 아이템 UUID
       int limit,
       SortDirection sortDirection,
       SortBy sortBy // createdAt
@@ -38,8 +38,8 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
         .join(watchingSession.user, user).fetchJoin()
         .join(watchingSession.content, content).fetchJoin()
         .where(
-            watchingSession.content.id.eq(contentId), // contentId match
-            watcherNameExist(watcherNameLike), //filter -> if name exist
+            watchingSession.content.id.eq(contentId), // 컨텐츠 아이디 필터
+            watcherNameExist(watcherNameLike), // watcherNameLike로 필터
             cursorCondition(cursor, idAfter, sortDirection)
         )
         .orderBy(getSortOrder(sortDirection))
@@ -54,10 +54,9 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
 
   private BooleanExpression cursorCondition(String cursor, UUID idAfter, SortDirection sortDirection) {
 
-    // 1st page
+    // 첫번째 페이지 빠른 리턴
     if (cursor == null || idAfter == null) return null;
 
-    // only return according to the directions
     DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     LocalDateTime lastCreatedAt = LocalDateTime.parse(cursor, formatter);
 
@@ -76,7 +75,7 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
     }
   }
 
-  // sort by createdAt AND Id
+  // 정렬 createdAt AND Id
   private OrderSpecifier<?>[] getSortOrder(SortDirection sortDirection) {
     Order order = (sortDirection == SortDirection.ASCENDING) ? Order.ASC : Order.DESC;
     OrderSpecifier<?> sortByCreatedAt = new OrderSpecifier<>(order, watchingSession.createdAt);
@@ -84,7 +83,6 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
     return new OrderSpecifier[]{sortByCreatedAt, sortById};
   }
 
-  // returns watcherCount == totalCount
   @Override
   public long getWatcherCount(UUID contentId, String watcherNameLike) {
     Long count = jpaQueryFactory
@@ -92,13 +90,12 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
         .from(watchingSession)
         .where(
             watchingSession.content.id.eq(contentId),
-            watcherNameExist(watcherNameLike) //
+            watcherNameExist(watcherNameLike)
         )
         .fetchOne();
     return count != null ? count : 0L;
   }
 
-  // boolean expressions for get watcherCount
   public BooleanExpression watcherNameExist(String watcherNameLike) {
     return watcherNameLike != null && !watcherNameLike.isBlank()
         ? watchingSession.user.name.containsIgnoreCase(watcherNameLike)

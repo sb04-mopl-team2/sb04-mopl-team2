@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 public enum ContentType {
   MOVIE("movie"),
   TV("tvSeries"),
-  SPORT("sport");
+  SPORTS("sport");
 
   private final String type;
 

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users
     profile_image_url TEXT,
     role VARCHAR(20) NOT NULL,
     locked BOOLEAN NOT NULL DEFAULT FALSE,
+    provider VARCHAR(50) NOT NULL DEFAULT 'LOCAL',
     follower_count BIGINT NOT NULL DEFAULT 0
     );
 
@@ -154,6 +155,8 @@ CREATE TABLE IF NOT EXISTS follows
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     follower_id UUID NOT NULL,
     followee_id UUID NOT NULL,
+    follow_status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
+    retry_count INT NOT NULL DEFAULT 0,
 
     FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (followee_id) REFERENCES users(id) ON DELETE CASCADE,

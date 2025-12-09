@@ -564,7 +564,7 @@ class KafkaEventListenerTest {
         .findByEventIdAndEventType(playlistId, EventType.PLAY_LIST_CREATED);
 
     // 2) 팔로워 알림 위임
-    verify(followService, times(1))
+    verify(notificationService, times(1))
         .notifyFollowersOnPlaylistCreated(event);
 
     // 3) ProcessedEvent 저장
@@ -602,7 +602,7 @@ class KafkaEventListenerTest {
         .findByEventIdAndEventType(watchingSessionId, EventType.WATCH_SESSION_CREATED);
 
     // 2) 팔로워 알림 위임
-    verify(followService, times(1))
+    verify(notificationService, times(1))
         .notifyFollowersOnWatchingEvent(event);
 
     // 3) ProcessedEvent 저장
@@ -634,7 +634,7 @@ class KafkaEventListenerTest {
     kafkaConsumer.onPlayListCreated(kafkaEventJson, ack);
 
     // then
-    verify(followService, never()).notifyFollowersOnPlaylistCreated(any());
+    verify(notificationService, never()).notifyFollowersOnPlaylistCreated(any());
     verify(processedEventRepository, never()).save(any());
     verify(ack, times(1)).acknowledge();
   }
@@ -660,7 +660,7 @@ class KafkaEventListenerTest {
     kafkaConsumer.onWatchingSessionCreated(kafkaEventJson, ack);
 
     // then
-    verify(followService, never()).notifyFollowersOnWatchingEvent(any());
+    verify(notificationService, never()).notifyFollowersOnWatchingEvent(any());
     verify(processedEventRepository, never()).save(any());
     verify(ack, times(1)).acknowledge();
   }

@@ -2,23 +2,26 @@ package com.codeit.mopl.domain.auth.service;
 
 import com.codeit.mopl.domain.auth.dto.request.ResetPasswordRequest;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
+import com.codeit.mopl.domain.user.entity.Provider;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.event.MailSendEvent;
 import com.codeit.mopl.exception.auth.AuthErrorCode;
 import com.codeit.mopl.exception.auth.InvalidTokenException;
+import com.codeit.mopl.exception.user.SocialAccountPasswordChangeNotAllowedException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
-import com.codeit.mopl.mail.service.MailService;
 import com.codeit.mopl.mail.utils.PasswordUtils;
-import com.codeit.mopl.mail.utils.RedisStoreUtils;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +30,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final PasswordUtils passwordUtils;
-    private final MailService mailService;
-    private final RedisStoreUtils redisStoreUtils;
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public String reissueAccessToken(Map<String, Object> claims, UserDto userDto) {
@@ -61,12 +63,16 @@ public class AuthService {
             log.debug("[사용자 관리] 해당 유저를 찾을 수 없음 email = {}", request.email());
             throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("email", request.email()));
         }
+        checkProviderIsLocal(request.email());
+
         String tempPw = passwordUtils.makeTempPassword();
 
-        log.info("[REDIS] 임시 비밀번호 키 저장");
-        redisStoreUtils.storeTempPassword(request.email(), tempPw);
+        publisher.publishEvent(new MailSendEvent(UUID.randomUUID(), request.email(), tempPw));
+    }
 
-        log.info("[이메일] 이메일 전송 email = {}", request.email());
-        mailService.sendMail(request.email(), tempPw);
+    private void checkProviderIsLocal(String email) {
+        if (userRepository.existsByEmailAndProviderIsNot(email, Provider.LOCAL)) {
+            throw new SocialAccountPasswordChangeNotAllowedException(UserErrorCode.SOCIAL_ACCOUNT_CHANGE_PASSWORD_NOT_ALLOWED, Map.of("email",email));
+        }
     }
 }

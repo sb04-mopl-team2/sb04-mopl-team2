@@ -11,13 +11,15 @@ import com.codeit.mopl.domain.review.mapper.ReviewMapper;
 import com.codeit.mopl.domain.review.repository.ReviewRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.content.ContentErrorCode;
+import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.review.ReviewDuplicateException;
 import com.codeit.mopl.exception.review.ReviewErrorCode;
 import com.codeit.mopl.exception.review.ReviewNotFoundException;
 import com.codeit.mopl.exception.review.ReviewForbiddenException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
-import jakarta.transaction.Transactional;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,8 +30,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
+@Transactional
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
@@ -43,7 +47,6 @@ public class ReviewService {
 
   public static final String REVIEWS_FIRST_PAGE = "review:first-page";
 
-  @Transactional
   public ReviewDto createReview(UUID userId, UUID contentId, String text, double rating) {
     log.info("[리뷰] 리뷰 생성 시작, userId = {}, contentId = {}, text = {}, rating = {}", userId, contentId, text, rating);
     User user = getValidUserByUserId(userId);
@@ -51,45 +54,53 @@ public class ReviewService {
     checkReviewDuplicate(user, content);
     Review review = new Review(user, content, text, rating, false);
     reviewRepository.save(review);
+
+    applyReviewCreated(content, rating);
+    contentRepository.save(content);
+
     log.info("[리뷰] 리뷰 생성 종료, userId = {}, contentId = {}, reviewId = {}", userId, contentId, review.getId());
     evictFirstPageCacheByContentId(contentId);
     return reviewMapper.toDto(review);
   }
 
-  @Transactional
   public ReviewDto updateReview(UUID userId, UUID reviewId, String text, double rating) {
     log.info("[리뷰] 리뷰 수정 시작, userId = {}, reviewId = {}, text = {}, rating = {}", userId, reviewId, text, rating);
 
     Review review = getValidReviewByReviewId(reviewId);
-    if (!review.getUser().getId().equals(userId)) {
-      log.warn("[리뷰] 리뷰를 수정할 권한이 없습니다. reviewId = {}", reviewId);
-      throw new ReviewForbiddenException(
-          ReviewErrorCode.REVIEW_FORBIDDEN, Map.of("reviewId", reviewId));
-    }
+    double originalRating = review.getRating();
+
+    validateReviewOwner(userId, review);
     review.setText(text);
     review.setRating(rating);
     reviewRepository.save(review);
+
+    Content content = review.getContent();
+    applyReviewUpdated(content, originalRating, rating);
+    contentRepository.save(content);
 
     log.info("[리뷰] 리뷰 수정 종료, reviewId = {}", reviewId);
     evictFirstPageCacheByContentId(review.getContent().getId());
     return reviewMapper.toDto(review);
   }
 
-  @Transactional
   public void deleteReview(UUID userId, UUID reviewId) {
     log.info("[리뷰] 리뷰 삭제 시작, userId = {}, reviewId = {}", userId, reviewId);
     Review review = getValidReviewByReviewId(reviewId);
-    if (!review.getUser().getId().equals(userId)) {
-      log.warn("[리뷰] 리뷰를 삭제할 권한이 없습니다. reviewId = {}", reviewId);
-      throw new ReviewForbiddenException(
-          ReviewErrorCode.REVIEW_FORBIDDEN, Map.of("reviewId", reviewId));
-    }
+    validateReviewOwner(userId, review);
     review.setIsDeleted(true);
     reviewRepository.save(review);
+
+    Content content = review.getContent();
+    double rating = review.getRating();
+
+    applyReviewDeleted(content, rating);
+    contentRepository.save(content);
+
     evictFirstPageCacheByContentId(review.getContent().getId());
     log.info("[리뷰] 리뷰 삭제 종료, reviewId = {}", reviewId);
   }
 
+  @Transactional(readOnly = true)
   @Cacheable(
       cacheNames = REVIEWS_FIRST_PAGE,
       key = "T(java.lang.String).format('%s:%s:%s:%s', #contentId, #limit, #sortDirection, #sortBy)",
@@ -107,15 +118,7 @@ public class ReviewService {
         reviewRepository.searchReview(contentId, cursor, idAfter, limit, sortDirection, sortBy);
 
     if (reviewList.isEmpty()) {
-      CursorResponseReviewDto dto = new CursorResponseReviewDto(
-          List.of(),
-          null,
-          null,
-          false,
-          0L,
-          sortBy.toString(),
-          sortDirection.toString()
-      );
+      CursorResponseReviewDto dto = emptyCursorResponse(sortBy, sortDirection);
 
       log.info("[리뷰] 리뷰 조회 종료, contentId = {}, reviewListSize = {}, hasNext = {}, totalCount = {}",
           contentId, 0, dto.hasNext(), dto.totalCount());
@@ -164,25 +167,23 @@ public class ReviewService {
           return new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId));
         });
   }
-  
+
   private Content getValidContentByContentId(UUID contentId) {
     return contentRepository.findById(contentId).orElseThrow(() -> {
       log.warn("[리뷰] 해당 컨텐츠를 찾을 수 없음 contentId = {}", contentId);
-      return new IllegalArgumentException();// 추후에 ContentNotFoundException으로 변경
+      return new ContentNotFoundException(ContentErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId));
     });
   }
 
   private Review getValidReviewByReviewId(UUID reviewId) {
-    return reviewRepository.findById(reviewId)
-        .orElseThrow(() -> {
-          log.warn("[리뷰] 해당 리뷰를 찾을 수 없음 reviewId = {}", reviewId);
-          return new ReviewNotFoundException(
-              ReviewErrorCode.REVIEW_NOT_FOUND, Map.of("reviewId", reviewId));
-        });
+    return reviewRepository.findById(reviewId).orElseThrow(() -> {
+      log.warn("[리뷰] 해당 리뷰를 찾을 수 없음 reviewId = {}", reviewId);
+      return new ReviewNotFoundException(ReviewErrorCode.REVIEW_NOT_FOUND, Map.of("reviewId", reviewId));
+    });
   }
 
   private void checkReviewDuplicate(User user, Content content) {
-    Optional<Review> review = reviewRepository.findByUserAndContent(user, content);
+    Optional<Review> review = reviewRepository.findByUserAndContentAndIsDeletedFalse(user, content);
     if (review.isPresent()) {
       log.warn("[리뷰] 이미 리뷰가 존재합니다. reviewId = {}", review.get().getId());
       throw new ReviewDuplicateException(
@@ -198,5 +199,69 @@ public class ReviewService {
       stringRedisTemplate.delete(keys);
       log.info("[리뷰] 리뷰 조회 캐싱 초기화, contentId = {}, evictedKeys = {}", contentId, keys.size());
     }
+  }
+
+  private void applyReviewCreated(Content content, double rating) {
+    int count = content.getReviewCount() == null ? 0 : content.getReviewCount();
+    double avg = content.getAverageRating() == null ? 0.0 : content.getAverageRating();
+
+    int newCount = count + 1;
+    double newAvg = (avg * count + rating) / newCount;
+
+    content.setReviewCount(newCount);
+    content.setAverageRating(newAvg);
+  }
+
+  private void applyReviewUpdated(Content content, double oldRating, double newRating) {
+    int count = content.getReviewCount() == null ? 0 : content.getReviewCount();
+    if (count <= 0) {
+      content.setReviewCount(1);
+      content.setAverageRating(newRating);
+      return;
+    }
+
+    double avg = content.getAverageRating() == null ? 0.0 : content.getAverageRating();
+    double total = avg * count - oldRating + newRating;
+    double newAvg = total / count;
+
+    content.setAverageRating(newAvg);
+  }
+
+  private void applyReviewDeleted(Content content, double rating) {
+    int count = content.getReviewCount() == null ? 0 : content.getReviewCount();
+    double avg = content.getAverageRating() == null ? 0.0 : content.getAverageRating();
+
+    if (count <= 1) {
+      content.setReviewCount(0);
+      content.setAverageRating(0.0);
+      return;
+    }
+
+    double total = avg * count - rating;
+    int newCount = count - 1;
+    double newAvg = total / newCount;
+
+    content.setReviewCount(newCount);
+    content.setAverageRating(newAvg);
+  }
+
+  private void validateReviewOwner(UUID userId, Review review) {
+    if (!review.getUser().getId().equals(userId)) {
+      log.warn("[리뷰] 리뷰에 대한 권한이 없습니다. reviewId = {}", review.getId());
+      throw new ReviewForbiddenException(
+          ReviewErrorCode.REVIEW_FORBIDDEN, Map.of("reviewId", review.getId()));
+    }
+  }
+
+  private CursorResponseReviewDto emptyCursorResponse(ReviewSortBy sortBy, SortDirection sortDirection) {
+    return new CursorResponseReviewDto(
+        List.of(),
+        null,
+        null,
+        false,
+        0L,
+        sortBy.toString(),
+        sortDirection.toString()
+    );
   }
 }

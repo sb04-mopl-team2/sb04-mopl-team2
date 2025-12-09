@@ -1,5 +1,6 @@
 package com.codeit.mopl.oauth.userInfo;
 
+import com.codeit.mopl.domain.user.entity.Provider;
 import lombok.AllArgsConstructor;
 
 import java.util.Map;
@@ -14,8 +15,8 @@ public class GoogleUserInfo implements OAuth2UserInfo{
     }
 
     @Override
-    public String getProvider() {
-        return "google";
+    public Provider getProvider() {
+        return Provider.GOOGLE;
     }
 
     @Override

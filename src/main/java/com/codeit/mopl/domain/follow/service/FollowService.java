@@ -3,26 +3,24 @@ package com.codeit.mopl.domain.follow.service;
 import com.codeit.mopl.domain.follow.dto.FollowDto;
 import com.codeit.mopl.domain.follow.dto.FollowRequest;
 import com.codeit.mopl.domain.follow.entity.Follow;
-import com.codeit.mopl.domain.follow.entity.Status;
+import com.codeit.mopl.domain.follow.entity.FollowStatus;
 import com.codeit.mopl.domain.follow.mapper.FollowMapper;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.notification.template.NotificationMessage;
+import com.codeit.mopl.domain.notification.template.NotificationTemplate;
+import com.codeit.mopl.domain.notification.template.context.FollowCreatedContext;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
-import com.codeit.mopl.event.event.PlayListCreateEvent;
-import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.codeit.mopl.exception.follow.*;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
-
-import java.util.List;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -69,8 +67,18 @@ public class FollowService {
         eventPublisher.publishEvent(new FollowerIncreaseEvent(follow.getId(), followeeId));
 
         // 알람 발행
-        String title = getFollowNotificationTitle(follower.getName());
-        notificationService.createNotification(followeeId, title, "", Level.INFO);
+        FollowCreatedContext ctx =
+            new FollowCreatedContext(follower.getName());
+
+        NotificationTemplate template = NotificationTemplate.FOLLOW_CREATED;
+        NotificationMessage message = template.build(ctx);
+        notificationService.createNotification(
+            followeeId,
+            message.title(),
+            message.content(),
+            Level.INFO
+        );
+
         log.info("[팔로우 관리] 팔로우 생성 완료: id = {}", dto.id());
         return dto;
     }
@@ -88,7 +96,7 @@ public class FollowService {
         
         // 팔로워 수 증가, 상태 변경
         followee.increaseFollowerCount();
-        follow.setStatus(Status.CONFIRM);
+        follow.setFollowStatus(FollowStatus.CONFIRM);
 
         // 처리된 이벤트 저장
         ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_INCREASE);
@@ -102,7 +110,7 @@ public class FollowService {
         if (!userRepository.existsById(followeeId)) {
             throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", followeeId));
         }
-        boolean isFollowed = followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
+       boolean isFollowed = followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
         log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 완료: followerId = {}, followeeId = {}, isFollowed = {}", followerId, followeeId, isFollowed);
         return isFollowed;
     }
@@ -128,7 +136,7 @@ public class FollowService {
             throw FollowDeleteForbiddenException.withIds(followId, followerId, requesterId);
         }
         // 팔로우 상태 변경
-        follow.setStatus(Status.CANCELLED);
+        follow.setFollowStatus(FollowStatus.CANCELLED);
         
         // 팔로우 감소 이벤트 발행
         UUID followeeId = follow.getFollowee().getId();

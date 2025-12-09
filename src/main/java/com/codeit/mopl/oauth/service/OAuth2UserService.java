@@ -1,5 +1,6 @@
 package com.codeit.mopl.oauth.service;
 
+import com.codeit.mopl.domain.user.entity.Provider;
 import com.codeit.mopl.exception.user.NotSupportedSocialLoginException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.oauth.userInfo.GoogleUserInfo;
@@ -41,7 +42,8 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         String email = oAuth2UserInfo.getProviderEmail();
         String name = oAuth2UserInfo.getProviderName();
         String profileImageUrl = oAuth2UserInfo.getProfileImageUrl();
-        UserDto user = userService.findOrCreateOAuth2User(email, name, profileImageUrl);
+        Provider provider = oAuth2UserInfo.getProvider();
+        UserDto user = userService.findOrCreateOAuth2User(email, name, profileImageUrl,provider);
         return new CustomUserDetails(user,oAuth2User.getAttributes());
     }
 

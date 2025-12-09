@@ -3,6 +3,7 @@ package com.codeit.mopl.domain.user.service;
 import com.codeit.mopl.domain.user.dto.request.*;
 import com.codeit.mopl.domain.user.dto.response.CursorResponseUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
+import com.codeit.mopl.domain.user.entity.Provider;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
@@ -420,7 +421,7 @@ public class UserServiceTest {
         given(userRepository.existsByEmail(email)).willReturn(false);
         given(passwordUtils.makeTempPassword()).willReturn(password);
         given(passwordEncoder.encode(password)).willReturn(encodedPassword);
-        User user = new User(email,encodedPassword,name,profileImageUrl);
+        User user = new User(email,encodedPassword,name,profileImageUrl, Provider.GOOGLE);
         UserDto userDto = new UserDto(
                 UUID.randomUUID(),
                 LocalDateTime.now(),
@@ -434,7 +435,7 @@ public class UserServiceTest {
         given(userMapper.toDto(any(User.class))).willReturn(userDto);
 
         // when
-        UserDto response = userService.findOrCreateOAuth2User(email,name,profileImageUrl);
+        UserDto response = userService.findOrCreateOAuth2User(email,name,profileImageUrl,Provider.GOOGLE);
 
         // then
         assertEquals(email, response.email());
@@ -450,13 +451,13 @@ public class UserServiceTest {
         String name = "소셜로그인";
         String profileImageUrl = "https://googleImage.example.com";
         given(userRepository.existsByEmail(email)).willReturn(true);
-        User user = new User(email,"password",name,profileImageUrl);
+        User user = new User(email,"password",name,profileImageUrl, Provider.GOOGLE);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
         UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@gmail.com", "소셜로그인", "https://googleImage.example.com", Role.USER, false);
         given(userMapper.toDto(user)).willReturn(userDto);
 
         // when
-        UserDto response = userService.findOrCreateOAuth2User(email,name,profileImageUrl);
+        UserDto response = userService.findOrCreateOAuth2User(email,name,profileImageUrl, Provider.GOOGLE);
 
         // then
         assertEquals(email, response.email());

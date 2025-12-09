@@ -1,6 +1,7 @@
 package com.codeit.mopl.oauth.service;
 
 import com.codeit.mopl.domain.user.dto.response.UserDto;
+import com.codeit.mopl.domain.user.entity.Provider;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.service.UserService;
 import com.codeit.mopl.exception.user.NotSupportedSocialLoginException;
@@ -46,7 +47,7 @@ public class OAuth2ServiceTest {
                 .given(oAuth2UserService)
                 .loadUserFromParent(any(OAuth2UserRequest.class));
         UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@gmail.com", "홍길동","https://example.com/profile.jpg", Role.USER,false);
-        given(userService.findOrCreateOAuth2User("test@gmail.com","홍길동","https://example.com/profile.jpg")).willReturn(userDto);
+        given(userService.findOrCreateOAuth2User("test@gmail.com","홍길동","https://example.com/profile.jpg", Provider.GOOGLE)).willReturn(userDto);
 
         CustomUserDetails details = (CustomUserDetails) oAuth2UserService.loadUser(request);
         assertEquals("홍길동",details.getUser().name());
@@ -61,7 +62,7 @@ public class OAuth2ServiceTest {
                 .given(oAuth2UserService)
                 .loadUserFromParent(any(OAuth2UserRequest.class));
         UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "홍길동_9876543210@kakao.com", "홍길동","https://example.com/kakao-profile.jpg", Role.USER,false);
-        given(userService.findOrCreateOAuth2User("홍길동_9876543210@kakao.com","홍길동","https://example.com/kakao-profile.jpg")).willReturn(userDto);
+        given(userService.findOrCreateOAuth2User("홍길동_9876543210@kakao.com","홍길동","https://example.com/kakao-profile.jpg",Provider.KAKAO)).willReturn(userDto);
 
         CustomUserDetails details = (CustomUserDetails) oAuth2UserService.loadUser(request);
         assertEquals("홍길동",details.getUser().name());

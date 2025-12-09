@@ -34,6 +34,10 @@ public class User extends UpdatableEntity {
     @Column
     private boolean locked;
 
+    @Column
+    @Enumerated(EnumType.STRING)
+    private Provider provider;
+
     @Column(nullable = false, columnDefinition = "BIGINT DEFAULT 0")
     private long followerCount;
 
@@ -45,11 +49,13 @@ public class User extends UpdatableEntity {
         this.role = Role.USER;
         this.locked = false;
         this.followerCount = 0;
+        this.provider = Provider.LOCAL;
     }
 
-    public User(String email, String password, String name, String profileImageUrl) {
+    public User(String email, String password, String name, String profileImageUrl, Provider provider) {
         this(email,password,name);
         this.profileImageUrl = profileImageUrl;
+        this.provider = provider;
     }
 
     public void updateRole(Role role) {

@@ -3,7 +3,7 @@ package com.codeit.mopl.domain.follow.service;
 import com.codeit.mopl.domain.follow.dto.FollowDto;
 import com.codeit.mopl.domain.follow.dto.FollowRequest;
 import com.codeit.mopl.domain.follow.entity.Follow;
-import com.codeit.mopl.domain.follow.entity.Status;
+import com.codeit.mopl.domain.follow.entity.FollowStatus;
 import com.codeit.mopl.domain.follow.mapper.FollowMapper;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
@@ -100,7 +100,7 @@ class FollowServiceTest {
         Follow savedFollow = followCaptor.getValue();
         assertThat(savedFollow.getFollower().getId()).isEqualTo(follower.getId());
         assertThat(savedFollow.getFollowee().getId()).isEqualTo(followee.getId());
-        assertThat(savedFollow.getStatus()).isEqualTo(Status.PENDING);
+        assertThat(savedFollow.getFollowStatus()).isEqualTo(FollowStatus.PENDING);
 
         assertThat(result.followerId()).isEqualTo(followerId);
         assertThat(result.followeeId()).isEqualTo(followeeId);
@@ -110,7 +110,12 @@ class FollowServiceTest {
         FollowerIncreaseEvent event = eventCaptor.getValue();
         assertThat(event.followeeId()).isEqualTo(followeeId);
 
-        verify(notificationService).createNotification(eq(followeeId), any(String.class), eq(""), eq(Level.INFO));
+        verify(notificationService).createNotification(
+            eq(followeeId),
+            anyString(),
+            contains(follower.getName()),
+            eq(Level.INFO)
+        );
     }
 
     @Test
@@ -174,7 +179,7 @@ class FollowServiceTest {
         Follow follow = new Follow(follower, followee);
         UUID followId = UUID.randomUUID();
         ReflectionTestUtils.setField(follow, "id", followId);
-        follow.setStatus(Status.PENDING);
+        follow.setFollowStatus(FollowStatus.PENDING);
 
         ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_INCREASE);
 
@@ -188,7 +193,7 @@ class FollowServiceTest {
         // then
         verify(userRepository, times(1)).findByIdForUpdate(eq(followeeId));
         assertThat(followee.getFollowerCount()).isEqualTo(1L);
-        assertThat(follow.getStatus()).isEqualTo(Status.CONFIRM);
+        assertThat(follow.getFollowStatus()).isEqualTo(FollowStatus.CONFIRM);
     }
 
     @Test
@@ -345,7 +350,7 @@ class FollowServiceTest {
         Follow follow = new Follow(follower, followee);
         UUID followId = UUID.randomUUID();
         ReflectionTestUtils.setField(follow, "id", followId);
-        follow.setStatus(Status.CONFIRM);
+        follow.setFollowStatus(FollowStatus.CONFIRM);
 
         given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(follow));
 
@@ -355,7 +360,7 @@ class FollowServiceTest {
         followService.deleteFollow(followId, requesterId);
 
         // then
-        assertThat(follow.getStatus()).isEqualTo(Status.CANCELLED);
+        assertThat(follow.getFollowStatus()).isEqualTo(FollowStatus.CANCELLED);
 
         verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
         FollowerDecreaseEvent event = eventCaptor.getValue();
@@ -391,14 +396,14 @@ class FollowServiceTest {
         Follow follow = new Follow(follower, followee);
         UUID followId = UUID.randomUUID();
         ReflectionTestUtils.setField(follow, "id", followId);
-        follow.setStatus(Status.CONFIRM);
+        follow.setFollowStatus(FollowStatus.CONFIRM);
 
         given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(follow));
 
         // when & then
         assertThatThrownBy(() -> followService.deleteFollow(followId, requesterId))
                 .isInstanceOf(FollowDeleteForbiddenException.class);
-        assertThat(follow.getStatus()).isEqualTo(Status.CONFIRM);
+        assertThat(follow.getFollowStatus()).isEqualTo(FollowStatus.CONFIRM);
     }
 
     @Test

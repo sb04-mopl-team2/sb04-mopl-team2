@@ -49,7 +49,7 @@ public class SubscriptionService {
 
         User subscriber = userRepository.findById(subscriberId)
                 .orElseThrow(() -> {
-                    log.warn("[플레이리스트] 플레이리스트 구독 처리 실패 - userId = {}", subscriberId);
+                    log.warn("[플레이리스트] 플레이리스트 구독 처리 실패 - 유저가 존재하지 않음 userId = {}", subscriberId);
                     return new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", subscriberId));
                 });
 

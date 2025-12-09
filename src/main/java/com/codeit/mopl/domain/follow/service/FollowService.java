@@ -8,6 +8,9 @@ import com.codeit.mopl.domain.follow.mapper.FollowMapper;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.notification.template.NotificationMessage;
+import com.codeit.mopl.domain.notification.template.NotificationTemplate;
+import com.codeit.mopl.domain.notification.template.context.FollowCreatedContext;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.entity.EventType;
@@ -64,8 +67,18 @@ public class FollowService {
         eventPublisher.publishEvent(new FollowerIncreaseEvent(follow.getId(), followeeId));
 
         // 알람 발행
-        String title = getFollowNotificationTitle(follower.getName());
-        notificationService.createNotification(followeeId, title, "", Level.INFO);
+        FollowCreatedContext ctx =
+            new FollowCreatedContext(follower.getName());
+
+        NotificationTemplate template = NotificationTemplate.FOLLOW_CREATED;
+        NotificationMessage message = template.build(ctx);
+        notificationService.createNotification(
+            followeeId,
+            message.title(),
+            message.content(),
+            Level.INFO
+        );
+
         log.info("[팔로우 관리] 팔로우 생성 완료: id = {}", dto.id());
         return dto;
     }
@@ -97,7 +110,7 @@ public class FollowService {
         if (!userRepository.existsById(followeeId)) {
             throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", followeeId));
         }
-        boolean isFollowed = followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
+       boolean isFollowed = followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
         log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 완료: followerId = {}, followeeId = {}, isFollowed = {}", followerId, followeeId, isFollowed);
         return isFollowed;
     }

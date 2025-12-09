@@ -58,9 +58,6 @@ class KafkaConsumerTest {
   @Mock
   private SseEmitterRegistry sseEmitterRegistry;
 
-  @Mock
-  private FollowService followService;
-
   private KafkaConsumer kafkaConsumer;
 
   @Mock

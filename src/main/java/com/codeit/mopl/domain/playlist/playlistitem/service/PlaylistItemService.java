@@ -4,6 +4,10 @@ import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.notification.template.NotificationMessage;
+import com.codeit.mopl.domain.notification.template.NotificationTemplate;
+import com.codeit.mopl.domain.notification.template.context.DirectMessageContext;
+import com.codeit.mopl.domain.notification.template.context.PlaylistContentAddedContext;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.playlistitem.entity.PlaylistItem;
 import com.codeit.mopl.domain.playlist.playlistitem.repository.PlaylistItemRepository;
@@ -54,15 +58,24 @@ public class PlaylistItemService {
 
         // 구독자들에게 알림 생성함 (동기 처리)
         List<Subscription> subscriptions = subscriptionRepository.findByPlaylistId(playlistId);
-        String title = "구독한 플레이리스트에 새로운 콘텐츠 추가";
-        String contentMessage = String.format("구독 중인 '%s' 플레이리스트에 '%s' 콘텐츠가 추가되었어요.",
-                playlist.getTitle(), content.getTitle());
+
+        PlaylistContentAddedContext ctx =
+            new PlaylistContentAddedContext(playlist.getTitle(), content.getTitle());
+
+        NotificationTemplate template = NotificationTemplate.PLAYLIST_CONTENT_ADDED;
+        NotificationMessage message = template.build(ctx);
 
         for (Subscription subscription : subscriptions) {
             UUID subscriberId = subscription.getSubscriber().getId();
-            //본인의 플레이리스트에 추가한 경우 소유자는 알림을 받지 않음
+
+            // 본인 플레이리스트에 추가한 경우 알림 제외
             if (!subscriberId.equals(ownerId)) {
-                notificationService.createNotification(subscriberId,title,contentMessage, Level.INFO);
+                notificationService.createNotification(
+                    subscriberId,
+                    message.title(),
+                    message.content(),
+                    Level.INFO
+                );
             }
         }
     }

@@ -1,16 +1,21 @@
 package com.codeit.mopl.exception.notification;
 
+import com.codeit.mopl.exception.global.ErrorCodeInterface;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
 @Getter
-public enum NotificationErrorCode {
-  NOTIFICATION_NOT_FOUND("알림을 찾을 수 없습니다.",404),
-  NOTIFICATION_FORBIDDEN("알림을 수정할 권리가 없습니다.",403);
-  private String message;
-  private int code;
+@AllArgsConstructor
+public enum NotificationErrorCode implements ErrorCodeInterface {
+  NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다."),
+  NOTIFICATION_FORBIDDEN(HttpStatus.FORBIDDEN, "알림에 대한 권한이 없습니다.");
 
-  NotificationErrorCode(String message, int code) {
-    this.message = message;
-    this.code = code;
+  private final HttpStatus status;
+  private final String message;
+
+  @Override
+  public String getName() {
+    return this.name();
   }
 }

@@ -1,6 +1,5 @@
 package com.codeit.mopl.domain.review.service;
 
-import co.elastic.clients.elasticsearch.nodes.Ingest;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.domain.review.dto.CursorResponseReviewDto;
@@ -12,13 +11,15 @@ import com.codeit.mopl.domain.review.mapper.ReviewMapper;
 import com.codeit.mopl.domain.review.repository.ReviewRepository;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.exception.content.ContentErrorCode;
+import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.review.ReviewDuplicateException;
 import com.codeit.mopl.exception.review.ReviewErrorCode;
 import com.codeit.mopl.exception.review.ReviewNotFoundException;
 import com.codeit.mopl.exception.review.ReviewForbiddenException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
-import jakarta.transaction.Transactional;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,8 +30,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
+@Transactional
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
@@ -44,7 +47,6 @@ public class ReviewService {
 
   public static final String REVIEWS_FIRST_PAGE = "review:first-page";
 
-  @Transactional
   public ReviewDto createReview(UUID userId, UUID contentId, String text, double rating) {
     log.info("[리뷰] 리뷰 생성 시작, userId = {}, contentId = {}, text = {}, rating = {}", userId, contentId, text, rating);
     User user = getValidUserByUserId(userId);
@@ -61,18 +63,13 @@ public class ReviewService {
     return reviewMapper.toDto(review);
   }
 
-  @Transactional
   public ReviewDto updateReview(UUID userId, UUID reviewId, String text, double rating) {
     log.info("[리뷰] 리뷰 수정 시작, userId = {}, reviewId = {}, text = {}, rating = {}", userId, reviewId, text, rating);
 
     Review review = getValidReviewByReviewId(reviewId);
     double originalRating = review.getRating();
 
-    if (!review.getUser().getId().equals(userId)) {
-      log.warn("[리뷰] 리뷰를 수정할 권한이 없습니다. reviewId = {}", reviewId);
-      throw new ReviewForbiddenException(
-          ReviewErrorCode.REVIEW_FORBIDDEN, Map.of("reviewId", reviewId));
-    }
+    validateReviewOwner(userId, review);
     review.setText(text);
     review.setRating(rating);
     reviewRepository.save(review);
@@ -86,15 +83,10 @@ public class ReviewService {
     return reviewMapper.toDto(review);
   }
 
-  @Transactional
   public void deleteReview(UUID userId, UUID reviewId) {
     log.info("[리뷰] 리뷰 삭제 시작, userId = {}, reviewId = {}", userId, reviewId);
     Review review = getValidReviewByReviewId(reviewId);
-    if (!review.getUser().getId().equals(userId)) {
-      log.warn("[리뷰] 리뷰를 삭제할 권한이 없습니다. reviewId = {}", reviewId);
-      throw new ReviewForbiddenException(
-          ReviewErrorCode.REVIEW_FORBIDDEN, Map.of("reviewId", reviewId));
-    }
+    validateReviewOwner(userId, review);
     review.setIsDeleted(true);
     reviewRepository.save(review);
 
@@ -108,6 +100,7 @@ public class ReviewService {
     log.info("[리뷰] 리뷰 삭제 종료, reviewId = {}", reviewId);
   }
 
+  @Transactional(readOnly = true)
   @Cacheable(
       cacheNames = REVIEWS_FIRST_PAGE,
       key = "T(java.lang.String).format('%s:%s:%s:%s', #contentId, #limit, #sortDirection, #sortBy)",
@@ -125,15 +118,7 @@ public class ReviewService {
         reviewRepository.searchReview(contentId, cursor, idAfter, limit, sortDirection, sortBy);
 
     if (reviewList.isEmpty()) {
-      CursorResponseReviewDto dto = new CursorResponseReviewDto(
-          List.of(),
-          null,
-          null,
-          false,
-          0L,
-          sortBy.toString(),
-          sortDirection.toString()
-      );
+      CursorResponseReviewDto dto = emptyCursorResponse(sortBy, sortDirection);
 
       log.info("[리뷰] 리뷰 조회 종료, contentId = {}, reviewListSize = {}, hasNext = {}, totalCount = {}",
           contentId, 0, dto.hasNext(), dto.totalCount());
@@ -182,21 +167,19 @@ public class ReviewService {
           return new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId));
         });
   }
-  
+
   private Content getValidContentByContentId(UUID contentId) {
     return contentRepository.findById(contentId).orElseThrow(() -> {
       log.warn("[리뷰] 해당 컨텐츠를 찾을 수 없음 contentId = {}", contentId);
-      return new IllegalArgumentException();// 추후에 ContentNotFoundException으로 변경
+      return new ContentNotFoundException(ContentErrorCode.CONTENT_NOT_FOUND, Map.of("contentId", contentId));
     });
   }
 
   private Review getValidReviewByReviewId(UUID reviewId) {
-    return reviewRepository.findById(reviewId)
-        .orElseThrow(() -> {
-          log.warn("[리뷰] 해당 리뷰를 찾을 수 없음 reviewId = {}", reviewId);
-          return new ReviewNotFoundException(
-              ReviewErrorCode.REVIEW_NOT_FOUND, Map.of("reviewId", reviewId));
-        });
+    return reviewRepository.findById(reviewId).orElseThrow(() -> {
+      log.warn("[리뷰] 해당 리뷰를 찾을 수 없음 reviewId = {}", reviewId);
+      return new ReviewNotFoundException(ReviewErrorCode.REVIEW_NOT_FOUND, Map.of("reviewId", reviewId));
+    });
   }
 
   private void checkReviewDuplicate(User user, Content content) {
@@ -262,4 +245,23 @@ public class ReviewService {
     content.setAverageRating(newAvg);
   }
 
+  private void validateReviewOwner(UUID userId, Review review) {
+    if (!review.getUser().getId().equals(userId)) {
+      log.warn("[리뷰] 리뷰에 대한 권한이 없습니다. reviewId = {}", review.getId());
+      throw new ReviewForbiddenException(
+          ReviewErrorCode.REVIEW_FORBIDDEN, Map.of("reviewId", review.getId()));
+    }
+  }
+
+  private CursorResponseReviewDto emptyCursorResponse(ReviewSortBy sortBy, SortDirection sortDirection) {
+    return new CursorResponseReviewDto(
+        List.of(),
+        null,
+        null,
+        false,
+        0L,
+        sortBy.toString(),
+        sortDirection.toString()
+    );
+  }
 }

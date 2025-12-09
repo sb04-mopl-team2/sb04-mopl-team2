@@ -1,6 +1,6 @@
 package com.codeit.mopl.domain.notification.template;
 
-import com.codeit.mopl.betterKorean.BetterKorean;
+import com.codeit.mopl.config.betterKorean.BetterKorean;
 import com.codeit.mopl.domain.notification.template.context.DirectMessageContext;
 import com.codeit.mopl.domain.notification.template.context.FollowCreatedContext;
 import com.codeit.mopl.domain.notification.template.context.PlaylistContentAddedContext;

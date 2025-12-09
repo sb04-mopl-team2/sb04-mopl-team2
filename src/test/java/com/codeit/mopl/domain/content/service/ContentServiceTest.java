@@ -2,8 +2,9 @@ package com.codeit.mopl.domain.content.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 
 import com.codeit.mopl.domain.content.ContentTestFactory;
@@ -17,6 +18,7 @@ import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
+import com.codeit.mopl.s3.S3Storage;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,6 +40,9 @@ class ContentServiceTest {
 
   @Mock
   private ContentMapper contentMapper;
+
+  @Mock
+  private S3Storage s3Storage;
 
   @InjectMocks
   private ContentService contentService;
@@ -53,8 +59,12 @@ class ContentServiceTest {
         tags
     );
 
-    MultipartFile thumbnail = mock(MultipartFile.class);
-    given(thumbnail.isEmpty()).willReturn(false);
+    MultipartFile thumbnail = new MockMultipartFile(
+        "thumbnail",
+        "test.png",
+        "image/png",
+        new byte[1000]
+    );
 
     Content content = new Content();
     content.setTitle("범죄도시");
@@ -75,6 +85,9 @@ class ContentServiceTest {
         0,
         0L
     );
+
+    doNothing().when(s3Storage).upload(any(MultipartFile.class), anyString());
+    given(s3Storage.getPresignedUrl(anyString())).willReturn("thumbnailUrl");
 
     given(contentMapper.fromCreateRequest(request)).willReturn(content);
     given(contentRepository.save(any(Content.class))).willReturn(savedContent);

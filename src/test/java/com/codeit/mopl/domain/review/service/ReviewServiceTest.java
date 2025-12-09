@@ -345,6 +345,7 @@ class ReviewServiceTest {
 
     Review review = mock(Review.class);
     when(review.getUser()).thenReturn(author);
+    when(review.getId()).thenReturn(reviewId);
 
     when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
@@ -424,6 +425,7 @@ class ReviewServiceTest {
 
     Review review = mock(Review.class);
     when(review.getUser()).thenReturn(author);
+    when(review.getId()).thenReturn(reviewId);
 
     when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 

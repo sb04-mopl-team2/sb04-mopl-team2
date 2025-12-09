@@ -104,6 +104,11 @@ tmdb:
     token: ${TMDB_API_TOKEN}
   base-url: ${TMDB_BASE_URL}
 
+sportsdb:
+  base-url: ${SPORTSDB_BASE_URL}
+  api:
+    key: ${SPORTSDB_API_KEY}
+
 mail:
   host: ${MAIL_HOST}
   port: ${MAIL_PORT}

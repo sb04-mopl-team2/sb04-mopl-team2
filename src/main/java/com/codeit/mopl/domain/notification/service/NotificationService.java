@@ -10,6 +10,11 @@ import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
+import com.codeit.mopl.domain.notification.template.NotificationMessage;
+import com.codeit.mopl.domain.notification.template.NotificationTemplate;
+import com.codeit.mopl.domain.notification.template.context.DirectMessageContext;
+import com.codeit.mopl.domain.notification.template.context.PlaylistCreatedContext;
+import com.codeit.mopl.domain.notification.template.context.WatchingSessionStartedContext;
 import com.codeit.mopl.event.event.PlayListCreateEvent;
 import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
 import com.codeit.mopl.exception.notification.NotificationForbidden;
@@ -22,7 +27,6 @@ import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.sse.service.SseService;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -166,40 +170,77 @@ public class NotificationService {
     String eventName = "direct-messages";
     Object data = directMessageDto;
 
-    String title = "[DM] " + directMessageDto.sender().name();
-    String content = directMessageDto.content();
-    Level level = Level.INFO;
-    createNotification(receiverId, title, content, level);
+    DirectMessageContext ctx =
+        new DirectMessageContext(directMessageDto.sender().name(), directMessageDto.content());
+
+    NotificationTemplate template = NotificationTemplate.DM_CREATED;
+    NotificationMessage message = template.build(ctx);
+
+    createNotification(
+        receiverId,
+        message.title(),
+        message.content(),
+        Level.INFO
+    );
+
     sseService.send(receiverId, eventName, data);
     log.info("[알림] DM 생성 SSE 전송 호출 종료, notificationDto = {}", directMessageDto);
   }
 
   @Transactional
   public void notifyFollowersOnPlaylistCreated(PlayListCreateEvent playListCreateEvent) {
-    log.info("[팔로우 관리] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 시작 : playListId = {}", playListCreateEvent.playListId());
+    log.info("[알림] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 시작 : playListId = {}", playListCreateEvent.playListId());
     UUID ownerId = playListCreateEvent.ownerId();
     List<Follow> followList = followRepository.findByFolloweeId(ownerId);
 
     for (Follow follow : followList) {
       UUID receiverId = follow.getFollower().getId();
-      String title = follow.getFollowee().getName() + "님이 새로운 플레이리스트: " + playListCreateEvent.title() + "를 만들었어요!";
-      createNotification(receiverId, title, "", Level.INFO);
+
+      String username = follow.getFollowee().getName();
+      String playlistTitle = playListCreateEvent.title();
+
+      PlaylistCreatedContext ctx =
+          new PlaylistCreatedContext(username, playlistTitle);
+
+      NotificationTemplate template = NotificationTemplate.PLAYLIST_CREATED;
+      NotificationMessage message = template.build(ctx);
+
+      createNotification(
+          receiverId,
+          message.title(),
+          message.content(),
+          Level.INFO
+      );
     }
-    log.info("[팔로우 관리] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 완료 : playListId = {}", playListCreateEvent.playListId());
+    log.info("[알림] 팔로우한 유저가 플레이리스트 생성시 팔로워 알림 송신 완료 : playListId = {}", playListCreateEvent.playListId());
   }
 
   @Transactional
   public void notifyFollowersOnWatchingEvent(WatchingSessionCreateEvent watchingSessionCreateEvent) {
-    log.info("[팔로우 관리] 팔로우한 유저가 실시간 콘텐츠 시청시 팔로워 알림 송신 시작 : watchingSessionId = {}", watchingSessionCreateEvent.watchingSessionId());
+    log.info("[알림] 팔로우한 유저가 실시간 콘텐츠 시청시 팔로워 알림 송신 시작 : watchingSessionId = {}", watchingSessionCreateEvent.watchingSessionId());
     UUID ownerId = watchingSessionCreateEvent.ownerId();
     List<Follow> followList = followRepository.findByFolloweeId(ownerId);
 
     for (Follow follow : followList) {
       UUID receiverId = follow.getFollower().getId();
-      String title = follow.getFollowee().getName() + "님이 " + watchingSessionCreateEvent.watchingSessionContentTitle() + "를 보고있어요!";
-      createNotification(receiverId, title, "", Level.INFO);
+
+      String username = follow.getFollowee().getName();
+      String contentTitle = watchingSessionCreateEvent.watchingSessionContentTitle();
+
+      WatchingSessionStartedContext ctx =
+          new WatchingSessionStartedContext(username, contentTitle);
+
+      NotificationTemplate template = NotificationTemplate.WATCHING_SESSION_STARTED;
+      NotificationMessage message = template.build(ctx);
+      createNotification(
+          receiverId,
+          message.title(),
+          message.content(),
+          Level.INFO
+      );
     }
-    log.info("[팔로우 관리] 팔로우한 유저가 실시간 콘텐츠 시청시 알림 송신 완료 : watchingSessionId = {}", watchingSessionCreateEvent.watchingSessionId());
+
+    log.info("[알림] 팔로우한 유저가 실시간 콘텐츠 시청시 알림 송신 완료 : watchingSessionId = {}", watchingSessionCreateEvent.watchingSessionId());
   }
 
   private Notification saveNotification(UUID userId, String title, String content, Level level) {

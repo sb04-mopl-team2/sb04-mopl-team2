@@ -4,15 +4,13 @@ import com.codeit.mopl.domain.user.dto.request.*;
 import com.codeit.mopl.domain.user.dto.response.CursorResponseUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.ImageContentType;
+import com.codeit.mopl.domain.user.entity.Provider;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.UserRoleUpdateEvent;
-import com.codeit.mopl.exception.user.NotImageContentException;
-import com.codeit.mopl.exception.user.UserEmailAlreadyExistsException;
-import com.codeit.mopl.exception.user.UserErrorCode;
-import com.codeit.mopl.exception.user.UserNotFoundException;
+import com.codeit.mopl.exception.user.*;
 import com.codeit.mopl.mail.utils.PasswordUtils;
 import com.codeit.mopl.s3.S3Storage;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
@@ -76,6 +74,10 @@ public class UserService {
     public void changePassword(UUID userId, ChangePasswordRequest request) {
         log.info("[사용자 관리] 유저 비밀번호 변경 동작 userId = {}", userId);
         User findUser = getValidUserByUserId(userId);
+        if (!Provider.LOCAL.equals(findUser.getProvider())) {
+            log.warn("[사용자 관리] 소셜 로그인 사용자는 비밀번호를 변경할 수 없다.");
+            throw new SocialAccountPasswordChangeNotAllowedException(UserErrorCode.SOCIAL_ACCOUNT_CHANGE_PASSWORD_NOT_ALLOWED,Map.of("email",findUser.getEmail(), "provider", findUser.getProvider()));
+        }
         String encodedNewPassword = passwordEncoder.encode(request.password());
         findUser.updatePassword(encodedNewPassword);
         try{
@@ -185,7 +187,7 @@ public class UserService {
         return userMapper.toDto(findUser);
     }
 
-    public UserDto findOrCreateOAuth2User(String email, String name, String profileImageUrl) {
+    public UserDto findOrCreateOAuth2User(String email, String name, String profileImageUrl, Provider provider) {
         log.info("[사용자 관리] 소셜 로그인 시도 email = {}", email);
         if (userRepository.existsByEmail(email)) {
             return userMapper.toDto(findUserByEmail(email));
@@ -193,7 +195,7 @@ public class UserService {
         log.info("[사용자 관리] 소셜 로그인 계정 생성 email = {}", email);
         String randomPassword = passwordUtils.makeTempPassword();
         String encodedPassword = passwordEncoder.encode(randomPassword);  // 사용하지 않는 비밀번호
-        User user = new User(email,encodedPassword, name, profileImageUrl);
+        User user = new User(email,encodedPassword, name, profileImageUrl, provider);
         log.info("[사용자 관리] 소셜 로그인 계정 생성 완료 email = {}", email);
         return userMapper.toDto(userRepository.save(user));
     }

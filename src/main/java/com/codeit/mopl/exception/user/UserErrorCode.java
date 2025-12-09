@@ -14,7 +14,8 @@ public enum UserErrorCode implements ErrorCodeInterface {
     TEMP_PASSWORD_STORE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "임시 비밀번호 저장에 실패했습니다."),
     LOGIN_FAIL(HttpStatus.UNAUTHORIZED, "로그인에 실패했습니다."),
     MAIL_SEND_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "메일 전송에 실패했습니다."),
-    NOT_SUPPORTED_SOCIAL_LOGIN(HttpStatus.UNAUTHORIZED, "지원하지 않는 소셜 로그인입니다.");
+    NOT_SUPPORTED_SOCIAL_LOGIN(HttpStatus.UNAUTHORIZED, "지원하지 않는 소셜 로그인입니다."),
+    SOCIAL_ACCOUNT_CHANGE_PASSWORD_NOT_ALLOWED(HttpStatus.CONFLICT, "소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;

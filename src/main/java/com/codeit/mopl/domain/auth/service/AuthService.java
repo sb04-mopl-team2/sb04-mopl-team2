@@ -2,10 +2,12 @@ package com.codeit.mopl.domain.auth.service;
 
 import com.codeit.mopl.domain.auth.dto.request.ResetPasswordRequest;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
+import com.codeit.mopl.domain.user.entity.Provider;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.MailSendEvent;
 import com.codeit.mopl.exception.auth.AuthErrorCode;
 import com.codeit.mopl.exception.auth.InvalidTokenException;
+import com.codeit.mopl.exception.user.SocialAccountPasswordChangeNotAllowedException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.mail.utils.PasswordUtils;
@@ -61,8 +63,16 @@ public class AuthService {
             log.debug("[사용자 관리] 해당 유저를 찾을 수 없음 email = {}", request.email());
             throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("email", request.email()));
         }
+        checkProviderIsLocal(request.email());
+
         String tempPw = passwordUtils.makeTempPassword();
 
         publisher.publishEvent(new MailSendEvent(UUID.randomUUID(), request.email(), tempPw));
+    }
+
+    private void checkProviderIsLocal(String email) {
+        if (userRepository.existsByEmailAndProviderIsNot(email, Provider.LOCAL)) {
+            throw new SocialAccountPasswordChangeNotAllowedException(UserErrorCode.SOCIAL_ACCOUNT_CHANGE_PASSWORD_NOT_ALLOWED, Map.of("email",email));
+        }
     }
 }

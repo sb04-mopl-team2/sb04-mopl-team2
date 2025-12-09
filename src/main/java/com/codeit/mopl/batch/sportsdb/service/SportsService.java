@@ -7,6 +7,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -18,6 +19,7 @@ public class SportsService {
   /**
    * 축구 경기 초기 데이터 로드 (6개월치)
    */
+  @Transactional()
   public void runInitialDataLoad() {
     LocalDate endDate = LocalDate.now();
     LocalDate startDate = endDate.minusMonths(6);

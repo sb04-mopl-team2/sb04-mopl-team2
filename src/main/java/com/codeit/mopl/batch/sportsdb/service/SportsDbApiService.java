@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Flux;
@@ -42,7 +41,6 @@ public class SportsDbApiService {
    * @param date 조회 날짜
    * @return 저장된 Content 리스트
    */
-  @Transactional
   public Mono<List<Content>> fetchSoccerEventsByDate(LocalDate date) {
     String formattedDate = date.format(DATE_FORMATTER);
     log.info("[SportsDB] 축구 경기 조회 시작 date = {}", formattedDate);

@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.message.conversation.repository;
 
+import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.message.conversation.dto.request.ConversationSearchCond;
 import com.codeit.mopl.domain.message.conversation.entity.Conversation;
 import com.codeit.mopl.domain.message.conversation.entity.QConversation;
@@ -10,6 +11,7 @@ import com.codeit.mopl.domain.user.entity.QUser;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -98,18 +100,21 @@ public class ConversationRepositoryImpl implements CustomConversationRepository 
             return null;
         }
        LocalDateTime cursorCreatedAt;
+
         try {
             cursorCreatedAt = LocalDateTime.parse(cursor);
         } catch (DateTimeParseException e) {
             return null;
         }
 
-        BooleanExpression ltCursor = conversation.createdAt.lt(cursorCreatedAt);
+      Instant cursorInstant = TimeUtil.toInstant(cursorCreatedAt);
+
+        BooleanExpression ltCursor = conversation.createdAt.lt(cursorInstant);
 
         if (idAfter == null) {
             return ltCursor;
         }
-        BooleanExpression tieBreaker = conversation.createdAt.eq(cursorCreatedAt)
+        BooleanExpression tieBreaker = conversation.createdAt.eq(cursorInstant)
                 .and(conversation.id.lt(idAfter));
         return ltCursor.or(tieBreaker);
     }

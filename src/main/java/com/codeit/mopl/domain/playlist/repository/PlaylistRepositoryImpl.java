@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.playlist.repository;
 
+import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
@@ -9,6 +10,7 @@ import com.codeit.mopl.domain.playlist.entity.SortBy;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -90,12 +92,14 @@ public class PlaylistRepositoryImpl implements CustomPlaylistRepository {
         } catch (DateTimeException e) {
             throw new IllegalArgumentException("올바르지 않은 커서 포맷입니다." + cursor, e);
         }
-        BooleanExpression lessThanCreatedAt = playlist.createdAt.lt(cursorCreatedAt);
+
+        Instant cursorInstant = TimeUtil.toInstant(cursorCreatedAt);
+        BooleanExpression lessThanCreatedAt = playlist.createdAt.lt(cursorInstant);
 
         if (idAfter == null) {
             return lessThanCreatedAt;
         }
-        BooleanExpression equalAndLtId = playlist.createdAt.eq(cursorCreatedAt)
+        BooleanExpression equalAndLtId = playlist.createdAt.eq(cursorInstant)
                 .and(playlist.id.lt(idAfter));
         return lessThanCreatedAt.or(equalAndLtId);
     }

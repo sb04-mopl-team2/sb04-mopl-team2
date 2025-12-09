@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.review.repository;
 
+import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.review.entity.QReview;
 import com.codeit.mopl.domain.review.entity.Review;
 import com.codeit.mopl.domain.review.entity.ReviewSortBy;
@@ -9,6 +10,7 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,14 +101,15 @@ public class ReviewRepositoryImpl implements CustomReviewRepository {
     switch (sortBy) {
 
       case createdAt: {
-        LocalDateTime cursorTime = LocalDateTime.parse(cursor);
+        LocalDateTime cursorLocalDateTime = LocalDateTime.parse(cursor);
+        Instant cursorInstant = TimeUtil.toInstant(cursorLocalDateTime);
 
         if (sortDirection == SortDirection.DESCENDING) {
-          main = qReview.createdAt.lt(cursorTime);
-          tie = qReview.createdAt.eq(cursorTime).and(qReview.id.lt(idAfter));
+          main = qReview.createdAt.lt(cursorInstant);
+          tie = qReview.createdAt.eq(cursorInstant).and(qReview.id.lt(idAfter));
         } else {
-          main = qReview.createdAt.gt(cursorTime);
-          tie = qReview.createdAt.eq(cursorTime).and(qReview.id.gt(idAfter));
+          main = qReview.createdAt.gt(cursorInstant);
+          tie = qReview.createdAt.eq(cursorInstant).and(qReview.id.gt(idAfter));
         }
 
         return main.or(tie);

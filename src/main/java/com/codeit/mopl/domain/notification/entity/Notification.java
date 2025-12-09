@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -46,7 +47,10 @@ public class Notification extends DeletableEntity {
 
   public Notification(UUID id, LocalDateTime createdAt) {
     this.id = id;
-    this.createdAt = createdAt;
-  } // TEST 용 생성자
+    this.createdAt = createdAt
+        .atZone(ZoneId.of("Asia/Seoul"))
+        .toInstant();
+  }
+
 
 }

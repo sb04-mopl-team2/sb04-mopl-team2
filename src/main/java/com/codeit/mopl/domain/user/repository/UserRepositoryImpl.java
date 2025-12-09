@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.user.repository;
 
+import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.user.dto.request.CursorRequestUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
@@ -9,6 +10,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -143,19 +145,20 @@ public class UserRepositoryImpl implements CustomUserRepository{
             }
         } else if (orderBy.equalsIgnoreCase("createdAt")) {
             LocalDateTime cursorValue = LocalDateTime.parse(String.valueOf(cursor));
+            Instant cursorInstant = TimeUtil.toInstant(cursorValue);
             if (directionOrder == Order.ASC) {
                 predicate.and(
-                        user.createdAt.gt(cursorValue)
+                        user.createdAt.gt(cursorInstant)
                                 .or(after != null
-                                        ? user.createdAt.eq(cursorValue).and(user.id.gt(after))
-                                        : user.createdAt.gt(cursorValue))
+                                        ? user.createdAt.eq(cursorInstant).and(user.id.gt(after))
+                                        : user.createdAt.gt(cursorInstant))
                 );
             } else {
                 predicate.and(
-                        user.createdAt.lt(cursorValue)
+                        user.createdAt.lt(cursorInstant)
                                 .or(after != null
-                                        ? user.createdAt.eq(cursorValue).and(user.id.lt(after))
-                                        : user.createdAt.lt(cursorValue))
+                                        ? user.createdAt.eq(cursorInstant).and(user.id.lt(after))
+                                        : user.createdAt.lt(cursorInstant))
                 );
             }
         } else if (orderBy.equalsIgnoreCase("isLocked")) {

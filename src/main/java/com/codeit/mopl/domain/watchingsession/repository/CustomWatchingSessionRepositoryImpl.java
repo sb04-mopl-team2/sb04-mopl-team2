@@ -3,6 +3,8 @@ package com.codeit.mopl.domain.watchingsession.repository;
 import static com.codeit.mopl.domain.content.entity.QContent.content;
 import static com.codeit.mopl.domain.user.entity.QUser.user;
 import static com.codeit.mopl.domain.watchingsession.entity.QWatchingSession.watchingSession;
+
+import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
@@ -10,6 +12,7 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -59,18 +62,19 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
 
     DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     LocalDateTime lastCreatedAt = LocalDateTime.parse(cursor, formatter);
+    Instant cursorInstant = TimeUtil.toInstant(lastCreatedAt);
 
     if (sortDirection == SortDirection.ASCENDING) {
       // WHERE (createdAt > lastCreatedAt)
       //     OR (createdAt = lastCreatedAt AND id > lastId)
-      return watchingSession.createdAt.gt(lastCreatedAt)
-          .or(watchingSession.createdAt.eq(lastCreatedAt)
+      return watchingSession.createdAt.gt(cursorInstant)
+          .or(watchingSession.createdAt.eq(cursorInstant)
             .and(watchingSession.id.gt(idAfter)));
     } else {
       // WHERE (createdAt < lastCreatedAt)
       //     OR (createdAt = lastCreatedAt AND id < lastId)
-      return watchingSession.createdAt.lt(lastCreatedAt)
-          .or(watchingSession.createdAt.eq(lastCreatedAt)
+      return watchingSession.createdAt.lt(cursorInstant)
+          .or(watchingSession.createdAt.eq(cursorInstant)
             .and(watchingSession.id.lt(idAfter)));
     }
   }

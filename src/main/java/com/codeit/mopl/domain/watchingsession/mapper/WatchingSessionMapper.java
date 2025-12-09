@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.watchingsession.mapper;
 
+import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.content.dto.response.ContentSummary;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.user.entity.User;
@@ -9,8 +10,10 @@ import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", imports = TimeUtil.class)
 public interface WatchingSessionMapper {
+
+  @Mapping(target = "createdAt", expression = "java(TimeUtil.toKst(watchingSession.getCreatedAt()))")
   @Mapping(source = "user", target = "watcher")
   WatchingSessionDto toDto(WatchingSession watchingSession);
 

@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.base;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
+import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -15,5 +16,5 @@ public class UpdatableEntity extends BaseEntity {
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    protected LocalDateTime updatedAt;
+    protected Instant updatedAt;
 }

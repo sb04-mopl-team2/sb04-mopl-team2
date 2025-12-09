@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.content.repository;
 
 import static com.codeit.mopl.domain.content.entity.QContent.content;
 
+import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.content.dto.request.ContentSearchCondition;
 import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
@@ -14,6 +15,7 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -133,7 +135,9 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
 
     switch (sortBy) {
       case CREATED_AT -> {
-        LocalDateTime cursorInstant = (LocalDateTime) parseCursor(sortBy, cond.getCursor());
+        LocalDateTime cursorLocalDateTime = LocalDateTime.parse(cond.getCursor());
+        Instant cursorInstant = TimeUtil.toInstant(cursorLocalDateTime);
+
         if (dir == SortDirection.ASCENDING) {
           if (idAfter != null) {
             return content.createdAt.gt(cursorInstant)

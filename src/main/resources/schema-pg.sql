@@ -5,8 +5,8 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE IF NOT EXISTS users
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP,
+    created_at TIMESTAMPZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPZ,
     email VARCHAR(255) UNIQUE NOT NULL,
     name VARCHAR(50) NOT NULL,
     password VARCHAR(512) NOT NULL,
@@ -21,8 +21,8 @@ CREATE TABLE IF NOT EXISTS users
 CREATE TABLE IF NOT EXISTS contents
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP,
+    created_at TIMESTAMPZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPZ,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     thumbnail_url TEXT,
@@ -46,8 +46,8 @@ CREATE TABLE IF NOT EXISTS contents_tags
 CREATE TABLE IF NOT EXISTS playlists
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP,
+    created_at TIMESTAMPZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPZ,
     owner_id UUID NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS playlists
 CREATE TABLE IF NOT EXISTS playlist_items
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    created_at TIMESTAMPZ NOT NULL DEFAULT now(),
     playlist_id UUID NOT NULL,
     content_id UUID NOT NULL,
 
@@ -73,11 +73,11 @@ CREATE TABLE IF NOT EXISTS playlist_items
 CREATE TABLE IF NOT EXISTS playlist_subscriptions
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP,
+    created_at TIMESTAMPZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPZ,
     subscriber_id UUID NOT NULL,
     playlist_id UUID NOT NULL,
-    subscribed_at TIMESTAMP,
+    subscribed_at TIMESTAMPZ,
 
     FOREIGN KEY (subscriber_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
@@ -88,9 +88,9 @@ CREATE TABLE IF NOT EXISTS playlist_subscriptions
 CREATE TABLE IF NOT EXISTS notifications
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP,
-    deleted_at TIMESTAMP,
+    created_at TIMESTAMPZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPZ,
+    deleted_at TIMESTAMPZ,
     user_id UUID NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
@@ -104,9 +104,9 @@ CREATE TABLE IF NOT EXISTS notifications
 CREATE TABLE IF NOT EXISTS reviews
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP,
-    deleted_at TIMESTAMP,
+    created_at TIMESTAMPZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPZ,
+    deleted_at TIMESTAMPZ,
     user_id UUID NOT NULL,
     content_id UUID NOT NULL,
     text TEXT NOT NULL,
@@ -121,8 +121,8 @@ CREATE TABLE IF NOT EXISTS reviews
 CREATE TABLE IF NOT EXISTS conversations
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP,
+    created_at TIMESTAMPZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPZ,
     with_user_id UUID NOT NULL,
     user_id UUID NOT NULL,
     has_unread BOOLEAN NOT NULL DEFAULT FALSE,
@@ -135,8 +135,8 @@ CREATE TABLE IF NOT EXISTS conversations
 CREATE TABLE IF NOT EXISTS direct_messages
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP,
+    created_at TIMESTAMPZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPZ,
     sender UUID NOT NULL,
     receiver UUID NOT NULL,
     conversation_id UUID NOT NULL,
@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS direct_messages
 CREATE TABLE IF NOT EXISTS follows
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    created_at TIMESTAMPZ NOT NULL DEFAULT now(),
     follower_id UUID NOT NULL,
     followee_id UUID NOT NULL,
     follow_status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
@@ -167,9 +167,9 @@ CREATE TABLE IF NOT EXISTS follows
 CREATE TABLE IF NOT EXISTS watching_sessions
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP,
-    deleted_at TIMESTAMP,
+    created_at TIMESTAMPZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPZ,
+    deleted_at TIMESTAMPZ,
     user_id UUID NOT NULL,
     content_id UUID NOT NULL,
 
@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS watching_sessions
 CREATE TABLE IF NOT EXISTS processed_events
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    created_at TIMESTAMPZ NOT NULL DEFAULT now(),
     event_id UUID NOT NULL,
     event_type VARCHAR(255) NOT NULL,
 

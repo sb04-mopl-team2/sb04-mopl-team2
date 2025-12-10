@@ -36,13 +36,5 @@ spring:
         enable.auto.commit: false
     listener:
       ack-mode: MANUAL
-
-admin:
-  email: ${ADMIN_EMAIL}
-  name: ${ADMIN_NAME}
-  password: ${ADMIN_PASSWORD}
-
-sportsdb:
-  base-url: ${SPORTSDB_BASE_URL}
-  api:
-    key: ${SPORTSDB_API_KEY}
+  elasticsearch:
+    uris: localhost:9200

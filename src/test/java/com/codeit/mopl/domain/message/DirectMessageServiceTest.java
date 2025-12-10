@@ -18,6 +18,7 @@ import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,6 @@ import org.springframework.data.domain.Pageable;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -256,7 +256,7 @@ public class DirectMessageServiceTest {
         void shouldGetMessagesAfterCursor() {
             //given
             DirectMessageSearchCond cond = new DirectMessageSearchCond();
-            LocalDateTime fixedTime = LocalDateTime.of(2024, 1, 1, 12, 0, 0);
+            Instant fixedTime = LocalDateTime.of(2024, 1, 1, 12, 0, 0).toInstant(ZoneOffset.UTC);
             cond.setCursor(fixedTime.toString());
             cond.setIdAfter(null);
             cond.setLimit(20);
@@ -297,7 +297,7 @@ public class DirectMessageServiceTest {
             setId(after2, after2Id);
             given(directMessageRepository.findMessagesBefore(
                     any(UUID.class),
-                    nullable(LocalDateTime.class),
+                    nullable(Instant.class),
                     nullable(UUID.class),
                     any(Pageable.class)
             )).willReturn(Arrays.asList(after1, after2));

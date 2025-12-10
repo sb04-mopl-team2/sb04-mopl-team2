@@ -18,6 +18,7 @@ import com.codeit.mopl.exception.message.conversation.ConversationForbiddenExcep
 import com.codeit.mopl.exception.message.conversation.ConversationNotFound;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -26,8 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.Pageable;
-
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +102,7 @@ public class DirectMessageService {
                 );
 
         }
-            LocalDateTime cursor = LocalDateTime.parse(cond.getCursor());
+            Instant cursor = Instant.parse(cond.getCursor());
             if (cond.getSortDirection() == SortDirection.DESCENDING) {
                 directMessages = directMessageRepository.findMessagesBefore(
                         conversationId,

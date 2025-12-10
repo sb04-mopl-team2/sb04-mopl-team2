@@ -4,9 +4,8 @@ import com.codeit.mopl.domain.base.UpdatableEntity;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.user.entity.User;
 import jakarta.persistence.*;
+import java.time.Instant;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -25,5 +24,5 @@ public class Subscription extends UpdatableEntity {
     private User subscriber;
 
     @Column(name = "subscribed_at")
-    private LocalDateTime subscribedAt;
+    private Instant subscribedAt;
 }

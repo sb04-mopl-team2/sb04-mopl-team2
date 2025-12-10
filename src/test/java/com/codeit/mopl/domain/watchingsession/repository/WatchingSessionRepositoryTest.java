@@ -9,8 +9,8 @@ import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
 import com.codeit.mopl.util.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,21 +56,21 @@ public class WatchingSessionRepositoryTest {
     this.content.setContentType(ContentType.MOVIE);
     em.persistAndFlush(content);
 
-    LocalDateTime localDateTime1 = LocalDateTime.now();
-    LocalDateTime localDateTime2 = localDateTime1.plusHours(5);
+    Instant instant1 = Instant.now();
+    Instant instant2 = Instant.now().minus(Duration.ofHours(1));
 
     this.w1 = new WatchingSession();
     w1.setUser(user1);
     w1.setContent(content);
     em.persist(w1);
-    ReflectionTestUtils.setField(w1, "createdAt", localDateTime1);
+    ReflectionTestUtils.setField(w1, "createdAt", instant1);
     em.flush();
 
     this.w2 = new WatchingSession();
     w2.setUser(user2);
     w2.setContent(content);
     em.persist(w2);
-    ReflectionTestUtils.setField(w2, "createdAt", localDateTime2);
+    ReflectionTestUtils.setField(w2, "createdAt", instant2);
     em.flush();
 
     // cache 클리어

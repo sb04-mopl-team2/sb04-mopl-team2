@@ -42,7 +42,6 @@ import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;

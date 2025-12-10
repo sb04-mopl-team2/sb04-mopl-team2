@@ -11,8 +11,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,12 +44,8 @@ public class Notification extends DeletableEntity {
   @Column(nullable = false)
   private Status status = Status.UNREAD; // 기본값
 
-  public Notification(UUID id, LocalDateTime createdAt) {
+  public Notification(UUID id, Instant createdAt) {
     this.id = id;
-    this.createdAt = createdAt
-        .atZone(ZoneId.of("Asia/Seoul"))
-        .toInstant();
+    this.createdAt = createdAt;
   }
-
-
 }

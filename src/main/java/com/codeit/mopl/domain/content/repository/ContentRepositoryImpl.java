@@ -15,7 +15,6 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -197,7 +196,7 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
 
   private Comparable<?> parseCursor(SortBy sortBy, String cursor) {
     return switch (sortBy) {
-      case CREATED_AT -> LocalDateTime.parse(cursor);
+      case CREATED_AT -> Instant.parse(cursor);
       case WATCHER_COUNT -> Integer.valueOf(cursor);
       case RATE -> Double.valueOf(cursor);
     };

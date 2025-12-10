@@ -22,7 +22,8 @@ import com.codeit.mopl.exception.review.ReviewDuplicateException;
 import com.codeit.mopl.exception.review.ReviewForbiddenException;
 import com.codeit.mopl.exception.review.ReviewNotFoundException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -103,8 +104,8 @@ class ReviewServiceTest {
     SortDirection sortDirection = SortDirection.DESCENDING;
     ReviewSortBy sortBy = ReviewSortBy.createdAt;
 
-    Review review1 = createReview(UUID.randomUUID(), LocalDateTime.now().minusMinutes(2));
-    Review review2 = createReview(UUID.randomUUID(), LocalDateTime.now().minusMinutes(1));
+    Review review1 = createReview(UUID.randomUUID(), Instant.now().minus(Duration.ofHours(2)));
+    Review review2 = createReview(UUID.randomUUID(), Instant.now().minus(Duration.ofHours(1)));
     List<Review> reviews = List.of(review1, review2);
 
     when(reviewRepository.searchReview(
@@ -150,9 +151,9 @@ class ReviewServiceTest {
     SortDirection sortDirection = SortDirection.DESCENDING;
     ReviewSortBy sortBy = ReviewSortBy.createdAt;
 
-    Review review1 = createReview(UUID.randomUUID(), LocalDateTime.now().minusMinutes(3));
-    Review review2 = createReview(UUID.randomUUID(), LocalDateTime.now().minusMinutes(2));
-    Review review3 = createReview(UUID.randomUUID(), LocalDateTime.now().minusMinutes(1)); // limit+1번째
+    Review review1 = createReview(UUID.randomUUID(), Instant.now().minus(Duration.ofHours(3)));
+    Review review2 = createReview(UUID.randomUUID(), Instant.now().minus(Duration.ofHours(2)));
+    Review review3 = createReview(UUID.randomUUID(), Instant.now().minus(Duration.ofHours(1))); // limit+1번째
 
     List<Review> reviews = new ArrayList<>();
     reviews.add(review1);
@@ -606,7 +607,7 @@ class ReviewServiceTest {
     verify(contentRepository).save(content);
   }
 
-  private Review createReview(UUID id, LocalDateTime createdAt) {
+  private Review createReview(UUID id, Instant createdAt) {
     Review review = new Review();
     review.setText("sample");
     review.setRating(4.0);

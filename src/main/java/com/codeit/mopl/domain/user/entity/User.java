@@ -3,12 +3,10 @@ package com.codeit.mopl.domain.user.entity;
 import com.codeit.mopl.domain.base.UpdatableEntity;
 import jakarta.persistence.*;
 import java.time.Instant;
-import java.time.ZoneId;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity

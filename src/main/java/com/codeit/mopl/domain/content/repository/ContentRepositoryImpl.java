@@ -2,7 +2,6 @@ package com.codeit.mopl.domain.content.repository;
 
 import static com.codeit.mopl.domain.content.entity.QContent.content;
 
-import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.content.dto.request.ContentSearchCondition;
 import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
@@ -135,8 +134,7 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
 
     switch (sortBy) {
       case CREATED_AT -> {
-        LocalDateTime cursorLocalDateTime = LocalDateTime.parse(cond.getCursor());
-        Instant cursorInstant = TimeUtil.toInstant(cursorLocalDateTime);
+        Instant cursorInstant = Instant.parse(cond.getCursor());
 
         if (dir == SortDirection.ASCENDING) {
           if (idAfter != null) {

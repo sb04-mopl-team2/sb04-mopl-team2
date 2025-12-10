@@ -1,6 +1,5 @@
 package com.codeit.mopl.domain.playlist.repository;
 
-import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
@@ -15,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.DateTimeException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -86,14 +84,13 @@ public class PlaylistRepositoryImpl implements CustomPlaylistRepository {
         if (cursor == null) {
             return null;
         }
-        LocalDateTime cursorCreatedAt;
+        Instant cursorInstant;
         try {
-            cursorCreatedAt = LocalDateTime.parse(cursor);
+            cursorInstant = Instant.parse(cursor);
         } catch (DateTimeException e) {
             throw new IllegalArgumentException("올바르지 않은 커서 포맷입니다." + cursor, e);
         }
 
-        Instant cursorInstant = TimeUtil.toInstant(cursorCreatedAt);
         BooleanExpression lessThanCreatedAt = playlist.createdAt.lt(cursorInstant);
 
         if (idAfter == null) {

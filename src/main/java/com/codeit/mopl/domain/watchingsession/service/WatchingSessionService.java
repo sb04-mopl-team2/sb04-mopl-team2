@@ -1,6 +1,6 @@
 package com.codeit.mopl.domain.watchingsession.service;
 
-import com.codeit.mopl.domain.base.TimeUtil;
+import com.codeit.mopl.domain.base.FrontendKstOffsetAdjuster;
 import com.codeit.mopl.domain.content.dto.response.ContentSummary;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
@@ -24,7 +24,6 @@ import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -214,7 +213,7 @@ public class WatchingSessionService {
         changeType,
         new WatchingSessionDto(
             savedWatchingSession.getId(),
-            TimeUtil.toKst(savedWatchingSession.getCreatedAt()),
+            FrontendKstOffsetAdjuster.adjust(savedWatchingSession.getCreatedAt()),
             new UserSummary(
                 user.getId(),
                 user.getEmail(),

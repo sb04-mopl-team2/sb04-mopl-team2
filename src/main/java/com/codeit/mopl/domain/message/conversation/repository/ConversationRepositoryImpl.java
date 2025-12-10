@@ -1,6 +1,5 @@
 package com.codeit.mopl.domain.message.conversation.repository;
 
-import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.message.conversation.dto.request.ConversationSearchCond;
 import com.codeit.mopl.domain.message.conversation.entity.Conversation;
 import com.codeit.mopl.domain.message.conversation.entity.QConversation;
@@ -15,7 +14,6 @@ import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.UUID;
@@ -99,15 +97,13 @@ public class ConversationRepositoryImpl implements CustomConversationRepository 
         if (cursor == null || cursor.isEmpty()) {
             return null;
         }
-       LocalDateTime cursorCreatedAt;
+       Instant cursorInstant;
 
         try {
-            cursorCreatedAt = LocalDateTime.parse(cursor);
+          cursorInstant = Instant.parse(cursor);
         } catch (DateTimeParseException e) {
             return null;
         }
-
-      Instant cursorInstant = TimeUtil.toInstant(cursorCreatedAt);
 
         BooleanExpression ltCursor = conversation.createdAt.lt(cursorInstant);
 

@@ -1,6 +1,5 @@
 package com.codeit.mopl.domain.review.repository;
 
-import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.review.entity.QReview;
 import com.codeit.mopl.domain.review.entity.Review;
 import com.codeit.mopl.domain.review.entity.ReviewSortBy;
@@ -11,7 +10,6 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -101,8 +99,7 @@ public class ReviewRepositoryImpl implements CustomReviewRepository {
     switch (sortBy) {
 
       case createdAt: {
-        LocalDateTime cursorLocalDateTime = LocalDateTime.parse(cursor);
-        Instant cursorInstant = TimeUtil.toInstant(cursorLocalDateTime);
+        Instant cursorInstant = Instant.parse(cursor);
 
         if (sortDirection == SortDirection.DESCENDING) {
           main = qReview.createdAt.lt(cursorInstant);

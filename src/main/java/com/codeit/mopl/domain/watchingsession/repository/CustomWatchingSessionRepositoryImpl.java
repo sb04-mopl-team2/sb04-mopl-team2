@@ -4,7 +4,6 @@ import static com.codeit.mopl.domain.content.entity.QContent.content;
 import static com.codeit.mopl.domain.user.entity.QUser.user;
 import static com.codeit.mopl.domain.watchingsession.entity.QWatchingSession.watchingSession;
 
-import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
@@ -13,7 +12,6 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
@@ -60,9 +58,9 @@ public class CustomWatchingSessionRepositoryImpl implements CustomWatchingSessio
     // 첫번째 페이지 빠른 리턴
     if (cursor == null || idAfter == null) return null;
 
-    DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-    LocalDateTime lastCreatedAt = LocalDateTime.parse(cursor, formatter);
-    Instant cursorInstant = TimeUtil.toInstant(lastCreatedAt);
+    //DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    //Instant cursorInstant = Instant.parse(cursor, formatter);
+    Instant cursorInstant = Instant.parse(cursor);
 
     if (sortDirection == SortDirection.ASCENDING) {
       // WHERE (createdAt > lastCreatedAt)

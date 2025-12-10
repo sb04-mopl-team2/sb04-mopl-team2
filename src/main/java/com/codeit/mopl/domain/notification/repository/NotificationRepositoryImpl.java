@@ -1,6 +1,5 @@
 package com.codeit.mopl.domain.notification.repository;
 
-import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.QNotification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
@@ -12,7 +11,6 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -89,9 +87,7 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
       return null;
     }
 
-    // cursor: KST 기준 LocalDateTime 문자열이라고 가정
-    LocalDateTime cursorLocalDateTime = LocalDateTime.parse(cursor);
-    Instant cursorInstant = TimeUtil.toInstant(cursorLocalDateTime);
+    Instant cursorInstant = Instant.parse(cursor);
 
     // createdAt(Instant) + id 조합으로 커서 조건 생성
     if (sortDirection == SortDirection.DESCENDING) {

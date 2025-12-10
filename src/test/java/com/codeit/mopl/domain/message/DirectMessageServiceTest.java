@@ -17,6 +17,7 @@ import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -95,7 +96,7 @@ public class DirectMessageServiceTest {
                     .willReturn(new DirectMessageDto(
                        message.getId(),
                        conversationId,
-                       LocalDateTime.now(),
+                       Instant.now(),
                        sender,
                        receiver,
                        message.getContent()

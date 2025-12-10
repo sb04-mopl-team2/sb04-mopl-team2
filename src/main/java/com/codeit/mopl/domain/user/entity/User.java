@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.user.entity;
 
 import com.codeit.mopl.domain.base.UpdatableEntity;
 import jakarta.persistence.*;
+import java.time.Instant;
 import java.time.ZoneId;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -86,11 +87,9 @@ public class User extends UpdatableEntity {
         return Objects.hashCode(getId());
     }
 
-    public User(String email, String password, String name, LocalDateTime createdAt) {
+    public User(String email, String password, String name, Instant createdAt) {
         this(email,password,name);
-        this.createdAt = createdAt
-            .atZone(ZoneId.of("Asia/Seoul"))
-            .toInstant();
+        this.createdAt = createdAt;
     }
 
     public void increaseFollowerCount() {

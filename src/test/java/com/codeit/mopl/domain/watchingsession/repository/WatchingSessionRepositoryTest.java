@@ -188,7 +188,9 @@ public class WatchingSessionRepositoryTest {
     assertThat(firstResult.getId()).isEqualTo(w2.getId()); // w2
 
     // 두번째 페이지
-    String cursorTimestamp = firstResult.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    String cursorTimestamp =
+        firstResult.getCreatedAt().toString();
+           // .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     UUID cursorId = firstResult.getId();
     List<WatchingSession> page2 = watchingSessionRepository.findWatchingSessions(
         content.getId(),
@@ -239,7 +241,9 @@ public class WatchingSessionRepositoryTest {
     WatchingSession first = page1.get(0);
 
     // 1번쨰 아이템 커서로 사용
-    String cursorTime = first.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    String cursorTime =
+        first.getCreatedAt().toString();
+            //.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     List<WatchingSession> page2 = watchingSessionRepository.findWatchingSessions(
         content.getId(), null,
         cursorTime,

@@ -1,6 +1,5 @@
 package com.codeit.mopl.domain.user.repository;
 
-import com.codeit.mopl.domain.base.TimeUtil;
 import com.codeit.mopl.domain.user.dto.request.CursorRequestUserDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
@@ -19,7 +18,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -144,8 +142,8 @@ public class UserRepositoryImpl implements CustomUserRepository{
                 );
             }
         } else if (orderBy.equalsIgnoreCase("createdAt")) {
-            LocalDateTime cursorValue = LocalDateTime.parse(String.valueOf(cursor));
-            Instant cursorInstant = TimeUtil.toInstant(cursorValue);
+            Instant cursorInstant = Instant.parse(String.valueOf(cursor));
+
             if (directionOrder == Order.ASC) {
                 predicate.and(
                         user.createdAt.gt(cursorInstant)

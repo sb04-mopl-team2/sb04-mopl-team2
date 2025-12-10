@@ -19,7 +19,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -238,9 +240,9 @@ public class ConversationRepositoryTest {
     @DisplayName("cursorLessThan - cursor 보다 createdAt값이 작은 채팅방만 조회함")
     void findAllWithCursorLessThan() {
         //given
-        LocalDateTime t1 = LocalDateTime.now().minusDays(2);
-        LocalDateTime t2 = LocalDateTime.now().minusDays(1);
-        LocalDateTime t3 = LocalDateTime.now();
+        Instant t1 = Instant.now().minus(2, ChronoUnit.DAYS);
+        Instant t2 = Instant.now().minus(1,ChronoUnit.DAYS);
+        Instant t3 = Instant.now();
 
         em.getEntityManager()
                 .createNativeQuery("UPDATE conversations SET created_at = ? WHERE id = ?")
@@ -281,9 +283,9 @@ public class ConversationRepositoryTest {
     @DisplayName("hasNext - hasNext == true 일 경우, cursor 기반 페이지네이션 동작이 정상적으로 동작함")
     void findAllWhenHasNext() {
         //given & when : createdAt 강제 세팅
-        LocalDateTime t1 = LocalDateTime.now().minusDays(2);
-        LocalDateTime t2 = LocalDateTime.now().minusDays(1);
-        LocalDateTime t3 = LocalDateTime.now();
+        Instant t1 = Instant.now().minus(2, ChronoUnit.DAYS);
+        Instant t2 = Instant.now().minus(1,ChronoUnit.DAYS);
+        Instant t3 = Instant.now();
         em.getEntityManager()
                 .createNativeQuery("UPDATE conversations SET created_at = ? WHERE id = ?")
                 .setParameter(1, t1)
@@ -332,9 +334,9 @@ public class ConversationRepositoryTest {
     @DisplayName("정렬 - CREATED_AT DESC로 정렬됨")
     void orderByCreatedAtDesc() {
          //given
-         LocalDateTime t1 = LocalDateTime.now().minusDays(2);
-         LocalDateTime t2 = LocalDateTime.now().minusDays(1);
-         LocalDateTime t3 = LocalDateTime.now();
+        Instant t1 = Instant.now().minus(2, ChronoUnit.DAYS);
+        Instant t2 = Instant.now().minus(1,ChronoUnit.DAYS);
+        Instant t3 = Instant.now();
          ReflectionTestUtils.setField(conversation1, "createdAt", t1);
          ReflectionTestUtils.setField(conversation2, "createdAt", t2);
          ReflectionTestUtils.setField(conversation3, "createdAt", t3);

@@ -19,6 +19,7 @@ import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.s3.S3Storage;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -49,7 +50,7 @@ class ContentServiceTest {
 
   @Test
   @DisplayName("콘텐츠 수동생성")
-  void createContent_Success() {
+  void createContent_Success() throws IOException {
     // given
     List<String> tags = Arrays.asList("액션", "스릴러");
     ContentCreateRequest request = new ContentCreateRequest(
@@ -104,7 +105,7 @@ class ContentServiceTest {
 
   @Test
   @DisplayName("콘텐츠 목록 조회")
-  void findContents_Success() {
+  void findContents_Success() throws IOException {
     // given
     ContentSearchRequest request = new ContentSearchRequest();
     request.setCursor("cursor123");
@@ -174,7 +175,7 @@ class ContentServiceTest {
 
   @Test
   @DisplayName("콘텐츠 수정 성공")
-  void updateContent_Success_NoThumbnail() {
+  void updateContent_Success_NoThumbnail() throws IOException {
     // given
     UUID contentId = UUID.randomUUID();
 
@@ -223,7 +224,7 @@ class ContentServiceTest {
 
   @Test
   @DisplayName("콘텐츠 삭제 성공")
-  void deleteContent_Success() {
+  void deleteContent_Success() throws IOException {
     // given
     UUID contentId = UUID.randomUUID();
 

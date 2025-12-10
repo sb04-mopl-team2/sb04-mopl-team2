@@ -1,17 +1,16 @@
 package com.codeit.mopl.search.document;
 
-import com.codeit.mopl.domain.content.entity.ContentType;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Mapping;
+//import org.springframework.data.elasticsearch.annotations.Document;
+//import org.springframework.data.elasticsearch.annotations.Mapping;
 
 @Getter
 @Setter
-@Document(indexName = "content")
-@Mapping(mappingPath = "elasticsearch/content.json")
+//@Document(indexName = "content")
+//@Mapping(mappingPath = "elasticsearch/content.json")
 public class ContentDocument extends AbstractDocument {
   private String type;
   private String title;

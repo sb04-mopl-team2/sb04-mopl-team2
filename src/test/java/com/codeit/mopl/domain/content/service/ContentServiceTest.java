@@ -9,7 +9,6 @@ import static org.mockito.Mockito.verify;
 
 import com.codeit.mopl.domain.content.ContentTestFactory;
 import com.codeit.mopl.domain.content.dto.request.ContentCreateRequest;
-import com.codeit.mopl.domain.content.dto.request.ContentSearchCondition;
 import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
 import com.codeit.mopl.domain.content.dto.request.ContentUpdateRequest;
 import com.codeit.mopl.domain.content.dto.response.ContentDto;
@@ -19,7 +18,9 @@ import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.s3.S3Storage;
-import java.io.IOException;
+import com.codeit.mopl.search.ContentOsRepository;
+import com.codeit.mopl.search.OpenSearchService;
+import com.codeit.mopl.search.converter.ContentConverter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -45,12 +46,21 @@ class ContentServiceTest {
   @Mock
   private S3Storage s3Storage;
 
+  @Mock
+  private ContentConverter contentConverter;
+
+  @Mock
+  private OpenSearchService openSearchService;
+
+  @Mock
+  private ContentOsRepository contentOsRepository;
+
   @InjectMocks
   private ContentService contentService;
 
   @Test
   @DisplayName("콘텐츠 수동생성")
-  void createContent_Success() throws IOException {
+  void createContent_Success() {
     // given
     List<String> tags = Arrays.asList("액션", "스릴러");
     ContentCreateRequest request = new ContentCreateRequest(
@@ -105,7 +115,7 @@ class ContentServiceTest {
 
   @Test
   @DisplayName("콘텐츠 목록 조회")
-  void findContents_Success() throws IOException {
+  void findContents_Success() {
     // given
     ContentSearchRequest request = new ContentSearchRequest();
     request.setCursor("cursor123");
@@ -124,9 +134,10 @@ class ContentServiceTest {
             "ASCENDING"
         );
 
-    given(contentRepository.findContents(any(ContentSearchCondition.class)))
+//    given(contentRepository.findContents(any(ContentSearchCondition.class)))
+//        .willReturn(mockedResponse);
+    given(openSearchService.search(any(ContentSearchRequest.class)))
         .willReturn(mockedResponse);
-
     // when
     CursorResponseContentDto result = contentService.findContents(request);
 
@@ -175,7 +186,7 @@ class ContentServiceTest {
 
   @Test
   @DisplayName("콘텐츠 수정 성공")
-  void updateContent_Success_NoThumbnail() throws IOException {
+  void updateContent_Success_NoThumbnail() {
     // given
     UUID contentId = UUID.randomUUID();
 
@@ -224,7 +235,7 @@ class ContentServiceTest {
 
   @Test
   @DisplayName("콘텐츠 삭제 성공")
-  void deleteContent_Success() throws IOException {
+  void deleteContent_Success() {
     // given
     UUID contentId = UUID.randomUUID();
 

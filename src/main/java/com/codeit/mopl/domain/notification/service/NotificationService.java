@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.notification.service;
 
+import com.codeit.mopl.domain.base.FrontendKstOffsetAdjuster;
 import com.codeit.mopl.domain.follow.entity.Follow;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;

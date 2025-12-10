@@ -16,6 +16,7 @@ import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import com.codeit.mopl.util.WithCustomMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -82,7 +82,7 @@ public class UserControllerTest {
     private ClientRegistrationRepository clientRegistrationRepository;
 
     private static final UUID TEST_UUID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-    private static final UserDto USER_DTO = new UserDto(TEST_UUID,LocalDateTime.now(),"test@test.com","testName",null,Role.USER,false);
+    private static final UserDto USER_DTO = new UserDto(TEST_UUID, Instant.now(),"test@test.com","testName",null,Role.USER,false);
 
     @DisplayName("이메일, 비밀번호, 이름이 정상적으로 들어오면 회원가입을 시도한다.")
     @Test
@@ -92,7 +92,7 @@ public class UserControllerTest {
         String content = om.writeValueAsString(request);
 
         // given
-        UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@example.com","test",null, Role.USER, false);
+        UserDto userDto = new UserDto(UUID.randomUUID(), Instant.now(), "test@example.com","test",null, Role.USER, false);
         given(userService.create(request)).willReturn(userDto);
 
         // when
@@ -137,7 +137,7 @@ public class UserControllerTest {
         UUID userId = UUID.randomUUID();
 
         // given
-        UserDto userDto = new UserDto(userId, LocalDateTime.now(), "test@example.com", "test", null, Role.USER, false);
+        UserDto userDto = new UserDto(userId, Instant.now(), "test@example.com", "test", null, Role.USER, false);
         given(userService.findUser(userId)).willReturn(userDto);
 
         // when

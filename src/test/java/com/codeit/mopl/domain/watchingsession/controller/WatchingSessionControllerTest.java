@@ -30,7 +30,7 @@ import com.codeit.mopl.exception.watchingsession.ContentNotFoundException;
 import com.codeit.mopl.security.CustomUserDetailsService;
 import com.codeit.mopl.security.config.TestSecurityConfig;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -100,7 +100,7 @@ public class WatchingSessionControllerTest {
     UUID watchingSessionId = UUID.randomUUID();
     WatchingSessionDto watchingSessionDto = new WatchingSessionDto(
         watchingSessionId,
-        LocalDateTime.now(),
+        Instant.now(),
         new UserSummary(
             watcherId,
             "test",
@@ -153,7 +153,7 @@ public class WatchingSessionControllerTest {
     UUID userId = UUID.randomUUID();
     WatchingSessionDto watchingSessionDto = new WatchingSessionDto(
         UUID.randomUUID(),
-        LocalDateTime.now(),
+        Instant.now(),
         new UserSummary(userId,"test",null),
         new ContentSummary(contentId,null,null,
             null, null,null,null,null

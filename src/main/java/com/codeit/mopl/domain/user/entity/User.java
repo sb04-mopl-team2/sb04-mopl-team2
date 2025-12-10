@@ -2,11 +2,11 @@ package com.codeit.mopl.domain.user.entity;
 
 import com.codeit.mopl.domain.base.UpdatableEntity;
 import jakarta.persistence.*;
+import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
@@ -85,7 +85,7 @@ public class User extends UpdatableEntity {
         return Objects.hashCode(getId());
     }
 
-    public User(String email, String password, String name, LocalDateTime createdAt) {
+    public User(String email, String password, String name, Instant createdAt) {
         this(email,password,name);
         this.createdAt = createdAt;
     }

@@ -14,7 +14,7 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -133,7 +133,8 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
 
     switch (sortBy) {
       case CREATED_AT -> {
-        LocalDateTime cursorInstant = (LocalDateTime) parseCursor(sortBy, cond.getCursor());
+        Instant cursorInstant = Instant.parse(cond.getCursor());
+
         if (dir == SortDirection.ASCENDING) {
           if (idAfter != null) {
             return content.createdAt.gt(cursorInstant)
@@ -195,7 +196,7 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
 
   private Comparable<?> parseCursor(SortBy sortBy, String cursor) {
     return switch (sortBy) {
-      case CREATED_AT -> LocalDateTime.parse(cursor);
+      case CREATED_AT -> Instant.parse(cursor);
       case WATCHER_COUNT -> Integer.valueOf(cursor);
       case RATE -> Double.valueOf(cursor);
     };

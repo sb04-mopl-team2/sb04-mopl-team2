@@ -7,6 +7,7 @@ import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.fixture.UserFixture;
+import java.time.Instant;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,8 +17,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Slice;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
-import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -284,7 +283,7 @@ public class UserRepositoryTest {
                 null,
                 null,
                 false,
-                LocalDateTime.now().toString(),
+                Instant.now().toString(),
                 null,
                 20,
                 "ASCENDING",
@@ -306,7 +305,7 @@ public class UserRepositoryTest {
                 null,
                 null,
                 false,
-                LocalDateTime.now().toString(),
+                Instant.now().toString(),
                 null,
                 20,
                 "DESCENDING",
@@ -318,7 +317,7 @@ public class UserRepositoryTest {
 
         // then
         assertEquals(4,response.getContent().size());
-        assertTrue(response.getContent().get(0).createdAt().isBefore(LocalDateTime.now()));
+        assertTrue(response.getContent().get(0).createdAt().isBefore(Instant.now()));
         assertTrue(response.getContent().get(0).createdAt()
                 .isAfter(response.getContent().get(1).createdAt()));
     }

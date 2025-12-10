@@ -38,21 +38,12 @@ public class OpenSearchService {
   private final ContentOsRepository osRepository;
 
   public void save(Content content) {
-    try {
-      ContentDto dto = contentMapper.toDto(content);
-      osRepository.save(converter.convertToDocument(dto, content.getCreatedAt()));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    ContentDto dto = contentMapper.toDto(content);
+    osRepository.save(converter.convertToDocument(dto, content.getCreatedAt()));
   }
 
   public void delete(String contentId) {
-    try {
-      // ES에 반영
-      osRepository.delete(contentId);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    osRepository.delete(contentId);
   }
 
   public CursorResponseContentDto search(ContentSearchRequest request) {

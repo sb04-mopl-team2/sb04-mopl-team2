@@ -20,6 +20,34 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      zookeeper:
+        image: confluentinc/cp-zookeeper:7.4.0
+        ports:
+          - 2181:2181
+        env:
+          ZOOKEEPER_CLIENT_PORT: 2181
+          ZOOKEEPER_TICK_TIME: 2000
+          ZOOKEEPER_SYNC_LIMIT: 2
+
+      kafka:
+        image: confluentinc/cp-kafka:7.4.0
+        ports:
+          - 9092:9092
+        env:
+          KAFKA_BROKER_ID: 1
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+      elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+        ports:
+          - 9200:9200
+        options: >-
+          -e "discovery.type=single-node"
+          -e "xpack.security.enabled=false"
+          -e "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+
     steps:
       - uses: actions/checkout@v3
 

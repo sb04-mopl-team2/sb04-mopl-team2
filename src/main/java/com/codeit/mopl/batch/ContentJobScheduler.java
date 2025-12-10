@@ -22,7 +22,7 @@ public class ContentJobScheduler {
   /**
    * 매일 새벽 4시에 Movie, TV, Sports를 순차적으로 실행
    */
-  @Scheduled(cron = "0 0 4 * * *")
+  @Scheduled(cron = "0 30 8 * * *")
   public void runDailyContentUpdate() {
     log.info("=== 일일 컨텐츠 업데이트 시작 (Movie + TV + Sports) ===");
 

@@ -1,10 +1,5 @@
 package com.codeit.mopl.search;
 
-//import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-//import co.elastic.clients.elasticsearch._types.query_dsl.MultiMatchQuery;
-//import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-//import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
-
 import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
 import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
@@ -33,25 +28,13 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ElasticsearchProxy {
+public class OpenSearchService {
 
-//  private final ElasticsearchOperations operations;
   private final OpenSearchClient client;
   private final ContentConverter converter;
 
-
-//  request=ContentSearchRequest {
-//    typeEqual     = movie
-//    keywordLike   = 예시
-//    tagsIn        = null
-//    cursor        = null
-//    idAfter       = null
-//    limit         = 20
-//    sort          = rate (DESCENDING)
-//  }
-
   public CursorResponseContentDto search(ContentSearchRequest request) throws IOException {
-    log.info("[콘텐츠 목록 조회 시작 -  ES] request={}", request);
+    log.info("[콘텐츠 목록 조회 시작 -  OpenSearch] request={}", request);
 
     Query boolQuery = boolQueryBuilder(request);
     SearchRequest.Builder builder = new SearchRequest.Builder()
@@ -96,7 +79,7 @@ public class ElasticsearchProxy {
         request.getSortBy(),
         request.getSortDirection()
     );
-    log.info("[콘텐츠 목록 조회 완료 - ES] resultCount={}", data.size());
+    log.info("[콘텐츠 목록 조회 완료 - OpenSearch] resultCount={}", data.size());
     return response;
   }
 
@@ -148,7 +131,6 @@ public class ElasticsearchProxy {
     boolean asc = req.getSortDirection().equals(SortDirection.ASCENDING.toString());
 
     builder.sort(s -> s.field(f -> f.field(sortByString).order(asc ? SortOrder.Asc : SortOrder.Desc)));
-
     // 타이 브레이커
     builder.sort(s -> s.field(f -> f.field("id").order(SortOrder.Asc)));
   }

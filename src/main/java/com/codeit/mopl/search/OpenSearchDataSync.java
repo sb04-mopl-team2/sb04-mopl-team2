@@ -23,10 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 //@Profile("prod")
 @Component
 @RequiredArgsConstructor
-public class ElasticsearchDataSync implements ApplicationRunner {
+public class OpenSearchDataSync implements ApplicationRunner {
 
   private final ContentRepository repository;
-  private final ContentESRepository esRepository;
+  private final ContentOSRepository esRepository;
   private final ContentMapper contentMapper;
   private final ContentDocumentMapper documentMapper;
 

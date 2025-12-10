@@ -1,6 +1,5 @@
 package com.codeit.mopl.domain.watchingsession.controller;
 
-import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.watchingsession.service.WatchingSessionService;
 import com.codeit.mopl.domain.watchingsession.dto.CursorResponseWatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
@@ -52,8 +51,8 @@ public class WatchingSessionController {
       @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
     log.info("[실시간 세션] 특정 콘텐츠의 시청 세션 목록 요청 수신. contentId = {}", contentId);
-    UserDto user = userDetails.getUser();
-    watchingSessionService.joinSession(user.id(), contentId);
+//    UserDto user = userDetails.getUser();
+//    watchingSessionService.joinSession(user.id(), contentId);
 
     CursorResponseWatchingSessionDto response = watchingSessionService.getWatchingSessions(
         contentId,

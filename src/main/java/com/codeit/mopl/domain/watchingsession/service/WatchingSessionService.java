@@ -215,7 +215,7 @@ public class WatchingSessionService {
             savedWatchingSession.getCreatedAt(),
             new UserSummary(
                 user.getId(),
-                user.getEmail(),
+                user.getName(),
                 user.getProfileImageUrl()
             ),
             new ContentSummary(

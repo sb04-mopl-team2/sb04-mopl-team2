@@ -1,4 +1,4 @@
-package com.codeit.mopl.domain.message;
+package com.codeit.mopl.domain.message.service;
 
 import com.codeit.mopl.domain.base.BaseEntity;
 import com.codeit.mopl.domain.message.conversation.entity.Conversation;
@@ -31,7 +31,6 @@ import org.springframework.data.domain.Pageable;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 

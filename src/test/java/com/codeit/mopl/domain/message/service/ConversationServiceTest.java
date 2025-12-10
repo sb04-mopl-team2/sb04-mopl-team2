@@ -1,4 +1,4 @@
-package com.codeit.mopl.domain.message;
+package com.codeit.mopl.domain.message.service;
 
 import com.codeit.mopl.domain.base.BaseEntity;
 import com.codeit.mopl.domain.message.conversation.dto.request.ConversationCreateRequest;

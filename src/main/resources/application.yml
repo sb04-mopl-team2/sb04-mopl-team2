@@ -16,15 +16,14 @@ spring:
       enabled: false
     job:
       enabled: false
-  jpa:
-    properties:
-      hibernate.jdbc.lock_timeout: 3000
+
   # redis 설정
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+  # OAuth2 추가
   security:
     oauth2:
       client:

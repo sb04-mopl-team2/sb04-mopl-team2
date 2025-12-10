@@ -6,7 +6,6 @@ import com.codeit.mopl.domain.notification.dto.NotificationSearchRequest;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.entity.SortBy;
 import com.codeit.mopl.domain.notification.entity.SortDirection;
-import com.codeit.mopl.domain.notification.mapper.MapperUtils;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
 import com.codeit.mopl.domain.notification.service.NotificationService;
@@ -24,6 +23,7 @@ import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
 import com.codeit.mopl.sse.service.SseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -89,9 +89,6 @@ public class NotificationControllerTest {
   private SseEmitterRegistry sseEmitterRegistry;
 
   @MockitoBean
-  private MapperUtils mapperUtils;
-
-  @MockitoBean
   private UserMapper userMapper;
 
   @MockitoBean
@@ -116,7 +113,7 @@ public class NotificationControllerTest {
   @DisplayName("알림 조회 성공")
   void getNotifications_success() throws Exception {
     // given
-    UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@example.com","test",null, Role.USER, false);
+    UserDto userDto = new UserDto(UUID.randomUUID(), Instant.now(), "test@example.com","test",null, Role.USER, false);
     CustomUserDetails customUserDetails = new CustomUserDetails(
         userDto,
         "dummyPassword"
@@ -132,15 +129,15 @@ public class NotificationControllerTest {
         );
 
     NotificationDto notificationDto1 = new NotificationDto(
-        UUID.randomUUID(), LocalDateTime.now(), UUID.randomUUID(),
+        UUID.randomUUID(), Instant.now(), UUID.randomUUID(),
         "test title1", "test content1", Level.INFO
     );
     NotificationDto notificationDto2 = new NotificationDto(
-        UUID.randomUUID(), LocalDateTime.now(), UUID.randomUUID(),
+        UUID.randomUUID(), Instant.now(), UUID.randomUUID(),
         "test title2", "test content2", Level.INFO
     );
     NotificationDto notificationDto3 = new NotificationDto(
-        UUID.randomUUID(), LocalDateTime.now(), UUID.randomUUID(),
+        UUID.randomUUID(), Instant.now(), UUID.randomUUID(),
         "test title3", "test content3", Level.INFO
     );
 
@@ -205,7 +202,7 @@ public class NotificationControllerTest {
 
     UserDto userDto = new UserDto(
         userId,
-        LocalDateTime.now(),
+        Instant.now(),
         "test@example.com",
         "tester",
         null,

@@ -21,7 +21,7 @@ import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
 import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -151,7 +151,7 @@ public class WatchingSessionServiceTest {
     entity2.setUser(user2);
     entity2.setContent(content);
     UUID entity2Id = UUID.randomUUID();
-    LocalDateTime entity2Time = LocalDateTime.now();
+    Instant entity2Time = Instant.now();
     ReflectionTestUtils.setField(entity2, "id", entity2Id);
     ReflectionTestUtils.setField(entity2, "createdAt", entity2Time);
 

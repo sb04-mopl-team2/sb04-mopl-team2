@@ -24,7 +24,8 @@ import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.sse.service.SseService;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -113,8 +114,8 @@ class NotificationServiceUnitTest {
   void getNotifications_whenSizeLessOrEqualLimit_shouldNotHaveNext() {
     // given
 
-    Notification n1 = createNotification(userId.toString(), LocalDateTime.now().minusMinutes(2));
-    Notification n2 = createNotification(userId.toString(), LocalDateTime.now().minusMinutes(1));
+    Notification n1 = createNotification(userId.toString(), Instant.now().minus(Duration.ofHours(2)));
+    Notification n2 = createNotification(userId.toString(), Instant.now().minus(Duration.ofHours(1)));
     List<Notification> notifications = Arrays.asList(n1, n2);
 
     when(notificationRepository.searchNotifications(
@@ -147,10 +148,10 @@ class NotificationServiceUnitTest {
   @DisplayName("알림 개수가 limit+1 이면 hasNext=true, nextCursor/nextIdAfter가 설정된다")
   void getNotifications_whenSizeGreaterThanLimit_shouldHaveNextAndSetCursor() {
     // given
-    Notification n1 = createNotification("테스트 1", LocalDateTime.now().minusMinutes(4));
-    Notification n2 = createNotification("테스트 2", LocalDateTime.now().minusMinutes(3));
-    Notification n3 = createNotification("테스트 3", LocalDateTime.now().minusMinutes(2));
-    Notification n4 = createNotification("테스트 4", LocalDateTime.now().minusMinutes(1));
+    Notification n1 = createNotification("테스트 1", Instant.now().minus(Duration.ofHours(4)));
+    Notification n2 = createNotification("테스트 2", Instant.now().minus(Duration.ofHours(3)));
+    Notification n3 = createNotification("테스트 3", Instant.now().minus(Duration.ofHours(2)));
+    Notification n4 = createNotification("테스트 4", Instant.now().minus(Duration.ofHours(1)));
     List<Notification> notifications = Arrays.asList(n4, n3, n2, n1);
 
     when(notificationRepository.searchNotifications(
@@ -264,7 +265,7 @@ class NotificationServiceUnitTest {
     String content = "테스트 내용";
     Level level = Level.INFO;
 
-    Notification notification = createNotification(title, LocalDateTime.now());
+    Notification notification = createNotification(title, Instant.now());
     NotificationDto notificationDto = createDtoFrom(notification);
 
     when(notificationMapper.toDto(any(Notification.class))).thenReturn(notificationDto);
@@ -294,7 +295,7 @@ class NotificationServiceUnitTest {
     UUID receiverId = UUID.randomUUID();
     String title = "테스트 제목";
 
-    Notification notification = createNotification(title, LocalDateTime.now());
+    Notification notification = createNotification(title, Instant.now());
     NotificationDto notificationDto = createDtoFrom(notification, receiverId);
 
     // when
@@ -304,7 +305,7 @@ class NotificationServiceUnitTest {
     verify(sseService).send(eq(receiverId), eq("notifications"), eq(notificationDto));
   }
   // ---- 테스트용 헬퍼 메소드들 ----
-  private Notification createNotification(String title, LocalDateTime createdAt) {
+  private Notification createNotification(String title, Instant createdAt) {
     Notification notification = new Notification(UUID.randomUUID(), createdAt);
     notification.setTitle(title);
     notification.setStatus(Status.UNREAD);

@@ -27,6 +27,7 @@ import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import com.codeit.mopl.util.WithCustomMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -118,7 +118,7 @@ public class PlaylistControllerTest {
         );
         UUID playlistId = UUID.randomUUID();
         PlaylistDto response = new PlaylistDto(
-                playlistId, null, "테스트 제목", "테스트 설명", LocalDateTime.now(), 0L, false, List.of());
+                playlistId, null, "테스트 제목", "테스트 설명", Instant.now(), 0L, false, List.of());
 
         when(playlistService.createPlaylist(any(), any(PlaylistCreateRequest.class))).thenReturn(response);
 
@@ -267,7 +267,7 @@ public class PlaylistControllerTest {
         //given
         UUID playlistId = UUID.randomUUID();
         PlaylistDto response = new PlaylistDto(
-                playlistId, null, "테스트 제목", "테스트 설명", LocalDateTime.now(), 2L, true, List.of()
+                playlistId, null, "테스트 제목", "테스트 설명", Instant.now(), 2L, true, List.of()
         );
         when(playlistService.getPlaylist(any(UUID.class), any(UUID.class)))
                 .thenReturn(response);
@@ -316,7 +316,7 @@ public class PlaylistControllerTest {
                 "테스트 수정 제목", "테스트 수정 설명"
         );
         PlaylistDto response = new PlaylistDto(
-                playlistId, null, "테스트 수정 제목", "테스트 수정 설명", LocalDateTime.now(), 2L, true, List.of()
+                playlistId, null, "테스트 수정 제목", "테스트 수정 설명", Instant.now(), 2L, true, List.of()
         );
         when(playlistService.updatePlaylist(any(UUID.class), any(UUID.class), any(PlaylistUpdateRequest.class)))
                 .thenReturn(response);
@@ -549,10 +549,10 @@ public class PlaylistControllerTest {
     @Test
     @DisplayName("플레이리스트에서 콘텐츠 삭제 - 해당 콘텐츠가 플레이리스트 내 존재하지 않으면 404예외 발생함")
     void deleteContentFromPlaylistFailWithPlaylistItemNotFound() throws Exception {
-        //when
+        //given
         UUID playlistId = UUID.randomUUID();
         UUID contentId = UUID.randomUUID();
-        doThrow(PlaylistItemNotFoundException.withId(playlistId))
+        doThrow(PlaylistItemNotFoundException.withId(contentId))
                 .when(playlistItemService)
                 .deleteContent(any(UUID.class),any(UUID.class),any(UUID.class));
         //when

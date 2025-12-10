@@ -4,7 +4,7 @@ package com.codeit.mopl.domain.playlist.dto;
 import com.codeit.mopl.domain.content.dto.response.ContentSummary;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,7 +13,7 @@ public record PlaylistDto (
     UserSummary owner,
     String title,
     String description,
-    LocalDateTime updatedAt,
+    Instant updatedAt,
     long subscriberCount,
     boolean subscribedByMe,
     List<ContentSummary> contents

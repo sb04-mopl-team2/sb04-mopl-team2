@@ -74,7 +74,7 @@ public enum NotificationTemplate {
     @Override
     public NotificationMessage build(RoleChangedContext ctx) {
       String title = "내 권한이 변경되었어요.";
-      String josa = BetterKorean.with(ctx.afterRole()).get_으로_로_with();
+      String josa = BetterKorean.with(ctx.afterRole()).get_으로_로();
 
       String content = "내 권한이 '%s'에서 '%s'%s 변경되었어요."
           .formatted(ctx.beforeRole(), ctx.afterRole(), josa);

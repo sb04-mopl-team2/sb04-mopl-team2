@@ -15,6 +15,7 @@ import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.mail.utils.PasswordUtils;
 import com.codeit.mopl.s3.S3Storage;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
+import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +35,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -81,7 +81,7 @@ public class UserServiceTest {
         // given
         UserCreateRequest request = new UserCreateRequest("test", "test@example.com", "testPassword");
         User user = new User("test@example.com","encodedPassword","test");
-        UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@example.com","test",null, Role.USER, false);
+        UserDto userDto = new UserDto(UUID.randomUUID(), Instant.now(), "test@example.com","test",null, Role.USER, false);
         given(userRepository.existsByEmail(request.email())).willReturn(false);
         given(passwordEncoder.encode("testPassword")).willReturn("encodedPassword");
         given(userRepository.save(user)).willReturn(user);
@@ -114,7 +114,7 @@ public class UserServiceTest {
         // given
         User findUser = new User("test@example.com","testPassword","test");
         UUID uuid = UUID.randomUUID();
-        UserDto findUserDto = new UserDto(uuid, LocalDateTime.now(), "test@example.com","test",null, Role.USER, false);
+        UserDto findUserDto = new UserDto(uuid, Instant.now(), "test@example.com","test",null, Role.USER, false);
         given(userRepository.findById(any(UUID.class))).willReturn(Optional.of(findUser));
         given(userMapper.toDto(findUser)).willReturn(findUserDto);
 
@@ -328,9 +328,9 @@ public class UserServiceTest {
                 "ASCENDING",
                 "name"
         );
-        UserDto userDto1 = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test1@example.com", "test1", null, Role.USER, false);
-        UserDto userDto2 = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test2@example.com", "test2", null, Role.USER, true);
-        UserDto userDto3 = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test3@example.com", "test3", null, Role.ADMIN, false);
+        UserDto userDto1 = new UserDto(UUID.randomUUID(), Instant.now(), "test1@example.com", "test1", null, Role.USER, false);
+        UserDto userDto2 = new UserDto(UUID.randomUUID(), Instant.now(), "test2@example.com", "test2", null, Role.USER, true);
+        UserDto userDto3 = new UserDto(UUID.randomUUID(), Instant.now(), "test3@example.com", "test3", null, Role.ADMIN, false);
         List<UserDto> content = List.of(userDto1,userDto2,userDto3);
         Slice<UserDto> page = new SliceImpl<>(content, PageRequest.of(0, request.limit(), Sort.Direction.ASC, request.sortBy()),false);
         given(userRepository.findAllPage(request)).willReturn(page);
@@ -379,7 +379,7 @@ public class UserServiceTest {
         // given
         String email = "test@test.com";
         User user = new User("test@test.com","password","test");
-        UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@test.com","test", null, Role.USER, false);
+        UserDto userDto = new UserDto(UUID.randomUUID(), Instant.now(), "test@test.com","test", null, Role.USER, false);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
         given(userMapper.toDto(user)).willReturn(userDto);
 
@@ -424,7 +424,7 @@ public class UserServiceTest {
         User user = new User(email,encodedPassword,name,profileImageUrl, Provider.GOOGLE);
         UserDto userDto = new UserDto(
                 UUID.randomUUID(),
-                LocalDateTime.now(),
+            Instant.now(),
                 "test@gmail.com",
                 "소셜로그인",
                 "https://googleImage.example.com",
@@ -453,7 +453,7 @@ public class UserServiceTest {
         given(userRepository.existsByEmail(email)).willReturn(true);
         User user = new User(email,"password",name,profileImageUrl, Provider.GOOGLE);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
-        UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@gmail.com", "소셜로그인", "https://googleImage.example.com", Role.USER, false);
+        UserDto userDto = new UserDto(UUID.randomUUID(), Instant.now(), "test@gmail.com", "소셜로그인", "https://googleImage.example.com", Role.USER, false);
         given(userMapper.toDto(user)).willReturn(userDto);
 
         // when

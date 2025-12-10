@@ -3,7 +3,7 @@ package com.codeit.mopl.util;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.security.CustomUserDetails;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,7 +23,7 @@ public class WithCustomMockUserSecurityContextFactory implements WithSecurityCon
         CustomUserDetails customUserDetails = new CustomUserDetails(
                 new UserDto(
                         UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                        LocalDateTime.now(),
+                    Instant.now(),
                         email, name,null,
                         Role.USER,false
                 ),

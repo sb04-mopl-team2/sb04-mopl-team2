@@ -1,13 +1,13 @@
 package com.codeit.mopl.domain.message.directmessage.repository;
 
 import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
+import java.time.Instant;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,7 +40,7 @@ public interface DirectMessageRepository extends JpaRepository<DirectMessage, UU
 """)
     List<DirectMessage>findMessagesBefore(
             @Param("conversationId") UUID conversationId,
-            @Param("cursor") LocalDateTime cursor,
+            @Param("cursor") Instant cursor,
             @Param("idAfter") UUID idAfter,
             Pageable pageable
             );
@@ -59,7 +59,7 @@ public interface DirectMessageRepository extends JpaRepository<DirectMessage, UU
 """)
     List<DirectMessage> findMessagesAfter(
             @Param("conversationId") UUID conversationId,
-            @Param("cursor") LocalDateTime cursor,
+            @Param("cursor") Instant cursor,
             @Param("idAfter") UUID idAfter,
             Pageable pageable
             );

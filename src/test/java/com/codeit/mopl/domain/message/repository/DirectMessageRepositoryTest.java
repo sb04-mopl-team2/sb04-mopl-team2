@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -167,7 +168,7 @@ public class DirectMessageRepositoryTest {
         Pageable pageable = Pageable.ofSize(2);
 
         DirectMessage dm2 = em.find(DirectMessage.class, directMessage2.getId());
-        LocalDateTime cursor = dm2.getCreatedAt();
+        Instant cursor = dm2.getCreatedAt();
 
         //when
         List<DirectMessage> result = directMessageRepository.findMessagesBefore(
@@ -206,7 +207,7 @@ public class DirectMessageRepositoryTest {
 
         Pageable pageable = Pageable.ofSize(3);
         DirectMessage dm1 = em.find(DirectMessage.class, idAfter);
-        LocalDateTime cursor = dm1.getCreatedAt();
+        Instant cursor = dm1.getCreatedAt();
         //when
         List<DirectMessage> result = directMessageRepository.findMessagesAfter(
                 conversation1.getId(),

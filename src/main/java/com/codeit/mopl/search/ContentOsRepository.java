@@ -1,8 +1,11 @@
 package com.codeit.mopl.search;
 
+import com.codeit.mopl.exception.content.ContentErrorCode;
+import com.codeit.mopl.exception.content.ContentOsStorageException;
 import com.codeit.mopl.search.document.ContentDocument;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch.core.CountResponse;
@@ -22,7 +25,10 @@ public class ContentOsRepository {
           .document(doc)
       );
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new ContentOsStorageException(
+          ContentErrorCode.SEARCH_ENGINE_ERROR,
+          Map.of("contentId", doc.getId())
+      );
     }
   }
 
@@ -34,7 +40,11 @@ public class ContentOsRepository {
           ContentDocument.class
       ).source();
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new ContentOsStorageException(
+          ContentErrorCode.SEARCH_ENGINE_ERROR,
+          Map.of("contentId", id)
+      );
+
     }
   }
 
@@ -45,7 +55,11 @@ public class ContentOsRepository {
           .id(id)
       );
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new ContentOsStorageException(
+          ContentErrorCode.SEARCH_ENGINE_ERROR,
+          Map.of("contentId", id)
+      );
+
     }
   }
 
@@ -56,7 +70,10 @@ public class ContentOsRepository {
           .index("content")
       );
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new ContentOsStorageException(
+          ContentErrorCode.SEARCH_ENGINE_ERROR,
+          Map.of()
+      );
     }
     return response.count();
   }
@@ -76,7 +93,10 @@ public class ContentOsRepository {
         return b;
       });
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new ContentOsStorageException(
+          ContentErrorCode.SEARCH_ENGINE_ERROR,
+          Map.of()
+      );
     }
   }
 

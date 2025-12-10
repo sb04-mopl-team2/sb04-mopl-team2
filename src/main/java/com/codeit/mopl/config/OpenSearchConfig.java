@@ -23,27 +23,26 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenSearchConfig {
 
-  private static final String SCHEME = "http";
-
-  // local vd prod 에 다른 값 주입
-  @Value("${spring.elasticsearch.port}")
-  private static int PORT;
-  @Value("${spring.elasticsearch.host}")
-  private static String HOST;
-  @Value("${spring.elasticsearch.username}")
-  private static String USERNAME;
-  @Value("${spring.elasticsearch.password}")
-  private static String PASSWORD;
+  // local / prod 에 다른 값 주입
+  @Value("${spring.opensearch.port}")
+  private int PORT;
+  @Value("${spring.opensearch.host}")
+  private String HOST;
+  @Value("${spring.opensearch.username}")
+  private String USERNAME;
+  @Value("${spring.opensearch.password}")
+  private String PASSWORD;
+  @Value("${spring.opensearch.protocol}")
+  private String PROTOCOL;
 
   /**
    * OpenSearchClient Bean 설정
-   *
    * @return OpenSearchClient
    */
   @Bean
   public OpenSearchClient openSearchClient() {
 
-    final HttpHost httpHost = new HttpHost(SCHEME, HOST, PORT);
+    final HttpHost httpHost = new HttpHost(PROTOCOL, HOST, PORT);
 
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
@@ -64,6 +63,8 @@ public class OpenSearchConfig {
             .build();
 
     OpenSearchClient client = new OpenSearchClient(transport);
+    log.info("[OpenSearchConfig] OpenSearchClient 생성 완료.");
+
     // index 생성
     String indexName = "content";
     try {

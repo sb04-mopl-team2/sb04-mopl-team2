@@ -110,7 +110,7 @@ public class OpenSearchService {
     return response;
   }
 
-  // ================================= private 메서드들 =================================
+  // ================================= private 헬퍼 메서드들 =================================
   // 예: cursor = 9.2, sortBy = "rating"
   private Object parseCursor(String cursor, String sortBy) {
     return switch(sortBy) {

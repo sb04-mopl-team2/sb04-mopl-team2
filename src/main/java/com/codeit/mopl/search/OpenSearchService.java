@@ -3,8 +3,10 @@ package com.codeit.mopl.search;
 import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
 import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
+import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.entity.SortDirection;
+import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.search.converter.ContentConverter;
 import com.codeit.mopl.search.document.ContentDocument;
 import java.io.IOException;
@@ -31,9 +33,29 @@ import org.springframework.stereotype.Component;
 public class OpenSearchService {
 
   private final OpenSearchClient client;
+  private final ContentMapper contentMapper;
   private final ContentConverter converter;
+  private final ContentOsRepository osRepository;
 
-  public CursorResponseContentDto search(ContentSearchRequest request) throws IOException {
+  public void save(Content content) {
+    try {
+      ContentDto dto = contentMapper.toDto(content);
+      osRepository.save(converter.convertToDocument(dto, content.getCreatedAt()));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void delete(String contentId) {
+    try {
+      // ES에 반영
+      osRepository.delete(contentId);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public CursorResponseContentDto search(ContentSearchRequest request) {
     log.info("[콘텐츠 목록 조회 시작 -  OpenSearch] request={}", request);
 
     Query boolQuery = boolQueryBuilder(request);
@@ -52,7 +74,12 @@ public class OpenSearchService {
       // 커서 존재하면 쿼리에 적용
       builder.searchAfter(searchAfterList);
     }
-    SearchResponse<ContentDocument> res = client.search(builder.build(), ContentDocument.class);
+    SearchResponse<ContentDocument> res = null;
+    try {
+      res = client.search(builder.build(), ContentDocument.class);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     List<Hit<ContentDocument>> hits = res.hits().hits();
     boolean hasNext = hits.size() > request.getLimit();
 
@@ -75,7 +102,7 @@ public class OpenSearchService {
         nextCursor,
         nextIdAfter,
         hasNext,
-        res.hits().total().value(),
+        res.hits().total() == null ? 0 : res.hits().total().value(),
         request.getSortBy(),
         request.getSortDirection()
     );
@@ -83,6 +110,7 @@ public class OpenSearchService {
     return response;
   }
 
+  // ================================= private 메서드들 =================================
   // 예: cursor = 9.2, sortBy = "rating"
   private Object parseCursor(String cursor, String sortBy) {
     return switch(sortBy) {

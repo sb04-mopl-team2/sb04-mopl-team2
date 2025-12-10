@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ContentOSRepository {
+public class ContentOsRepository {
 
   private final OpenSearchClient client;
 

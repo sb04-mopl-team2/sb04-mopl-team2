@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class OpenSearchDataSync implements ApplicationRunner {
 
   private final ContentRepository repository;
-  private final ContentOSRepository esRepository;
+  private final ContentOsRepository esRepository;
   private final ContentMapper contentMapper;
   private final ContentDocumentMapper documentMapper;
 

@@ -14,6 +14,7 @@ import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch.indices.CreateIndexRequest;
 import org.opensearch.client.transport.OpenSearchTransport;
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -23,10 +24,16 @@ import org.springframework.context.annotation.Configuration;
 public class OpenSearchConfig {
 
   private static final String SCHEME = "http";
-  private static final String HOST = "localhost";
-  private static final int PORT = 9200;
-  private static final String USERNAME = "admin";
-  private static final String PASSWORD = "admin";
+
+  // local vd prod 에 다른 값 주입
+  @Value("${spring.elasticsearch.port}")
+  private static int PORT;
+  @Value("${spring.elasticsearch.host}")
+  private static String HOST;
+  @Value("${spring.elasticsearch.username}")
+  private static String USERNAME;
+  @Value("${spring.elasticsearch.password}")
+  private static String PASSWORD;
 
   /**
    * OpenSearchClient Bean 설정

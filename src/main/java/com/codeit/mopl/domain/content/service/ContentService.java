@@ -13,11 +13,8 @@ import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.content.InvalidImageFileException;
 import com.codeit.mopl.s3.S3Storage;
-import com.codeit.mopl.search.ContentOSRepository;
 import com.codeit.mopl.search.OpenSearchService;
-import com.codeit.mopl.search.converter.ContentConverter;
 import jakarta.validation.Valid;
-import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -37,10 +34,7 @@ public class ContentService {
   private final S3Storage s3Storage;
 
   // Opensearch 관련
-  private final OpenSearchService proxy;
-  private final ContentOSRepository contentOSRepository;
-  private final ContentConverter converter;
-
+  private final OpenSearchService openSearchService;
 
   @Transactional
   public ContentDto createContent(@Valid ContentCreateRequest request, MultipartFile thumbnail) {
@@ -55,12 +49,8 @@ public class ContentService {
     Content savedContent = contentRepository.save(content);
     ContentDto dto = contentMapper.toDto(savedContent);
 
-    try {
-      // ES에 저장
-      contentOSRepository.save(converter.convertToDocument(dto, savedContent.getCreatedAt()));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    // OS에 저장
+    openSearchService.save(savedContent);
 
     log.info("[콘텐츠 생성 완료] id={}, title={}", dto.id(), dto.title());
     return dto;
@@ -71,15 +61,11 @@ public class ContentService {
     log.info("[콘텐츠 목록 조회 시작] request={}", request);
 
 //    CursorResponseContentDto response = contentRepository.findContents(request.toCondition());
-    try {
-      CursorResponseContentDto response = proxy.search(request);
+    CursorResponseContentDto response = openSearchService.search(request);
 
-      log.info("[콘텐츠 목록 조회 완료] resultCount={}",
-          response.data() != null ? response.data().size() : 0);
-      return response;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    log.info("[콘텐츠 목록 조회 완료] resultCount={}",
+        response.data() != null ? response.data().size() : 0);
+    return response;
   }
 
   @Transactional(readOnly = true)
@@ -123,12 +109,8 @@ public class ContentService {
     }
     ContentDto dto = contentMapper.toDto(content);
 
-    try {
-      // ES에 저장
-      contentOSRepository.save(converter.convertToDocument(dto, content.getCreatedAt()));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    // OS에 저장
+    openSearchService.save(content);
 
     log.info("[콘텐츠 수정 완료] id={}, title={}", dto.id(), dto.title());
     return dto;
@@ -148,12 +130,8 @@ public class ContentService {
 
     contentRepository.delete(content);
 
-    try {
-      // ES에 반영
-      contentOSRepository.delete(contentId.toString());
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    // OS에 반영
+    openSearchService.delete(contentId.toString());
 
     log.info("[콘텐츠 삭제 완료] contentId={}", contentId);
   }

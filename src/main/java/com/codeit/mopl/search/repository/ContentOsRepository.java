@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch.core.BulkResponse;
 import org.opensearch.client.opensearch.core.CountResponse;
 import org.springframework.stereotype.Component;
 
@@ -80,7 +81,7 @@ public class ContentOsRepository {
 
   public void saveAll(List<ContentDocument> docs) {
     try {
-      client.bulk(b -> {
+      BulkResponse response = client.bulk(b -> {
         b.index("content");
         for (ContentDocument doc : docs) {
           b.operations(op -> op
@@ -92,6 +93,12 @@ public class ContentOsRepository {
         }
         return b;
       });
+      if (response.errors()) {
+        throw new ContentOsStorageException(
+            ContentErrorCode.SEARCH_ENGINE_ERROR,
+            Map.of()
+        );
+      }
     } catch (IOException e) {
       throw new ContentOsStorageException(
           ContentErrorCode.SEARCH_ENGINE_ERROR,

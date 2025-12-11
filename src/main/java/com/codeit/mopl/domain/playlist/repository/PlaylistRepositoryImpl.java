@@ -9,11 +9,11 @@ import com.codeit.mopl.domain.playlist.entity.SortBy;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.DateTimeException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -84,18 +84,19 @@ public class PlaylistRepositoryImpl implements CustomPlaylistRepository {
         if (cursor == null) {
             return null;
         }
-        LocalDateTime cursorCreatedAt;
+        Instant cursorInstant;
         try {
-            cursorCreatedAt = LocalDateTime.parse(cursor);
+            cursorInstant = Instant.parse(cursor);
         } catch (DateTimeException e) {
             throw new IllegalArgumentException("올바르지 않은 커서 포맷입니다." + cursor, e);
         }
-        BooleanExpression lessThanCreatedAt = playlist.createdAt.lt(cursorCreatedAt);
+
+        BooleanExpression lessThanCreatedAt = playlist.createdAt.lt(cursorInstant);
 
         if (idAfter == null) {
             return lessThanCreatedAt;
         }
-        BooleanExpression equalAndLtId = playlist.createdAt.eq(cursorCreatedAt)
+        BooleanExpression equalAndLtId = playlist.createdAt.eq(cursorInstant)
                 .and(playlist.id.lt(idAfter));
         return lessThanCreatedAt.or(equalAndLtId);
     }

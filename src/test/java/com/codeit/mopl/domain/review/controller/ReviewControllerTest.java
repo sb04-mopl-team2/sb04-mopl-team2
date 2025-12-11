@@ -16,7 +16,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.codeit.mopl.domain.content.repository.ContentRepository;
-import com.codeit.mopl.domain.notification.mapper.MapperUtils;
 import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.domain.review.dto.CursorResponseReviewDto;
 import com.codeit.mopl.domain.review.dto.ReviewCreateRequest;
@@ -42,7 +41,7 @@ import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -83,9 +82,6 @@ public class ReviewControllerTest {
   private SseEmitterRegistry sseEmitterRegistry;
 
   @MockitoBean
-  private MapperUtils mapperUtils;
-
-  @MockitoBean
   private UserMapper userMapper;
 
   @MockitoBean
@@ -119,7 +115,7 @@ public class ReviewControllerTest {
 
   @BeforeEach
   void setUp() throws Exception {
-    UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@example.com","test",null, Role.USER, false);
+    UserDto userDto = new UserDto(UUID.randomUUID(), Instant.now(), "test@example.com","test",null, Role.USER, false);
     customUserDetails = new CustomUserDetails(
         userDto,
         "dummyPassword"

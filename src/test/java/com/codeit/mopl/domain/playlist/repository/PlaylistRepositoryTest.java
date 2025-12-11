@@ -12,7 +12,8 @@ import com.codeit.mopl.domain.playlist.playlistitem.entity.PlaylistItem;
 import com.codeit.mopl.domain.playlist.subscription.entity.Subscription;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.util.QueryDslConfig;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -118,7 +119,7 @@ public class PlaylistRepositoryTest {
     @DisplayName("subscriberEq - 특정 유저가 구독한 플레이리스트 조회함")
     void findAllBySubscriberEq() {
         //given
-        Subscription subscription = new Subscription(playlist1,user, LocalDateTime.now());
+        Subscription subscription = new Subscription(playlist1,user, Instant.now());
         em.persistAndFlush(subscription);
         em.clear();
 
@@ -137,12 +138,12 @@ public class PlaylistRepositoryTest {
     void findAllWithCursorLessThan() {
         //given
         //createdAt을 강제로 세팅해줌
-        ReflectionTestUtils.setField(playlist1, "createdAt", LocalDateTime.now().minusDays(1));
+        ReflectionTestUtils.setField(playlist1, "createdAt", Instant.now().minus(Duration.ofDays(1)));
         em.flush();
         em.clear();
 
         PlaylistSearchCond cond = new PlaylistSearchCond();
-        cond.setCursor(LocalDateTime.now().toString());
+        cond.setCursor(Instant.now().toString());
         cond.setLimit(10);
         //when
         List<Playlist> result = playlistRepository.findAllByCond(cond);
@@ -154,9 +155,9 @@ public class PlaylistRepositoryTest {
     @DisplayName("Cursor - hasNext == true 일 경우, cursor 기반 페이지네이션 동작이 정상적으로 동작함")
     void hasNext() {
         //given & when
-        LocalDateTime t1 = LocalDateTime.now().minusDays(3);
-        LocalDateTime t2 = LocalDateTime.now().minusDays(2);
-        LocalDateTime t3 = LocalDateTime.now().minusDays(1);
+        Instant t1 = Instant.now().minus(Duration.ofDays(3));
+        Instant t2 = Instant.now().minus(Duration.ofDays(2));
+        Instant t3 = Instant.now().minus(Duration.ofDays(1));
 
         Playlist p1 = em.find(Playlist.class, playlist1.getId());
         Playlist p2 = em.find(Playlist.class, playlist2.getId());
@@ -197,9 +198,9 @@ public class PlaylistRepositoryTest {
     @DisplayName("정렬 - UPDATED_AT desc로 정렬됨")
     void orderByUpdatedAtDesc() {
         //given
-        LocalDateTime t1 = LocalDateTime.now().minusDays(2);
-        LocalDateTime t2 = LocalDateTime.now().minusDays(1);
-        LocalDateTime t3 = LocalDateTime.now();
+        Instant t1 = Instant.now().minus(Duration.ofDays(2));
+        Instant t2 = Instant.now().minus(Duration.ofDays(1));
+        Instant t3 = Instant.now();
 
         Playlist p1 = em.find(Playlist.class, playlist1.getId());
         Playlist p2 = em.find(Playlist.class, playlist2.getId());

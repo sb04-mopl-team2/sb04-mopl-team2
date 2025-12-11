@@ -10,7 +10,7 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -83,19 +83,20 @@ public class NotificationRepositoryImpl implements CustomNotificationRepository 
       SortDirection sortDirection,
       QNotification q
   ) {
-    if (cursor == null || sortBy == null || sortDirection == null) return null;
+    if (cursor == null || sortBy == null || sortDirection == null) {
+      return null;
+    }
 
-    LocalDateTime cursorTime = LocalDateTime.parse(cursor);
+    Instant cursorInstant = Instant.parse(cursor);
 
-    // 커서를 통해 먼저 짜르고
-    // 커서의 값이 같을 경우 아이디로 짜름
-    // createdAt 기준 + id 기준 조합
+    // createdAt(Instant) + id 조합으로 커서 조건 생성
     if (sortDirection == SortDirection.DESCENDING) {
-      return q.createdAt.lt(cursorTime)
-          .or(q.createdAt.eq(cursorTime).and(q.id.lt(idAfter)));
+      return q.createdAt.lt(cursorInstant)
+          .or(q.createdAt.eq(cursorInstant).and(q.id.lt(idAfter)));
     } else {
-      return q.createdAt.gt(cursorTime)
-          .or(q.createdAt.eq(cursorTime).and(q.id.gt(idAfter)));
+      return q.createdAt.gt(cursorInstant)
+          .or(q.createdAt.eq(cursorInstant).and(q.id.gt(idAfter)));
     }
   }
+
 }

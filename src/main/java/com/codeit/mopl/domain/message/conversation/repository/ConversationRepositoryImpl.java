@@ -10,10 +10,10 @@ import com.codeit.mopl.domain.user.entity.QUser;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.UUID;
@@ -97,19 +97,20 @@ public class ConversationRepositoryImpl implements CustomConversationRepository 
         if (cursor == null || cursor.isEmpty()) {
             return null;
         }
-       LocalDateTime cursorCreatedAt;
+       Instant cursorInstant;
+
         try {
-            cursorCreatedAt = LocalDateTime.parse(cursor);
+          cursorInstant = Instant.parse(cursor);
         } catch (DateTimeParseException e) {
             return null;
         }
 
-        BooleanExpression ltCursor = conversation.createdAt.lt(cursorCreatedAt);
+        BooleanExpression ltCursor = conversation.createdAt.lt(cursorInstant);
 
         if (idAfter == null) {
             return ltCursor;
         }
-        BooleanExpression tieBreaker = conversation.createdAt.eq(cursorCreatedAt)
+        BooleanExpression tieBreaker = conversation.createdAt.eq(cursorInstant)
                 .and(conversation.id.lt(idAfter));
         return ltCursor.or(tieBreaker);
     }

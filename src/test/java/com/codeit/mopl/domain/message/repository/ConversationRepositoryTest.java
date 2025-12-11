@@ -55,13 +55,13 @@ public class ConversationRepositoryTest {
         sender = new User("sender@test.com","sender123","sender");
         em.persistAndFlush(sender);
 
-        receiver1 = new User("receiver1.test.com","receiver111","receiver1");
+        receiver1 = new User("receiver1@test.com","receiver111","receiver1");
         em.persistAndFlush(receiver1);
 
-        receiver2 = new User("receiver2.test.com","receiver222","receiver2");
+        receiver2 = new User("receiver2@test.com","receiver222","receiver2");
         em.persistAndFlush(receiver2);
 
-        receiver3 = new User("receiver3.test.com","receiver333","receiver3");
+        receiver3 = new User("receiver3@test.com","receiver333","receiver3");
         em.persistAndFlush(receiver3);
 
         conversation1 = Conversation.builder()
@@ -101,7 +101,7 @@ public class ConversationRepositoryTest {
     }
 
     @Test
-    @DisplayName("기본 조회 - loginUser가 sender인 겨우 conversation1,2,3 모두 조회됨")
+    @DisplayName("기본 조회 - loginUser가 sender인 경우 conversation1,2,3 모두 조회됨")
     void findConversationWhenLoginUserIsSender() {
         //given
         ConversationSearchCond cond = new ConversationSearchCond();
@@ -337,11 +337,27 @@ public class ConversationRepositoryTest {
         Instant t1 = Instant.now().minus(2, ChronoUnit.DAYS);
         Instant t2 = Instant.now().minus(1,ChronoUnit.DAYS);
         Instant t3 = Instant.now();
-         ReflectionTestUtils.setField(conversation1, "createdAt", t1);
-         ReflectionTestUtils.setField(conversation2, "createdAt", t2);
-         ReflectionTestUtils.setField(conversation3, "createdAt", t3);
+        em.getEntityManager()
+                .createNativeQuery("UPDATE conversations SET created_at = ? WHERE id = ?")
+                .setParameter(1, t1)
+                .setParameter(2, conversation1.getId())
+                .executeUpdate();
+
+        em.getEntityManager()
+                .createNativeQuery("UPDATE conversations SET created_at = ? WHERE id = ?")
+                .setParameter(1, t2)
+                .setParameter(2, conversation2.getId())
+                .executeUpdate();
+
+        em.getEntityManager()
+                .createNativeQuery("UPDATE conversations SET created_at = ? WHERE id = ?")
+                .setParameter(1, t3)
+                .setParameter(2, conversation3.getId())
+                .executeUpdate();
+
          em.flush();
          em.clear();
+         
          ConversationSearchCond cond = new ConversationSearchCond();
          cond.setSortBy(SortBy.CREATED_AT);
          cond.setSortDirection(SortDirection.DESCENDING);
@@ -349,7 +365,7 @@ public class ConversationRepositoryTest {
          cond.setLoginUserId(sender.getId());
          //when
         List<Conversation> result = conversationRepository.findAllByCond(cond);
-        //the
+        //then
         assertThat(result.size()).isEqualTo(3);
         assertThat(result).isSortedAccordingTo(
                 (a,b) -> b.getCreatedAt().compareTo(a.getCreatedAt())

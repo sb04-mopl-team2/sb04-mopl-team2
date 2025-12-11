@@ -1,38 +1,29 @@
 package com.codeit.mopl.domain.notification.service;
 
-import com.codeit.mopl.domain.base.FrontendKstOffsetAdjuster;
 import com.codeit.mopl.domain.follow.entity.Follow;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
-import com.codeit.mopl.domain.notification.entity.Level;
-import com.codeit.mopl.domain.notification.entity.Notification;
-import com.codeit.mopl.domain.notification.entity.SortBy;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
-import com.codeit.mopl.domain.notification.entity.Status;
+import com.codeit.mopl.domain.notification.entity.*;
+import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
+import com.codeit.mopl.domain.notification.repository.NotificationRepository;
 import com.codeit.mopl.domain.notification.template.NotificationMessage;
 import com.codeit.mopl.domain.notification.template.NotificationTemplate;
 import com.codeit.mopl.domain.notification.template.context.DirectMessageContext;
 import com.codeit.mopl.domain.notification.template.context.PlaylistCreatedContext;
 import com.codeit.mopl.domain.notification.template.context.WatchingSessionStartedContext;
+import com.codeit.mopl.domain.user.entity.User;
+import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.event.event.PlayListCreateEvent;
 import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
 import com.codeit.mopl.exception.notification.NotificationErrorCode;
 import com.codeit.mopl.exception.notification.NotificationForbidden;
 import com.codeit.mopl.exception.notification.NotificationNotFoundException;
-import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
-import com.codeit.mopl.domain.notification.repository.NotificationRepository;
-import com.codeit.mopl.domain.user.entity.User;
-import com.codeit.mopl.domain.user.repository.UserRepository;
-import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.sse.service.SseService;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -40,6 +31,11 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 @Slf4j
 @Transactional
@@ -116,24 +112,6 @@ public class NotificationService {
         userId, data.size(), hasNext, totalCount);
 
     return cursorResponseNotificationDto;
-  }
-
-  public void deleteNotification(UUID userId, UUID notificationId) {
-    log.info("[알림] 알림 삭제 시작, userId = {}, notificationId = {}", userId, notificationId);
-    Notification notification = getOwnedNotification(userId, notificationId);
-
-    UUID ownerId = notification.getUser().getId();
-    if (!ownerId.equals(userId)) {
-      log.warn("[알림] 알림 삭제 실패, 알림을 삭제할 권한이 없음, userId = {}, notificationId = {}, ownerId = {}",
-          userId, notificationId, ownerId);
-      throw new NotificationForbidden(NotificationErrorCode.NOTIFICATION_FORBIDDEN, Map.of("notificationId", notificationId));
-    }
-
-    notification.setStatus(Status.READ);
-    notificationRepository.save(notification);
-
-    evictFirstPageCacheByUserId(userId);
-    log.info("[알림] 알림 삭제 종료, notificationId={}", notificationId);
   }
 
   public void createNotification(UUID userId, String title, String content, Level level) {
@@ -228,6 +206,24 @@ public class NotificationService {
     }
 
     log.info("[알림] 팔로우한 유저가 실시간 콘텐츠 시청시 알림 송신 완료 : watchingSessionId = {}", watchingSessionCreateEvent.watchingSessionId());
+  }
+
+  public void deleteNotification(UUID userId, UUID notificationId) {
+    log.info("[알림] 알림 삭제 시작, userId = {}, notificationId = {}", userId, notificationId);
+    Notification notification = getOwnedNotification(userId, notificationId);
+
+    UUID ownerId = notification.getUser().getId();
+    if (!ownerId.equals(userId)) {
+      log.warn("[알림] 알림 삭제 실패, 알림을 삭제할 권한이 없음, userId = {}, notificationId = {}, ownerId = {}",
+              userId, notificationId, ownerId);
+      throw new NotificationForbidden(NotificationErrorCode.NOTIFICATION_FORBIDDEN, Map.of("notificationId", notificationId));
+    }
+
+    notification.setStatus(Status.READ);
+    notificationRepository.save(notification);
+
+    evictFirstPageCacheByUserId(userId);
+    log.info("[알림] 알림 삭제 종료, notificationId={}", notificationId);
   }
 
   private Notification saveNotification(UUID userId, String title, String content, Level level) {

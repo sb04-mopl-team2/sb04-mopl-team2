@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class FollowCannotDeleteWhileProcessingException extends FollowException {
-    public FollowCannotDeleteWhileProcessingException(Map<String ,Object> details) {
+    public FollowCannotDeleteWhileProcessingException(Map<String, Object> details) {
         super(FollowErrorCode.FOLLOW_CANNOT_DELETE_WHILE_PROCESSING, details);
     }
 

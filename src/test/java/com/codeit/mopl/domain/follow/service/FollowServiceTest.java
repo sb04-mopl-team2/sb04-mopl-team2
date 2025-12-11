@@ -545,7 +545,7 @@ class FollowServiceTest {
     }
 
     @Test
-    @DisplayName("팔로우 감소 이벤트 처리 실패 - followId에 해당하는 유저가 없음")
+    @DisplayName("팔로우 감소 이벤트 처리 실패 - followId에 해당하는 팔로우가 없음")
     void processFollowerDecrease_FollowNotFound_ThrowsException() {
         // given
         UUID followId = UUID.randomUUID();

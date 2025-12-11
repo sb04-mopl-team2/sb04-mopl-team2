@@ -57,7 +57,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = ConversationController.class)
-@Import({TestSecurityConfig.class})
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 public class ConversationControllerTest {
@@ -258,7 +257,7 @@ public class ConversationControllerTest {
         );
         //then
         result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.lastestMessage").isEmpty())
+                .andExpect(jsonPath("$.latestMessage").isEmpty())
                 .andExpect(jsonPath("$.hasUnread").value(false));
     }
 

@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
-
 import com.codeit.mopl.domain.content.ContentTestFactory;
 import com.codeit.mopl.domain.content.dto.request.ContentCreateRequest;
 import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
@@ -18,9 +17,9 @@ import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.s3.S3Storage;
+import com.codeit.mopl.search.converter.ContentDocumentMapper;
 import com.codeit.mopl.search.repository.ContentOsRepository;
 import com.codeit.mopl.search.service.OpenSearchService;
-import com.codeit.mopl.search.converter.ContentConverter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +46,7 @@ class ContentServiceTest {
   private S3Storage s3Storage;
 
   @Mock
-  private ContentConverter contentConverter;
+  private ContentDocumentMapper contentDocumentMapper;
 
   @Mock
   private OpenSearchService openSearchService;
@@ -134,8 +133,6 @@ class ContentServiceTest {
             "ASCENDING"
         );
 
-//    given(contentRepository.findContents(any(ContentSearchCondition.class)))
-//        .willReturn(mockedResponse);
     given(openSearchService.search(any(ContentSearchRequest.class)))
         .willReturn(mockedResponse);
     // when

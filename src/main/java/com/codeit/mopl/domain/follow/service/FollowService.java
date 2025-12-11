@@ -129,12 +129,24 @@ public class FollowService {
         log.info("[팔로우 관리] 팔로우 삭제 시작: followId = {}, requesterId = {}", followId, requesterId);
         // 비관적 락 적용: WRITE
         Follow follow = getFollowByIdWithWriteLock(followId);
+        FollowStatus followStatus = follow.getFollowStatus();
+
+        // 이미 CANCELLED 상태인 팔로우 객체면 return
+        if (followStatus == FollowStatus.CANCELLED) {
+            return;
+        }
+
+        // PENDING, FAILED 상태의 팔로우 객체는 시스템에서 처리해야 함
+        if (followStatus == FollowStatus.PENDING || followStatus == FollowStatus.FAILED) {
+            throw FollowCannotDeleteWhileProcessingException.withIdAndStatus(followId, followStatus);
+        }
 
         // 팔로우한 본인이 아니면 팔로우 삭제 불가능
         UUID followerId = follow.getFollower().getId();
         if (!followerId.equals(requesterId)) {
             throw FollowDeleteForbiddenException.withIds(followId, followerId, requesterId);
         }
+
         // 팔로우 상태 변경
         follow.setFollowStatus(FollowStatus.CANCELLED);
         
@@ -151,17 +163,18 @@ public class FollowService {
         if (isAlreadyProcessed(followId, EventType.FOLLOWER_DECREASE)) {
             return;
         }
-        // 비관적 락 적용: WRITE
+        // 비관적 락 적용: WRITE (follow -> user)
+        Follow follow = getFollowByIdWithWriteLock(followId);
         User followee = getUserByIdWithWriteLock(followeeId);
 
         // followerCount가 0이하인지 검사
         long followerCount = followee.getFollowerCount();
         detectFollowerCountIsZeroOrNegative(followeeId, followerCount);
-        
-        // 팔로워 수 감소, 팔로우 객체 삭제
+
+        // 팔로워 수 감소 & 삭제
         followee.decreaseFollowerCount();
-        followRepository.deleteById(followId);
-        
+        followRepository.delete(follow);
+
         // 처리된 이벤트 저장
         ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_DECREASE);
         processedEventRepository.save(processedEvent);

@@ -55,12 +55,12 @@ public class OpenSearchService {
     addSort(builder, request);
 
 
-    if (request.getSortBy() != null && request.getIdAfter() != null) {
+    // 커서 존재하면 쿼리에 적용
+    if (request.getSortBy() != null && request.getIdAfter() != null && request.getCursor() != null) {
       Object sortValue = parseCursor(request.getCursor(), request.getSortBy());
       List<String> searchAfterList= new ArrayList<>();
       searchAfterList.add(sortValue.toString());
       searchAfterList.add(request.getIdAfter().toString());
-      // 커서 존재하면 쿼리에 적용
       builder.searchAfter(searchAfterList);
     }
     SearchResponse<ContentDocument> res = null;

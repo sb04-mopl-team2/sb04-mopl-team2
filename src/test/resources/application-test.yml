@@ -36,9 +36,9 @@ spring:
         enable.auto.commit: false
     listener:
       ack-mode: MANUAL
-    opensearch:
-      host: localhost
-      port: 9200
-      protocol: http 
-      username: admin
-      password: admin
+  opensearch:
+    host: localhost
+    port: 9200
+    protocol: http
+    username: admin
+    password: admin

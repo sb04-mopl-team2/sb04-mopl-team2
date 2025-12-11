@@ -58,8 +58,8 @@ public class KafkaEventListener {
     }
 
     @Async("taskExecutor")
-    @TransactionalEventListener
-    public void on(UserLogInOutEvent event) throws JsonProcessingException {
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void on(UserLogInOutEvent event) {
         log.info("kafka UserLogInOut Event");
         String key = event.userId().toString();
         send("mopl-user-login-out", key, event);

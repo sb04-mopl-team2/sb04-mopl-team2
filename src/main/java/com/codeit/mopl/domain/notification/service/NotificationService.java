@@ -118,24 +118,6 @@ public class NotificationService {
     return cursorResponseNotificationDto;
   }
 
-  public void deleteNotification(UUID userId, UUID notificationId) {
-    log.info("[알림] 알림 삭제 시작, userId = {}, notificationId = {}", userId, notificationId);
-    Notification notification = getOwnedNotification(userId, notificationId);
-
-    UUID ownerId = notification.getUser().getId();
-    if (!ownerId.equals(userId)) {
-      log.warn("[알림] 알림 삭제 실패, 알림을 삭제할 권한이 없음, userId = {}, notificationId = {}, ownerId = {}",
-          userId, notificationId, ownerId);
-      throw new NotificationForbidden(NotificationErrorCode.NOTIFICATION_FORBIDDEN, Map.of("notificationId", notificationId));
-    }
-
-    notification.setStatus(Status.READ);
-    notificationRepository.save(notification);
-
-    evictFirstPageCacheByUserId(userId);
-    log.info("[알림] 알림 삭제 종료, notificationId={}", notificationId);
-  }
-
   public void createNotification(UUID userId, String title, String content, Level level) {
     log.info("[알림] 알림 생성 시작, userId = {}, title = {}, content = {}, level = {}", userId, title, content, level);
 

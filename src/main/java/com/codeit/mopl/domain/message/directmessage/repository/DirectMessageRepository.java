@@ -16,7 +16,6 @@ public interface DirectMessageRepository extends JpaRepository<DirectMessage, UU
 
     boolean existsByConversationIdAndReceiverIdAndIsReadFalse(UUID conversationId, UUID receiverId);
 
-
     @Query("""
     SELECT dm FROM DirectMessage dm
     WHERE dm.conversation.id = :conversationId
@@ -30,10 +29,13 @@ public interface DirectMessageRepository extends JpaRepository<DirectMessage, UU
     @Query("""
        SELECT dm FROM DirectMessage dm
        WHERE dm.conversation.id = :conversationId
-       AND(:cursor IS NULL OR (
-       dm.createdAt < :cursor
-       OR (dm.createdAt = :cursor AND dm.id < :idAfter)
-       ))
+       AND (
+           :cursor IS NULL 
+           OR dm.createdAt < :cursor
+           OR (dm.createdAt = :cursor 
+               AND (:idAfter IS NULL OR dm.id < :idAfter)
+        )
+       )
        ORDER BY dm.createdAt DESC, dm.id DESC
 """)
     List<DirectMessage>findMessagesBefore(
@@ -46,10 +48,13 @@ public interface DirectMessageRepository extends JpaRepository<DirectMessage, UU
     @Query("""
         SELECT dm FROM DirectMessage dm
         WHERE dm.conversation.id = :conversationId
-        AND (:cursor IS NULL OR(
-        dm.createdAt > :cursor
-        OR (dm.createdAt = :cursor AND dm.id > :idAfter)
-        ))
+        AND (
+            :cursor IS NULL 
+            OR dm.createdAt > :cursor
+            OR (dm.createdAt = :cursor 
+                AND (:idAfter IS NULL OR dm.id > :idAfter)
+         )
+        )
         ORDER BY dm.createdAt ASC, dm.id ASC
 """)
     List<DirectMessage> findMessagesAfter(

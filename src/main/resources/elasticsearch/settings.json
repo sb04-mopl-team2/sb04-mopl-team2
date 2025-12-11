@@ -1,0 +1,46 @@
+{
+  "settings": {
+    "analysis": {
+      "tokenizer": {
+        "nori_user_tokenizer": {
+          "type": "nori_tokenizer",
+          "decompound_mode": "mixed"
+        }
+      },
+      "analyzer": {
+        "my_nori_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_user_tokenizer"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "id": { "type": "keyword" },
+      "createdAt": { "type": "date" },
+      "type": { "type": "keyword" },
+      "title": {
+        "type": "text",
+        "analyzer": "standard",
+        "fields": {
+          "ko": { "type": "text", "analyzer": "my_nori_analyzer" }
+        }
+      },
+      "description": {
+        "type": "text",
+        "analyzer": "standard",
+        "fields": {
+          "ko": { "type": "text", "analyzer": "my_nori_analyzer" }
+        }
+      },
+      "thumbnailUrl": { "type": "keyword" },
+      "tags": { "type": "keyword" },
+      "contentType": { "type": "keyword" },
+      "averageRating": { "type": "double" },
+      "reviewCount": { "type": "integer" },
+      "watcherCount": { "type": "integer" }
+    }
+  }
+}

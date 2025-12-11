@@ -2,7 +2,7 @@ package com.codeit.mopl.search.converter;
 
 import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.search.document.ContentDocument;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +24,7 @@ public class ContentConverter implements Converter<ContentDocument, ContentDto> 
   }
 
   @Override
-  public ContentDocument convertToDocument(ContentDto dto, LocalDateTime createdAt) {
+  public ContentDocument convertToDocument(ContentDto dto, Instant createdAt) {
     if (dto ==  null) return null;
     return mapper.toDocument(dto, createdAt);
   }

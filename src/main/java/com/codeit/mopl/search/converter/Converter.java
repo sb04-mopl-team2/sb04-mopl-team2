@@ -1,7 +1,7 @@
 package com.codeit.mopl.search.converter;
 
 import com.codeit.mopl.search.document.AbstractDocument;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 // E - Document 클래스, T - DTO
 public interface Converter<E extends AbstractDocument, T> {
@@ -10,5 +10,5 @@ public interface Converter<E extends AbstractDocument, T> {
 
   T convertToDto(E document);
 
-  E convertToDocument(T dto, LocalDateTime createdAt);
+  E convertToDocument(T dto, Instant createdAt);
 }

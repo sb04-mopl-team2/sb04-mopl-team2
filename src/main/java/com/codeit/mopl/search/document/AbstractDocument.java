@@ -2,7 +2,7 @@ package com.codeit.mopl.search.document;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Id;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,5 +12,5 @@ import lombok.Setter;
 public class AbstractDocument {
   @Id
   private String id;
-  private LocalDateTime createdAt;
+  private Instant createdAt;
 }

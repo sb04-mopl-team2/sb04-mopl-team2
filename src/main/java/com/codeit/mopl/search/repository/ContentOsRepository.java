@@ -1,4 +1,4 @@
-package com.codeit.mopl.search;
+package com.codeit.mopl.search.repository;
 
 import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentOsStorageException;

@@ -7,6 +7,7 @@ import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.search.converter.ContentDocumentMapper;
 import com.codeit.mopl.search.document.ContentDocument;
+import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

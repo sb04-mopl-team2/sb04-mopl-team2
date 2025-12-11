@@ -41,7 +41,7 @@
     "watcherCount" : {
       "type" : "integer"
     },
-    "created_at": {
+    "createdAt": {
       "type": "date"
     }
   }

@@ -13,7 +13,7 @@ import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.content.InvalidImageFileException;
 import com.codeit.mopl.s3.S3Storage;
-import com.codeit.mopl.search.OpenSearchService;
+import com.codeit.mopl.search.service.OpenSearchService;
 import jakarta.validation.Valid;
 import java.util.Map;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package com.codeit.mopl.search;
+package com.codeit.mopl.search.service;
 
 import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
 import com.codeit.mopl.domain.content.dto.response.ContentDto;
@@ -9,6 +9,7 @@ import com.codeit.mopl.domain.content.entity.SortDirection;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.search.converter.ContentConverter;
 import com.codeit.mopl.search.document.ContentDocument;
+import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

@@ -68,10 +68,8 @@ public class FailedFollowCleanupTaskletTest {
     @DisplayName("FAILED 상태 팔로우 객체 삭제 중단 - FAILED 상태 객체 없음")
     void failedFollowCleanupTasklet_Stop_NoFailedFollows() throws Exception {
         // given
-        follow.setFollowStatus(FollowStatus.CONFIRM);
-
         given(followRepository.findByStatus(eq(FollowStatus.FAILED)))
-                .willReturn(List.of(follow));
+                .willReturn(List.of());
 
         // when
         RepeatStatus status = tasklet.execute(null, null);

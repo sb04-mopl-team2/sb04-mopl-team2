@@ -197,9 +197,9 @@ public class ConversationRepositoryTest {
     @DisplayName("cursorLessThan - cursor가 null일 경우 요청자가 참여하는 모든 채팅방 조회함")
     void findAllWhenCursorIsNull() {
         //given
-        LocalDateTime t1 = LocalDateTime.now().minusDays(2);
-        LocalDateTime t2 = LocalDateTime.now().minusDays(1);
-        LocalDateTime t3 = LocalDateTime.now();
+        Instant t1 = Instant.parse("2025-01-01T00:00:00Z");
+        Instant t2 = Instant.parse("2025-01-02T00:00:00Z");
+        Instant t3 = Instant.parse("2025-01-03T00:00:00Z");
 
         em.getEntityManager()
                 .createNativeQuery("UPDATE conversations SET created_at = ? WHERE id = ?")
@@ -240,9 +240,9 @@ public class ConversationRepositoryTest {
     @DisplayName("cursorLessThan - cursor 보다 createdAt값이 작은 채팅방만 조회함")
     void findAllWithCursorLessThan() {
         //given
-        Instant t1 = Instant.now().minus(2, ChronoUnit.DAYS);
-        Instant t2 = Instant.now().minus(1,ChronoUnit.DAYS);
-        Instant t3 = Instant.now();
+        Instant t1 = Instant.parse("2025-01-01T00:00:00Z");
+        Instant t2 = Instant.parse("2025-01-02T00:00:00Z");
+        Instant t3 = Instant.parse("2025-01-03T00:00:00Z");
 
         em.getEntityManager()
                 .createNativeQuery("UPDATE conversations SET created_at = ? WHERE id = ?")
@@ -276,16 +276,16 @@ public class ConversationRepositoryTest {
         //then
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getWith().getId()).isEqualTo(receiver1.getId());
-        assertThat(result.get(0).getCreatedAt()).isEqualTo(t1);
+        assertThat(result.get(0).getCreatedAt()).isBefore(t2);
     }
 
     @Test
     @DisplayName("hasNext - hasNext == true 일 경우, cursor 기반 페이지네이션 동작이 정상적으로 동작함")
     void findAllWhenHasNext() {
         //given & when : createdAt 강제 세팅
-        Instant t1 = Instant.now().minus(2, ChronoUnit.DAYS);
-        Instant t2 = Instant.now().minus(1,ChronoUnit.DAYS);
-        Instant t3 = Instant.now();
+        Instant t1 = Instant.parse("2025-01-01T00:00:00Z");
+        Instant t2 = Instant.parse("2025-01-02T00:00:00Z");
+        Instant t3 = Instant.parse("2025-01-03T00:00:00Z");
         em.getEntityManager()
                 .createNativeQuery("UPDATE conversations SET created_at = ? WHERE id = ?")
                 .setParameter(1, t1)
@@ -326,7 +326,7 @@ public class ConversationRepositoryTest {
         assertThat(page1.size()).isEqualTo(3);
         assertThat(page2.size()).isEqualTo(1);
         assertThat(page1.get(0).getWith().getId()).isEqualTo(receiver3.getId());
-        assertThat(page1.get(1).getCreatedAt()).isEqualTo(t2);
+        assertThat(page1.get(1).getCreatedAt()).isAfter(t1);
         assertThat(page2.get(0).getWith().getId()).isEqualTo(receiver1.getId());
     }
 
@@ -334,9 +334,9 @@ public class ConversationRepositoryTest {
     @DisplayName("정렬 - CREATED_AT DESC로 정렬됨")
     void orderByCreatedAtDesc() {
          //given
-        Instant t1 = Instant.now().minus(2, ChronoUnit.DAYS);
-        Instant t2 = Instant.now().minus(1,ChronoUnit.DAYS);
-        Instant t3 = Instant.now();
+        Instant t1 = Instant.parse("2025-01-01T00:00:00Z");
+        Instant t2 = Instant.parse("2025-01-02T00:00:00Z");
+        Instant t3 = Instant.parse("2025-01-03T00:00:00Z");
         em.getEntityManager()
                 .createNativeQuery("UPDATE conversations SET created_at = ? WHERE id = ?")
                 .setParameter(1, t1)

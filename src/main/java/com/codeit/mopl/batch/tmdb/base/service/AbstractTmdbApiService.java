@@ -3,6 +3,8 @@ package com.codeit.mopl.batch.tmdb.base.service;
 import com.codeit.mopl.batch.tmdb.base.dto.TmdbDiscoverResponse;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
+import com.codeit.mopl.search.converter.ContentDocumentMapper;
+import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
@@ -27,6 +29,10 @@ public abstract class AbstractTmdbApiService<T, R extends TmdbDiscoverResponse<T
   protected final WebClient tmdbWebClient;
   protected final ContentRepository contentRepository;
 
+  // OpenSearch
+  private final ContentOsRepository osRepository;
+  private final ContentDocumentMapper contentDocumentMapper;
+
   /**
    * 특정 날짜의 컨텐츠를 조회하고 저장
    *
@@ -49,7 +55,10 @@ public abstract class AbstractTmdbApiService<T, R extends TmdbDiscoverResponse<T
         )
         .map(this::mapToContent)
         .publishOn(Schedulers.boundedElastic())
-        .map(contentRepository::save)
+        .map(c -> {
+          osRepository.save(contentDocumentMapper.toDocument(c));
+          return contentRepository.save(c);
+        })
         .collectList()
         .doOnSuccess(list ->
             log.info("[TMDB] {} 조회 완료 저장된 컨텐츠 수 = {}", getContentType(), list.size())
@@ -76,7 +85,10 @@ public abstract class AbstractTmdbApiService<T, R extends TmdbDiscoverResponse<T
           return Flux.fromIterable(results)
               .map(this::mapToContent)
               .publishOn(Schedulers.boundedElastic())
-              .map(contentRepository::save)
+              .map(c -> {
+                osRepository.save(contentDocumentMapper.toDocument(c));
+                return contentRepository.save(c);
+              })
               .collectList()
               .doOnSuccess(saved -> log.info("[TMDB] {} 조회 및 저장 완료 조회 수 = {}",
                   getContentType(), saved.size()))

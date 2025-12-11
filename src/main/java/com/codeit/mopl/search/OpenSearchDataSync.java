@@ -1,7 +1,6 @@
 package com.codeit.mopl.search;
 
 
-import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
@@ -50,10 +49,7 @@ public class OpenSearchDataSync implements ApplicationRunner {
       Pageable pageable = PageRequest.of(i, PAGE_SIZE); // 페이지 + 아이템 수
       Page<Content> pages = repository.findAll(pageable);
       List<ContentDocument> contents = pages.getContent().stream()
-          .map(c -> {
-            ContentDto dto = contentMapper.toDto(c);
-            return documentMapper.toDocument(dto, c.getCreatedAt());
-          })
+          .map(documentMapper::toDocument)
           .toList();
 
       esRepository.saveAll(contents);

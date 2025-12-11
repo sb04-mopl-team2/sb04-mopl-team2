@@ -6,8 +6,7 @@ import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.entity.SortDirection;
-import com.codeit.mopl.domain.content.mapper.ContentMapper;
-import com.codeit.mopl.search.converter.ContentConverter;
+import com.codeit.mopl.search.converter.ContentDocumentMapper;
 import com.codeit.mopl.search.document.ContentDocument;
 import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.io.IOException;
@@ -34,13 +33,11 @@ import org.springframework.stereotype.Component;
 public class OpenSearchService {
 
   private final OpenSearchClient client;
-  private final ContentMapper contentMapper;
-  private final ContentConverter converter;
+  private final ContentDocumentMapper contentDocumentMapper;
   private final ContentOsRepository osRepository;
 
   public void save(Content content) {
-    ContentDto dto = contentMapper.toDto(content);
-    osRepository.save(converter.convertToDocument(dto, content.getCreatedAt()));
+    osRepository.save(contentDocumentMapper.toDocument(content));
   }
 
   public void delete(String contentId) {
@@ -76,7 +73,7 @@ public class OpenSearchService {
     boolean hasNext = hits.size() > request.getLimit();
 
     List<ContentDto> data = hits.stream()
-        .map(d -> converter.convertToDto(d.source()))
+        .map(d -> contentDocumentMapper.fromDocumentToDto(d.source()))
         .limit(request.getLimit())
         .toList();
 

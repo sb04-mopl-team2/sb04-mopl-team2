@@ -10,11 +10,8 @@ import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
 import com.codeit.mopl.domain.user.dto.request.UserCreateRequest;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
-import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.global.ErrorResponse;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,7 +22,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,9 +41,6 @@ public class FollowE2ETest {
 
     @Autowired
     private NotificationRepository notificationRepository;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     private HttpHeaders defaultHeaders = new HttpHeaders();
     private String followerAccessToken;

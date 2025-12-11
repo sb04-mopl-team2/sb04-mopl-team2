@@ -80,5 +80,4 @@ public class CancelledEventRetryStepConfig {
             return RepeatStatus.FINISHED;
         };
     }
-
 }

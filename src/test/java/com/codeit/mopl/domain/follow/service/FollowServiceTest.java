@@ -111,10 +111,10 @@ class FollowServiceTest {
         assertThat(event.followeeId()).isEqualTo(followeeId);
 
         verify(notificationService).createNotification(
-            eq(followeeId),
-            anyString(),
-            contains(follower.getName()),
-            eq(Level.INFO)
+                eq(followeeId),
+                anyString(),
+                contains(follower.getName()),
+                eq(Level.INFO)
         );
     }
 

@@ -216,7 +216,7 @@ public class WatchingSessionService {
             FrontendKstOffsetAdjuster.adjust(savedWatchingSession.getCreatedAt()),
             new UserSummary(
                 user.getId(),
-                user.getEmail(),
+                user.getName(),
                 user.getProfileImageUrl()
             ),
             new ContentSummary(

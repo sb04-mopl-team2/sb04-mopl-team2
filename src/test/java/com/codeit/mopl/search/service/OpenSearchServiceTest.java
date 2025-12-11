@@ -1,7 +1,7 @@
 package com.codeit.mopl.search.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -12,13 +12,12 @@ import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
 import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
-import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.exception.content.ContentOsStorageException;
-import com.codeit.mopl.search.converter.ContentConverter;
+import com.codeit.mopl.search.converter.ContentDocumentMapper;
 import com.codeit.mopl.search.document.ContentDocument;
 import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,10 +41,7 @@ public class OpenSearchServiceTest {
   private OpenSearchClient client;
 
   @Mock
-  private ContentMapper contentMapper;
-
-  @Mock
-  private ContentConverter converter;
+  private ContentDocumentMapper contentDocumentMapper;
 
   @Mock
   private ContentOsRepository osRepository;
@@ -57,12 +53,12 @@ public class OpenSearchServiceTest {
   private Content content;
   private ContentDto dto;
   private ContentDocument doc;
-  private LocalDateTime fixedTime;
+  private Instant fixedTime;
 
   @BeforeEach
   public void init() {
     // given
-    fixedTime = LocalDateTime.now();
+    fixedTime = Instant.now();
     content = new Content();
     contentId = UUID.randomUUID();
     ReflectionTestUtils.setField(content, "createdAt", fixedTime);
@@ -74,21 +70,20 @@ public class OpenSearchServiceTest {
     );
     doc = new ContentDocument();
     doc.setId(contentId.toString());
-    doc.setCreatedAt(fixedTime);
+    doc.setCreatedAt(Instant.from(fixedTime));
   }
 
   @Test
   @DisplayName("콘텐츠 저장 성공")
   public void saveContentDocumentSuccess() {
     // given
-    given(contentMapper.toDto(content)).willReturn(dto);
-    given(converter.convertToDocument(dto, fixedTime)).willReturn(doc);
+    given(contentDocumentMapper.toDocument(content)).willReturn(doc);
     
     // when
     openSearchService.save(content);
 
     // then
-    verify(contentMapper).toDto(content);
+    verify(contentDocumentMapper).toDocument(content);
     verify(osRepository).save(any(ContentDocument.class));
   }
 
@@ -96,8 +91,7 @@ public class OpenSearchServiceTest {
   @DisplayName("OpenSearch 문제로 콘텐츠 저장 실패")
   public void saveContentDocumentFailure() {
     // given
-    given(contentMapper.toDto(content)).willReturn(dto);
-    given(converter.convertToDocument(dto, fixedTime)).willReturn(doc);
+    given(contentDocumentMapper.toDocument(content)).willReturn(doc);
     willThrow(ContentOsStorageException.class)
         .given(osRepository).save(any());
 
@@ -105,7 +99,7 @@ public class OpenSearchServiceTest {
     assertThrows(ContentOsStorageException.class, () -> {
       openSearchService.save(content);
     });
-    verify(contentMapper).toDto(content);
+    verify(contentDocumentMapper).toDocument(content);
   }
 
   @Test

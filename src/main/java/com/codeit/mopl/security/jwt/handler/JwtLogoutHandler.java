@@ -30,6 +30,7 @@ public class JwtLogoutHandler implements LogoutHandler {
                 .ifPresent(cookie -> {
                     cookie.setMaxAge(0); // 즉시 만료
                     cookie.setPath("/");
+                    cookie.setValue(null);
                     response.addCookie(cookie);
                 });
     }

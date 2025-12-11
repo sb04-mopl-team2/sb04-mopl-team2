@@ -60,7 +60,7 @@ public class FollowService {
 
         User follower = getUserById(followerId);
         User followee = getUserById(followeeId);
-        
+
         // 팔로우 저장, 증가 이벤트 발행
         Follow follow = new Follow(follower, followee);
         FollowDto dto = followMapper.toDto(followRepository.save(follow));
@@ -68,15 +68,15 @@ public class FollowService {
 
         // 알람 발행
         FollowCreatedContext ctx =
-            new FollowCreatedContext(follower.getName());
+                new FollowCreatedContext(follower.getName());
 
         NotificationTemplate template = NotificationTemplate.FOLLOW_CREATED;
         NotificationMessage message = template.build(ctx);
         notificationService.createNotification(
-            followeeId,
-            message.title(),
-            message.content(),
-            Level.INFO
+                followeeId,
+                message.title(),
+                message.content(),
+                Level.INFO
         );
 
         log.info("[팔로우 관리] 팔로우 생성 완료: id = {}", dto.id());
@@ -93,7 +93,7 @@ public class FollowService {
         // 비관적 락 적용: WRITE (follow -> user)
         Follow follow = getFollowByIdWithWriteLock(followId);
         User followee = getUserByIdWithWriteLock(followeeId);
-        
+
         // 팔로워 수 증가, 상태 변경
         followee.increaseFollowerCount();
         follow.setFollowStatus(FollowStatus.CONFIRM);
@@ -110,7 +110,7 @@ public class FollowService {
         if (!userRepository.existsById(followeeId)) {
             throw new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", followeeId));
         }
-       boolean isFollowed = followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
+        boolean isFollowed = followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
         log.info("[팔로우 관리] 특정 유저를 내가 팔로우하는지 여부 조회 완료: followerId = {}, followeeId = {}, isFollowed = {}", followerId, followeeId, isFollowed);
         return isFollowed;
     }
@@ -149,7 +149,7 @@ public class FollowService {
 
         // 팔로우 상태 변경
         follow.setFollowStatus(FollowStatus.CANCELLED);
-        
+
         // 팔로우 감소 이벤트 발행
         UUID followeeId = follow.getFollowee().getId();
         eventPublisher.publishEvent(new FollowerDecreaseEvent(follow.getId(), followeeId));
@@ -209,9 +209,5 @@ public class FollowService {
     private Follow getFollowByIdWithWriteLock(UUID followId) {
         return followRepository.findByIdForUpdate(followId)
                 .orElseThrow(() -> FollowNotFoundException.withId(followId));
-    }
-
-    private String getFollowNotificationTitle(String followerName) {
-        return followerName + "님이 나를 팔로우했어요.";
     }
 }

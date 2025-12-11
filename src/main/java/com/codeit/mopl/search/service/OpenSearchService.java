@@ -6,12 +6,15 @@ import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.entity.SortDirection;
+import com.codeit.mopl.exception.content.ContentErrorCode;
+import com.codeit.mopl.exception.content.ContentOsStorageException;
 import com.codeit.mopl.search.converter.ContentDocumentMapper;
 import com.codeit.mopl.search.document.ContentDocument;
 import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,11 +66,14 @@ public class OpenSearchService {
       searchAfterList.add(request.getIdAfter().toString());
       builder.searchAfter(searchAfterList);
     }
-    SearchResponse<ContentDocument> res = null;
+    SearchResponse<ContentDocument> res;
     try {
       res = client.search(builder.build(), ContentDocument.class);
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new ContentOsStorageException(
+          ContentErrorCode.SEARCH_ENGINE_ERROR,
+          Map.of()
+      );
     }
     List<Hit<ContentDocument>> hits = res.hits().hits();
     boolean hasNext = hits.size() > request.getLimit();

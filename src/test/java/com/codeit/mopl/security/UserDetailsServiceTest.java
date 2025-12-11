@@ -7,6 +7,7 @@ import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.user.UserLockedException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -37,7 +37,7 @@ public class UserDetailsServiceTest {
     void loadUserByUsername() {
         // given
         User user = new User("test@example.com", "encodedPassword", "TEST");
-        UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@example.com", "TEST", null, Role.USER, false);
+        UserDto userDto = new UserDto(UUID.randomUUID(), Instant.now(), "test@example.com", "TEST", null, Role.USER, false);
         given(userRepository.findByEmail("test@example.com"))
                 .willReturn(Optional.of(user));
         given(userMapper.toDto(user))

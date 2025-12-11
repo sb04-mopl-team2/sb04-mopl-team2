@@ -10,7 +10,7 @@ import com.codeit.mopl.domain.watchingsession.dto.ContentChatDto;
 import com.codeit.mopl.domain.watchingsession.entity.ContentChatSendRequest;
 import com.codeit.mopl.domain.watchingsession.service.RedisPublisher;
 import com.codeit.mopl.security.CustomUserDetails;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ public class ChatControllerTest {
     UUID userId = UUID.randomUUID();
     UserDto userDto = new UserDto(
         userId,
-        LocalDateTime.now(),
+        Instant.now(),
         "test@test.com",
         "test",
         null,

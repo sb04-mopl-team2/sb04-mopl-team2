@@ -17,12 +17,12 @@ import com.codeit.mopl.exception.playlist.subscription.SubscriptionNotFoundExcep
 import com.codeit.mopl.exception.playlist.subscription.SubscriptionSelfProhibitedException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -38,7 +38,7 @@ public class SubscriptionService {
     private final NotificationService notificationService;
 
     public void subscribe(UUID playlistId, UUID subscriberId) {
-        LocalDateTime subscribedAt = LocalDateTime.now();
+        Instant subscribedAt = Instant.now();
         log.info("[플레이리스트] 플레이리스트 구독 처리 시작 - playlistId = {}", playlistId);
 
         Playlist playlist = playlistRepository.findById(playlistId)

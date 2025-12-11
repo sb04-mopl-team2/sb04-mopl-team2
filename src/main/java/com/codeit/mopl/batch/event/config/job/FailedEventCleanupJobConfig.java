@@ -16,8 +16,8 @@ public class FailedEventCleanupJobConfig {
     private final Step failedFollowCleanupStep;
 
     /*
-    *  FAILED 팔로우 객체 삭제 Job
-    * */
+     *  FAILED 팔로우 객체 삭제 Job
+     * */
     @Bean
     public Job failedFollowCleanupJob() {
         return new JobBuilder("failedFollowCleanupJob", jobRepository)

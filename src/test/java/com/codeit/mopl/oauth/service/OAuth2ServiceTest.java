@@ -8,6 +8,7 @@ import com.codeit.mopl.exception.user.NotSupportedSocialLoginException;
 import com.codeit.mopl.oauth.utils.TestOAuth2UserRequests;
 import com.codeit.mopl.oauth.utils.oauth2_user.TestOAuth2Users;
 import com.codeit.mopl.security.CustomUserDetails;
+import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +20,6 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,7 +46,7 @@ public class OAuth2ServiceTest {
         willReturn(user)
                 .given(oAuth2UserService)
                 .loadUserFromParent(any(OAuth2UserRequest.class));
-        UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@gmail.com", "홍길동","https://example.com/profile.jpg", Role.USER,false);
+        UserDto userDto = new UserDto(UUID.randomUUID(), Instant.now(), "test@gmail.com", "홍길동","https://example.com/profile.jpg", Role.USER,false);
         given(userService.findOrCreateOAuth2User("test@gmail.com","홍길동","https://example.com/profile.jpg", Provider.GOOGLE)).willReturn(userDto);
 
         CustomUserDetails details = (CustomUserDetails) oAuth2UserService.loadUser(request);
@@ -61,7 +61,7 @@ public class OAuth2ServiceTest {
         willReturn(user)
                 .given(oAuth2UserService)
                 .loadUserFromParent(any(OAuth2UserRequest.class));
-        UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "홍길동_9876543210@kakao.com", "홍길동","https://example.com/kakao-profile.jpg", Role.USER,false);
+        UserDto userDto = new UserDto(UUID.randomUUID(), Instant.now(), "홍길동_9876543210@kakao.com", "홍길동","https://example.com/kakao-profile.jpg", Role.USER,false);
         given(userService.findOrCreateOAuth2User("홍길동_9876543210@kakao.com","홍길동","https://example.com/kakao-profile.jpg",Provider.KAKAO)).willReturn(userDto);
 
         CustomUserDetails details = (CustomUserDetails) oAuth2UserService.loadUser(request);

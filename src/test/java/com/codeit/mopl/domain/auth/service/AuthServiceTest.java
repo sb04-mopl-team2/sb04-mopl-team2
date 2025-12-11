@@ -3,16 +3,14 @@ package com.codeit.mopl.domain.auth.service;
 import com.codeit.mopl.domain.auth.dto.request.ResetPasswordRequest;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
-import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.event.MailSendEvent;
 import com.codeit.mopl.exception.auth.InvalidTokenException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
-import com.codeit.mopl.mail.service.MailService;
 import com.codeit.mopl.mail.utils.PasswordUtils;
-import com.codeit.mopl.mail.utils.RedisStoreUtils;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import jakarta.mail.MessagingException;
+import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -86,7 +83,7 @@ public class AuthServiceTest {
     void reissueAccessTokenShouldSucceed() throws MessagingException {
         // given
         UUID userId = UUID.randomUUID();
-        UserDto userDto = new UserDto(userId, LocalDateTime.now(), "test@test.com", "test", null, Role.USER, false);
+        UserDto userDto = new UserDto(userId, Instant.now(), "test@test.com", "test", null, Role.USER, false);
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         Date exp = new Date(System.currentTimeMillis() + 2 * 60 * 1000);
@@ -104,7 +101,7 @@ public class AuthServiceTest {
     @Test
     void reissueAccessTokenShouldFailWhenInvalidToken() throws MessagingException {
         // given
-        UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@test.com", "test", null, Role.USER, false);
+        UserDto userDto = new UserDto(UUID.randomUUID(), Instant.now(), "test@test.com", "test", null, Role.USER, false);
         Map<String, Object> claims = new HashMap<>();
         Date exp = new Date(System.currentTimeMillis() - 2 * 60 * 1000);
         claims.put("exp", exp);
@@ -125,7 +122,7 @@ public class AuthServiceTest {
     void reissueRefreshTokenShouldSucceed() throws MessagingException {
         // given
         UUID userId = UUID.randomUUID();
-        UserDto userDto = new UserDto(userId, LocalDateTime.now(), "test@test.com", "test", null, Role.USER, false);
+        UserDto userDto = new UserDto(userId, Instant.now(), "test@test.com", "test", null, Role.USER, false);
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         Date exp = new Date(System.currentTimeMillis() + 2 * 60 * 1000);
@@ -143,7 +140,7 @@ public class AuthServiceTest {
     @Test
     void reissueRefreshTokenShouldFailWhenInvalidToken() throws MessagingException {
         // given
-        UserDto userDto = new UserDto(UUID.randomUUID(), LocalDateTime.now(), "test@test.com", "test", null, Role.USER, false);
+        UserDto userDto = new UserDto(UUID.randomUUID(), Instant.now(), "test@test.com", "test", null, Role.USER, false);
         Map<String, Object> claims = new HashMap<>();
         Date exp = new Date(System.currentTimeMillis() - 2 * 60 * 1000);
         claims.put("exp", exp);

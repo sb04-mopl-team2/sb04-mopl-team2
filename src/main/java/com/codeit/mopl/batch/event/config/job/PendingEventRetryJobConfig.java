@@ -16,13 +16,12 @@ public class PendingEventRetryJobConfig {
     private final Step retryFollowerIncreaseStep;
 
     /*
-    *   팔로워 증가 재시도 Job
-    * */
+     *   팔로워 증가 재시도 Job
+     * */
     @Bean
     public Job retryFollowerIncreaseJob() {
         return new JobBuilder("retryFollowerIncreaseJob", jobRepository)
                 .start(retryFollowerIncreaseStep)
                 .build();
     }
-
 }

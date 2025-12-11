@@ -3,16 +3,16 @@ package com.codeit.mopl.domain.follow.controller;
 import com.codeit.mopl.domain.follow.dto.FollowDto;
 import com.codeit.mopl.domain.follow.dto.FollowRequest;
 import com.codeit.mopl.domain.follow.service.FollowService;
-import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.security.CustomUserDetails;
 import com.codeit.mopl.security.config.TestSecurityConfig;
+import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
 import com.codeit.mopl.security.jwt.handler.OAuth2UserSuccessHandler;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
-import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +30,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.eq;
@@ -97,7 +97,7 @@ class FollowControllerTest {
         UUID followerId = UUID.randomUUID();
         UserDto userDto = new UserDto(
                 followerId,
-                LocalDateTime.now(),
+                Instant.now(),
                 "testUser@test.com",
                 "test",
                 null,
@@ -141,7 +141,7 @@ class FollowControllerTest {
         UUID followerId = UUID.randomUUID();
         UserDto userDto = new UserDto(
                 followerId,
-                LocalDateTime.now(),
+                Instant.now(),
                 "testUser@test.com",
                 "test",
                 null,
@@ -170,7 +170,7 @@ class FollowControllerTest {
         UUID followerId = UUID.randomUUID();
         UserDto userDto = new UserDto(
                 followerId,
-                LocalDateTime.now(),
+                Instant.now(),
                 "testUser@test.com",
                 "test",
                 null,
@@ -204,7 +204,7 @@ class FollowControllerTest {
         UUID followerId = UUID.randomUUID();
         UserDto userDto = new UserDto(
                 followerId,
-                LocalDateTime.now(),
+                Instant.now(),
                 "testUser@test.com",
                 "test",
                 null,
@@ -232,7 +232,7 @@ class FollowControllerTest {
         UUID followeeId = UUID.randomUUID();
         UserDto userDto = new UserDto(
                 followerId,
-                LocalDateTime.now(),
+                Instant.now(),
                 "testUser@test.com",
                 "test",
                 null,
@@ -266,7 +266,7 @@ class FollowControllerTest {
         String followeeId = "testId";
         UserDto userDto = new UserDto(
                 followerId,
-                LocalDateTime.now(),
+                Instant.now(),
                 "testUser@test.com",
                 "test",
                 null,
@@ -293,7 +293,7 @@ class FollowControllerTest {
         UUID requesterId = UUID.randomUUID();
         UserDto userDto = new UserDto(
                 requesterId,
-                LocalDateTime.now(),
+                Instant.now(),
                 "testUser@test.com",
                 "test",
                 null,
@@ -323,7 +323,7 @@ class FollowControllerTest {
         UUID followerId = UUID.randomUUID();
         UserDto userDto = new UserDto(
                 followerId,
-                LocalDateTime.now(),
+                Instant.now(),
                 "testUser@test.com",
                 "test",
                 null,

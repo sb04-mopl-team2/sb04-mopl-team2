@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.watchingsession.service;
 
+import com.codeit.mopl.domain.base.FrontendKstOffsetAdjuster;
 import com.codeit.mopl.domain.content.dto.response.ContentSummary;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
@@ -22,7 +23,7 @@ import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -154,7 +155,7 @@ public class WatchingSessionService {
       WatchingSession session = existingSession.get();
       session.getContent().getTags().size();
       session.getUser();
-      session.setUpdatedAt(LocalDateTime.now());
+      session.setUpdatedAt(Instant.now());
       log.info("[실시간 세션] 서비스: 세션이 이미 존재합니다 - sessionId = {}", session.getId());
       return session;
     }
@@ -212,10 +213,10 @@ public class WatchingSessionService {
         changeType,
         new WatchingSessionDto(
             savedWatchingSession.getId(),
-            savedWatchingSession.getCreatedAt(),
+            FrontendKstOffsetAdjuster.adjust(savedWatchingSession.getCreatedAt()),
             new UserSummary(
                 user.getId(),
-                user.getEmail(),
+                user.getName(),
                 user.getProfileImageUrl()
             ),
             new ContentSummary(

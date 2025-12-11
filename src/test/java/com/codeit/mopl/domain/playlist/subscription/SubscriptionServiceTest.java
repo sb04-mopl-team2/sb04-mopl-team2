@@ -13,6 +13,7 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
 import com.codeit.mopl.exception.playlist.subscription.SubscriptionDuplicateException;
 import com.codeit.mopl.exception.playlist.subscription.SubscriptionNotFoundException;
+import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,7 +50,7 @@ public class SubscriptionServiceTest {
         @DisplayName("정상 요청일 경우 해당 플레이리스트를 구독함")
         void shouldCreateSubscription() {
             //given
-            LocalDateTime subscribedAt = LocalDateTime.now();
+            Instant subscribedAt = Instant.now();
             UUID subscriberId = UUID.randomUUID();
             User subscriber = new User();
             setId(subscriber, subscriberId);
@@ -162,7 +162,7 @@ public class SubscriptionServiceTest {
             User subscriber = new User();
             setId(subscriber, subscriberId);
 
-            LocalDateTime subscribedAt = LocalDateTime.now();
+            Instant subscribedAt = Instant.now();
             Subscription subscription = Subscription.builder()
                     .playlist(playlist)
                     .subscriber(subscriber)

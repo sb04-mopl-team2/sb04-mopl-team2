@@ -16,8 +16,8 @@ public class CancelledEventRetryJobConfig {
     private final Step retryFollowerDecreaseStep;
 
     /*
-    *  팔로워 감소 재시도 Job
-    * */
+     *  팔로워 감소 재시도 Job
+     * */
     @Bean
     public Job retryFollowerDecreaseJob() {
         return new JobBuilder("retryFollowerDecreaseJob", jobRepository)

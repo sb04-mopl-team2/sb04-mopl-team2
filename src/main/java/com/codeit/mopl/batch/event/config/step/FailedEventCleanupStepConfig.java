@@ -27,8 +27,8 @@ public class FailedEventCleanupStepConfig {
     private final FollowRepository followRepository;
 
     /*
-    *  FAILED 팔로우 삭제 Step
-    * */
+     *  FAILED 팔로우 삭제 Step
+     * */
     @Bean
     public Step failedFollowCleanupStep() {
         return new StepBuilder("failedFollowCleanupStep", jobRepository)

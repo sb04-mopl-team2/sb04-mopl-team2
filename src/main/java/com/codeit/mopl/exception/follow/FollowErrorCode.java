@@ -11,8 +11,7 @@ public enum FollowErrorCode implements ErrorCodeInterface {
     FOLLOW_DUPLICATE(HttpStatus.BAD_REQUEST, "같은 사용자를 중복해서 팔로우할 수 없습니다."),
     FOLLOW_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 팔로우를 지울 권한이 없습니다."),
     FOLLOWER_COUNT_CANNOT_BE_NEGATIVE(HttpStatus.CONFLICT, "팔로워 수는 음수가 될 수 없습니다."),
-    FOLLOWEE_ID_IS_NULL(HttpStatus.BAD_REQUEST, "FolloweeId는 필수 값입니다."),
-    FOLLOW_ID_IS_NULL(HttpStatus.BAD_REQUEST, "FollowId는 필수 값입니다.");
+    FOLLOW_CANNOT_DELETE_WHILE_PROCESSING(HttpStatus.CONFLICT, "시스템에서 처리 중인 팔로우 객체는 삭제할 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;

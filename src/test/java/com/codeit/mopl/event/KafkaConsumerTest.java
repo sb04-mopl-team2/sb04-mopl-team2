@@ -3,7 +3,12 @@ package com.codeit.mopl.event;
 import com.codeit.mopl.domain.follow.service.FollowService;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
+import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
+import com.codeit.mopl.domain.notification.template.NotificationMessage;
+import com.codeit.mopl.domain.notification.template.NotificationTemplate;
+import com.codeit.mopl.domain.notification.template.context.RoleChangedContext;
+import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.event.consumer.KafkaConsumer;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
@@ -23,9 +28,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -604,6 +614,204 @@ class KafkaConsumerTest {
 
     // when & then
     assertThatThrownBy(() -> kafkaConsumer.onMailSend(kafkaEventJson, ack))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("unexpected");
+
+    verify(ack, never()).acknowledge();
+  }
+
+  @Test
+  @DisplayName("알림 생성 - 아직 처리되지 않은 이벤트면 권한 변경 알림 생성, processedEvent 저장, ack 호출")
+  void onNotificationCreate_success() throws Exception {
+    // given
+    String kafkaEventJson = "\"eventId\"=\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"";
+    UUID eventId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    UserRoleUpdateEvent event = new UserRoleUpdateEvent(
+            eventId,
+            userId,
+            Role.USER,
+            Role.ADMIN
+    );
+
+    when(objectMapper.readValue(kafkaEventJson, UserRoleUpdateEvent.class))
+            .thenReturn(event);
+    when(processedEventRepository.findByEventIdAndEventType(event.eventId(), EventType.NOTIFICATION_CREATE))
+            .thenReturn(Optional.empty());
+    doNothing().when(notificationService).createNotification(any(UUID.class), anyString(), anyString(), any(Level.class));
+    // when
+    kafkaConsumer.onNotificationCreate(kafkaEventJson, ack);
+
+    // then
+    verify(processedEventRepository).findByEventIdAndEventType(event.eventId(), EventType.NOTIFICATION_CREATE);
+    verify(processedEventRepository).save(any(ProcessedEvent.class));
+    verify(ack).acknowledge();
+  }
+
+  @Test
+  @DisplayName("권한 변경 알림 생성 - 이미 처리된 이벤트면 이후 동작 안 하고 ack만 호출")
+  void onNotificationCreate_idempotent() throws Exception {
+    // given
+    String kafkaEventJson = "\"eventId\"=\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"";
+    UUID eventId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    UserRoleUpdateEvent event = new UserRoleUpdateEvent(
+            eventId,
+            userId,
+            Role.USER,
+            Role.ADMIN
+    );
+
+    when(objectMapper.readValue(kafkaEventJson, UserRoleUpdateEvent.class))
+            .thenReturn(event);
+
+    when(processedEventRepository.findByEventIdAndEventType(event.eventId(), EventType.NOTIFICATION_CREATE))
+            .thenReturn(Optional.of(new ProcessedEvent(event.eventId(), EventType.NOTIFICATION_CREATE)));
+
+    // when
+    kafkaConsumer.onNotificationCreate(kafkaEventJson, ack);
+
+    // then
+    verify(processedEventRepository).findByEventIdAndEventType(event.eventId(), EventType.NOTIFICATION_CREATE);
+    verify(processedEventRepository, never()).save(any());
+    verify(ack).acknowledge();
+  }
+
+  @Test
+  @DisplayName("권한 변경 알림 생성 - JSON 역직렬화 실패 시 이후 동작 없이 ack만 호출")
+  void onNotificationCreate_jsonDeserializeFail() throws Exception {
+    // given
+    String invalidJson = "INVALID_JSON";
+
+    when(objectMapper.readValue(invalidJson, UserRoleUpdateEvent.class))
+            .thenThrow(new JsonProcessingException("fail") {});
+
+    // when
+    kafkaConsumer.onNotificationCreate(invalidJson, ack);
+
+    // then
+    verify(processedEventRepository, never()).findByEventIdAndEventType(any(), any());
+    verify(processedEventRepository, never()).save(any());
+    verify(ack).acknowledge();
+  }
+
+  @Test
+  @DisplayName("권한 변경 알림 생성 - 기타 예외 발생 시 ack 호출 없이 예외 전파")
+  void onNotificationCreate_unexpectedException() throws Exception {
+    // given
+    String kafkaEventJson = "\"eventId\"=\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"";
+    UUID eventId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    UserRoleUpdateEvent event = new UserRoleUpdateEvent(
+            eventId,
+            userId,
+            Role.USER,
+            Role.ADMIN
+    );
+    when(objectMapper.readValue(kafkaEventJson, UserRoleUpdateEvent.class))
+            .thenReturn(event);
+
+    when(processedEventRepository.findByEventIdAndEventType(event.eventId(), EventType.NOTIFICATION_CREATE))
+            .thenReturn(Optional.empty());
+
+    doThrow(new RuntimeException("unexpected"))
+            .when(notificationService).createNotification(any(UUID.class), anyString(), anyString(), any(Level.class));
+
+    // when & then
+    assertThatThrownBy(() -> kafkaConsumer.onNotificationCreate(kafkaEventJson, ack))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("unexpected");
+
+    verify(ack, never()).acknowledge();
+  }
+
+  @Test
+  @DisplayName("유저 로그인 - status true(로그인) 시 SseService 연결, ack 호출")
+  void onUserLogInOutEventLogIn_success() throws Exception {
+    // given
+    String kafkaEventJson = "\"eventId\"=\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"";
+    UUID userId = UUID.randomUUID();
+    UserLogInOutEvent event = new UserLogInOutEvent(
+            userId,
+            true
+    );
+
+    when(objectMapper.readValue(kafkaEventJson, UserLogInOutEvent.class))
+            .thenReturn(event);
+    SseEmitter emitter = mock(SseEmitter.class);
+    when(sseService.connect(event.userId(),null)).thenReturn(emitter);
+
+    // when
+    kafkaConsumer.onUserLogInOutEvent(kafkaEventJson, ack);
+
+    // then
+    verify(sseService,times(1)).connect(event.userId(),null);
+    verify(ack).acknowledge();
+  }
+
+  @Test
+  @DisplayName("유저 로그아웃 - status false (로그아웃) 시 SseEmitter 정리, ack 호출")
+  void onUserLogInOutEventLogOut_success() throws Exception {
+    // given
+    String kafkaEventJson = "\"eventId\"=\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"";
+    UUID userId = UUID.randomUUID();
+    UserLogInOutEvent event = new UserLogInOutEvent(
+            userId,
+            false
+    );
+    when(objectMapper.readValue(kafkaEventJson, UserLogInOutEvent.class))
+            .thenReturn(event);
+    SseEmitter emitter = mock(SseEmitter.class);
+    ConcurrentMap<UUID, List<SseEmitter>> data = mock(ConcurrentMap.class);
+
+    when(sseEmitterRegistry.getData()).thenReturn(data);
+    when(data.remove(userId)).thenReturn(List.of(emitter));
+    // when
+    kafkaConsumer.onUserLogInOutEvent(kafkaEventJson, ack);
+
+    // then
+    verify(sseEmitterRegistry.getData()).remove(event.userId());
+    verify(ack).acknowledge();
+  }
+
+  @Test
+  @DisplayName("유저 로그인/로그아웃 - JSON 역직렬화 실패 시 이후 동작 없이 ack만 호출")
+  void onUserLoginOutEvent_jsonDeserializeFail() throws Exception {
+    // given
+    String invalidJson = "INVALID_JSON";
+
+    when(objectMapper.readValue(invalidJson, UserLogInOutEvent.class))
+            .thenThrow(new JsonProcessingException("fail") {});
+
+    // when
+    kafkaConsumer.onUserLogInOutEvent(invalidJson, ack);
+
+    // then
+    verify(sseEmitterRegistry, never()).getData();
+    verify(sseService,never()).connect(any(), any());
+    verify(ack).acknowledge();
+  }
+
+  @Test
+  @DisplayName("유저 로그인/로그아웃 - 기타 예외 발생 시 ack 호출 없이 예외 전파 " +
+          "로그인 시 상황으로 테스트 진행")
+  void onUserLogInOutEvent_unexpectedException() throws Exception {
+    // given
+    String kafkaEventJson = "\"eventId\"=\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"";
+    UUID userId = UUID.randomUUID();
+    UserLogInOutEvent event = new UserLogInOutEvent(
+            userId,
+            true
+    );
+    when(objectMapper.readValue(kafkaEventJson, UserLogInOutEvent.class))
+            .thenReturn(event);
+
+
+    doThrow(new RuntimeException("unexpected"))
+            .when(sseService).connect(event.userId(),null);
+
+    // when & then
+    assertThatThrownBy(() -> kafkaConsumer.onUserLogInOutEvent(kafkaEventJson, ack))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("unexpected");
 

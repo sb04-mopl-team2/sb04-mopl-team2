@@ -14,5 +14,5 @@ public interface ConversationMapper {
     @Mapping(source ="entity.with", target = "with")
     @Mapping(source = "latestMessage", target = "latestMessage")
     @Mapping(source = "entity.id", target = "id")
-    ConversationDto toConversationDto(Conversation entity, DirectMessageDto lastestMessage);
+    ConversationDto toConversationDto(Conversation entity, DirectMessageDto latestMessage);
 }

@@ -7,12 +7,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.exception.content.ContentOsStorageException;
 import com.codeit.mopl.search.document.ContentDocument;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
@@ -90,12 +92,13 @@ public class ContentOsRepositoryTest {
     given(client.get(any(Function.class), eq(ContentDocument.class))).willReturn(getResponse);
 
     // when
-    ContentDocument res = contentOsRepository.findById(doc.getId());
+    Optional<ContentDocument> res = contentOsRepository.findById(doc.getId());
 
     // then
     verify(client).get(any(Function.class), eq(ContentDocument.class));
     assertThat(res).isNotNull();
-    assertThat(res.getId()).isEqualTo(doc.getId());
+    assertThat(res.isPresent());
+    assertThat(res.get().getId()).isEqualTo(doc.getId());
   }
 
   @Test

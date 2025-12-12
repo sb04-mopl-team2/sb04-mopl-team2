@@ -6,6 +6,7 @@ import com.codeit.mopl.search.document.ContentDocument;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch.core.BulkResponse;
@@ -33,19 +34,18 @@ public class ContentOsRepository {
     }
   }
 
-  public ContentDocument findById(String id) {
+  public Optional<ContentDocument> findById(String id) {
     try {
-      return client.get(g -> g
+      return Optional.ofNullable(client.get(g -> g
               .index("content")
               .id(id),
           ContentDocument.class
-      ).source();
+      ).source());
     } catch (IOException e) {
       throw new ContentOsStorageException(
           ContentErrorCode.SEARCH_ENGINE_ERROR,
           Map.of("contentId", id)
       );
-
     }
   }
 

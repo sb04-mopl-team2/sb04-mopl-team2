@@ -95,7 +95,7 @@ public class ContentOsRepository {
       });
       if (response.errors()) {
         throw new ContentOsStorageException(
-            ContentErrorCode.SEARCH_ENGINE_ERROR,
+            ContentErrorCode.SEARCH_ENGINE_INDEXING_ERROR,
             Map.of()
         );
       }

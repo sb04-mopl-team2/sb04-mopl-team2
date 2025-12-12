@@ -208,7 +208,7 @@ public class ConversationServiceTest {
             assertThat(result.hasNext()).isEqualTo(false);
             assertThat(result.data().get(0).id()).isEqualTo(conversationId);
             assertThat(result.data().get(0).with()).isEqualTo(with);
-            assertThat(result.data().get(0).lastestMessage()).isNull();
+            assertThat(result.data().get(0).latestMessage()).isNull();
         }
 
         @Test
@@ -268,7 +268,7 @@ public class ConversationServiceTest {
             assertThat(result.totalCount()).isEqualTo(2);
             assertThat(result.data().get(0).id()).isEqualTo(conversationId1);
             assertThat(result.data().get(1).id()).isEqualTo(conversationId2);
-            assertThat(result.data().get(0).lastestMessage()).isEqualTo(null);
+            assertThat(result.data().get(0).latestMessage()).isEqualTo(null);
         }
 
         @Test
@@ -323,7 +323,7 @@ public class ConversationServiceTest {
             //then
             assertThat(result.id()).isEqualTo(conversationId);
             assertThat(result.with()).isEqualTo(with);
-            assertThat(result.lastestMessage()).isNull();
+            assertThat(result.latestMessage()).isNull();
             assertThat(result.hasUnread()).isEqualTo(true);
         }
 

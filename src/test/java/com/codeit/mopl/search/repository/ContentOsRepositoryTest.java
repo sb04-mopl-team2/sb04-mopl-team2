@@ -170,6 +170,7 @@ public class ContentOsRepositoryTest {
     // given
     ContentDocument doc1 = doc;
     ContentDocument doc2 = new ContentDocument();
+    doc2.setId(UUID.randomUUID().toString());
     List<ContentDocument> docs = List.of(doc1, doc2);
     BulkResponse bulkResponse = mock(BulkResponse.class);
     given(client.bulk(any(Function.class))).willReturn(bulkResponse);
@@ -189,6 +190,7 @@ public class ContentOsRepositoryTest {
     // given
     ContentDocument doc1 = doc;
     ContentDocument doc2 = new ContentDocument();
+    doc2.setId(UUID.randomUUID().toString());
     List<ContentDocument> docs = List.of(doc1, doc2);
     BulkResponse bulkResponse = mock(BulkResponse.class);
     given(client.bulk(any(Function.class))).willReturn(bulkResponse);
@@ -205,6 +207,7 @@ public class ContentOsRepositoryTest {
     // given
     ContentDocument doc1 = doc;
     ContentDocument doc2 = new ContentDocument();
+    doc2.setId(UUID.randomUUID().toString());
     List<ContentDocument> docs = List.of(doc1, doc2);
     given(client.bulk(any(Function.class)))
         .willThrow(IOException.class);

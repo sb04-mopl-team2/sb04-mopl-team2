@@ -25,8 +25,8 @@ import org.springframework.util.MultiValueMap;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -105,18 +105,18 @@ public class FollowE2ETest {
         ResponseEntity<FollowDto> response = restTemplate.postForEntity("/api/follows", entity, FollowDto.class);
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
         FollowDto body = response.getBody();
         Assertions.assertNotNull(body);
         assertThat(body.id()).isNotNull();
-        assertThat(body.followerId()).isEqualTo(follower.id());
-        assertThat(body.followeeId()).isEqualTo(followee.id());
+        assertEquals(follower.id(), body.followerId());
+        assertEquals(followee.id(), body.followeeId());
 
         UUID followId = body.id();
         Follow createdFollow = followRepository.findById(followId).orElse(null);
         assertThat(createdFollow).isNotNull();
-        assertThat(createdFollow.getFollowStatus()).isEqualTo(FollowStatus.PENDING);
+        assertEquals(FollowStatus.PENDING, createdFollow.getFollowStatus());
     }
 
     @Test
@@ -131,14 +131,14 @@ public class FollowE2ETest {
                 restTemplate.postForEntity("/api/follows", entity, ErrorResponse.class);
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
 
         ErrorResponse errorResponse = response.getBody();
         assertThat(errorResponse).isNotNull();
-        assertThat(errorResponse.exceptionName()).isEqualTo("FOLLOW_SELF_PROHIBITED");
-        assertThat(errorResponse.message()).contains("자기 자신을 팔로우할 수 없습니다");
-        assertThat(errorResponse.details().get("followerId")).isEqualTo(follower.id().toString());
-        assertThat(errorResponse.details().get("followeeId")).isEqualTo(follower.id().toString());
+        assertEquals("FOLLOW_SELF_PROHIBITED", errorResponse.exceptionName());
+        assertEquals("자기 자신을 팔로우할 수 없습니다", errorResponse.message());
+        assertEquals(follower.id().toString(), errorResponse.details().get("followerId"));
+        assertEquals(followee.id().toString(), errorResponse.details().get("followeeId"));
     }
 
     @Test
@@ -156,14 +156,14 @@ public class FollowE2ETest {
         ResponseEntity<ErrorResponse> response = restTemplate.postForEntity("/api/follows", entity, ErrorResponse.class);
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
 
         ErrorResponse errorResponse = response.getBody();
         assertThat(errorResponse).isNotNull();
-        assertThat(errorResponse.exceptionName()).isEqualTo("FOLLOW_DUPLICATE");
-        assertThat(errorResponse.message()).contains("같은 사용자를 중복해서 팔로우할 수 없습니다.");
-        assertThat(errorResponse.details().get("followerId")).isEqualTo(follower.id().toString());
-        assertThat(errorResponse.details().get("followeeId")).isEqualTo(followee.id().toString());
+        assertEquals("FOLLOW_DUPLICATE", errorResponse.exceptionName());
+        assertEquals("같은 사용자를 중복해서 팔로우할 수 없습니다.", errorResponse.message());
+        assertEquals(follower.id().toString(), errorResponse.details().get("followerId"));
+        assertEquals(followee.id().toString(), errorResponse.details().get("followeeId"));
     }
 
     @Test
@@ -187,8 +187,8 @@ public class FollowE2ETest {
         );
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isTrue();
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(true, response.getBody());
     }
 
     @Test
@@ -206,8 +206,8 @@ public class FollowE2ETest {
         );
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isFalse();
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(false, response.getBody());
     }
 
     @Test
@@ -226,13 +226,13 @@ public class FollowE2ETest {
         );
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
 
         ErrorResponse errorResponse = response.getBody();
         assertThat(errorResponse).isNotNull();
-        assertThat(errorResponse.exceptionName()).isEqualTo("USER_NOT_FOUND");
-        assertThat(errorResponse.message()).contains("유저를 찾을 수 없습니다.");
-        assertThat(errorResponse.details().get("userId")).isEqualTo(followeeId.toString());
+        assertEquals("USER_NOT_FOUND", errorResponse.exceptionName());
+        assertEquals("유저를 찾을 수 없습니다.", errorResponse.message());
+        assertEquals(followeeId.toString(), errorResponse.details().get("userId"));
     }
 
     @Test
@@ -250,15 +250,15 @@ public class FollowE2ETest {
         );
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
 
         Long followerCount = response.getBody();
-        assertThat(followerCount).isEqualTo(0L);
-        
+        assertEquals(0L, followerCount);
+
         // 실제 값과 비교
         User followeeUser = userRepository.findById(followee.id()).orElse(null);
         assertThat(followeeUser).isNotNull();
-        assertThat(followeeUser.getFollowerCount()).isEqualTo(followerCount);
+        assertEquals(followerCount, followeeUser.getFollowerCount());
     }
 
     @Test
@@ -277,12 +277,174 @@ public class FollowE2ETest {
         );
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+
         ErrorResponse errorResponse = response.getBody();
         assertThat(errorResponse).isNotNull();
-        assertThat(errorResponse.exceptionName()).isEqualTo("USER_NOT_FOUND");
-        assertThat(errorResponse.message()).contains("유저를 찾을 수 없습니다.");
-        assertThat(errorResponse.details().get("userId")).isEqualTo(followeeId.toString());
+        assertEquals("USER_NOT_FOUND", errorResponse.exceptionName());
+        assertEquals("유저를 찾을 수 없습니다.", errorResponse.message());
+        assertEquals(followeeId.toString(), errorResponse.details().get("userId"));
+    }
+
+    @Test
+    @DisplayName("팔로우 삭제 성공")
+    void deleteFollow_Success() {
+        // given
+        Follow follow = createFollow();
+
+        // 팔로우 객체 상태 변경
+        Follow createdFollow = followRepository.findById(follow.getId()).orElse(null);
+        createdFollow.setFollowStatus(FollowStatus.CONFIRM);
+        followRepository.saveAndFlush(createdFollow);
+
+        HttpEntity<Void> entity = new HttpEntity<>(defaultHeaders);
+        
+        // when
+        ResponseEntity<Void> response = restTemplate.exchange(
+                "/api/follows/" + follow.getId(),
+                HttpMethod.DELETE,
+                entity,
+                Void.class
+        );
+
+        // then
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+
+        Follow cancelledFollow = followRepository.findById(follow.getId()).orElse(null);
+        assertThat(cancelledFollow).isNotNull();
+        assertEquals(FollowStatus.CANCELLED, cancelledFollow.getFollowStatus());
+    }
+
+    @Test
+    @DisplayName("팔로우 삭제 중단 - 이미 CANCELLED 상태인 팔로우 객체")
+    void deleteFollow_Stop_isAlreadyCancelled() {
+        // given
+        Follow follow = createFollow();
+        
+        // 팔로우 삭제 수행 -> follow 상태 CANCELLED로 변화
+        HttpEntity<Void> entity = new HttpEntity<>(defaultHeaders);
+        restTemplate.exchange(
+                "/api/follows/" + follow.getId(),
+                HttpMethod.DELETE,
+                entity,
+                Void.class
+        );
+
+        Follow cancelledFollow = followRepository.findById(follow.getId()).orElse(null);
+        cancelledFollow.setFollowStatus(FollowStatus.CANCELLED);
+        followRepository.saveAndFlush(cancelledFollow);
+
+        // when
+        // 팔로우 삭제 한 번 더 수행
+        ResponseEntity<Void> response = restTemplate.exchange(
+                "/api/follows/" + follow.getId(),
+                HttpMethod.DELETE,
+                entity,
+                Void.class
+        );
+
+        // then
+        // 멱등성
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        assertEquals(FollowStatus.CANCELLED, cancelledFollow.getFollowStatus());
+    }
+
+    @Test
+    @DisplayName("팔로우 삭제 실패 - 존재하지 않는 팔로우 id")
+    void deleteFollow_Failure_FollowNotFoundException() {
+        // given
+        HttpEntity<Void> entity = new HttpEntity<>(defaultHeaders);
+        UUID followId = UUID.randomUUID();
+
+        // when
+        ResponseEntity<ErrorResponse> response = restTemplate.exchange(
+                "/api/follows/" + followId,
+                HttpMethod.DELETE,
+                entity,
+                ErrorResponse.class
+        );
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+        ErrorResponse errorResponse = response.getBody();
+        assertThat(errorResponse).isNotNull();
+        assertEquals("FOLLOW_NOT_FOUND", errorResponse.exceptionName());
+        assertEquals("팔로우를 찾을 수 없습니다.", errorResponse.message());
+        assertEquals(followId.toString(), errorResponse.details().get("followId"));
+    }
+
+    @Test
+    @DisplayName("팔로우 삭제 실패 - PENDING, FAILED 상태의 팔로우 객체는 시스템에서 처리해야 함")
+    void deleteFollow_Failure_FollowCannotDeleteWhileProcessingException() {
+        // given
+        Follow follow = createFollow();
+        follow.setFollowStatus(FollowStatus.PENDING);
+        followRepository.saveAndFlush(follow);
+
+        HttpEntity<Void> entity = new HttpEntity<>(defaultHeaders);
+
+        // when
+        ResponseEntity<ErrorResponse> response = restTemplate.exchange(
+                "/api/follows/" + follow.getId(),
+                HttpMethod.DELETE,
+                entity,
+                ErrorResponse.class
+        );
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+
+        ErrorResponse errorResponse = response.getBody();
+        assertThat(errorResponse).isNotNull();
+        assertEquals("FOLLOW_CANNOT_DELETE_WHILE_PROCESSING", errorResponse.exceptionName());
+        assertEquals("시스템에서 처리 중인 팔로우 객체는 삭제할 수 없습니다.", errorResponse.message());
+        assertEquals(follow.getId().toString(), errorResponse.details().get("followId"));
+        assertEquals(follow.getFollowStatus().name(), errorResponse.details().get("followStatus"));
+    }
+
+    @Test
+    @DisplayName("팔로우 삭제 실패 - 팔로워 본인이 아니면 팔로우 삭제 불가능")
+    void deleteFollow_Failure_FollowDeleteForbiddenException() {
+        // given
+        // 팔로우 생성
+        Follow follow = createFollow();
+        follow.setFollowStatus(FollowStatus.CONFIRM);
+        followRepository.saveAndFlush(follow);
+        
+        // Follower 로그아웃
+        HttpEntity logoutEntity = new HttpEntity<>(defaultHeaders);
+        restTemplate.postForEntity("/api/auth/sign-out", logoutEntity, Void.class);
+
+        // 다른 사용자로 로그인
+        HttpHeaders followeeLoginHeaders = defaultHeaders;
+        SignInRequest followeeSignInRequest = new SignInRequest("followee@test.com", "password");
+        HttpEntity followeeLoginEntity = getSignInRequest(followeeSignInRequest);
+        ResponseEntity<JwtDto> loginJwtDto = restTemplate.postForEntity("/api/auth/sign-in", followeeLoginEntity, JwtDto.class);
+        String followeeAccessToken = loginJwtDto.getBody().accessToken();
+        followeeLoginHeaders.setBearerAuth(followeeAccessToken);
+
+        HttpEntity<Void> entity = new HttpEntity<>(followeeLoginHeaders);
+
+        // when
+        ResponseEntity<ErrorResponse> response = restTemplate.exchange(
+                "/api/follows/" + follow.getId(),
+                HttpMethod.DELETE,
+                entity,
+                ErrorResponse.class
+        );
+
+        // then
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+
+        ErrorResponse errorResponse = response.getBody();
+        assertThat(errorResponse).isNotNull();
+        assertEquals("FOLLOW_DELETE_FORBIDDEN", errorResponse.exceptionName());
+        assertEquals("해당 팔로우를 지울 권한이 없습니다.", errorResponse.message());
+        assertEquals(follow.getId().toString(), errorResponse.details().get("followId"));
+        assertEquals(follow.getFollower().getId().toString(), errorResponse.details().get("followerId"));
+        UUID requesterId = loginJwtDto.getBody().userDto().id();
+        assertEquals(requesterId.toString(), errorResponse.details().get("requesterId"));
     }
 
     private void setCSRFToken() {
@@ -326,5 +488,13 @@ public class FollowE2ETest {
         loginHeaders.add("X-XSRF-TOKEN", defaultHeaders.getFirst("X-XSRF-TOKEN"));
 
         return new HttpEntity<>(params, loginHeaders);
+    }
+
+    private Follow createFollow() {
+        FollowRequest followRequest = new FollowRequest(followee.id());
+        HttpEntity<FollowRequest> followHttpEntity = new HttpEntity<>(followRequest, defaultHeaders);
+        ResponseEntity<FollowDto> followResponse = restTemplate.postForEntity("/api/follows", followHttpEntity, FollowDto.class);
+        FollowDto follow = followResponse.getBody();
+        return followRepository.findById(follow.id()).orElse(null);
     }
 }

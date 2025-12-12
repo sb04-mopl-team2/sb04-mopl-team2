@@ -55,11 +55,6 @@ jobs:
           discovery.type: single-node
           plugins.security.disabled: "true"
           OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
-        options: >-
-          --health-cmd "curl --fail http://localhost:9200/_cluster/health || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
 
     steps:
       - uses: actions/checkout@v3

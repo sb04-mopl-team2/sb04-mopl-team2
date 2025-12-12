@@ -5,6 +5,8 @@ import com.codeit.mopl.batch.sportsdb.dto.SportsDbEventResponse;
 import com.codeit.mopl.batch.sportsdb.mapper.SportsEventMapper;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
+import com.codeit.mopl.search.converter.ContentDocumentMapper;
+import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -31,6 +33,10 @@ public class SportsDbApiService {
   private final SportsEventMapper sportsEventMapper;
   private final ContentRepository contentRepository;
   private final BatchMetricsService metricsService;
+
+  // OpenSearch
+  private final ContentOsRepository osRepository;
+  private final ContentDocumentMapper contentDocumentMapper;
 
   @Value("${sportsdb.api.key}")
   private String API_KEY;
@@ -63,7 +69,10 @@ public class SportsDbApiService {
         })
         .map(sportsEventMapper::toContent)
         .publishOn(Schedulers.boundedElastic())
-        .map(contentRepository::save)
+        .map(c -> {
+          osRepository.save(contentDocumentMapper.toDocument(c));
+          return contentRepository.save(c);
+        })
         .collectList()
         .doOnSuccess(list -> {
           log.info("[SportsDB] 축구 경기 조회 완료 저장된 컨텐츠 수 = {}", list.size());

@@ -9,7 +9,11 @@ public enum ContentErrorCode implements ErrorCodeInterface {
   INVALID_CONTENT_ID(HttpStatus.BAD_REQUEST, "유효하지 않은 콘텐츠 ID입니다."),
   INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "유효하지 않은 콘텐츠 타입입니다."),
   INVALID_SORT_BY(HttpStatus.BAD_REQUEST, "유효하지 않은 정렬 기준입니다."),
-  INVALID_SORT_DIRECTION(HttpStatus.BAD_REQUEST, "유효하지 않은 정렬 방향입니다.");
+  INVALID_SORT_DIRECTION(HttpStatus.BAD_REQUEST, "유효하지 않은 정렬 방향입니다."),
+
+  // OpenSearch
+  SEARCH_ENGINE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "검색 엔진 연동 중 오류가 발생했습니다."),
+  SEARCH_ENGINE_INDEXING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "콘텐츠 인덱싱 중 일부 문서 저장에 실패했습니다.");
 
   private final HttpStatus status;
   private final String message;

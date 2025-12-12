@@ -5,6 +5,7 @@ import com.codeit.mopl.batch.tmdb.base.service.AbstractTmdbApiService;
 import com.codeit.mopl.batch.tmdb.movie.dto.TmdbDiscoverMovieResponse;
 import com.codeit.mopl.batch.tmdb.movie.dto.TmdbDiscoverMovieResponse.Movie;
 import com.codeit.mopl.batch.tmdb.movie.mapper.TmdbMovieMapper;
+import com.codeit.mopl.batch.tmdb.base.service.AbstractTmdbApiService;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import java.net.URI;

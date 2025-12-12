@@ -21,6 +21,15 @@ spring:
       ssl:
         enabled: true
 
+  # OS
+  opensearch:
+    host: ${OPENSEARCH_HOST}
+    port: ${OPENSEARCH_PORT}
+    username: ${OPENSEARCH_USERNAME}
+    password: ${OPENSEARCH_PASSWORD}
+    protocol: ${OPENSEARCH_PROTOCOL}
+
+
   kafka:
     bootstrap-servers: ${CONFLUENT_BOOTSTRAP_SERVERS}
 

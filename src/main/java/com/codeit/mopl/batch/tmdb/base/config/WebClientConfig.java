@@ -28,7 +28,6 @@ public class WebClientConfig {
         .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
         .filter((request, next) -> {
           log.info("[TMDB] → Request URL = {}", request.url());
-          request.headers().forEach((k, v) -> log.info("[TMDB] → Header {} = {}", k, v));
           return next.exchange(request);
         })
         .build();

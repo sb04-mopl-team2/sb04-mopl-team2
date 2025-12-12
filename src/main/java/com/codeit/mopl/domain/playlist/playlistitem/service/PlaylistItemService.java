@@ -60,7 +60,7 @@ public class PlaylistItemService {
         }
         PlaylistItem playlistItem = new PlaylistItem(playlist, content);
         log.info("[플레이리스트] 플레이리스트에 콘텐츠 추가 완료 - playlistId = {}, contentId = {}", playlistId, contentId);
-        playlistItemRepository.save(playlistItem);
+        playlist.addPlaylistItem(playlistItem);
 
         // 구독자들에게 알림 생성함 (동기 처리)
         List<Subscription> subscriptions = subscriptionRepository.findByPlaylistId(playlistId);
@@ -105,7 +105,7 @@ public class PlaylistItemService {
                             playlistId, contentId);
                     return PlaylistItemNotFoundException.withId(contentId);
                 });
-        playlistItemRepository.delete(playlistItem);
+        playlist.removePlaylistItem(playlistItem);
         log.info("[플레이리스트] 플레이리스트에서 콘텐츠 삭제 완료 - playlistId = {}, contentId = {}", playlistId, contentId);
     }
 }

@@ -65,17 +65,10 @@ public class Playlist extends UpdatableEntity {
     public void  addPlaylistItem(PlaylistItem playlistItem) {
         this.playlistItems.add(playlistItem);
         playlistItem.setPlaylist(this);
-        touch();
     }
 
     public void removePlaylistItem(PlaylistItem playlistItem) {
         this.playlistItems.remove(playlistItem);
         playlistItem.setPlaylist(null);
-        touch();
     }
-
-    private void touch() {
-        this.updatedAt = Instant.now();
-    }
-
 }

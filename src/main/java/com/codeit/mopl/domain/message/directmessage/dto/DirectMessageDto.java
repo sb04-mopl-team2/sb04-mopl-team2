@@ -1,10 +1,8 @@
 package com.codeit.mopl.domain.message.directmessage.dto;
 
-import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 
 import java.time.Instant;
-import java.time.ZoneId;
 import java.util.UUID;
 
 public record DirectMessageDto(

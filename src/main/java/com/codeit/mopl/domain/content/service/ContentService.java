@@ -13,6 +13,7 @@ import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.content.InvalidImageFileException;
 import com.codeit.mopl.s3.S3Storage;
+import com.codeit.mopl.search.service.OpenSearchService;
 import jakarta.validation.Valid;
 import java.util.Map;
 import java.util.UUID;
@@ -32,6 +33,9 @@ public class ContentService {
   private final ContentMapper contentMapper;
   private final S3Storage s3Storage;
 
+  // Opensearch 관련
+  private final OpenSearchService openSearchService;
+
   @Transactional
   public ContentDto createContent(@Valid ContentCreateRequest request, MultipartFile thumbnail) {
     log.info("[콘텐츠 생성 시작] title={}", request.title());
@@ -45,6 +49,9 @@ public class ContentService {
     Content savedContent = contentRepository.save(content);
     ContentDto dto = contentMapper.toDto(savedContent);
 
+    // OS에 저장
+    openSearchService.save(savedContent);
+
     log.info("[콘텐츠 생성 완료] id={}, title={}", dto.id(), dto.title());
     return dto;
   }
@@ -53,7 +60,8 @@ public class ContentService {
   public CursorResponseContentDto findContents(ContentSearchRequest request) {
     log.info("[콘텐츠 목록 조회 시작] request={}", request);
 
-    CursorResponseContentDto response = contentRepository.findContents(request.toCondition());
+//    CursorResponseContentDto response = contentRepository.findContents(request.toCondition());
+    CursorResponseContentDto response = openSearchService.search(request);
 
     log.info("[콘텐츠 목록 조회 완료] resultCount={}",
         response.data() != null ? response.data().size() : 0);
@@ -72,7 +80,7 @@ public class ContentService {
         }
     );
 
-     ContentDto dto = contentMapper.toDto(content);
+    ContentDto dto = contentMapper.toDto(content);
 
     log.info("[콘텐츠 단건 조회 완료] id={}, title={}", dto.id(), dto.title());
     return dto;
@@ -101,6 +109,9 @@ public class ContentService {
     }
     ContentDto dto = contentMapper.toDto(content);
 
+    // OS에 저장
+    openSearchService.save(content);
+
     log.info("[콘텐츠 수정 완료] id={}, title={}", dto.id(), dto.title());
     return dto;
   }
@@ -118,6 +129,9 @@ public class ContentService {
     );
 
     contentRepository.delete(content);
+
+    // OS에 반영
+    openSearchService.delete(contentId.toString());
 
     log.info("[콘텐츠 삭제 완료] contentId={}", contentId);
   }

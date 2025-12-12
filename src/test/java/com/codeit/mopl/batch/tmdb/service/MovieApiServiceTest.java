@@ -11,6 +11,8 @@ import com.codeit.mopl.domain.content.ContentTestFactory;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
+import com.codeit.mopl.search.converter.ContentDocumentMapper;
+import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.time.LocalDate;
 import java.util.List;
 import okhttp3.mockwebserver.MockResponse;
@@ -38,6 +40,12 @@ class MovieApiServiceTest {
   @Mock
   private ContentRepository contentRepository;
 
+  @Mock
+  private ContentOsRepository osRepository;
+
+  @Mock
+  private ContentDocumentMapper contentDocumentMapper;
+
   @InjectMocks
   private MovieApiService movieApiService;
 
@@ -50,7 +58,7 @@ class MovieApiServiceTest {
         .baseUrl(mockWebServer.url("/").toString())
         .build();
 
-    movieApiService = new MovieApiService(webClient, contentRepository, movieMapper);
+    movieApiService = new MovieApiService(webClient, contentRepository, movieMapper, osRepository, contentDocumentMapper);
   }
 
   @AfterEach

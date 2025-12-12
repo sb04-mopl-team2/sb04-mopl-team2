@@ -1,6 +1,6 @@
 package com.codeit.mopl.batch.controller;
 
-import com.codeit.mopl.batch.ContentInitService;
+import com.codeit.mopl.batch.service.ContentInitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

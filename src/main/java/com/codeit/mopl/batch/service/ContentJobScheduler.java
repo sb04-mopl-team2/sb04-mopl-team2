@@ -1,5 +1,6 @@
-package com.codeit.mopl.batch;
+package com.codeit.mopl.batch.service;
 
+import com.codeit.mopl.batch.service.BatchMetricsService.JobStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -18,11 +19,12 @@ public class ContentJobScheduler {
   private final Job dailyMovieUpdateJob;
   private final Job dailyTvUpdateJob;
   private final Job dailySportsUpdateJob;
+  private final BatchMetricsService metricsService;
 
   /**
    * 매일 오전 8시 30분에 Movie, TV, Sports를 순차적으로 실행
    */
-  @Scheduled(cron = "0 30 8 * * *", zone = "Asia/Seoul")
+  @Scheduled(cron = "0 */5 * * * *", zone = "Asia/Seoul")
   public void runDailyContentUpdate() {
     log.info("=== 일일 컨텐츠 업데이트 시작 (Movie + TV + Sports) ===");
 
@@ -69,5 +71,53 @@ public class ContentJobScheduler {
       log.error("일일 컨텐츠 업데이트 실패", e);
       throw new RuntimeException("일일 컨텐츠 업데이트 실패", e);
     }
+  }
+  /**
+   * 개별 Job 실행 및 메트릭 수집
+   */
+  private void runJob(String jobName, Job job, String contentType) {
+    long startTime = System.currentTimeMillis();
+
+    try {
+      log.info(">>> {}단계: {} 데이터 수집 시작",
+          contentType.equals("MOVIE") ? "1" : contentType.equals("TV") ? "2" : "3",
+          getJobDisplayName(contentType));
+
+      JobParameters params = new JobParametersBuilder()
+          .addLong("timestamp", System.currentTimeMillis())
+          .addString("contentType", contentType)
+          .toJobParameters();
+
+      jobLauncher.run(job, params);
+
+      long duration = System.currentTimeMillis() - startTime;
+
+      // 메트릭 기록: 성공
+      metricsService.recordJobExecution(jobName, JobStatus.SUCCESS);
+      metricsService.recordJobDuration(jobName, duration);
+
+      log.info(">>> {}단계: {} 데이터 수집 완료 ({}ms)",
+          contentType.equals("MOVIE") ? "1" : contentType.equals("TV") ? "2" : "3",
+          getJobDisplayName(contentType), duration);
+
+    } catch (Exception e) {
+      long duration = System.currentTimeMillis() - startTime;
+
+      // 메트릭 기록: 실패
+      metricsService.recordJobExecution(jobName, JobStatus.FAILED);
+      metricsService.recordJobDuration(jobName, duration);
+
+      log.error(">>> {} 데이터 수집 실패", getJobDisplayName(contentType), e);
+      throw new RuntimeException(jobName + " 실행 실패", e);
+    }
+  }
+
+  private String getJobDisplayName(String contentType) {
+    return switch (contentType) {
+      case "MOVIE" -> "영화";
+      case "TV" -> "TV 프로그램";
+      case "SPORTS" -> "축구 경기";
+      default -> contentType;
+    };
   }
 }

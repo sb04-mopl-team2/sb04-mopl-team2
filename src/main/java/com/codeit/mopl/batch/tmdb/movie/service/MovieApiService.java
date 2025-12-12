@@ -1,9 +1,10 @@
 package com.codeit.mopl.batch.tmdb.movie.service;
 
+import com.codeit.mopl.batch.service.BatchMetricsService;
+import com.codeit.mopl.batch.tmdb.base.service.AbstractTmdbApiService;
 import com.codeit.mopl.batch.tmdb.movie.dto.TmdbDiscoverMovieResponse;
 import com.codeit.mopl.batch.tmdb.movie.dto.TmdbDiscoverMovieResponse.Movie;
 import com.codeit.mopl.batch.tmdb.movie.mapper.TmdbMovieMapper;
-import com.codeit.mopl.batch.tmdb.base.service.AbstractTmdbApiService;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
 import java.net.URI;
@@ -25,8 +26,9 @@ public class MovieApiService extends AbstractTmdbApiService<Movie, TmdbDiscoverM
   public MovieApiService(
       @Qualifier("tmdbWebClient") WebClient tmdbWebClient,
       ContentRepository contentRepository,
+      BatchMetricsService metricsService,
       TmdbMovieMapper tmdbMovieMapper) {
-    super(tmdbWebClient, contentRepository);
+    super(tmdbWebClient, contentRepository, metricsService);
     this.tmdbMovieMapper = tmdbMovieMapper;
   }
 
@@ -57,5 +59,10 @@ public class MovieApiService extends AbstractTmdbApiService<Movie, TmdbDiscoverM
   @Override
   protected String getContentType() {
     return "영화";
+  }
+
+  @Override
+  protected String getContentTypeForMetrics() {
+    return "MOVIE";
   }
 }

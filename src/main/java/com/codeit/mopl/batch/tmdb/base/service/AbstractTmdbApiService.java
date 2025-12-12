@@ -1,5 +1,6 @@
 package com.codeit.mopl.batch.tmdb.base.service;
 
+import com.codeit.mopl.batch.service.BatchMetricsService;
 import com.codeit.mopl.batch.tmdb.base.dto.TmdbDiscoverResponse;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
@@ -26,6 +27,7 @@ public abstract class AbstractTmdbApiService<T, R extends TmdbDiscoverResponse<T
 
   protected final WebClient tmdbWebClient;
   protected final ContentRepository contentRepository;
+  protected final BatchMetricsService metricsService;
 
   /**
    * 특정 날짜의 컨텐츠를 조회하고 저장
@@ -51,9 +53,11 @@ public abstract class AbstractTmdbApiService<T, R extends TmdbDiscoverResponse<T
         .publishOn(Schedulers.boundedElastic())
         .map(contentRepository::save)
         .collectList()
-        .doOnSuccess(list ->
-            log.info("[TMDB] {} 조회 완료 저장된 컨텐츠 수 = {}", getContentType(), list.size())
-        );
+        .doOnSuccess(list -> {
+          log.info("[TMDB] {} 조회 완료 저장된 컨텐츠 수 = {}", getContentType(), list.size());
+          // 메트릭 기록: 수집된 데이터 수
+          metricsService.recordContentCollected(getContentTypeForMetrics(), list.size());
+        });
   }
 
   /**
@@ -71,16 +75,19 @@ public abstract class AbstractTmdbApiService<T, R extends TmdbDiscoverResponse<T
         .uri(uriBuilder -> buildDiscoverUri(uriBuilder, from, page))
         .retrieve()
         .bodyToMono(getResponseClass())
-        .flatMap(response -> {
-          List<T> results = response.getResults() != null ? response.getResults() : List.of();
-          return Flux.fromIterable(results)
+        .publishOn(Schedulers.boundedElastic())
+        .doOnNext(response -> {
+          List<Content> savedContents = Flux.fromIterable(response.getResults())
               .map(this::mapToContent)
               .publishOn(Schedulers.boundedElastic())
               .map(contentRepository::save)
               .collectList()
-              .doOnSuccess(saved -> log.info("[TMDB] {} 조회 및 저장 완료 조회 수 = {}",
-                  getContentType(), saved.size()))
-              .thenReturn(response);
+              .block();
+
+          log.info("[TMDB] {} 조회 및 저장 완료 조회 수 = {}",
+              getContentType(), savedContents.size());
+          // 메트릭 기록: 수집된 데이터 수
+          metricsService.recordContentCollected(getContentTypeForMetrics(), savedContents.size());
         });
   }
 
@@ -115,4 +122,11 @@ public abstract class AbstractTmdbApiService<T, R extends TmdbDiscoverResponse<T
    * @return "영화" 또는 "TV 프로그램"
    */
   protected abstract String getContentType();
+
+  /**
+   * 메트릭용 컨텐츠 타입 반환
+   *
+   * @return "MOVIE" 또는 "TV"
+   */
+  protected abstract String getContentTypeForMetrics();
 }

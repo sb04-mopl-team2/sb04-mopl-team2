@@ -1,4 +1,4 @@
-package com.codeit.mopl.batch;
+package com.codeit.mopl.batch.service;
 
 import com.codeit.mopl.batch.sportsdb.service.SportsService;
 import com.codeit.mopl.batch.tmdb.movie.service.MovieService;

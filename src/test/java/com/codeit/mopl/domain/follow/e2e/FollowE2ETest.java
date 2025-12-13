@@ -295,7 +295,8 @@ public class FollowE2ETest {
         Follow follow = createFollow();
 
         // 팔로우 객체 상태 변경
-        Follow createdFollow = followRepository.findById(follow.getId()).orElse(null);
+        Follow createdFollow = followRepository.findById(follow.getId())
+                        .orElseThrow(() -> new AssertionError("createdFollow를 찾을 수 없음"));
         assertThat(createdFollow).isNotNull();
         createdFollow.setFollowStatus(FollowStatus.CONFIRM);
         followRepository.saveAndFlush(createdFollow);

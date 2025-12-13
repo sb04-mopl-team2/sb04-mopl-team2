@@ -497,6 +497,7 @@ public class FollowE2ETest {
         HttpEntity<FollowRequest> followHttpEntity = new HttpEntity<>(followRequest, defaultHeaders);
         ResponseEntity<FollowDto> followResponse = restTemplate.postForEntity("/api/follows", followHttpEntity, FollowDto.class);
         FollowDto follow = followResponse.getBody();
-        return followRepository.findById(follow.id()).orElse(null);
+        return followRepository.findById(follow.id())
+                .orElseThrow(() -> new AssertionError("팔로우 찾기 실패 - 해당 id를 가진 팔로우가 생성되지 않음"));
     }
 }

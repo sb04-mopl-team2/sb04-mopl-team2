@@ -114,7 +114,8 @@ public class FollowE2ETest {
         assertEquals(followee.id(), body.followeeId());
 
         UUID followId = body.id();
-        Follow createdFollow = followRepository.findById(followId).orElse(null);
+        Follow createdFollow = followRepository.findById(followId)
+                        .orElseThrow(() -> new AssertionError("createdFollow 객체를 찾을 수 없음"));
         assertThat(createdFollow).isNotNull();
         assertEquals(FollowStatus.PENDING, createdFollow.getFollowStatus());
     }
@@ -256,7 +257,8 @@ public class FollowE2ETest {
         assertEquals(0L, followerCount);
 
         // 실제 값과 비교
-        User followeeUser = userRepository.findById(followee.id()).orElse(null);
+        User followeeUser = userRepository.findById(followee.id())
+                        .orElseThrow(() -> new AssertionError("followeeUser를 찾을 수 없음"));
         assertThat(followeeUser).isNotNull();
         assertEquals(followerCount, followeeUser.getFollowerCount());
     }
@@ -310,7 +312,8 @@ public class FollowE2ETest {
         // then
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
 
-        Follow cancelledFollow = followRepository.findById(follow.getId()).orElse(null);
+        Follow cancelledFollow = followRepository.findById(follow.getId())
+                        .orElseThrow(() -> new AssertionError("팔로우 삭제 수행 후 cancelledFollow 객체를 찾을 수 없음"));
         assertThat(cancelledFollow).isNotNull();
         assertEquals(FollowStatus.CANCELLED, cancelledFollow.getFollowStatus());
     }
@@ -345,7 +348,8 @@ public class FollowE2ETest {
         // 멱등성
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
 
-        Follow afterSecondDeleteFollow = followRepository.findById(follow.getId()).orElse(null);
+        Follow afterSecondDeleteFollow = followRepository.findById(follow.getId())
+                        .orElseThrow(() -> new AssertionError("두 번째 팔로우 삭제 후 afterSecondDeleteFollow 객체를 찾을 수 없음"));
         assertEquals(FollowStatus.CANCELLED, afterSecondDeleteFollow.getFollowStatus());
     }
 

@@ -417,7 +417,9 @@ public class FollowE2ETest {
         restTemplate.postForEntity("/api/auth/sign-out", logoutEntity, Void.class);
 
         // 다른 사용자로 로그인
-        HttpHeaders followeeLoginHeaders = defaultHeaders;
+        HttpHeaders followeeLoginHeaders = new HttpHeaders();
+        followeeLoginHeaders.add(HttpHeaders.COOKIE, defaultHeaders.getFirst(HttpHeaders.COOKIE));
+        followeeLoginHeaders.add("X-XSRF-TOKEN", defaultHeaders.getFirst("X-XSRF-TOKEN"));
         SignInRequest followeeSignInRequest = new SignInRequest("followee@test.com", "password");
         HttpEntity followeeLoginEntity = getSignInRequest(followeeSignInRequest);
         ResponseEntity<JwtDto> loginJwtDto = restTemplate.postForEntity("/api/auth/sign-in", followeeLoginEntity, JwtDto.class);

@@ -320,8 +320,10 @@ public class FollowE2ETest {
     void deleteFollow_Stop_isAlreadyCancelled() {
         // given
         Follow follow = createFollow();
+        follow.setFollowStatus(FollowStatus.CONFIRM);
+        followRepository.saveAndFlush(follow);
         
-        // 팔로우 삭제 수행 -> follow 상태 CANCELLED로 변화
+        // 첫 번째 팔로우 삭제 수행 -> follow 상태 CANCELLED로 변화
         HttpEntity<Void> entity = new HttpEntity<>(defaultHeaders);
         restTemplate.exchange(
                 "/api/follows/" + follow.getId(),
@@ -330,12 +332,8 @@ public class FollowE2ETest {
                 Void.class
         );
 
-        Follow cancelledFollow = followRepository.findById(follow.getId()).orElse(null);
-        cancelledFollow.setFollowStatus(FollowStatus.CANCELLED);
-        followRepository.saveAndFlush(cancelledFollow);
-
         // when
-        // 팔로우 삭제 한 번 더 수행
+        // 두 번째 팔로우 삭제 수행
         ResponseEntity<Void> response = restTemplate.exchange(
                 "/api/follows/" + follow.getId(),
                 HttpMethod.DELETE,
@@ -346,7 +344,9 @@ public class FollowE2ETest {
         // then
         // 멱등성
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        assertEquals(FollowStatus.CANCELLED, cancelledFollow.getFollowStatus());
+
+        Follow afterSecondDeleteFollow = followRepository.findById(follow.getId()).orElse(null);
+        assertEquals(FollowStatus.CANCELLED, afterSecondDeleteFollow.getFollowStatus());
     }
 
     @Test

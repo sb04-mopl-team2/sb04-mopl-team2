@@ -136,9 +136,9 @@ public class FollowE2ETest {
         ErrorResponse errorResponse = response.getBody();
         assertThat(errorResponse).isNotNull();
         assertEquals("FOLLOW_SELF_PROHIBITED", errorResponse.exceptionName());
-        assertEquals("자기 자신을 팔로우할 수 없습니다", errorResponse.message());
+        assertEquals("자기 자신을 팔로우할 수 없습니다.", errorResponse.message());
         assertEquals(follower.id().toString(), errorResponse.details().get("followerId"));
-        assertEquals(followee.id().toString(), errorResponse.details().get("followeeId"));
+        assertEquals(follower.id().toString(), errorResponse.details().get("followeeId"));
     }
 
     @Test

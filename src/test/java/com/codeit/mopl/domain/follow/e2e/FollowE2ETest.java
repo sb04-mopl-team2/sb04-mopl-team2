@@ -45,7 +45,6 @@ public class FollowE2ETest {
     private NotificationRepository notificationRepository;
 
     private HttpHeaders defaultHeaders = new HttpHeaders();
-    private String followerAccessToken;
 
     private UserDto follower;
     private UserDto followee;
@@ -81,9 +80,10 @@ public class FollowE2ETest {
 
         // follower 로그인
         SignInRequest followerSignInRequest = new SignInRequest(followerEmail, password);
-        HttpEntity followerLoginEntity = getSignInRequest(followerSignInRequest);
+        HttpEntity<MultiValueMap<String, String>> followerLoginEntity = getSignInRequest(followerSignInRequest);
         ResponseEntity<JwtDto> loginJwtDto = restTemplate.postForEntity("/api/auth/sign-in", followerLoginEntity, JwtDto.class);
-        followerAccessToken = loginJwtDto.getBody().accessToken();
+        Assertions.assertNotNull(loginJwtDto.getBody());
+        String followerAccessToken = loginJwtDto.getBody().accessToken();
         defaultHeaders.setBearerAuth(followerAccessToken);
     }
 
@@ -115,7 +115,7 @@ public class FollowE2ETest {
 
         UUID followId = body.id();
         Follow createdFollow = followRepository.findById(followId)
-                        .orElseThrow(() -> new AssertionError("createdFollow 객체를 찾을 수 없음"));
+                .orElseThrow(() -> new AssertionError("createdFollow 객체를 찾을 수 없음"));
         assertThat(createdFollow).isNotNull();
         assertEquals(FollowStatus.PENDING, createdFollow.getFollowStatus());
     }
@@ -258,7 +258,7 @@ public class FollowE2ETest {
 
         // 실제 값과 비교
         User followeeUser = userRepository.findById(followee.id())
-                        .orElseThrow(() -> new AssertionError("followeeUser를 찾을 수 없음"));
+                .orElseThrow(() -> new AssertionError("followeeUser를 찾을 수 없음"));
         assertThat(followeeUser).isNotNull();
         assertEquals(followerCount, followeeUser.getFollowerCount());
     }
@@ -296,11 +296,12 @@ public class FollowE2ETest {
 
         // 팔로우 객체 상태 변경
         Follow createdFollow = followRepository.findById(follow.getId()).orElse(null);
+        assertThat(createdFollow).isNotNull();
         createdFollow.setFollowStatus(FollowStatus.CONFIRM);
         followRepository.saveAndFlush(createdFollow);
 
         HttpEntity<Void> entity = new HttpEntity<>(defaultHeaders);
-        
+
         // when
         ResponseEntity<Void> response = restTemplate.exchange(
                 "/api/follows/" + follow.getId(),
@@ -313,7 +314,7 @@ public class FollowE2ETest {
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
 
         Follow cancelledFollow = followRepository.findById(follow.getId())
-                        .orElseThrow(() -> new AssertionError("팔로우 삭제 수행 후 cancelledFollow 객체를 찾을 수 없음"));
+                .orElseThrow(() -> new AssertionError("팔로우 삭제 수행 후 cancelledFollow 객체를 찾을 수 없음"));
         assertThat(cancelledFollow).isNotNull();
         assertEquals(FollowStatus.CANCELLED, cancelledFollow.getFollowStatus());
     }
@@ -325,7 +326,7 @@ public class FollowE2ETest {
         Follow follow = createFollow();
         follow.setFollowStatus(FollowStatus.CONFIRM);
         followRepository.saveAndFlush(follow);
-        
+
         // 첫 번째 팔로우 삭제 수행 -> follow 상태 CANCELLED로 변화
         HttpEntity<Void> entity = new HttpEntity<>(defaultHeaders);
         restTemplate.exchange(
@@ -349,7 +350,7 @@ public class FollowE2ETest {
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
 
         Follow afterSecondDeleteFollow = followRepository.findById(follow.getId())
-                        .orElseThrow(() -> new AssertionError("두 번째 팔로우 삭제 후 afterSecondDeleteFollow 객체를 찾을 수 없음"));
+                .orElseThrow(() -> new AssertionError("두 번째 팔로우 삭제 후 afterSecondDeleteFollow 객체를 찾을 수 없음"));
         assertEquals(FollowStatus.CANCELLED, afterSecondDeleteFollow.getFollowStatus());
     }
 
@@ -415,9 +416,9 @@ public class FollowE2ETest {
         Follow follow = createFollow();
         follow.setFollowStatus(FollowStatus.CONFIRM);
         followRepository.saveAndFlush(follow);
-        
+
         // Follower 로그아웃
-        HttpEntity logoutEntity = new HttpEntity<>(defaultHeaders);
+        HttpEntity<Void> logoutEntity = new HttpEntity<>(defaultHeaders);
         restTemplate.postForEntity("/api/auth/sign-out", logoutEntity, Void.class);
 
         // 다른 사용자로 로그인
@@ -425,8 +426,9 @@ public class FollowE2ETest {
         followeeLoginHeaders.add(HttpHeaders.COOKIE, defaultHeaders.getFirst(HttpHeaders.COOKIE));
         followeeLoginHeaders.add("X-XSRF-TOKEN", defaultHeaders.getFirst("X-XSRF-TOKEN"));
         SignInRequest followeeSignInRequest = new SignInRequest("followee@test.com", "password");
-        HttpEntity followeeLoginEntity = getSignInRequest(followeeSignInRequest);
+        HttpEntity<MultiValueMap<String, String>> followeeLoginEntity = getSignInRequest(followeeSignInRequest);
         ResponseEntity<JwtDto> loginJwtDto = restTemplate.postForEntity("/api/auth/sign-in", followeeLoginEntity, JwtDto.class);
+        Assertions.assertNotNull(loginJwtDto.getBody());
         String followeeAccessToken = loginJwtDto.getBody().accessToken();
         followeeLoginHeaders.setBearerAuth(followeeAccessToken);
 
@@ -458,7 +460,7 @@ public class FollowE2ETest {
                 restTemplate.getForEntity("/api/auth/csrf-token", String.class);
 
         List<String> setCookieHeaders = csrfInitResponse.getHeaders().get(HttpHeaders.SET_COOKIE);
-
+        Assertions.assertNotNull(setCookieHeaders);
         String xsrfCookie = setCookieHeaders.stream()
                 .filter(cookie -> cookie.startsWith("XSRF-TOKEN"))
                 .findFirst()

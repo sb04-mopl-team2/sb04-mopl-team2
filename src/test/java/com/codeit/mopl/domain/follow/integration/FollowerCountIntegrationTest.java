@@ -25,6 +25,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -36,13 +37,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.MOCK,
+        properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}"
+)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@EmbeddedKafka(partitions = 1, brokerProperties = {
-        "listener=PLAINTEXT://localhost:9092",
-        "port=9092"
-})
+@EmbeddedKafka
 public class FollowerCountIntegrationTest {
 
     @Autowired
@@ -132,7 +133,9 @@ public class FollowerCountIntegrationTest {
                             userRepository.findById(followee.getId()).orElseThrow();
                     assertThat(updatedFollowee.getFollowerCount()).isEqualTo(1L);
 
-                    Follow createdFollow = followRepository.findAll().get(0);
+                    List<Follow> follows = followRepository.findAll();
+                    assertThat(follows).hasSize(1);
+                    Follow createdFollow = follows.get(0);
                     assertThat(createdFollow.getFollowStatus()).isEqualTo(FollowStatus.CONFIRM);
                 });
     }

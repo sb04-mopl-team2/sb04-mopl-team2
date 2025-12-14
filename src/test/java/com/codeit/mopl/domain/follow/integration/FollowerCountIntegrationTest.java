@@ -174,7 +174,7 @@ public class FollowerCountIntegrationTest {
                             userRepository.findById(followee.getId()).orElseThrow();
 
                     assertThat(updatedFollowee.getFollowerCount()).isEqualTo(0L);
+                    assertThat(followRepository.findAll()).hasSize(0);
                 });
-        assertThat(followRepository.findAll()).hasSize(0);
     }
 }

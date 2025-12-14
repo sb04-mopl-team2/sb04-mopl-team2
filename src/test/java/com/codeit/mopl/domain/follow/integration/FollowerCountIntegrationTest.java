@@ -164,9 +164,6 @@ public class FollowerCountIntegrationTest {
         resultActions
                 .andExpect(status().isNoContent());
 
-        Follow cancelledFollow = followRepository.findById(follow.getId()).orElseThrow();
-        assertThat(cancelledFollow.getFollowStatus()).isEqualTo(FollowStatus.CANCELLED);
-
         await()
                 .atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {

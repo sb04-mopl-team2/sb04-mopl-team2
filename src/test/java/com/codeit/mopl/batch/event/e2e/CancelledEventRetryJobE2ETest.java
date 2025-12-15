@@ -29,7 +29,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -173,8 +172,8 @@ public class CancelledEventRetryJobE2ETest {
         assertEquals(FollowStatus.CANCELLED, afterJobFollow.getFollowStatus());
         assertEquals(1, afterJobFollow.getRetryCount());
 
-        User afterJobUser = getUser(followee.getId());
-        assertEquals(1L, afterJobUser.getFollowerCount());
+        User afterJobFollowee = getUser(followee.getId());
+        assertEquals(1L, afterJobFollowee.getFollowerCount());
     }
 
     private void launchJob() throws Exception {

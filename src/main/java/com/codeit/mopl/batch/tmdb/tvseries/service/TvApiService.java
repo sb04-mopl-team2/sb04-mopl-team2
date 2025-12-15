@@ -1,5 +1,6 @@
 package com.codeit.mopl.batch.tmdb.tvseries.service;
 
+import com.codeit.mopl.batch.service.BatchMetricsService;
 import com.codeit.mopl.batch.tmdb.base.service.AbstractTmdbApiService;
 import com.codeit.mopl.batch.tmdb.tvseries.dto.TmdbDiscoverTvResponse;
 import com.codeit.mopl.batch.tmdb.tvseries.dto.TmdbDiscoverTvResponse.TvShow;
@@ -29,10 +30,11 @@ public class TvApiService extends AbstractTmdbApiService<
   public TvApiService(
       @Qualifier("tmdbWebClient") WebClient tmdbWebClient,
       ContentRepository contentRepository,
+      BatchMetricsService metricsService,
       ContentOsRepository osRepository,
       ContentDocumentMapper contentDocumentMapper,
       TmdbTvMapper tmdbTvMapper) {
-    super(tmdbWebClient, contentRepository, osRepository, contentDocumentMapper);
+    super(tmdbWebClient, contentRepository, metricsService, osRepository, contentDocumentMapper);
     this.tmdbTvMapper = tmdbTvMapper;
   }
 
@@ -63,5 +65,10 @@ public class TvApiService extends AbstractTmdbApiService<
   @Override
   protected String getContentType() {
     return "TV 프로그램";
+  }
+
+  @Override
+  protected String getContentTypeForMetrics() {
+    return "TV";
   }
 }

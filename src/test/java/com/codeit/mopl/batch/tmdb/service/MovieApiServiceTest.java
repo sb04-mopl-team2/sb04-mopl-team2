@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
 
+import com.codeit.mopl.batch.service.BatchMetricsService;
 import com.codeit.mopl.batch.tmdb.movie.dto.TmdbDiscoverMovieResponse;
 import com.codeit.mopl.batch.tmdb.movie.mapper.TmdbMovieMapper;
 import com.codeit.mopl.batch.tmdb.movie.service.MovieApiService;
@@ -46,6 +47,9 @@ class MovieApiServiceTest {
   @Mock
   private ContentDocumentMapper contentDocumentMapper;
 
+  @Mock
+  private BatchMetricsService batchMetricsService;
+
   @InjectMocks
   private MovieApiService movieApiService;
 
@@ -58,7 +62,7 @@ class MovieApiServiceTest {
         .baseUrl(mockWebServer.url("/").toString())
         .build();
 
-    movieApiService = new MovieApiService(webClient, contentRepository, movieMapper, osRepository, contentDocumentMapper);
+    movieApiService = new MovieApiService(webClient, contentRepository, batchMetricsService, osRepository, contentDocumentMapper, movieMapper);
   }
 
   @AfterEach

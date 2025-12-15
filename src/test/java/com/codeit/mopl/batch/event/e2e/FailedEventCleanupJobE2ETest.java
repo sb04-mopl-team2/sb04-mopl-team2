@@ -24,7 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -97,7 +97,7 @@ public class FailedEventCleanupJobE2ETest {
 
         // then
         List<Follow> afterJobFailedFollows = followRepository.findByStatus(FollowStatus.FAILED);
-        assertThat(afterJobFailedFollows.isEmpty());
+        assertEquals(0, afterJobFailedFollows.size());
     }
 
     private void launchJob() throws Exception {

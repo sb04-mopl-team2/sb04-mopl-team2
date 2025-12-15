@@ -114,7 +114,7 @@ public class CancelledEventRetryJobE2ETest {
 
         // then
         List<Follow> followList = followRepository.findAll();
-        assertThat(followList.isEmpty());
+        assertEquals(0, followList.size());
 
         User afterJobFollowee = getUser(followee.getId());
         assertEquals(0L, afterJobFollowee.getFollowerCount());

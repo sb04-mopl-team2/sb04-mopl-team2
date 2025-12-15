@@ -58,8 +58,9 @@ public abstract class AbstractTmdbApiService<T, R extends TmdbDiscoverResponse<T
         .map(this::mapToContent)
         .publishOn(Schedulers.boundedElastic())
         .map(c -> {
-          osRepository.save(contentDocumentMapper.toDocument(c));
-          return contentRepository.save(c);
+          Content savedContent = contentRepository.save(c);
+          osRepository.save(contentDocumentMapper.toDocument(savedContent));
+          return savedContent;
         })
         .collectList()
         .doOnSuccess(list -> {

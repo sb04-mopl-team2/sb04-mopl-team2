@@ -70,8 +70,9 @@ public class SportsDbApiService {
         .map(sportsEventMapper::toContent)
         .publishOn(Schedulers.boundedElastic())
         .map(c -> {
-          osRepository.save(contentDocumentMapper.toDocument(c));
-          return contentRepository.save(c);
+          Content savedContent = contentRepository.save(c);
+          osRepository.save(contentDocumentMapper.toDocument(savedContent));
+          return savedContent;
         })
         .collectList()
         .doOnSuccess(list -> {

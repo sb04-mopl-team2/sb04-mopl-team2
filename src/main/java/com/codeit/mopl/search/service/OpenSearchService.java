@@ -4,7 +4,6 @@ import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
 import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
-import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.entity.SortDirection;
 import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentOsStorageException;
@@ -122,9 +121,9 @@ public class OpenSearchService {
 
     // typeEqual
     if (request.getTypeEqual() != null) {
-        String value = ContentType.fromType(request.getTypeEqual()).name();
+        String value = request.getTypeEqual();
         boolQueryBuilder.filter(f -> f.term(t -> t
-            .field("contentType")
+            .field("type")
             .value(FieldValue.of(value))
         ));
     }

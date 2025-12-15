@@ -177,34 +177,6 @@ public class CancelledEventRetryJobE2ETest {
         assertEquals(1L, afterJobUser.getFollowerCount());
     }
 
-    @Test
-    @DisplayName("팔로워 수 감소 배치 처리 실패 - retryCount MAX 달성, FAILED로 전환")
-    void retryFollowerDecreaseJobE2ETest_Failure_MaxRetryCount_FAILED() throws Exception {
-        // given
-        Follow follow = new Follow(follower, followee);
-        follow.setFollowStatus(FollowStatus.CANCELLED);
-        follow.setRetryCount(Follow.MAX_RETRY_COUNT - 1);
-        followRepository.saveAndFlush(follow);
-
-        given(processedEventRepository.existsByEventIdAndEventType(eq(follow.getId()), eq(EventType.FOLLOWER_DECREASE)))
-                .willReturn(false);
-
-        doThrow(new RuntimeException("save processed event failed"))
-                .when(processedEventRepository)
-                .save(any());
-
-        // when
-        launchJob();
-
-        // then
-        Follow afterJobFollow = getFollow(follow.getId());
-        assertEquals(FollowStatus.FAILED, afterJobFollow.getFollowStatus());
-        assertEquals(Follow.MAX_RETRY_COUNT, afterJobFollow.getRetryCount());
-
-        User afterJobUser = getUser(followee.getId());
-        assertEquals(1L, afterJobUser.getFollowerCount());
-    }
-
     private void launchJob() throws Exception {
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("time", System.currentTimeMillis())

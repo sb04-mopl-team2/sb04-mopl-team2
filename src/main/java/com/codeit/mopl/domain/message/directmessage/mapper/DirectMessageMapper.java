@@ -8,10 +8,10 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring",
-        uses = {UserMapper.class, FrontendKstOffsetAdjuster.class})
+        uses = {UserMapper.class})
 public interface DirectMessageMapper {
 
-    @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "adjustForFrontend")
+    @Mapping(source = "createdAt", target = "createdAt")
     @Mapping(source = "conversation.id", target = "conversationId")
     @Mapping(source = "sender", target = "sender")
     @Mapping(source = "receiver", target = "receiver")

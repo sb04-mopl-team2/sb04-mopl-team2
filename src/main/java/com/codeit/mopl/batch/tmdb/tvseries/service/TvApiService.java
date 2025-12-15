@@ -7,6 +7,8 @@ import com.codeit.mopl.batch.tmdb.tvseries.dto.TmdbDiscoverTvResponse.TvShow;
 import com.codeit.mopl.batch.tmdb.tvseries.mapper.TmdbTvMapper;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
+import com.codeit.mopl.search.converter.ContentDocumentMapper;
+import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.net.URI;
 import java.time.LocalDate;
 import lombok.extern.slf4j.Slf4j;
@@ -29,8 +31,10 @@ public class TvApiService extends AbstractTmdbApiService<
       @Qualifier("tmdbWebClient") WebClient tmdbWebClient,
       ContentRepository contentRepository,
       BatchMetricsService metricsService,
+      ContentOsRepository osRepository,
+      ContentDocumentMapper contentDocumentMapper,
       TmdbTvMapper tmdbTvMapper) {
-    super(tmdbWebClient, contentRepository, metricsService);
+    super(tmdbWebClient, contentRepository, metricsService, osRepository, contentDocumentMapper);
     this.tmdbTvMapper = tmdbTvMapper;
   }
 

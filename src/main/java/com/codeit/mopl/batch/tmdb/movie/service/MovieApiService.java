@@ -5,9 +5,10 @@ import com.codeit.mopl.batch.tmdb.base.service.AbstractTmdbApiService;
 import com.codeit.mopl.batch.tmdb.movie.dto.TmdbDiscoverMovieResponse;
 import com.codeit.mopl.batch.tmdb.movie.dto.TmdbDiscoverMovieResponse.Movie;
 import com.codeit.mopl.batch.tmdb.movie.mapper.TmdbMovieMapper;
-import com.codeit.mopl.batch.tmdb.base.service.AbstractTmdbApiService;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
+import com.codeit.mopl.search.converter.ContentDocumentMapper;
+import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.net.URI;
 import java.time.LocalDate;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +29,10 @@ public class MovieApiService extends AbstractTmdbApiService<Movie, TmdbDiscoverM
       @Qualifier("tmdbWebClient") WebClient tmdbWebClient,
       ContentRepository contentRepository,
       BatchMetricsService metricsService,
+      ContentOsRepository osRepository,
+      ContentDocumentMapper contentDocumentMapper,
       TmdbMovieMapper tmdbMovieMapper) {
-    super(tmdbWebClient, contentRepository, metricsService);
+    super(tmdbWebClient, contentRepository, metricsService, osRepository, contentDocumentMapper);
     this.tmdbMovieMapper = tmdbMovieMapper;
   }
 

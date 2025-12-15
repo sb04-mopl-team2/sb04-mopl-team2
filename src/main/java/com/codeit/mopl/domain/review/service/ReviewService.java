@@ -20,6 +20,8 @@ import com.codeit.mopl.exception.review.ReviewForbiddenException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 
+import com.codeit.mopl.search.converter.ContentDocumentMapper;
+import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,6 +45,10 @@ public class ReviewService {
   private final UserRepository userRepository;
   private final ContentRepository contentRepository;
 
+  // opensearch
+  private final ContentOsRepository osRepository;
+  private final ContentDocumentMapper contentDocumentMapper;
+
   private final StringRedisTemplate stringRedisTemplate;
 
   public static final String REVIEWS_FIRST_PAGE = "review:first-page";
@@ -56,7 +62,9 @@ public class ReviewService {
     reviewRepository.save(review);
 
     applyReviewCreated(content, rating);
-    contentRepository.save(content);
+    Content savedContent = contentRepository.save(content);
+    // Opensearch
+    osRepository.save(contentDocumentMapper.toDocument(savedContent));
 
     log.info("[리뷰] 리뷰 생성 종료, userId = {}, contentId = {}, reviewId = {}", userId, contentId, review.getId());
     evictFirstPageCacheByContentId(contentId);
@@ -76,7 +84,9 @@ public class ReviewService {
 
     Content content = review.getContent();
     applyReviewUpdated(content, originalRating, rating);
-    contentRepository.save(content);
+    Content savedContent = contentRepository.save(content);
+    // Opensearch
+    osRepository.save(contentDocumentMapper.toDocument(savedContent));
 
     log.info("[리뷰] 리뷰 수정 종료, reviewId = {}", reviewId);
     evictFirstPageCacheByContentId(review.getContent().getId());
@@ -94,7 +104,9 @@ public class ReviewService {
     double rating = review.getRating();
 
     applyReviewDeleted(content, rating);
-    contentRepository.save(content);
+    Content savedContent = contentRepository.save(content);
+    // Opensearch
+    osRepository.save(contentDocumentMapper.toDocument(savedContent));
 
     evictFirstPageCacheByContentId(review.getContent().getId());
     log.info("[리뷰] 리뷰 삭제 종료, reviewId = {}", reviewId);

@@ -23,6 +23,8 @@ import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
+import com.codeit.mopl.search.document.ContentDocument;
+import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +49,8 @@ public class WatchingSessionService {
   private final ContentRepository contentRepository;
   private final UserRepository userRepository;
   private final ApplicationEventPublisher eventPublisher;
+
+  private final ContentOsRepository osRepository;
 
   /*
     조회용 함수들
@@ -173,6 +177,14 @@ public class WatchingSessionService {
 
     // 콘텐츠 watcherCount 증가
     contentRepository.incrementWatcherCount(content.getId());
+    long watcherCount = content.getWatcherCount();
+    // OS
+    ContentDocument contentDocument = osRepository.findById(contentId.toString())
+        .orElseThrow(() -> new WatchingSessionNotFoundException(
+            WatchingSessionErrorCode.WATCHING_SESSION_NOT_FOUND, Map.of("watchingSessionId", watchingSession.getId()))
+        );
+    contentDocument.setWatcherCount((watcherCount + 1));
+    osRepository.save(contentDocument);
 
     eventPublisher.publishEvent(new WatchingSessionCreateEvent(saved.getId(), userId, saved.getContent().getTitle()));
 
@@ -199,6 +211,13 @@ public class WatchingSessionService {
 
     // 콘텐츠 watcherCount 감소
     contentRepository.decrementWatcherCount(contentId);
+    // OS
+    ContentDocument contentDocument = osRepository.findById(contentId.toString())
+        .orElseThrow(() -> new WatchingSessionNotFoundException(
+            WatchingSessionErrorCode.WATCHING_SESSION_NOT_FOUND, Map.of("watchingSessionId", watchingSessionId))
+        );
+    contentDocument.setWatcherCount((watcherCount - 1));
+    osRepository.save(contentDocument);
 
     // 페이로드 보내기
     return getWatchingSessionChange(

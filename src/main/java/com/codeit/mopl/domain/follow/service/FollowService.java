@@ -30,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -83,7 +85,11 @@ public class FollowService {
         return dto;
     }
 
-    @Transactional
+    /**
+     * RuntimeException 발생 시 Batch 트랜잭션 전체 rollback 방지
+     * retryCount 증가 및 상태 전이 보장을 위해 독립 트랜잭션(REQUIRES_NEW)으로 실행
+     */
+    @Transactional(propagation = REQUIRES_NEW)
     public void processFollowerIncrease(UUID followId, UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작: followId = {}, followeeId = {}", followId, followeeId);
         // 이미 처리된 이벤트면 early return
@@ -156,7 +162,11 @@ public class FollowService {
         log.info("[팔로우 관리] 팔로우 삭제 완료: followId = {}, followeeId = {}", followId, followeeId);
     }
 
-    @Transactional
+    /**
+     * RuntimeException 발생 시 Batch 트랜잭션 전체 rollback 방지
+     * retryCount 증가 및 상태 전이 보장을 위해 독립 트랜잭션(REQUIRES_NEW)으로 실행
+     */
+    @Transactional(propagation = REQUIRES_NEW)
     public void processFollowerDecrease(UUID followId, UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 시작: followId = {}, followeeId = {}", followId, followeeId);
         // 이미 처리된 이벤트면 early return

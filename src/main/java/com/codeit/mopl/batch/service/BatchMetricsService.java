@@ -1,8 +1,6 @@
 package com.codeit.mopl.batch.service;
 
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,11 +23,9 @@ public class BatchMetricsService {
    * @param status  실행 상태 (SUCCESS, FAILED)
    */
   public void recordJobExecution(String jobName, JobStatus status) {
-    Counter.builder("batch.job.runs.total")
-        .description("배치 작업 실행 횟수")
-        .tag("job", jobName)
-        .tag("status", status.name())
-        .register(meterRegistry)
+    meterRegistry.counter("batch.job.runs.total",
+            "job", jobName,
+            "status", status.name())
         .increment();
 
     log.info("[Metrics] Job 실행 기록: job={}, status={}", jobName, status);
@@ -38,14 +34,12 @@ public class BatchMetricsService {
   /**
    * 배치 작업 실행 시간 기록
    *
-   * @param jobName      작업 이름
-   * @param durationMs   실행 시간 (밀리초)
+   * @param jobName    작업 이름
+   * @param durationMs 실행 시간 (밀리초)
    */
   public void recordJobDuration(String jobName, long durationMs) {
-    Timer.builder("batch.job.duration")
-        .description("배치 작업 실행 시간")
-        .tag("job", jobName)
-        .register(meterRegistry)
+    meterRegistry.timer("batch.job.duration",
+            "job", jobName)
         .record(durationMs, TimeUnit.MILLISECONDS);
 
     log.info("[Metrics] Job 실행 시간 기록: job={}, duration={}ms", jobName, durationMs);
@@ -58,10 +52,8 @@ public class BatchMetricsService {
    * @param count       수집된 개수
    */
   public void recordContentCollected(String contentType, int count) {
-    Counter.builder("batch.content.collected.total")
-        .description("수집된 컨텐츠 수")
-        .tag("type", contentType)
-        .register(meterRegistry)
+    meterRegistry.counter("batch.content.collected.total",
+            "type", contentType)
         .increment(count);
 
     log.info("[Metrics] 컨텐츠 수집 기록: type={}, count={}", contentType, count);

@@ -30,40 +30,19 @@ public class ContentJobScheduler {
 
     try {
       // 1. Movie Job 실행
-      log.info(">>> 1단계: 영화 데이터 수집 시작");
-      JobParameters movieParams = new JobParametersBuilder()
-          .addLong("timestamp", System.currentTimeMillis())
-          .addString("contentType", "MOVIE")
-          .toJobParameters();
-
-      jobLauncher.run(dailyMovieUpdateJob, movieParams);
-      log.info(">>> 1단계: 영화 데이터 수집 완료");
+      runJob("dailyMovieUpdateJob", dailyMovieUpdateJob, "MOVIE");
 
       // 2. API Rate Limit 고려하여 잠시 대기
       Thread.sleep(2000);
 
       // 3. TV Job 실행
-      log.info(">>> 2단계: TV 프로그램 데이터 수집 시작");
-      JobParameters tvParams = new JobParametersBuilder()
-          .addLong("timestamp", System.currentTimeMillis())
-          .addString("contentType", "TV")
-          .toJobParameters();
-
-      jobLauncher.run(dailyTvUpdateJob, tvParams);
-      log.info(">>> 2단계: TV 프로그램 데이터 수집 완료");
+      runJob("dailyTvUpdateJob", dailyTvUpdateJob, "TV");
 
       // 4. API Rate Limit 고려하여 잠시 대기
       Thread.sleep(2000);
 
       // 5. Sports Job 실행
-      log.info(">>> 3단계: 축구 경기 데이터 수집 시작");
-      JobParameters sportsParams = new JobParametersBuilder()
-          .addLong("timestamp", System.currentTimeMillis())
-          .addString("contentType", "SPORTS")
-          .toJobParameters();
-
-      jobLauncher.run(dailySportsUpdateJob, sportsParams);
-      log.info(">>> 3단계: 축구 경기 데이터 수집 완료");
+      runJob("dailySportsUpdateJob", dailySportsUpdateJob, "SPORTS");
 
       log.info("=== 일일 컨텐츠 업데이트 완료 (Movie + TV + Sports) ===");
 
@@ -72,6 +51,7 @@ public class ContentJobScheduler {
       throw new RuntimeException("일일 컨텐츠 업데이트 실패", e);
     }
   }
+
   /**
    * 개별 Job 실행 및 메트릭 수집
    */

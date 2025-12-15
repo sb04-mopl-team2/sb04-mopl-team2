@@ -87,20 +87,21 @@ public abstract class AbstractTmdbApiService<T, R extends TmdbDiscoverResponse<T
         .bodyToMono(getResponseClass())
         .publishOn(Schedulers.boundedElastic())
         .doOnNext(response -> {
-          List<Content> savedContents = Flux.fromIterable(response.getResults())
+          List<Content> savedContents = Flux.fromIterable(
+               response.getResults() != null ? response.getResults() : List.of())
               .map(this::mapToContent)
-              .publishOn(Schedulers.boundedElastic())
               .map(c -> {
                 osRepository.save(contentDocumentMapper.toDocument(c));
                 return contentRepository.save(c);
               })
               .collectList()
               .block();
+          int savedCount = savedContents != null ? savedContents.size() : 0;
 
           log.info("[TMDB] {} 조회 및 저장 완료 조회 수 = {}",
-              getContentType(), savedContents.size());
+              getContentType(), savedCount);
           // 메트릭 기록: 수집된 데이터 수
-          metricsService.recordContentCollected(getContentTypeForMetrics(), savedContents.size());
+          metricsService.recordContentCollected(getContentTypeForMetrics(),savedCount);
         });
   }
 

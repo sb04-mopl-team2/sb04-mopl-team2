@@ -15,6 +15,7 @@ import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
+import com.codeit.mopl.search.document.ContentDocument;
 import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +48,7 @@ class WatchingSessionKafkaEventTest {
   private ApplicationEventPublisher eventPublisher;
 
   @Mock
-  private ContentOsRepository contentOsRepository;
+  private ContentOsRepository osRepository;
 
   private WatchingSessionService watchingSessionService;
 
@@ -59,7 +60,7 @@ class WatchingSessionKafkaEventTest {
         contentRepository,
         userRepository,
         eventPublisher,
-        contentOsRepository
+        osRepository
     );
   }
 
@@ -77,6 +78,9 @@ class WatchingSessionKafkaEventTest {
         .thenReturn(Optional.of(content));
     when(content.getTitle()).thenReturn("테스트 콘텐츠");
     when(content.getTags()).thenReturn(List.of());
+    ContentDocument contentDocument = mock(ContentDocument.class);
+    when(osRepository.findById(contentId.toString()))
+        .thenReturn(Optional.of(contentDocument));
 
     // user 조회 성공
     User user = mock(User.class);

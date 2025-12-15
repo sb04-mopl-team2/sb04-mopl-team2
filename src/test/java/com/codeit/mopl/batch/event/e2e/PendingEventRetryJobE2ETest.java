@@ -4,10 +4,12 @@ import com.codeit.mopl.batch.event.config.job.PendingEventRetryJobConfig;
 import com.codeit.mopl.domain.follow.entity.Follow;
 import com.codeit.mopl.domain.follow.entity.FollowStatus;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
-import com.codeit.mopl.domain.follow.service.FollowService;
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.entity.EventType;
+import com.codeit.mopl.event.entity.ProcessedEvent;
+import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,14 +22,17 @@ import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -47,8 +52,11 @@ public class PendingEventRetryJobE2ETest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @MockitoBean
-    private FollowService followService;
+    private ProcessedEventRepository processedEventRepository;
 
     private User follower;
     private User followee;
@@ -76,6 +84,13 @@ public class PendingEventRetryJobE2ETest {
 
     @AfterEach
     void cleanUp() {
+        jdbcTemplate.update("DELETE FROM BATCH_STEP_EXECUTION_CONTEXT");
+        jdbcTemplate.update("DELETE FROM BATCH_STEP_EXECUTION");
+        jdbcTemplate.update("DELETE FROM BATCH_JOB_EXECUTION_CONTEXT");
+        jdbcTemplate.update("DELETE FROM BATCH_JOB_EXECUTION_PARAMS");
+        jdbcTemplate.update("DELETE FROM BATCH_JOB_EXECUTION");
+        jdbcTemplate.update("DELETE FROM BATCH_JOB_INSTANCE");
+
         followRepository.deleteAll();
         userRepository.deleteAll();
     }
@@ -86,18 +101,24 @@ public class PendingEventRetryJobE2ETest {
         // given
         Follow follow = new Follow(follower, followee);
         follow.setFollowStatus(FollowStatus.PENDING);
+        follow.setRetryCount(0);
         followRepository.saveAndFlush(follow);
+
+        given(processedEventRepository.existsByEventIdAndEventType(eq(follow.getId()), eq(EventType.FOLLOWER_INCREASE)))
+                .willReturn(false);
 
         // when
         launchJob();
 
         // then
-        Follow confirmedFollow = getFollow(follow.getId());
-        assertEquals(FollowStatus.CONFIRM, confirmedFollow.getFollowStatus());
-        assertEquals(0, confirmedFollow.getRetryCount());
+        Follow afterJobFollow = getFollow(follow.getId());
+        assertEquals(FollowStatus.CONFIRM, afterJobFollow.getFollowStatus());
+        assertEquals(0, afterJobFollow.getRetryCount());
 
-        User increasedFollowee = getUser(followee.getId());
-        assertEquals(1L, increasedFollowee.getFollowerCount());
+        User afterJobFollowee = getUser(followee.getId());
+        assertEquals(1L, afterJobFollowee.getFollowerCount());
+
+        verify(processedEventRepository, times(1)).save(any(ProcessedEvent.class));
     }
 
     @Test
@@ -106,21 +127,27 @@ public class PendingEventRetryJobE2ETest {
         // given
         Follow follow = new Follow(follower, followee);
         follow.setFollowStatus(FollowStatus.CONFIRM);
+        follow.setRetryCount(0);
         followRepository.saveAndFlush(follow);
 
         followee.setFollowerCount(1L);
         userRepository.saveAndFlush(followee);
 
+        given(processedEventRepository.existsByEventIdAndEventType(eq(follow.getId()), eq(EventType.FOLLOWER_INCREASE)))
+                .willReturn(false);
+
         // when
         launchJob();
 
         // then
-        Follow confirmedFollow = getFollow(follow.getId());
-        assertEquals(FollowStatus.CONFIRM, confirmedFollow.getFollowStatus());
-        assertEquals(0, confirmedFollow.getRetryCount());
+        Follow afterJobFollow = getFollow(follow.getId());
+        assertEquals(FollowStatus.CONFIRM, afterJobFollow.getFollowStatus());
+        assertEquals(0, afterJobFollow.getRetryCount());
 
-        User increasedFollowee = getUser(followee.getId());
-        assertEquals(1L, increasedFollowee.getFollowerCount());
+        User afterJobFollowee = getUser(followee.getId());
+        assertEquals(1L, afterJobFollowee.getFollowerCount());
+
+        verify(processedEventRepository, never()).save(any(ProcessedEvent.class));
     }
 
     @Test
@@ -129,22 +156,26 @@ public class PendingEventRetryJobE2ETest {
         // given
         Follow follow = new Follow(follower, followee);
         follow.setFollowStatus(FollowStatus.PENDING);
+        follow.setRetryCount(0);
         followRepository.saveAndFlush(follow);
 
-        // when
-        doThrow(new RuntimeException("increase failed"))
-                .when(followService)
-                .processFollowerIncrease(eq(follow.getId()), eq(followee.getId()));
+        given(processedEventRepository.existsByEventIdAndEventType(eq(follow.getId()), eq(EventType.FOLLOWER_INCREASE)))
+                .willReturn(false);
 
+        doThrow(new RuntimeException("save processed event failed"))
+                .when(processedEventRepository)
+                .save(any());
+
+        // when
         launchJob();
 
         // then
-        Follow afterFailureFollow = getFollow(follow.getId());
-        assertEquals(FollowStatus.PENDING, afterFailureFollow.getFollowStatus());
-        assertEquals(1, afterFailureFollow.getRetryCount());
+        Follow afterJobFollow = getFollow(follow.getId());
+        assertEquals(FollowStatus.PENDING, afterJobFollow.getFollowStatus());
+        assertEquals(1, afterJobFollow.getRetryCount());
 
-        User afterFailureFollowee = getUser(followee.getId());
-        assertEquals(0L, afterFailureFollowee.getFollowerCount());
+        User afterJobFollowee = getUser(followee.getId());
+        assertEquals(0L, afterJobFollowee.getFollowerCount());
     }
 
     @Test
@@ -156,20 +187,23 @@ public class PendingEventRetryJobE2ETest {
         follow.setRetryCount(Follow.MAX_RETRY_COUNT - 1);
         followRepository.saveAndFlush(follow);
 
-        // when
-        doThrow(new RuntimeException("increase failed"))
-                .when(followService)
-                .processFollowerIncrease(eq(follow.getId()), eq(followee.getId()));
+        given(processedEventRepository.existsByEventIdAndEventType(eq(follow.getId()), eq(EventType.FOLLOWER_INCREASE)))
+                .willReturn(false);
 
+        doThrow(new RuntimeException("save processed event failed"))
+                .when(processedEventRepository)
+                .save(any());
+
+        // when
         launchJob();
 
         // then
-        Follow afterFailureFollow = getFollow(follow.getId());
-        assertEquals(Follow.MAX_RETRY_COUNT, afterFailureFollow.getRetryCount());
-        assertEquals(FollowStatus.FAILED, afterFailureFollow.getFollowStatus());
+        Follow afterJobFollow = getFollow(follow.getId());
+        assertEquals(Follow.MAX_RETRY_COUNT, afterJobFollow.getRetryCount());
+        assertEquals(FollowStatus.FAILED, afterJobFollow.getFollowStatus());
 
-        User afterFailureFollowee = getUser(followee.getId());
-        assertEquals(0L, afterFailureFollowee.getFollowerCount());
+        User afterJobFollowee = getUser(followee.getId());
+        assertEquals(0L, afterJobFollowee.getFollowerCount());
     }
 
     private void launchJob() throws Exception {

@@ -221,7 +221,7 @@ public class PendingEventRetryJobE2ETest {
     }
 
     private User getUser(UUID userId) {
-        return userRepository.findById(followee.getId())
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new AssertionError("유저 찾기 실패 - 해당 id의 followee를 찾을 수 없음"));
     }
 }

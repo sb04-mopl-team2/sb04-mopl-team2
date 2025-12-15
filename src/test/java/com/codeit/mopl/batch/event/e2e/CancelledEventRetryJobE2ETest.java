@@ -131,9 +131,6 @@ public class CancelledEventRetryJobE2ETest {
         follow.setRetryCount(0);
         followRepository.saveAndFlush(follow);
 
-        given(processedEventRepository.existsByEventIdAndEventType(eq(follow.getId()), eq(EventType.FOLLOWER_DECREASE)))
-                .willReturn(false);
-
         // when
         launchJob();
 

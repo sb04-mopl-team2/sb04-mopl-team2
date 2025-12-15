@@ -133,9 +133,6 @@ public class PendingEventRetryJobE2ETest {
         followee.setFollowerCount(1L);
         userRepository.saveAndFlush(followee);
 
-        given(processedEventRepository.existsByEventIdAndEventType(eq(follow.getId()), eq(EventType.FOLLOWER_INCREASE)))
-                .willReturn(false);
-
         // when
         launchJob();
 

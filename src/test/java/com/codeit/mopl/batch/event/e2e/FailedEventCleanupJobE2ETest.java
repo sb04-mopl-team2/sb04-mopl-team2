@@ -23,6 +23,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -98,6 +99,28 @@ public class FailedEventCleanupJobE2ETest {
         // then
         List<Follow> afterJobFailedFollows = followRepository.findByStatus(FollowStatus.FAILED);
         assertEquals(0, afterJobFailedFollows.size());
+    }
+
+    @Test
+    @DisplayName("FAILED 상태 팔로우 객체 삭제 중단 - FAILED 상태인 팔로우 객체가 없음")
+    void failedFollowCleanupJobE2ETest_Stop_NoFailedFollows() throws Exception {
+        // given
+        Follow follow = new Follow(follower, followee);
+        follow.setFollowStatus(FollowStatus.CONFIRM);
+        followRepository.saveAndFlush(follow);
+
+        // when
+        launchJob();
+
+        // then
+        Follow afterJobFollow = getFollow(follow.getId());
+        assertEquals(FollowStatus.CONFIRM, afterJobFollow.getFollowStatus());
+        assertEquals(1, followRepository.findAll().size());
+    }
+
+    private Follow getFollow(UUID followId) {
+        return followRepository.findById(followId)
+                .orElseThrow(() -> new AssertionError("팔로우 찾기 실패 - 해당 id의 팔로우를 찾을 수 없음"));
     }
 
     private void launchJob() throws Exception {

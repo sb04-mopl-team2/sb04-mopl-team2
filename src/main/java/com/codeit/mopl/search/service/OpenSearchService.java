@@ -146,7 +146,8 @@ public class OpenSearchService {
   private void addSort(SearchRequest.Builder builder, ContentSearchRequest req) {
     String sortByString = switch (req.getSortBy()) {
       case "rate" -> "averageRating";
-      case "watcherCount" -> "watcherCount";
+      // watcherCount는 reviewCount로 정렬
+      case "watcherCount" -> "reviewCount";
       default -> "createdAt";
     };
 

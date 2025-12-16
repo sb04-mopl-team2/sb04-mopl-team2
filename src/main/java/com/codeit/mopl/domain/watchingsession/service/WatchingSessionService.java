@@ -1,5 +1,7 @@
 package com.codeit.mopl.domain.watchingsession.service;
 
+import static com.codeit.mopl.exception.content.ContentErrorCode.CONTENT_DOCUMENT_NOT_FOUND;
+
 import com.codeit.mopl.domain.base.FrontendKstOffsetAdjuster;
 import com.codeit.mopl.domain.content.dto.response.ContentSummary;
 import com.codeit.mopl.domain.content.entity.Content;
@@ -17,6 +19,7 @@ import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
 import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
+import com.codeit.mopl.exception.content.ContentDocumentNotFoundException;
 import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.user.UserErrorCode;
@@ -180,8 +183,8 @@ public class WatchingSessionService {
     long watcherCount = content.getWatcherCount();
     // OS
     ContentDocument contentDocument = osRepository.findById(contentId.toString())
-        .orElseThrow(() -> new WatchingSessionNotFoundException(
-            WatchingSessionErrorCode.WATCHING_SESSION_NOT_FOUND, Map.of("watchingSessionId", watchingSession.getId()))
+        .orElseThrow(() -> new ContentDocumentNotFoundException(
+            CONTENT_DOCUMENT_NOT_FOUND, Map.of("contentId", contentId))
         );
     contentDocument.setWatcherCount((watcherCount + 1));
     osRepository.save(contentDocument);
@@ -213,8 +216,8 @@ public class WatchingSessionService {
     contentRepository.decrementWatcherCount(contentId);
     // OS
     ContentDocument contentDocument = osRepository.findById(contentId.toString())
-        .orElseThrow(() -> new WatchingSessionNotFoundException(
-            WatchingSessionErrorCode.WATCHING_SESSION_NOT_FOUND, Map.of("watchingSessionId", watchingSessionId))
+        .orElseThrow(() -> new ContentDocumentNotFoundException(
+            CONTENT_DOCUMENT_NOT_FOUND, Map.of("contentId", contentId))
         );
     contentDocument.setWatcherCount((watcherCount - 1));
     osRepository.save(contentDocument);

@@ -1,6 +1,5 @@
 package com.codeit.mopl.event.watchingsession;
 
-import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSessionChange;
 import com.codeit.mopl.domain.watchingsession.service.RedisPublisher;
 import com.codeit.mopl.domain.watchingsession.service.WatchingSessionService;
@@ -13,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
@@ -26,9 +24,7 @@ import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 public class WebSocketEventListener {
 
   private final WatchingSessionService service;
-  private final UserRepository userRepository;
 //  private final SimpMessagingTemplate messagingTemplate;
-  private final SimpUserRegistry userRegistry;
   private final RedisPublisher redisPublisher;
 
   /**

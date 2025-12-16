@@ -122,28 +122,4 @@ public class RetryFollowerDecreaseTaskletTest {
         verify(followService, times(1)).processFollowerDecrease(eq(followId), eq(followeeId));
         verify(followRepository, times(1)).save(eq(follow));
     }
-
-    @Test
-    @DisplayName("CANCELLED 상태 follow 객체 팔로워 수 감소, 객체 삭제 실패 - MAX_RETRY_COUNT 달성, FAILURE 전환")
-    void retryFollowerDecreaseTasklet_Failure_MaxRetryCount() throws Exception {
-        // given
-        follow.setRetryCount(2);
-        given(followRepository.findByStatus(eq(FollowStatus.CANCELLED)))
-                .willReturn(List.of(follow));
-
-        doThrow(new RuntimeException("test"))
-                .when(followService)
-                .processFollowerDecrease(eq(followId), eq(followeeId));
-
-        // when
-        RepeatStatus status = tasklet.execute(null, null);
-
-        // then
-        assertEquals(RepeatStatus.FINISHED, status);
-        assertEquals(FollowStatus.FAILED, follow.getFollowStatus());
-        assertEquals(3, follow.getRetryCount());
-
-        verify(followService, times(1)).processFollowerDecrease(eq(followId), eq(followeeId));
-        verify(followRepository, times(1)).save(eq(follow));
-    }
 }

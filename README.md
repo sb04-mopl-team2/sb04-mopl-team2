@@ -8,7 +8,8 @@
 2. [팀원](#팀원)
 3. [기술 스택](#기술-스택)
 4. [시스템 아키텍쳐](#시스템-아키텍쳐)
-5. [주요 기능](#주요-기능)
+5. [실행 가이드](#실행-가이드)
+6. [주요 기능](#주요-기능)
    - [콘텐츠 관리](#콘텐츠-관리)
    - [플레이리스트](#플레이리스트)
    - [소셜 기능](#소셜-기능)
@@ -80,6 +81,104 @@
 - **Messaging**: Apache Kafka (비동기 이벤트 처리)
 - **Deployment**: AWS ECS + Docker
 - **CI/CD**: GitHub Actions
+
+# 🚀 실행 가이드
+
+로컬 개발 환경을 빠르게 올리기 위한 최소 단계만 정리했습니다.
+
+## 1) 필수 설치
+
+- Java 17+
+- Docker Desktop (Docker Compose 포함)
+- Git
+
+## 2) 환경 변수 (.env)
+
+프로젝트 루트에 `.env` 파일을 만들고 아래 값을 채워주세요.
+
+```env
+# DB
+POSTGRESQL_DATASOURCE_URL=jdbc:postgresql://localhost:5432/mopl
+POSTGRESQL_DATASOURCE_USERNAME=your_username
+POSTGRESQL_DATASOURCE_PASSWORD=your_password
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# JWT
+JWT_KEY=your-secret-key-min-256-bits
+ACCESS_TOKEN_EXPIRATION_MINUTES=30
+REFRESH_TOKEN_EXPIRATION_MINUTES=1440
+
+# TMDB
+TMDB_API_TOKEN=your-tmdb-token
+TMDB_BASE_URL=https://api.themoviedb.org/3
+```
+
+선택: Kakao/Google OAuth, AWS S3, Kafka, OpenSearch 값을 사용한다면 추가로 설정하세요.
+
+기능별 추가 환경 변수:
+
+- 소셜 로그인(Google/Kakao)
+  - `OAUTH2_GOOGLE_CLIENT_ID`
+  - `OAUTH2_GOOGLE_CLIENT_SECRET`
+  - `OAUTH2_KAKAO_CLIENT_ID`
+  - `OAUTH2_KAKAO_CLIENT_SECRET`
+- 파일 업로드(S3)
+  - `AWS_ACCESS_KEY`
+  - `AWS_SECRET_KEY`
+  - `AWS_REGION`
+  - `AWS_S3_BUCKET`
+  - `AWS_S3_PRESIGNED_URL_EXPIRATION`
+- 검색(OpenSearch)
+  - `OPENSEARCH_HOST`
+  - `OPENSEARCH_PORT`
+  - `OPENSEARCH_USERNAME`
+  - `OPENSEARCH_PASSWORD`
+  - `OPENSEARCH_PROTOCOL`
+- 이벤트/알림(Kafka)
+  - `CONFLUENT_BOOTSTRAP_SERVERS`
+  - `KAFKA_SECURITY_PROTOCOL`
+  - `KAFKA_SASL_MECHANISM`
+  - `KAFKA_SASL_JAAS_CONFIG`
+  - `KAFKA_CONSUMER_GROUP_ID`
+- 메일 전송
+  - `MAIL_HOST`
+  - `MAIL_PORT`
+  - `MAIL_USERNAME`
+  - `MAIL_PASSWORD`
+
+## 3) 인프라 컨테이너 기동
+
+```bash
+# Redis
+docker compose -f docker-compose-redis.yml up -d
+
+# OpenSearch (검색)
+docker compose -f docker-compose-os.yml up -d
+
+# Kafka (이벤트)
+docker compose -f docker-compose-kafka.yml up -d
+```
+
+- PostgreSQL: 로컬에 이미 설치된 인스턴스를 사용합니다. DB 이름은 `mopl`, 계정/비밀번호는 `.env`와 일치하게 맞춰 주세요. (Docker로 올리고 싶다면 별도 `docker run` 또는 compose를 추가로 사용하세요.)
+
+## 4) 애플리케이션 실행
+
+```bash
+# 빌드
+./gradlew clean build
+
+# 실행 (profile: dev)
+./gradlew bootRun
+```
+
+## 5) 확인
+
+- API 서버: http://localhost:8080
+- Health check: http://localhost:8080/actuator/health
+- Swagger UI: http://localhost:8080/swagger-ui/index.html (환경에 따라 다를 수 있음)
 
 # ✨ 주요 기능
 

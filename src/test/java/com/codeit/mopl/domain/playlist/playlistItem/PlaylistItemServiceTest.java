@@ -24,10 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -64,7 +61,7 @@ public class PlaylistItemServiceTest {
                     .title("테스트 제목")
                     .description("테스트 설명")
                     .user(owner)
-                    .playlistItems(Collections.emptyList())
+                    .playlistItems(new ArrayList<>())
                     .build();
 
             Content content = new Content();
@@ -91,7 +88,6 @@ public class PlaylistItemServiceTest {
             //then
             verify(playlistRepository).findById(playlistId);
             verify(contentRepository).findById(contentId);
-            verify(playlistItemRepository).save(any(PlaylistItem.class));
             verify(subscriptionRepository).findByPlaylistId(playlistId);
             verify(notificationService).createNotification(
                     eq(subscriberId),
@@ -152,7 +148,6 @@ public class PlaylistItemServiceTest {
             // then
             verify(playlistRepository).findById(playlistId);
             verify(playlistItemRepository).findByPlaylistIdAndContentId(playlistId,contentId);
-            verify(playlistItemRepository).delete(any(PlaylistItem.class));
         }
 
         @Test

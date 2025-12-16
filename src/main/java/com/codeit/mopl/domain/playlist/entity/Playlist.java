@@ -6,6 +6,7 @@ import com.codeit.mopl.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +24,11 @@ public class Playlist extends UpdatableEntity {
     private User user;
 
     @Builder.Default
-    @OneToMany(mappedBy = "playlist", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "playlist",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     private List<PlaylistItem> playlistItems = new ArrayList<>();
 
     @Column(nullable = false)
@@ -55,5 +60,15 @@ public class Playlist extends UpdatableEntity {
 
     public boolean isSubscribedByMe() {
         return subscribedByMe;
+    }
+
+    public void  addPlaylistItem(PlaylistItem playlistItem) {
+        this.playlistItems.add(playlistItem);
+        playlistItem.setPlaylist(this);
+    }
+
+    public void removePlaylistItem(PlaylistItem playlistItem) {
+        this.playlistItems.remove(playlistItem);
+        playlistItem.setPlaylist(null);
     }
 }

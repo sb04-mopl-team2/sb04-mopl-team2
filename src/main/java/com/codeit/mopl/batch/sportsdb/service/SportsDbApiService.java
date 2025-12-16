@@ -1,5 +1,6 @@
 package com.codeit.mopl.batch.sportsdb.service;
 
+import com.codeit.mopl.batch.service.BatchMetricsService;
 import com.codeit.mopl.batch.sportsdb.dto.SportsDbEventResponse;
 import com.codeit.mopl.batch.sportsdb.mapper.SportsEventMapper;
 import com.codeit.mopl.domain.content.entity.Content;
@@ -31,6 +32,7 @@ public class SportsDbApiService {
 
   private final SportsEventMapper sportsEventMapper;
   private final ContentRepository contentRepository;
+  private final BatchMetricsService metricsService;
 
   // OpenSearch
   private final ContentOsRepository osRepository;
@@ -73,9 +75,11 @@ public class SportsDbApiService {
           return savedContent;
         })
         .collectList()
-        .doOnSuccess(list ->
-            log.info("[SportsDB] 축구 경기 조회 완료 저장된 컨텐츠 수 = {}", list.size())
-        )
+        .doOnSuccess(list -> {
+          log.info("[SportsDB] 축구 경기 조회 완료 저장된 컨텐츠 수 = {}", list.size());
+          // 메트릭 기록: 수집된 데이터 수
+          metricsService.recordContentCollected("SPORTS", list.size());
+            })
         .doOnError(error ->
             log.error("[SportsDB] 축구 경기 조회 실패 date = {}", formattedDate, error)
         );

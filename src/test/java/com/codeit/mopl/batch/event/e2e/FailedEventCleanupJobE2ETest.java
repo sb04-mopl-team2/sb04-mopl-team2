@@ -11,9 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.*;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +23,7 @@ import org.springframework.test.context.ActiveProfiles;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -93,19 +92,21 @@ public class FailedEventCleanupJobE2ETest {
         followRepository.saveAndFlush(follow);
 
         // when
-        launchJob();
+        JobExecution result = launchJob();
 
         // then
+        assertEquals(BatchStatus.COMPLETED, result.getStatus());
+
         List<Follow> afterJobFailedFollows = followRepository.findByStatus(FollowStatus.FAILED);
         assertThat(afterJobFailedFollows.isEmpty());
     }
 
-    private void launchJob() throws Exception {
+    private JobExecution launchJob() throws Exception {
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("time", System.currentTimeMillis())
                 .toJobParameters();
 
         jobLauncherTestUtils.setJob(failedFollowCleanupJob);
-        jobLauncherTestUtils.launchJob(jobParameters);
+        return jobLauncherTestUtils.launchJob(jobParameters);
     }
 }

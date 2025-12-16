@@ -14,9 +14,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.*;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,9 +106,11 @@ public class PendingEventRetryJobE2ETest {
                 .willReturn(false);
 
         // when
-        launchJob();
+        JobExecution result = launchJob();
 
         // then
+        assertEquals(BatchStatus.COMPLETED, result.getStatus());
+
         Follow afterJobFollow = getFollow(follow.getId());
         assertEquals(FollowStatus.CONFIRM, afterJobFollow.getFollowStatus());
         assertEquals(0, afterJobFollow.getRetryCount());
@@ -137,9 +137,11 @@ public class PendingEventRetryJobE2ETest {
                 .willReturn(false);
 
         // when
-        launchJob();
+        JobExecution result = launchJob();
 
         // then
+        assertEquals(BatchStatus.COMPLETED, result.getStatus());
+
         Follow afterJobFollow = getFollow(follow.getId());
         assertEquals(FollowStatus.CONFIRM, afterJobFollow.getFollowStatus());
         assertEquals(0, afterJobFollow.getRetryCount());
@@ -167,9 +169,11 @@ public class PendingEventRetryJobE2ETest {
                 .save(any());
 
         // when
-        launchJob();
+        JobExecution result = launchJob();
 
         // then
+        assertEquals(BatchStatus.COMPLETED, result.getStatus());
+
         Follow afterJobFollow = getFollow(follow.getId());
         assertEquals(FollowStatus.PENDING, afterJobFollow.getFollowStatus());
         assertEquals(1, afterJobFollow.getRetryCount());
@@ -195,9 +199,11 @@ public class PendingEventRetryJobE2ETest {
                 .save(any());
 
         // when
-        launchJob();
+        JobExecution result = launchJob();
 
         // then
+        assertEquals(BatchStatus.COMPLETED, result.getStatus());
+
         Follow afterJobFollow = getFollow(follow.getId());
         assertEquals(Follow.MAX_RETRY_COUNT, afterJobFollow.getRetryCount());
         assertEquals(FollowStatus.FAILED, afterJobFollow.getFollowStatus());
@@ -206,13 +212,13 @@ public class PendingEventRetryJobE2ETest {
         assertEquals(0L, afterJobFollowee.getFollowerCount());
     }
 
-    private void launchJob() throws Exception {
+    private JobExecution launchJob() throws Exception {
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("time", System.currentTimeMillis())
                 .toJobParameters();
 
         jobLauncherTestUtils.setJob(retryFollowerIncreaseJob);
-        jobLauncherTestUtils.launchJob(jobParameters);
+        return jobLauncherTestUtils.launchJob(jobParameters);
     }
 
     private Follow getFollow(UUID followId) {

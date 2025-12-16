@@ -22,6 +22,9 @@ import com.codeit.mopl.exception.review.ReviewDuplicateException;
 import com.codeit.mopl.exception.review.ReviewForbiddenException;
 import com.codeit.mopl.exception.review.ReviewNotFoundException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import com.codeit.mopl.search.converter.ContentDocumentMapper;
+import com.codeit.mopl.search.repository.ContentOsRepository;
+import com.codeit.mopl.search.service.OpenSearchService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -51,6 +54,12 @@ class ReviewServiceTest {
 
   @Mock
   private StringRedisTemplate stringRedisTemplate;
+
+  @Mock
+  private ContentDocumentMapper contentDocumentMapper;
+
+  @Mock
+  private ContentOsRepository osRepository;
 
   @InjectMocks
   private ReviewService reviewService;

@@ -96,7 +96,7 @@ public class WebSocketEventListener {
     UUID userId = getUserId(accessor, sessionId);
 
     // 다른 열린 세션 체크
-    if (userWatchingOnOtherSession(userId, contentId, watchingSessionId)) return;
+    if (userWatchingOnOtherSession(userId, contentId, UUID.fromString(sessionId))) return;
 
     accessor.getSessionAttributes().remove("watchingSessionId");
     accessor.getSessionAttributes().remove("watchingContentId");
@@ -129,9 +129,7 @@ public class WebSocketEventListener {
     }
 
     UUID userId = getUserId(accessor, sessionId);
-    if (userWatchingOnOtherSession(userId, contentId, watchingSessionId)) {
-      return;
-    }
+    if (userWatchingOnOtherSession(userId, contentId, watchingSessionId)) return;
 
     processLeave(watchingSessionId, userId, contentId);
     log.info("[WebsocketEventListener] SessionDisconnectEvent 완료 - sessionId: {}, watchingSessionId: {}, contentId: {}",

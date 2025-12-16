@@ -92,7 +92,10 @@ public class FailedEventCleanupJobE2ETest {
         followRepository.saveAndFlush(follow);
 
         // when
-        launchJob();
+        JobExecution result = launchJob();
+
+        // then
+        assertEquals(BatchStatus.COMPLETED, result.getStatus());
 
         // then
         List<Follow> afterJobFailedFollows = followRepository.findByStatus(FollowStatus.FAILED);
@@ -108,9 +111,11 @@ public class FailedEventCleanupJobE2ETest {
         followRepository.saveAndFlush(follow);
 
         // when
-        launchJob();
+        JobExecution result = launchJob();
 
         // then
+        assertEquals(BatchStatus.COMPLETED, result.getStatus());
+
         Follow afterJobFollow = getFollow(follow.getId());
         assertEquals(FollowStatus.CONFIRM, afterJobFollow.getFollowStatus());
         assertEquals(1, followRepository.findAll().size());
@@ -121,12 +126,12 @@ public class FailedEventCleanupJobE2ETest {
                 .orElseThrow(() -> new AssertionError("팔로우 찾기 실패 - 해당 id의 팔로우를 찾을 수 없음"));
     }
 
-    private void launchJob() throws Exception {
+    private JobExecution launchJob() throws Exception {
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("time", System.currentTimeMillis())
                 .toJobParameters();
 
         jobLauncherTestUtils.setJob(failedFollowCleanupJob);
-        jobLauncherTestUtils.launchJob(jobParameters);
+        return jobLauncherTestUtils.launchJob(jobParameters);
     }
 }

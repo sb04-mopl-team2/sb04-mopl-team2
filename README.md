@@ -96,7 +96,7 @@
 
 프로젝트 루트에 `.env` 파일을 만들고 아래 값을 채워주세요.
 
-```
+```env
 # DB
 POSTGRESQL_DATASOURCE_URL=jdbc:postgresql://localhost:5432/mopl
 POSTGRESQL_DATASOURCE_USERNAME=your_username

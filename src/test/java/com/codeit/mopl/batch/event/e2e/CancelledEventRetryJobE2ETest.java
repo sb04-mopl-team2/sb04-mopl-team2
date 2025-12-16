@@ -27,7 +27,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -114,7 +113,7 @@ public class CancelledEventRetryJobE2ETest {
         assertEquals(BatchStatus.COMPLETED, result.getStatus());
 
         List<Follow> followList = followRepository.findAll();
-        assertThat(followList.isEmpty());
+        assertEquals(0, followList.size());
 
         User afterJobFollowee = getUser(followee.getId());
         assertEquals(0L, afterJobFollowee.getFollowerCount());
@@ -131,9 +130,6 @@ public class CancelledEventRetryJobE2ETest {
         follow.setFollowStatus(FollowStatus.CONFIRM);
         follow.setRetryCount(0);
         followRepository.saveAndFlush(follow);
-
-        given(processedEventRepository.existsByEventIdAndEventType(eq(follow.getId()), eq(EventType.FOLLOWER_DECREASE)))
-                .willReturn(false);
 
         // when
         JobExecution result = launchJob();
@@ -177,8 +173,8 @@ public class CancelledEventRetryJobE2ETest {
         assertEquals(FollowStatus.CANCELLED, afterJobFollow.getFollowStatus());
         assertEquals(1, afterJobFollow.getRetryCount());
 
-        User afterJobUser = getUser(followee.getId());
-        assertEquals(1L, afterJobUser.getFollowerCount());
+        User afterJobFollowee = getUser(followee.getId());
+        assertEquals(1L, afterJobFollowee.getFollowerCount());
     }
 
     private JobExecution launchJob() throws Exception {

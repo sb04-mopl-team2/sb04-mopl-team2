@@ -11,7 +11,7 @@ import com.codeit.mopl.domain.message.directmessage.dto.CursorResponseDirectMess
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageSearchCond;
 import com.codeit.mopl.domain.message.directmessage.repository.DirectMessageRepository;
 import com.codeit.mopl.domain.message.directmessage.service.DirectMessageService;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;

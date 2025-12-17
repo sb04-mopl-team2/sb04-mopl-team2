@@ -7,7 +7,7 @@ import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
 import com.codeit.mopl.domain.user.entity.User;
 import java.util.List;

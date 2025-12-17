@@ -5,7 +5,7 @@ import com.codeit.mopl.domain.message.conversation.entity.Conversation;
 import com.codeit.mopl.domain.message.conversation.entity.SortBy;
 import com.codeit.mopl.domain.message.conversation.repository.ConversationRepository;
 import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.util.QueryDslConfig;
 import org.junit.jupiter.api.BeforeEach;

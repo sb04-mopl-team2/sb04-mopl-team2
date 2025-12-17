@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.notification;
 
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.notification.entity.*;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
 import com.codeit.mopl.domain.user.dto.response.UserDto;

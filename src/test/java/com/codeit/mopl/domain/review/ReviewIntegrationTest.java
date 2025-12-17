@@ -8,7 +8,7 @@ import com.codeit.mopl.domain.review.dto.ReviewCreateRequest;
 import com.codeit.mopl.domain.review.dto.ReviewUpdateRequest;
 import com.codeit.mopl.domain.review.entity.Review;
 import com.codeit.mopl.domain.review.entity.ReviewSortBy;
-import com.codeit.mopl.domain.review.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.review.repository.ReviewRepository;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.User;

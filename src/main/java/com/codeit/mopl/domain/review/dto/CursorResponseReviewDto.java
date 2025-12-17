@@ -1,7 +1,5 @@
 package com.codeit.mopl.domain.review.dto;
 
-import com.codeit.mopl.domain.review.entity.ReviewSortBy;
-import com.codeit.mopl.domain.review.entity.SortDirection;
 import java.util.List;
 import java.util.UUID;
 

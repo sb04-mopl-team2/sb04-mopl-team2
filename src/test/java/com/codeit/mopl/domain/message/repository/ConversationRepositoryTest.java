@@ -1,13 +1,18 @@
 package com.codeit.mopl.domain.message.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.message.conversation.dto.request.ConversationSearchCond;
 import com.codeit.mopl.domain.message.conversation.entity.Conversation;
-import com.codeit.mopl.domain.message.conversation.entity.SortBy;
 import com.codeit.mopl.domain.message.conversation.repository.ConversationRepository;
 import com.codeit.mopl.domain.message.directmessage.entity.DirectMessage;
-import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.util.QueryDslConfig;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,12 +22,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import(QueryDslConfig.class)

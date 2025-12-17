@@ -1,6 +1,6 @@
 package com.codeit.mopl.domain.message.directmessage.dto;
 
-import com.codeit.mopl.domain.message.conversation.entity.SortBy;
+import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.base.SortDirection;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;

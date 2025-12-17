@@ -1,6 +1,6 @@
 package com.codeit.mopl.domain.notification.dto;
 
-import com.codeit.mopl.domain.notification.entity.SortBy;
+import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.base.SortDirection;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

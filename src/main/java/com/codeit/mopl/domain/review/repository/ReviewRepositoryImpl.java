@@ -2,7 +2,7 @@ package com.codeit.mopl.domain.review.repository;
 
 import com.codeit.mopl.domain.review.entity.QReview;
 import com.codeit.mopl.domain.review.entity.Review;
-import com.codeit.mopl.domain.review.entity.ReviewSortBy;
+import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.base.SortDirection;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
@@ -27,7 +27,7 @@ public class ReviewRepositoryImpl implements CustomReviewRepository {
       UUID idAfter,
       int limit,
       SortDirection sortDirection,
-      ReviewSortBy sortBy){
+      SortBy sortBy){
 
     QReview qReview = QReview.review;
 
@@ -53,7 +53,7 @@ public class ReviewRepositoryImpl implements CustomReviewRepository {
   }
 
   private List<OrderSpecifier<?>> buildOrderSpecifiers(
-      ReviewSortBy sortBy,
+      SortBy sortBy,
       SortDirection sortDirection,
       QReview qReview
   ) {
@@ -65,11 +65,11 @@ public class ReviewRepositoryImpl implements CustomReviewRepository {
           : Order.ASC;
 
       switch (sortBy) {
-        case createdAt:
+        case CREATED_AT:
           orders.add(new OrderSpecifier<>(order, qReview.createdAt));
           break;
 
-        case rating:
+        case RATING:
           orders.add(new OrderSpecifier<>(order, qReview.rating));
           break;
       }
@@ -84,7 +84,7 @@ public class ReviewRepositoryImpl implements CustomReviewRepository {
   private BooleanExpression buildCursorCondition(
       String cursor,
       UUID idAfter,
-      ReviewSortBy sortBy,
+      SortBy sortBy,
       SortDirection sortDirection,
       QReview qReview
   ) {
@@ -98,7 +98,7 @@ public class ReviewRepositoryImpl implements CustomReviewRepository {
 
     switch (sortBy) {
 
-      case createdAt: {
+      case CREATED_AT: {
         Instant cursorInstant = Instant.parse(cursor);
 
         if (sortDirection == SortDirection.DESCENDING) {
@@ -112,7 +112,7 @@ public class ReviewRepositoryImpl implements CustomReviewRepository {
         return main.or(tie);
       }
 
-      case rating: {
+      case RATING: {
         double cursorRating = Double.parseDouble(cursor);
 
         if (sortDirection == SortDirection.DESCENDING) {

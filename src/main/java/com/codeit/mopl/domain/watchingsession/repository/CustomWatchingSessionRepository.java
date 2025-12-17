@@ -1,7 +1,7 @@
 package com.codeit.mopl.domain.watchingsession.repository;
 
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
-import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
+import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.base.SortDirection;
 import java.util.List;
 import java.util.UUID;

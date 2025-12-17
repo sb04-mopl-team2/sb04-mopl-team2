@@ -5,7 +5,7 @@ import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.entity.QPlaylist;
 import com.codeit.mopl.domain.playlist.subscription.entity.QSubscription;
-import com.codeit.mopl.domain.playlist.entity.SortBy;
+import com.codeit.mopl.domain.base.SortBy;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;

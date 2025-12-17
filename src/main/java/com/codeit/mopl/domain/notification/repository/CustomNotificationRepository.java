@@ -2,7 +2,7 @@ package com.codeit.mopl.domain.notification.repository;
 
 import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Notification;
-import com.codeit.mopl.domain.notification.entity.SortBy;
+import com.codeit.mopl.domain.base.SortBy;
 import java.util.List;
 import java.util.UUID;
 

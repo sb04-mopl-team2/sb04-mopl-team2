@@ -1,6 +1,6 @@
 package com.codeit.mopl.domain.watchingsession.dto;
 
-import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
+import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.base.SortDirection;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

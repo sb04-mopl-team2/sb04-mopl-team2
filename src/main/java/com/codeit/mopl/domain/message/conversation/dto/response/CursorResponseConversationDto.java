@@ -1,6 +1,6 @@
 package com.codeit.mopl.domain.message.conversation.dto.response;
 
-import com.codeit.mopl.domain.message.conversation.entity.SortBy;
+import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.base.SortDirection;
 
 import java.util.List;

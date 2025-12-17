@@ -14,7 +14,7 @@ import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSessionChange;
 import com.codeit.mopl.domain.watchingsession.entity.enums.ChangeType;
-import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
+import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
@@ -117,7 +117,7 @@ public class WatchingSessionService {
         nextIdAfter,
         hasNext,
         totalCount,
-        sortBy.getType(),
+        sortBy.getValue(),
         sortDirection
     );
     log.info(

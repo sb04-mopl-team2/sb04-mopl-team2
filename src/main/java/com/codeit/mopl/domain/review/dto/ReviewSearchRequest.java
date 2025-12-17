@@ -1,6 +1,6 @@
 package com.codeit.mopl.domain.review.dto;
 
-import com.codeit.mopl.domain.review.entity.ReviewSortBy;
+import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.base.SortDirection;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -23,6 +23,6 @@ public record ReviewSearchRequest(
     SortDirection sortDirection,
 
     @NotNull
-    ReviewSortBy sortBy
+    SortBy sortBy
 
 ) {}

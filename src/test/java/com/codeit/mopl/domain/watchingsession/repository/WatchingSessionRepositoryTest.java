@@ -1,14 +1,15 @@
 package com.codeit.mopl.domain.watchingsession.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
-import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
-import com.codeit.mopl.domain.base.SortDirection;
-import com.codeit.mopl.util.*;
+import com.codeit.mopl.util.QueryDslConfig;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;

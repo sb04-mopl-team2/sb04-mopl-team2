@@ -1,8 +1,23 @@
 package com.codeit.mopl.domain.playlist.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.base.SortDirection;
-import com.codeit.mopl.domain.playlist.dto.*;
-import com.codeit.mopl.domain.playlist.entity.SortBy;
+import com.codeit.mopl.domain.playlist.dto.CursorResponsePlaylistDto;
+import com.codeit.mopl.domain.playlist.dto.PlaylistCreateRequest;
+import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
+import com.codeit.mopl.domain.playlist.dto.PlaylistUpdateRequest;
 import com.codeit.mopl.domain.playlist.playlistitem.service.PlaylistItemService;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
 import com.codeit.mopl.domain.playlist.service.PlaylistService;
@@ -28,6 +43,9 @@ import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import com.codeit.mopl.util.WithCustomMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,16 +58,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.mockito.Mockito.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = PlaylistController.class)
 @Import({TestSecurityConfig.class})

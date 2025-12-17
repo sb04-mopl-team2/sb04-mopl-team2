@@ -11,6 +11,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
@@ -21,8 +23,6 @@ import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSessionChange;
 import com.codeit.mopl.domain.watchingsession.entity.enums.ChangeType;
-import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
-import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
@@ -140,7 +140,7 @@ public class WatchingSessionServiceTest {
     CursorResponseWatchingSessionDto expectedDto = new CursorResponseWatchingSessionDto(
         List.of(watchingSessionDto),
         null, null, false,
-        1L, SortBy.CREATED_AT.getType(), SortDirection.ASCENDING
+        1L, SortBy.CREATED_AT.getValue(), SortDirection.ASCENDING
     );
     when(contentRepository.existsById(contentId)).thenReturn(true);
     when(watchingSessionMapper.toDto(watchingSession)).thenReturn(watchingSessionDto);
@@ -212,7 +212,7 @@ public class WatchingSessionServiceTest {
         entity2Time.toString(),
         entity2Id,
         true,
-        2L, SortBy.CREATED_AT.getType(), SortDirection.ASCENDING
+        2L, SortBy.CREATED_AT.getValue(), SortDirection.ASCENDING
     );
 
     // when

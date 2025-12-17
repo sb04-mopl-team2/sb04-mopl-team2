@@ -9,20 +9,19 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
-import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.domain.review.dto.CursorResponseReviewDto;
 import com.codeit.mopl.domain.review.dto.ReviewCreateRequest;
 import com.codeit.mopl.domain.review.dto.ReviewDto;
 import com.codeit.mopl.domain.review.dto.ReviewUpdateRequest;
-import com.codeit.mopl.domain.review.entity.ReviewSortBy;
-import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.review.repository.ReviewRepository;
 import com.codeit.mopl.domain.review.service.ReviewService;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
@@ -33,11 +32,12 @@ import com.codeit.mopl.exception.review.ReviewDuplicateException;
 import com.codeit.mopl.exception.review.ReviewErrorCode;
 import com.codeit.mopl.exception.review.ReviewForbiddenException;
 import com.codeit.mopl.exception.review.ReviewNotFoundException;
+import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.security.CustomUserDetails;
 import com.codeit.mopl.security.config.TestSecurityConfig;
+import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
 import com.codeit.mopl.security.jwt.handler.OAuth2UserSuccessHandler;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
-import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import com.codeit.mopl.sse.repository.SseEmitterRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -130,7 +130,7 @@ public class ReviewControllerTest {
     UUID contentId = UUID.randomUUID();
     int limit = 10;
     SortDirection sortDirection = SortDirection.DESCENDING;
-    ReviewSortBy sortBy = ReviewSortBy.createdAt;
+    SortBy sortBy = SortBy.CREATED_AT;
 
     ReviewDto reviewDto = new ReviewDto(
         UUID.randomUUID(),

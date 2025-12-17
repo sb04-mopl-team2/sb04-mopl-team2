@@ -1,7 +1,7 @@
 package com.codeit.mopl.domain.message.conversation.dto.response;
 
 import com.codeit.mopl.domain.message.conversation.entity.SortBy;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 
 import java.util.List;
 import java.util.UUID;

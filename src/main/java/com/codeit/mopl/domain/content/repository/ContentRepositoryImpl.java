@@ -8,7 +8,7 @@ import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.entity.SortBy;
-import com.codeit.mopl.domain.content.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;

@@ -3,7 +3,7 @@ package com.codeit.mopl.domain.review.repository;
 import com.codeit.mopl.domain.review.entity.QReview;
 import com.codeit.mopl.domain.review.entity.Review;
 import com.codeit.mopl.domain.review.entity.ReviewSortBy;
-import com.codeit.mopl.domain.review.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;

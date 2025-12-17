@@ -3,7 +3,7 @@ package com.codeit.mopl.domain.notification.repository;
 import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.notification.entity.QNotification;
 import com.codeit.mopl.domain.notification.entity.SortBy;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;

@@ -1,4 +1,4 @@
-package com.codeit.mopl.domain.content.entity;
+package com.codeit.mopl.domain.base;
 
 import com.codeit.mopl.exception.content.InvalidSortDirectionException;
 import java.util.Map;

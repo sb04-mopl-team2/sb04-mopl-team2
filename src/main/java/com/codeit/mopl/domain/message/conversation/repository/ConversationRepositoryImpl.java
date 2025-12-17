@@ -5,7 +5,7 @@ import com.codeit.mopl.domain.message.conversation.entity.Conversation;
 import com.codeit.mopl.domain.message.conversation.entity.QConversation;
 import com.codeit.mopl.domain.message.conversation.entity.SortBy;
 import com.codeit.mopl.domain.message.directmessage.entity.QDirectMessage;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.user.entity.QUser;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;

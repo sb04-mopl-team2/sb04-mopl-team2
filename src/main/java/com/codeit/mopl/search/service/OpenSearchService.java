@@ -4,7 +4,7 @@ import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
 import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
-import com.codeit.mopl.domain.content.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentOsStorageException;
 import com.codeit.mopl.search.converter.ContentDocumentMapper;

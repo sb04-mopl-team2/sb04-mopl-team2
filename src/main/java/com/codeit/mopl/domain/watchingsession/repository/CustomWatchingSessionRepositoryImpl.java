@@ -6,7 +6,7 @@ import static com.codeit.mopl.domain.watchingsession.entity.QWatchingSession.wat
 
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
-import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;

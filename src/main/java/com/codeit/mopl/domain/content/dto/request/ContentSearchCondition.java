@@ -1,7 +1,7 @@
 package com.codeit.mopl.domain.content.dto.request;
 
 import com.codeit.mopl.domain.content.entity.SortBy;
-import com.codeit.mopl.domain.content.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 import java.util.List;
 import java.util.UUID;
 import lombok.Builder;

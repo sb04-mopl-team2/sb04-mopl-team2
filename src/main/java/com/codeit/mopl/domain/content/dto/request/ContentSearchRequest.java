@@ -1,7 +1,7 @@
 package com.codeit.mopl.domain.content.dto.request;
 
 import com.codeit.mopl.domain.content.entity.SortBy;
-import com.codeit.mopl.domain.content.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;

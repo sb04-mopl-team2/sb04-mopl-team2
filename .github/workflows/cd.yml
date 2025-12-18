@@ -2,7 +2,6 @@ name: cd.yml
 on:
   push:
     branches:
-      - "develop"
       - "main"
 
 # Job1: Docker 이미지 빌드, ECR 푸시

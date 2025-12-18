@@ -1,5 +1,7 @@
 package com.codeit.mopl.domain.watchingsession.service;
 
+import static com.codeit.mopl.exception.content.ContentErrorCode.CONTENT_DOCUMENT_NOT_FOUND;
+
 import com.codeit.mopl.domain.base.FrontendKstOffsetAdjuster;
 import com.codeit.mopl.domain.content.dto.response.ContentSummary;
 import com.codeit.mopl.domain.content.entity.Content;
@@ -17,6 +19,7 @@ import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
 import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
+import com.codeit.mopl.exception.content.ContentDocumentNotFoundException;
 import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.user.UserErrorCode;
@@ -177,13 +180,14 @@ public class WatchingSessionService {
 
     // 콘텐츠 watcherCount 증가
     contentRepository.incrementWatcherCount(content.getId());
-    long watcherCount = content.getWatcherCount();
+    long watcherCount = watchingSessionRepository.countByContentId(contentId);
+
     // OS
     ContentDocument contentDocument = osRepository.findById(contentId.toString())
-        .orElseThrow(() -> new WatchingSessionNotFoundException(
-            WatchingSessionErrorCode.WATCHING_SESSION_NOT_FOUND, Map.of("watchingSessionId", watchingSession.getId()))
+        .orElseThrow(() -> new ContentDocumentNotFoundException(
+            CONTENT_DOCUMENT_NOT_FOUND, Map.of("contentId", contentId))
         );
-    contentDocument.setWatcherCount((watcherCount + 1));
+    contentDocument.setWatcherCount(watcherCount);
     osRepository.save(contentDocument);
 
     eventPublisher.publishEvent(new WatchingSessionCreateEvent(saved.getId(), userId, saved.getContent().getTitle()));
@@ -207,16 +211,17 @@ public class WatchingSessionService {
     watchingSession.getContent().getTags().size();
     watchingSession.getUser();
     watchingSessionRepository.deleteById(watchingSessionId);
-    long watcherCount = watchingSessionRepository.countByContentId(contentId);
 
     // 콘텐츠 watcherCount 감소
     contentRepository.decrementWatcherCount(contentId);
+    long watcherCount = watchingSessionRepository.countByContentId(contentId);
+
     // OS
     ContentDocument contentDocument = osRepository.findById(contentId.toString())
-        .orElseThrow(() -> new WatchingSessionNotFoundException(
-            WatchingSessionErrorCode.WATCHING_SESSION_NOT_FOUND, Map.of("watchingSessionId", watchingSessionId))
+        .orElseThrow(() -> new ContentDocumentNotFoundException(
+            CONTENT_DOCUMENT_NOT_FOUND, Map.of("contentId", contentId))
         );
-    contentDocument.setWatcherCount((watcherCount - 1));
+    contentDocument.setWatcherCount(watcherCount);
     osRepository.save(contentDocument);
 
     // 페이로드 보내기

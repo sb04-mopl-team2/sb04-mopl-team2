@@ -64,15 +64,17 @@ public class CancelledEventRetryStepConfig {
                     followService.processFollowerDecrease(followId, followeeId); // 팔로워 감소 + 팔로우 객체 삭제 수행
 
                 } catch (Exception e) {
-                    log.error("[배치] 팔로우 감소 재시도 실패: cancelledFollow = {}, errorMessage = {}", follow, e.getMessage(), e);
                     follow.increaseRetryCount();
-
-                    if (follow.getRetryCount() == Follow.MAX_RETRY_COUNT) {
-                        follow.setFollowStatus(FollowStatus.FAILED);
-                        log.warn("[배치] 최대 재시도 횟수 초과로 FAILED 상태로 전환: follow = {}", follow);
-                    }
-                    failureCount++;
+                    log.error(
+                            "[배치] 팔로워 감소 재시도 실패 (retryCount = {}): followId = {}, followeeId = {}, errorMessage = {}",
+                            follow.getRetryCount(),
+                            follow.getId(),
+                            follow.getFollowee().getId(),
+                            e.getMessage(),
+                            e
+                    );
                     followRepository.save(follow);
+                    failureCount++;
                 }
             }
             log.info("[배치] 팔로워 감소 재시도 처리 결과: total = {}, failure = {}", totalCount, failureCount);

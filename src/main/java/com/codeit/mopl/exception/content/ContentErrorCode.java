@@ -13,7 +13,9 @@ public enum ContentErrorCode implements ErrorCodeInterface {
 
   // OpenSearch
   SEARCH_ENGINE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "검색 엔진 연동 중 오류가 발생했습니다."),
-  SEARCH_ENGINE_INDEXING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "콘텐츠 인덱싱 중 일부 문서 저장에 실패했습니다.");
+  SEARCH_ENGINE_INDEXING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "콘텐츠 인덱싱 중 일부 문서 저장에 실패했습니다."),
+  CONTENT_DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "(OS) 콘텐츠를 찾을 수 없습니다.");
+
 
   private final HttpStatus status;
   private final String message;

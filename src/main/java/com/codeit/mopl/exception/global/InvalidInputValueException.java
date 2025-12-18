@@ -1,6 +1,5 @@
 package com.codeit.mopl.exception.global;
 
-import com.codeit.mopl.exception.notification.NotificationErrorCode;
 import java.util.Map;
 
 public class InvalidInputValueException extends MoplException {

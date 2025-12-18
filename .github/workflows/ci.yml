@@ -1,0 +1,106 @@
+name: ci.yml
+on:
+  push:
+    branches:
+      - "develop"
+  pull_request:
+    branches:
+      - "develop"
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      zookeeper:
+        image: confluentinc/cp-zookeeper:7.4.0
+        ports:
+          - 2181:2181
+        env:
+          ZOOKEEPER_CLIENT_PORT: 2181
+          ZOOKEEPER_TICK_TIME: 2000
+          ZOOKEEPER_SYNC_LIMIT: 2
+
+      kafka:
+        image: confluentinc/cp-kafka:7.4.0
+        ports:
+          - 9092:9092
+        env:
+          KAFKA_BROKER_ID: 1
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+#      elasticsearch:
+#        image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+#        ports:
+#          - 9200:9200
+#        options: >-
+#          -e "discovery.type=single-node"
+#          -e "xpack.security.enabled=false"
+#          -e "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      opensearch:
+        image: opensearchproject/opensearch:2.11.0
+        ports:
+          - 9200:9200
+        env:
+          discovery.type: single-node
+          plugins.security.disabled: "true"
+          OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: JDK 17S
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'temurin'
+
+      - name: 테스트 권한 부여
+        run: chmod +x ./gradlew
+
+      - name: 빌드 (테스트 생략)
+        env:
+          AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_S3_PRESIGNED_URL_EXPIRATION: ${{ secrets.AWS_S3_PRESIGNED_URL_EXPIRATION }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_NAME: ${{ secrets.ADMIN_NAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+          ACCESS_TOKEN_EXPIRATION_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRATION_MINUTES }}
+          REFRESH_TOKEN_EXPIRATION_MINUTES: ${{ secrets.REFRESH_TOKEN_EXPIRATION_MINUTES }}
+          MAIL_HOST: ${{ secrets.MAIL_HOST }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          TMDB_API_TOKEN: ${{ secrets.TMDB_API_TOKEN }}
+          TMDB_BASE_URL: ${{ secrets.TMDB_BASE_URL }}
+          SPORTSDB_API_KEY: ${{ secrets.SPORTSDB_API_KEY }}
+          SPORTSDB_BASE_URL: ${{ secrets.SPORTSDB_BASE_URL }}
+          OAUTH2_GOOGLE_CLIENT_ID: ${{ secrets.OAUTH2_GOOGLE_CLIENT_ID }}
+          OAUTH2_GOOGLE_CLIENT_SECRET: ${{ secrets.OAUTH2_GOOGLE_CLIENT_SECRET }}
+          OAUTH2_KAKAO_CLIENT_ID: ${{ secrets.OAUTH2_KAKAO_CLIENT_ID }}
+          OAUTH2_KAKAO_CLIENT_SECRET: ${{ secrets.OAUTH2_KAKAO_CLIENT_SECRET }}
+          HOST: ${{ secrets.HOST }}
+        run: ./gradlew clean test -Dspring.profiles.active=test jacocoTestReport
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: build/reports/jacoco/test/jacocoTestReport.xml
+          fail_ci_if_error: true
+          verbose: true

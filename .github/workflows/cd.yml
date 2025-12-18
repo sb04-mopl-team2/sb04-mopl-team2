@@ -1,0 +1,137 @@
+name: cd.yml
+on:
+  push:
+    branches:
+      - "main"
+
+# Job1: Docker 이미지 빌드, ECR 푸시
+jobs:
+  build-and-push-to-ecr:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    env:
+      REPO_URI: "${{ secrets.ECR_URI_PREFIX }}/${{ secrets.ECR_URI_NAME }}"
+
+    outputs:
+      image_tag: ${{ steps.set-tag.outputs.image_tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: AWS 설정
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: AWS Private ECR 로그인
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 도커 Buildx 설정
+        uses: docker/setup-buildx-action@v3
+
+      # 커밋 해시 7자리 + latest
+      - name: 이미지 태그 설정
+        id: set-tag
+        run: echo "image_tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      ## 도커 빌드 & 캐싱
+      - name: 도커 빌드
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REPO_URI }}:${{ steps.set-tag.outputs.image_tag }}
+            ${{ env.REPO_URI }}:latest
+          cache-from: type=registry,ref=${{ env.REPO_URI }}:buildcache
+          cache-to: type=registry,ref=${{ env.REPO_URI }}:buildcache,mode=max
+          platforms: linux/amd64
+
+# Job2: 새 이미지를 ECR 서비스에 배포
+  deploy-to-ecs:
+    runs-on: ubuntu-latest
+    needs: build-and-push-to-ecr
+
+    steps:
+      - name: AWS 설정
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: ECS Task Definition 확인
+        run: |
+          if [ -z "${{ secrets.ECS_TASK_DEFINITION }}" ]; then
+            echo "::error:: The ECS_TASK_DEFINITION secret is empty or not set."
+            exit 1
+          else
+            echo "ECS_TASK_DEFINITION secret is present."
+            echo "Length: ${#ECS_TASK_DEFINITION}"
+            # Show first few characters (safely masked by GitHub)
+            echo "Value starts with: ${ECS_TASK_DEFINITION:0:10}..."
+          fi
+
+      # 기존 ECS 태스크 정의 다운로드
+      - name: 기존 ECS 태스크 정의 다운로드
+        run: aws ecs describe-task-definition --task-definition "${{ secrets.ECS_TASK_DEFINITION }}" --query taskDefinition > task-def.json
+
+      # 기존 태스크 중지
+      - name: 서비스 중지 (Desired Count를 0으로 설정)
+        run: |
+          aws ecs update-service \
+            --cluster ${{ secrets.ECS_CLUSTER }} \
+            --service ${{ secrets.ECS_SERVICE }} \
+            --desired-count 0
+
+      # 서비스 중지 대기
+      - name: 서비스 중지 대기
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ secrets.ECS_CLUSTER }} \
+            --service ${{ secrets.ECS_SERVICE }}
+
+      # 새 ECR 이미지로 태스크 정의 업데이트
+      - name: 새 ECR 이미지로 태스크 정의 업데이트
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-def.json
+          container-name: ${{ secrets.ECS_CONTAINER_NAME }}
+          image: ${{ secrets.ECR_REPOSITORY_URI }}:${{ needs.build-and-push-to-ecr.outputs.image_tag }}
+
+      # 새 태스크 정의 등록
+      - name: 새 태스크 정의 등록
+        id: register-task-def
+        run: |
+          task_def_arn=$(aws ecs register-task-definition --cli-input-json file://${{ steps.render-task-def.outputs.task-definition }} --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "task_definition_arn=$task_def_arn" >> $GITHUB_OUTPUT
+
+      # 서비스 업데이트 및 재시작
+      - name: 서비스 업데이트 및 재시작
+        run: |
+          aws ecs update-service \
+            --cluster ${{ secrets.ECS_CLUSTER }} \
+            --service ${{ secrets.ECS_SERVICE }} \
+            --task-definition ${{ steps.register-task-def.outputs.task_definition_arn }} \
+            --desired-count 1 \
+            --force-new-deployment
+
+      # 새 배포 안정화 대기
+      - name: 새 배포 안정화 대기
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ secrets.ECS_CLUSTER }} \
+            --service ${{ secrets.ECS_SERVICE }}
+
+      # 배포 상태 확인
+      - name: ECS 배포 상태 확인
+        run: |
+          aws ecs describe-services --cluster ${{ secrets.ECS_CLUSTER }} --services ${{ secrets.ECS_SERVICE }} --query "services[0].deployments"

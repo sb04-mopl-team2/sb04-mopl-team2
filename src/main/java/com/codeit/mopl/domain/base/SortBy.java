@@ -6,7 +6,7 @@ import lombok.Getter;
 public enum SortBy {
   CREATED_AT("createdAt"),
   UPDATED_AT("updatedAt"),
-  SUBSCRIBER_COUNT("subscribeCount"),
+  SUBSCRIBER_COUNT("subscriberCount"),
   RATING("rating");
 
   private final String value;

@@ -1,6 +1,6 @@
 package com.codeit.mopl.domain.base;
 
-import com.codeit.mopl.exception.content.InvalidSortDirectionException;
+import com.codeit.mopl.exception.global.InvalidInputValueException;
 import java.util.Map;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ public enum SortDirection {
 
   public static SortDirection fromValue(String value) {
     if (value == null) {
-      throw new InvalidSortDirectionException(Map.of("inputValue", "null"));
+      throw new InvalidInputValueException(Map.of("inputValue", "null"));
     }
 
     for (SortDirection direction : values()) {
@@ -23,6 +23,6 @@ public enum SortDirection {
         return direction;
       }
     }
-    throw new InvalidSortDirectionException(Map.of("inputValue", value));
+    throw new InvalidInputValueException(Map.of("inputValue", value));
   }
 }

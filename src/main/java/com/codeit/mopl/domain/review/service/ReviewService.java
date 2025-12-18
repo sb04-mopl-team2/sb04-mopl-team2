@@ -5,8 +5,8 @@ import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.domain.review.dto.CursorResponseReviewDto;
 import com.codeit.mopl.domain.review.dto.ReviewDto;
 import com.codeit.mopl.domain.review.entity.Review;
-import com.codeit.mopl.domain.review.entity.ReviewSortBy;
-import com.codeit.mopl.domain.review.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.review.mapper.ReviewMapper;
 import com.codeit.mopl.domain.review.repository.ReviewRepository;
 import com.codeit.mopl.domain.user.entity.User;
@@ -124,7 +124,7 @@ public class ReviewService {
       UUID idAfter,
       int limit,
       SortDirection sortDirection,
-      ReviewSortBy sortBy
+      SortBy sortBy
   ) {
     List<Review> reviewList =
         reviewRepository.searchReview(contentId, cursor, idAfter, limit, sortDirection, sortBy);
@@ -265,7 +265,7 @@ public class ReviewService {
     }
   }
 
-  private CursorResponseReviewDto emptyCursorResponse(ReviewSortBy sortBy, SortDirection sortDirection) {
+  private CursorResponseReviewDto emptyCursorResponse(SortBy sortBy, SortDirection sortDirection) {
     return new CursorResponseReviewDto(
         List.of(),
         null,

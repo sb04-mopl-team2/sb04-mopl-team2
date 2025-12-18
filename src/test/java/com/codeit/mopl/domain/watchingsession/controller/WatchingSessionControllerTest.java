@@ -8,28 +8,29 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.content.dto.response.ContentSummary;
-import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.domain.user.service.UserService;
-import com.codeit.mopl.exception.user.UserErrorCode;
-import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
-import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
-import com.codeit.mopl.security.jwt.handler.OAuth2UserSuccessHandler;
-import com.codeit.mopl.security.jwt.registry.JwtRegistry;
-import com.codeit.mopl.util.WithCustomMockUser;
 import com.codeit.mopl.domain.watchingsession.dto.CursorResponseWatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.dto.WatchingSessionDto;
 import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
-import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
-import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
 import com.codeit.mopl.domain.watchingsession.service.WatchingSessionService;
+import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.exception.watchingsession.ContentNotFoundException;
+import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
+import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.security.CustomUserDetailsService;
 import com.codeit.mopl.security.config.TestSecurityConfig;
+import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
+import com.codeit.mopl.security.jwt.handler.OAuth2UserSuccessHandler;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
+import com.codeit.mopl.security.jwt.registry.JwtRegistry;
+import com.codeit.mopl.util.WithCustomMockUser;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -163,7 +164,7 @@ public class WatchingSessionControllerTest {
         List.of(watchingSessionDto),
         "nextCursor_123",
         userId,true,1L,
-        SortBy.CREATED_AT.getType(), SortDirection.ASCENDING
+        SortBy.CREATED_AT.getValue(), SortDirection.ASCENDING
     );
     when(watchingSessionService.getWatchingSessions(
         eq(contentId),

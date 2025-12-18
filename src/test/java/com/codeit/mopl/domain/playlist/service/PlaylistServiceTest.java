@@ -1,10 +1,21 @@
 package com.codeit.mopl.domain.playlist.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
 import com.codeit.mopl.domain.base.BaseEntity;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
-import com.codeit.mopl.domain.playlist.dto.*;
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
+import com.codeit.mopl.domain.playlist.dto.CursorResponsePlaylistDto;
+import com.codeit.mopl.domain.playlist.dto.PlaylistCreateRequest;
+import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
+import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
+import com.codeit.mopl.domain.playlist.dto.PlaylistUpdateRequest;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
-import com.codeit.mopl.domain.playlist.entity.SortBy;
 import com.codeit.mopl.domain.playlist.mapper.PlaylistMapper;
 import com.codeit.mopl.domain.playlist.playlistitem.entity.PlaylistItem;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
@@ -15,6 +26,13 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.exception.playlist.PlaylistNotFoundException;
 import com.codeit.mopl.exception.playlist.PlaylistUpdateForbiddenException;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -24,15 +42,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.test.context.support.WithMockUser;
-
-import java.lang.reflect.Field;
-import java.util.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class PlaylistServiceTest {

@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.notification.service;
 
+import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.follow.entity.Follow;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
@@ -31,6 +32,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.codeit.mopl.domain.base.SortDirection;
 
 import java.util.List;
 import java.util.Map;

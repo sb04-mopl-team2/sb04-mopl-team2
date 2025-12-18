@@ -1,6 +1,0 @@
-package com.codeit.mopl.domain.notification.entity;
-
-public enum SortDirection {
-  ASCENDING,
-  DESCENDING
-}

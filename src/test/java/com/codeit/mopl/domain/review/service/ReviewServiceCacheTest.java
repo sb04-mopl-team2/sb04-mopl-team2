@@ -5,9 +5,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
-import com.codeit.mopl.domain.review.entity.ReviewSortBy;
-import com.codeit.mopl.domain.review.entity.SortDirection;
 import com.codeit.mopl.domain.review.repository.ReviewRepository;
 import java.util.List;
 import java.util.UUID;
@@ -57,8 +57,8 @@ class ReviewServiceCacheTest {
     String cursor = null;
     UUID idAfter = null;
     int limit = 10;
-    com.codeit.mopl.domain.review.entity.SortDirection sortDirection = SortDirection.DESCENDING;
-    ReviewSortBy sortBy = ReviewSortBy.createdAt;
+    SortDirection sortDirection = SortDirection.DESCENDING;
+    SortBy sortBy = SortBy.CREATED_AT;
 
     when(reviewRepository.searchReview(
         eq(contentId),

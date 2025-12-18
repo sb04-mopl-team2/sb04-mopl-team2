@@ -13,8 +13,8 @@ import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.entity.Notification;
-import com.codeit.mopl.domain.notification.entity.SortBy;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
 import com.codeit.mopl.exception.notification.NotificationForbidden;
 import com.codeit.mopl.exception.notification.NotificationNotFoundException;
@@ -102,7 +102,7 @@ class NotificationServiceUnitTest {
     assertThat(result.nextIdAfter()).isNull();
     assertThat(result.hasNext()).isFalse();
     assertThat(result.totalCount()).isZero();
-    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT.getType());
+    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT.getValue());
     assertThat(result.sortDirection()).isEqualTo(SortDirection.DESCENDING);
 
     verify(notificationRepository, never())
@@ -140,7 +140,7 @@ class NotificationServiceUnitTest {
     assertThat(result.nextCursor()).isNull();
     assertThat(result.nextIdAfter()).isNull();
     assertThat(result.totalCount()).isEqualTo(totalCount);
-    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT.getType());
+    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT.getValue());
     assertThat(result.sortDirection()).isEqualTo(sortDirection);
   }
 
@@ -176,7 +176,7 @@ class NotificationServiceUnitTest {
     assertThat(result.nextCursor()).isEqualTo(n2.getCreatedAt().toString());
     assertThat(result.hasNext()).isTrue();
     assertThat(result.totalCount()).isEqualTo(totalCount);
-    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT.getType());
+    assertThat(result.sortBy()).isEqualTo(SortBy.CREATED_AT.getValue());
     assertThat(result.sortDirection()).isEqualTo(sortDirection);
 
     verify(notificationRepository).countByUserIdAndStatus(userId, Status.UNREAD);

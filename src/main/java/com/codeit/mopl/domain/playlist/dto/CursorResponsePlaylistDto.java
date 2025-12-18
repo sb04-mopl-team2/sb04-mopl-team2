@@ -1,7 +1,7 @@
 package com.codeit.mopl.domain.playlist.dto;
 
-import com.codeit.mopl.domain.notification.entity.SortDirection;
-import com.codeit.mopl.domain.playlist.entity.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
+import com.codeit.mopl.domain.base.SortBy;
 
 import java.util.List;
 import java.util.UUID;

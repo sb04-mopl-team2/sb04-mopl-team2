@@ -3,9 +3,9 @@ package com.codeit.mopl.domain.message.conversation.repository;
 import com.codeit.mopl.domain.message.conversation.dto.request.ConversationSearchCond;
 import com.codeit.mopl.domain.message.conversation.entity.Conversation;
 import com.codeit.mopl.domain.message.conversation.entity.QConversation;
-import com.codeit.mopl.domain.message.conversation.entity.SortBy;
+import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.message.directmessage.entity.QDirectMessage;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.user.entity.QUser;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -121,6 +121,7 @@ public class ConversationRepositoryImpl implements CustomConversationRepository 
 
         return switch (sortBy) {
             case CREATED_AT -> isDescending ? c.createdAt.desc() : c.createdAt.asc();
+          default -> null;
         };
     }
 }

@@ -5,8 +5,8 @@ import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
 import com.codeit.mopl.domain.content.mapper.ContentMapper;
 import com.codeit.mopl.domain.review.entity.Review;
-import com.codeit.mopl.domain.review.entity.ReviewSortBy;
-import com.codeit.mopl.domain.review.entity.SortDirection;
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.user.entity.User;
 import java.util.List;
 import java.util.UUID;
@@ -90,7 +90,7 @@ class ReviewRepositoryImplTest {
         null,
         3,
         SortDirection.DESCENDING,
-        ReviewSortBy.createdAt
+        SortBy.CREATED_AT
     );
 
     // then
@@ -113,7 +113,7 @@ class ReviewRepositoryImplTest {
         null,
         3,
         SortDirection.ASCENDING,
-        ReviewSortBy.createdAt
+        SortBy.CREATED_AT
     );
 
     // then
@@ -136,7 +136,7 @@ class ReviewRepositoryImplTest {
         null,
         3,
         SortDirection.DESCENDING,
-        ReviewSortBy.rating
+        SortBy.RATING
     );
 
     // then
@@ -159,7 +159,7 @@ class ReviewRepositoryImplTest {
         null,
         3,
         SortDirection.ASCENDING,
-        ReviewSortBy.rating
+        SortBy.RATING
     );
 
     // then
@@ -184,7 +184,7 @@ class ReviewRepositoryImplTest {
         id,
         3,
         SortDirection.DESCENDING,
-        ReviewSortBy.rating
+        SortBy.RATING
     );
 
     // then
@@ -209,7 +209,7 @@ class ReviewRepositoryImplTest {
         id,
         3,
         SortDirection.ASCENDING,
-        ReviewSortBy.rating
+        SortBy.RATING
     );
 
     // then
@@ -234,7 +234,7 @@ class ReviewRepositoryImplTest {
         id,
         3,
         SortDirection.DESCENDING,
-        ReviewSortBy.createdAt
+        SortBy.CREATED_AT
     );
 
     // then
@@ -259,7 +259,7 @@ class ReviewRepositoryImplTest {
         id,
         3,
         SortDirection.ASCENDING,
-        ReviewSortBy.createdAt
+        SortBy.CREATED_AT
     );
 
     // then

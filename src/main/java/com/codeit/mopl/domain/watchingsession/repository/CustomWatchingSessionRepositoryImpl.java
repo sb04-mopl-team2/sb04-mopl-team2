@@ -5,14 +5,13 @@ import static com.codeit.mopl.domain.user.entity.QUser.user;
 import static com.codeit.mopl.domain.watchingsession.entity.QWatchingSession.watchingSession;
 
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
-import com.codeit.mopl.domain.watchingsession.entity.enums.SortBy;
-import com.codeit.mopl.domain.watchingsession.entity.enums.SortDirection;
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

@@ -1,5 +1,7 @@
 package com.codeit.mopl.domain.notification;
 
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.notification.entity.*;
 import com.codeit.mopl.domain.notification.repository.NotificationRepository;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
@@ -143,7 +145,7 @@ class NotificationIntegrationTest {
             .with(user(customUserDetails1))
             .param("limit", String.valueOf(limit))
             .param("sortDirection", SortDirection.DESCENDING.toString())
-            .param("sortBy", SortBy.CREATED_AT.getType())
+            .param("sortBy", SortBy.CREATED_AT.getValue())
             .accept(MediaType.APPLICATION_JSON)
     );
 
@@ -153,7 +155,7 @@ class NotificationIntegrationTest {
         .andExpect(jsonPath("$.data.length()").value(3))
         .andExpect(jsonPath("$.hasNext").value(false))
         .andExpect(jsonPath("$.totalCount").value(3))
-        .andExpect(jsonPath("$.sortBy").value(SortBy.CREATED_AT.getType()))
+        .andExpect(jsonPath("$.sortBy").value(SortBy.CREATED_AT.getValue()))
         .andExpect(jsonPath("$.sortDirection").value(SortDirection.DESCENDING.toString()));
   }
 

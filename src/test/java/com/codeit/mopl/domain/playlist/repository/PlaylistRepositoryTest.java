@@ -2,12 +2,12 @@ package com.codeit.mopl.domain.playlist.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.entity.ContentType;
-import com.codeit.mopl.domain.notification.entity.SortDirection;
 import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
-import com.codeit.mopl.domain.playlist.entity.SortBy;
 import com.codeit.mopl.domain.playlist.playlistitem.entity.PlaylistItem;
 import com.codeit.mopl.domain.playlist.subscription.entity.Subscription;
 import com.codeit.mopl.domain.user.entity.User;

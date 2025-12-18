@@ -69,7 +69,8 @@
 
 # 🏗 시스템 아키텍쳐
 
-> 시스템 아키텍처 다이어그램은 준비 중입니다. 곧 추가될 예정입니다.
+> 시스템 아키텍처 다이어그램
+![System Architecture Diagram](docs/images/system-architecture-diagram.png)
 
 현재 프로젝트는 다음과 같은 아키텍처로 구성되어 있습니다:
 
@@ -77,9 +78,10 @@
 - **Database**: PostgreSQL (RDS) + Redis (캐싱)
 - **Search**: OpenSearch (콘텐츠 검색)
 - **Storage**: Amazon S3 (이미지 저장)
-- **Messaging**: Apache Kafka (비동기 이벤트 처리)
-- **Deployment**: AWS ECS + Docker
+- **Messaging**: Confluent Cloud, Apache Kafka (비동기 이벤트 처리)
+- **Deployment**: AWS ECS(Fargate), ECR + Docker, AWS EventBridge + Lambda(스케줄링), Cloudflare
 - **CI/CD**: GitHub Actions
+- **외부 API**: OAuth2(Google, Kakao), TMDb API, TheSportsDB(콘텐츠 메타데이터 수집)
 
 # ✨ 주요 기능
 

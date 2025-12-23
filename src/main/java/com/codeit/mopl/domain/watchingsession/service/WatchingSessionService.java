@@ -1,8 +1,8 @@
 package com.codeit.mopl.domain.watchingsession.service;
 
-import static com.codeit.mopl.exception.content.ContentErrorCode.CONTENT_DOCUMENT_NOT_FOUND;
-
 import com.codeit.mopl.domain.base.FrontendKstOffsetAdjuster;
+import com.codeit.mopl.domain.base.SortBy;
+import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.content.dto.response.ContentSummary;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.content.repository.ContentRepository;
@@ -14,21 +14,17 @@ import com.codeit.mopl.domain.watchingsession.entity.UserSummary;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSessionChange;
 import com.codeit.mopl.domain.watchingsession.entity.enums.ChangeType;
-import com.codeit.mopl.domain.base.SortBy;
-import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
-import com.codeit.mopl.exception.content.ContentDocumentNotFoundException;
 import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
-import com.codeit.mopl.search.document.ContentDocument;
-import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,12 +32,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/*
-   Controller에서 불려지는 조회용 함수들
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -53,12 +47,12 @@ public class WatchingSessionService {
   private final UserRepository userRepository;
   private final ApplicationEventPublisher eventPublisher;
 
-  private final ContentOsRepository osRepository;
+  private final RedisTemplate<String, String> redisTemplate;
+  private static final String COUNT_KEY_PREFIX = "watching:count:";
 
   /*
     조회용 함수들
    */
-
   @Transactional(readOnly = true)
   public WatchingSessionDto getByUserId(UUID userId) {
     log.info("[실시간 세션] 서비스: 사용자 ID로 시청 세션 조회 시작. userId = {}", userId);
@@ -127,15 +121,15 @@ public class WatchingSessionService {
     return response;
   }
 
-    /*
-      웹소켓용 이벤크 기반 함수들
-   */
+  /*
+    웹소켓용 이벤크 기반 함수들
+ */
   @Transactional
   public WatchingSessionChange joinSession(UUID userId, UUID contentId) {
+    forceResyncWatcherCount(contentId);
     WatchingSession session = ensureSessionExists(userId, contentId);
 
-    Long watcherCount = watchingSessionRepository.countByContentId(
-        contentId);
+    Long watcherCount = getWatcherCount(contentId);
 
     return getWatchingSessionChange(
         session,
@@ -157,7 +151,6 @@ public class WatchingSessionService {
     Optional<WatchingSession> existingSession = watchingSessionRepository
         .findByUserIdAndContentId(userId, contentId);
 
-    // 웹소켓 조회용
     if (existingSession.isPresent()) {
       WatchingSession session = existingSession.get();
       session.getContent().getTags().size();
@@ -166,31 +159,16 @@ public class WatchingSessionService {
       log.info("[실시간 세션] 서비스: 세션이 이미 존재합니다 - sessionId = {}", session.getId());
       return session;
     }
-
-
-    // GET 메소드로 인해 새로 생성
-    watchingSessionRepository.deleteByUserId(userId);
-    watchingSessionRepository.flush();
-
     WatchingSession watchingSession = new WatchingSession();
     watchingSession.setUser(user);
     watchingSession.setContent(content);
     WatchingSession saved = watchingSessionRepository.save(watchingSession);
     saved.getContent().getTags().size();
 
-    // 콘텐츠 watcherCount 증가
-    contentRepository.incrementWatcherCount(content.getId());
-    long watcherCount = watchingSessionRepository.countByContentId(contentId);
-
-    // OS
-    ContentDocument contentDocument = osRepository.findById(contentId.toString())
-        .orElseThrow(() -> new ContentDocumentNotFoundException(
-            CONTENT_DOCUMENT_NOT_FOUND, Map.of("contentId", contentId))
-        );
-    contentDocument.setWatcherCount(watcherCount);
-    osRepository.save(contentDocument);
-
     eventPublisher.publishEvent(new WatchingSessionCreateEvent(saved.getId(), userId, saved.getContent().getTitle()));
+
+    // Redis의 watcherCount 업데이트
+    increaseWatcherCount(contentId);
 
     log.info("[실시간 세션] 서비스: 새로운 세션 생성 - sessionId = {}, title = {}, tagsNum = {}",
         saved.getId(), saved.getContent().getTitle(), saved.getContent().getTags().size());
@@ -212,21 +190,66 @@ public class WatchingSessionService {
     watchingSession.getUser();
     watchingSessionRepository.deleteById(watchingSessionId);
 
-    // 콘텐츠 watcherCount 감소
-    contentRepository.decrementWatcherCount(contentId);
-    long watcherCount = watchingSessionRepository.countByContentId(contentId);
-
-    // OS
-    ContentDocument contentDocument = osRepository.findById(contentId.toString())
-        .orElseThrow(() -> new ContentDocumentNotFoundException(
-            CONTENT_DOCUMENT_NOT_FOUND, Map.of("contentId", contentId))
-        );
-    contentDocument.setWatcherCount(watcherCount);
-    osRepository.save(contentDocument);
+    // Redis의 watcherCount 업데이트
+    Long watcherCount = decreaseWatcherCount(contentId);
 
     // 페이로드 보내기
     return getWatchingSessionChange(
         watchingSession, user, ChangeType.LEAVE, watcherCount );
+  }
+
+  @Transactional(readOnly = true)
+  public Long getWatcherCount(UUID contentId) {
+    String key = COUNT_KEY_PREFIX + contentId;
+    String value = redisTemplate.opsForValue().get(key);
+    if (value != null) {
+      return Long.parseLong(value);
+    }
+    // Redis 미스
+    Long dbCount = watchingSessionRepository.countByContentId(contentId);
+    redisTemplate.opsForValue().set(key, dbCount.toString());
+    return dbCount;
+  }
+
+  @Transactional(readOnly = true)
+  public Map<UUID, Long> getWatcherCounts(List<UUID> contentIds) {
+    List<String> keys = contentIds.stream()
+        .map(id -> COUNT_KEY_PREFIX + id)
+        .toList();
+
+    List<String> values = redisTemplate.opsForValue().multiGet(keys);
+
+    Map<UUID, Long> result = new HashMap<>();
+    for (int i = 0; i < contentIds.size(); i++) {
+      UUID id = contentIds.get(i);
+      String val = values.get(i);
+
+      if (val != null) {
+        result.put(id, Long.parseLong(val));
+      } else {
+        Long dbCount = watchingSessionRepository.countByContentId(id);
+        redisTemplate.opsForValue().set(keys.get(i), dbCount.toString());
+        result.put(id, dbCount);
+      }
+    }
+    return result;
+  }
+
+  private Long increaseWatcherCount(UUID contentId) {
+    String key = COUNT_KEY_PREFIX + contentId;
+    return redisTemplate.opsForValue().increment(key);
+  }
+
+  private Long decreaseWatcherCount(UUID contentId) {
+    String key = COUNT_KEY_PREFIX + contentId;
+    return redisTemplate.opsForValue().decrement(key);
+  }
+
+  @Transactional(readOnly = true)
+  public void forceResyncWatcherCount(UUID contentId) {
+    Long dbCount = watchingSessionRepository.countByContentId(contentId);
+    String key = COUNT_KEY_PREFIX + contentId;
+    redisTemplate.opsForValue().set(key, dbCount.toString());
   }
 
   public WatchingSessionChange getWatchingSessionChange(
@@ -257,5 +280,5 @@ public class WatchingSessionService {
         watcherCount
     );
   }
-
 }
+

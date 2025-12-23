@@ -188,3 +188,19 @@ CREATE TABLE IF NOT EXISTS processed_events
 
     UNIQUE(event_id, event_type)
     );
+
+-- KAFKA EVENT STATS (10m bucket)
+CREATE TABLE IF NOT EXISTS kafka_event_stats_10m
+(
+    topic       VARCHAR(200) NOT NULL,
+    event_type  VARCHAR(200) NOT NULL,
+    bucket_time TIMESTAMPTZ  NOT NULL,
+
+    total_count BIGINT NOT NULL DEFAULT 0,
+    fail_count  BIGINT NOT NULL DEFAULT 0,
+    dup_count   BIGINT NOT NULL DEFAULT 0,
+
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    PRIMARY KEY (topic, event_type, bucket_time)
+    );

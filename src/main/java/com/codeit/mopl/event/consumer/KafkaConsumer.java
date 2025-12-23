@@ -1,19 +1,17 @@
 package com.codeit.mopl.event.consumer;
 
-import com.codeit.mopl.domain.follow.service.FollowService;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.notification.template.NotificationMessage;
 import com.codeit.mopl.domain.notification.template.NotificationTemplate;
-import com.codeit.mopl.domain.notification.template.context.DirectMessageContext;
 import com.codeit.mopl.domain.notification.template.context.RoleChangedContext;
-import com.codeit.mopl.domain.playlist.entity.Playlist;
-import com.codeit.mopl.domain.watchingsession.entity.WatchingSession;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.*;
+import com.codeit.mopl.event.metrics.KafkaEventKey;
+import com.codeit.mopl.event.metrics.KafkaEventStats10mCollector;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.codeit.mopl.mail.service.MailService;
 import com.codeit.mopl.mail.utils.RedisStoreUtils;
@@ -25,7 +23,6 @@ import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
 import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -36,6 +33,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class KafkaConsumer {
+
     private final ObjectMapper objectMapper;
     private final NotificationService notificationService;
     private final ProcessedEventRepository processedEventRepository;
@@ -43,42 +41,87 @@ public class KafkaConsumer {
     private final SseEmitterRegistry sseEmitterRegistry;
     private final MailService mailService;
     private final RedisStoreUtils redisStoreUtils;
+    private final KafkaEventStats10mCollector statsCollector;
+
+    private static final KafkaEventKey NOTIFICATION_CREATE =
+        new KafkaEventKey("mopl-notification-create", "NotificationCreateEvent");
+
+    private static final KafkaEventKey USER_ROLE_UPDATE =
+        new KafkaEventKey("mopl-user-role-update", "UserRoleUpdateEvent");
+
+    private static final KafkaEventKey USER_LOGIN_OUT =
+        new KafkaEventKey("mopl-user-login-out", "UserLogInOutEvent");
+
+    private static final KafkaEventKey DIRECT_MESSAGE_CREATE =
+        new KafkaEventKey("mopl-directMessage-create", "DirectMessageCreateEvent");
+
+    private static final KafkaEventKey PLAYLIST_CREATE =
+        new KafkaEventKey("mopl-playList-create", "PlayListCreateEvent");
+
+    private static final KafkaEventKey WATCHING_SESSION_CREATE =
+        new KafkaEventKey("mopl-watchingSession-create", "WatchingSessionCreateEvent");
+
+    private static final KafkaEventKey MAIL_SEND =
+        new KafkaEventKey("mopl-mail-send", "MailSendEvent");
+
 
     @Transactional
     @KafkaListener(topics = "mopl-notification-create", groupId = "mopl-notification", concurrency = "3")
     public void onNotificationCreated(String kafkaEventJson, Acknowledgment ack) {
+
+        statsCollector.incTotal(NOTIFICATION_CREATE);
+
         try {
-            NotificationCreateEvent event = objectMapper.readValue(kafkaEventJson, NotificationCreateEvent.class);
+            NotificationCreateEvent event =
+                objectMapper.readValue(kafkaEventJson, NotificationCreateEvent.class);
             NotificationDto notificationDto = event.notificationDto();
 
-            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(notificationDto.id(), EventType.NOTIFICATION_CREATED);
+            Optional<ProcessedEvent> processedEvent =
+                processedEventRepository.findByEventIdAndEventType(
+                    notificationDto.id(), EventType.NOTIFICATION_CREATED);
+
             if (processedEvent.isPresent()) {
                 log.warn("[Kafka] 이미 처리된 알림 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                statsCollector.incDup(NOTIFICATION_CREATE);
                 ack.acknowledge();
                 return;
             }
 
             notificationService.sendNotification(notificationDto);
-            processedEventRepository.save(new ProcessedEvent(notificationDto.id(), EventType.NOTIFICATION_CREATED));
+            processedEventRepository.save(
+                new ProcessedEvent(notificationDto.id(), EventType.NOTIFICATION_CREATED));
+
             ack.acknowledge();
+
         } catch (JsonProcessingException e) {
+            statsCollector.incFail(NOTIFICATION_CREATE);
             log.error("[Kafka] 알림 생성 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
+
         } catch (Exception e) {
+            statsCollector.incFail(NOTIFICATION_CREATE);
             log.error("[Kafka] 알림 생성 이벤트 처리 실패: {}", kafkaEventJson, e);
             throw e;
         }
     }
 
+
     @Transactional
     @KafkaListener(topics = {"mopl-user-role-update"}, groupId = "mopl-notification", concurrency = "3")
-    public void onNotificationCreate(String kafkaEventJson, Acknowledgment ack) {
+    public void onUserRoleUpdated(String kafkaEventJson, Acknowledgment ack) {
+
+        statsCollector.incTotal(USER_ROLE_UPDATE);
+
         try {
             UserRoleUpdateEvent event = objectMapper.readValue(kafkaEventJson, UserRoleUpdateEvent.class);
             UUID userId = event.userId();
-            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(event.eventId(), EventType.NOTIFICATION_CREATE);
+
+            Optional<ProcessedEvent> processedEvent =
+                processedEventRepository.findByEventIdAndEventType(event.eventId(), EventType.NOTIFICATION_CREATE);
+
             if (processedEvent.isPresent()) {
-                log.warn("[Kafka] 이미 처리된 알림 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                log.warn("[Kafka] 이미 처리된 역할 변경 알림 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                statsCollector.incDup(USER_ROLE_UPDATE);
                 ack.acknowledge();
                 return;
             }
@@ -88,6 +131,7 @@ public class KafkaConsumer {
 
             NotificationTemplate template = NotificationTemplate.ROLE_CHANGED;
             NotificationMessage message = template.build(ctx);
+
             notificationService.createNotification(
                 userId,
                 message.title(),
@@ -97,21 +141,29 @@ public class KafkaConsumer {
 
             processedEventRepository.save(new ProcessedEvent(event.eventId(), EventType.NOTIFICATION_CREATE));
             ack.acknowledge();
+
         } catch (JsonProcessingException e) {
-            log.error("[Kafka] 알림 생성 역직렬화 실패: {}", kafkaEventJson, e);
+            statsCollector.incFail(USER_ROLE_UPDATE);
+            log.error("[Kafka] 역할 변경 알림 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
+
         } catch (Exception e) {
-            log.error("[Kafka] 알림 생성 이벤트 처리 실패: {}", kafkaEventJson, e);
+            statsCollector.incFail(USER_ROLE_UPDATE);
+            log.error("[Kafka] 역할 변경 알림 처리 실패: {}", kafkaEventJson, e);
             throw e;
         }
     }
 
+
     @KafkaListener(topics = "mopl-user-login-out", groupId = "mopl-login-out", concurrency = "3")
     public void onUserLogInOutEvent(String kafkaEvent, Acknowledgment ack) {
+
+        statsCollector.incTotal(USER_LOGIN_OUT);
+
         try {
             log.info("[Kafka] User LogInOut 이벤트");
-            UserLogInOutEvent event = objectMapper.readValue(kafkaEvent,
-                    UserLogInOutEvent.class);
+            UserLogInOutEvent event = objectMapper.readValue(kafkaEvent, UserLogInOutEvent.class);
+
             if (event.status()) {
                 log.info("[Kafka] 유저 로그인 SseConnect. userId = {}", event.userId());
                 sseService.connect(event.userId(), null);
@@ -119,26 +171,38 @@ public class KafkaConsumer {
                 log.info("[Kafka] 유저 로그아웃 SseEmitter 제거 userId = {}", event.userId());
                 sseEmitterRegistry.getData().remove(event.userId());
             }
+
             ack.acknowledge();
+
         } catch (JsonProcessingException e) {
+            statsCollector.incFail(USER_LOGIN_OUT);
             log.error("[Kafka] LogInOut 이벤트 역직렬화 실패: {}", kafkaEvent, e);
             ack.acknowledge();
+
         } catch (Exception e) {
+            statsCollector.incFail(USER_LOGIN_OUT);
             log.error("[Kafka] LogInOut 이벤트 처리 실패: {}", kafkaEvent, e);
             throw e;
         }
     }
 
+
     @Transactional
     @KafkaListener(topics = "mopl-directMessage-create", groupId = "mopl-notification", concurrency = "3")
     public void onDirectMessageCreated(String kafkaEventJson, Acknowledgment ack) {
+
+        statsCollector.incTotal(DIRECT_MESSAGE_CREATE);
+
         try {
             DirectMessageCreateEvent event = objectMapper.readValue(kafkaEventJson, DirectMessageCreateEvent.class);
             DirectMessageDto directMessageDto = event.directMessageDto();
 
-            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(directMessageDto.id(), EventType.DIRECT_MESSAGE_CREATED);
+            Optional<ProcessedEvent> processedEvent =
+                processedEventRepository.findByEventIdAndEventType(directMessageDto.id(), EventType.DIRECT_MESSAGE_CREATED);
+
             if (processedEvent.isPresent()) {
                 log.warn("[Kafka] 이미 처리된 DM 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                statsCollector.incDup(DIRECT_MESSAGE_CREATE);
                 ack.acknowledge();
                 return;
             }
@@ -146,24 +210,35 @@ public class KafkaConsumer {
             notificationService.sendDirectMessage(directMessageDto);
             processedEventRepository.save(new ProcessedEvent(directMessageDto.id(), EventType.DIRECT_MESSAGE_CREATED));
             ack.acknowledge();
+
         } catch (JsonProcessingException e) {
+            statsCollector.incFail(DIRECT_MESSAGE_CREATE);
             log.error("[Kafka] DM 생성 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
+
         } catch (Exception e) {
+            statsCollector.incFail(DIRECT_MESSAGE_CREATE);
             log.error("[Kafka] DM 생성 이벤트 처리 실패: {}", kafkaEventJson, e);
             throw e;
         }
     }
 
+
     @Transactional
     @KafkaListener(topics = "mopl-playList-create", groupId = "mopl-notification", concurrency = "3")
     public void onPlayListCreated(String kafkaEventJson, Acknowledgment ack) {
+
+        statsCollector.incTotal(PLAYLIST_CREATE);
+
         try {
             PlayListCreateEvent event = objectMapper.readValue(kafkaEventJson, PlayListCreateEvent.class);
 
-            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(event.playListId(), EventType.PLAY_LIST_CREATED);
+            Optional<ProcessedEvent> processedEvent =
+                processedEventRepository.findByEventIdAndEventType(event.playListId(), EventType.PLAY_LIST_CREATED);
+
             if (processedEvent.isPresent()) {
-                log.warn("[Kafka] 플레이리스트 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                log.warn("[Kafka] 이미 처리된 플레이리스트 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                statsCollector.incDup(PLAYLIST_CREATE);
                 ack.acknowledge();
                 return;
             }
@@ -171,24 +246,35 @@ public class KafkaConsumer {
             notificationService.notifyFollowersOnPlaylistCreated(event);
             processedEventRepository.save(new ProcessedEvent(event.playListId(), EventType.PLAY_LIST_CREATED));
             ack.acknowledge();
+
         } catch (JsonProcessingException e) {
+            statsCollector.incFail(PLAYLIST_CREATE);
             log.error("[Kafka] 플레이리스트 생성 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
+
         } catch (Exception e) {
+            statsCollector.incFail(PLAYLIST_CREATE);
             log.error("[Kafka] 플레이리스트 생성 이벤트 처리 실패: {}", kafkaEventJson, e);
             throw e;
         }
     }
 
+
     @Transactional
     @KafkaListener(topics = "mopl-watchingSession-create", groupId = "mopl-notification", concurrency = "3")
     public void onWatchingSessionCreated(String kafkaEventJson, Acknowledgment ack) {
+
+        statsCollector.incTotal(WATCHING_SESSION_CREATE);
+
         try {
             WatchingSessionCreateEvent event = objectMapper.readValue(kafkaEventJson, WatchingSessionCreateEvent.class);
 
-            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(event.watchingSessionId(), EventType.WATCH_SESSION_CREATED);
+            Optional<ProcessedEvent> processedEvent =
+                processedEventRepository.findByEventIdAndEventType(event.watchingSessionId(), EventType.WATCH_SESSION_CREATED);
+
             if (processedEvent.isPresent()) {
-                log.warn("[Kafka] WatchingSession 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                log.warn("[Kafka] 이미 처리된 WatchingSession 생성 이벤트입니다. eventId = {}", processedEvent.get().getId());
+                statsCollector.incDup(WATCHING_SESSION_CREATE);
                 ack.acknowledge();
                 return;
             }
@@ -196,48 +282,69 @@ public class KafkaConsumer {
             notificationService.notifyFollowersOnWatchingEvent(event);
             processedEventRepository.save(new ProcessedEvent(event.watchingSessionId(), EventType.WATCH_SESSION_CREATED));
             ack.acknowledge();
+
         } catch (JsonProcessingException e) {
+            statsCollector.incFail(WATCHING_SESSION_CREATE);
             log.error("[Kafka] WatchingSession 생성 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
+
         } catch (Exception e) {
+            statsCollector.incFail(WATCHING_SESSION_CREATE);
             log.error("[Kafka] WatchingSession 생성 이벤트 처리 실패: {}", kafkaEventJson, e);
             throw e;
         }
     }
 
+
     @Transactional
     @KafkaListener(topics = "mopl-mail-send", groupId = "mopl-mail-send")
     public void onMailSend(String kafkaEventJson, Acknowledgment ack) throws MessagingException {
+
+        statsCollector.incTotal(MAIL_SEND);
+
         MailSendEvent event = null;
         try {
             event = objectMapper.readValue(kafkaEventJson, MailSendEvent.class);
 
-            Optional<ProcessedEvent> processedEvent = processedEventRepository.findByEventIdAndEventType(event.eventId(), EventType.MAIL_SEND);
+            Optional<ProcessedEvent> processedEvent =
+                processedEventRepository.findByEventIdAndEventType(event.eventId(), EventType.MAIL_SEND);
+
             if (processedEvent.isPresent()) {
-                log.warn("[Kafka] 이미 처리된 이벤트입니다. eventId = {}, eventType = {}", processedEvent.get().getId(), processedEvent.get().getEventType());
+                log.warn("[Kafka] 이미 처리된 메일 발송 이벤트입니다. eventId = {}, eventType = {}",
+                    processedEvent.get().getId(), processedEvent.get().getEventType());
+                statsCollector.incDup(MAIL_SEND);
                 ack.acknowledge();
                 return;
             }
+
             log.info("[REDIS] 임시 비밀번호 키 저장");
             redisStoreUtils.storeTempPassword(event.email(), event.tempPw());
+
             log.info("[이메일] 이메일 전송 email = {}", event.email());
-            mailService.sendMail(event.email(),event.tempPw());
+            mailService.sendMail(event.email(), event.tempPw());
+
             processedEventRepository.save(new ProcessedEvent(event.eventId(), EventType.MAIL_SEND));
             ack.acknowledge();
+
         } catch (JsonProcessingException e) {
-            log.error("[Kafka] 메일 발송 이벤트 역직렬화 실패", e);
+            statsCollector.incFail(MAIL_SEND);
+            log.error("[Kafka] 메일 발송 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
+
         } catch (MessagingException e) {
+            statsCollector.incFail(MAIL_SEND);
             log.error("[Kafka] 메일 발송 실패: eventId = {}, email = {}",
-                    event != null ? event.eventId() : "unknown",
-                    event != null ? event.email() : "unknown",
-                    e);
+                event != null ? event.eventId() : "unknown",
+                event != null ? event.email() : "unknown",
+                e);
             throw e;
+
         } catch (Exception e) {
+            statsCollector.incFail(MAIL_SEND);
             log.error("[Kafka] 메일 발송 이벤트 처리 실패: eventId = {}, email = {}",
-                    event != null ? event.eventId() : "unknown",
-                    event != null ? event.email() : "unknown",
-                    e);
+                event != null ? event.eventId() : "unknown",
+                event != null ? event.email() : "unknown",
+                e);
             throw e;
         }
     }

@@ -126,7 +126,7 @@ public class WatchingSessionService {
  */
   @Transactional
   public WatchingSessionChange joinSession(UUID userId, UUID contentId) {
-    forceResyncWatcherCount(contentId);
+//    forceResyncWatcherCount(contentId);
     WatchingSession session = ensureSessionExists(userId, contentId);
 
     Long watcherCount = getWatcherCount(contentId);
@@ -245,6 +245,7 @@ public class WatchingSessionService {
     return redisTemplate.opsForValue().decrement(key);
   }
 
+  // 관리자용
   @Transactional(readOnly = true)
   public void forceResyncWatcherCount(UUID contentId) {
     Long dbCount = watchingSessionRepository.countByContentId(contentId);

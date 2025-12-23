@@ -4,9 +4,10 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,8 +31,6 @@ import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentNotFoundException;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
-import com.codeit.mopl.search.document.ContentDocument;
-import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +45,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,10 +65,13 @@ public class WatchingSessionServiceTest {
   private UserRepository userRepository;
 
   @Mock
-  private ContentOsRepository osRepository;
+  private ApplicationEventPublisher eventPublisher;
 
   @Mock
-  private ApplicationEventPublisher eventPublisher;
+  private RedisTemplate<String, String> redisTemplate;
+
+  @Mock
+  private ValueOperations<String, String> valueOperations;
 
   @InjectMocks
   private WatchingSessionService watchingSessionService;
@@ -81,6 +85,8 @@ public class WatchingSessionServiceTest {
 
   @BeforeEach
   void init() {
+    lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
     user = new User("test@test.com", "pw", "test");
     ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
     userId = user.getId();
@@ -249,7 +255,6 @@ public class WatchingSessionServiceTest {
     verify(contentRepository).findById(contentId);
     verify(userRepository).findById(userId);
     verify(watchingSessionRepository).findByUserIdAndContentId(userId, contentId);
-    verify(osRepository, never()).findById(contentId.toString());
   }
 
   @Test
@@ -259,9 +264,7 @@ public class WatchingSessionServiceTest {
     when(contentRepository.findById(any(UUID.class))).thenReturn(Optional.of(content));
     when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(user));
     when(watchingSessionRepository.findByUserIdAndContentId(any(UUID.class), any(UUID.class))).thenReturn(Optional.empty());
-    ContentDocument mockDocument = mock(ContentDocument.class);
     when(watchingSessionRepository.save(any(WatchingSession.class))).thenReturn(watchingSession);
-    when(osRepository.findById(any(String.class))).thenReturn(Optional.of(mockDocument));
 
     // when
     WatchingSessionChange returnedWatchingSessionChange = watchingSessionService.joinSession(userId,contentId);
@@ -270,9 +273,6 @@ public class WatchingSessionServiceTest {
     // then
     assertThat(returnedWatchingSession.watcher().userId()).isEqualTo(userId);
     assertThat(returnedWatchingSession.content().id()).isEqualTo(contentId);
-    verify(watchingSessionRepository).deleteByUserId(userId);
-    verify(osRepository).findById(contentId.toString());
-    verify(osRepository).save(mockDocument);
     verify(eventPublisher).publishEvent(any(WatchingSessionCreateEvent.class));
   }
 
@@ -297,9 +297,7 @@ public class WatchingSessionServiceTest {
     // given
     when(watchingSessionRepository.findById(any(UUID.class))).thenReturn(Optional.of(watchingSession));
     when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(user));
-    when(watchingSessionRepository.countByContentId(any(UUID.class))).thenReturn(1L);
-    ContentDocument mockDocument = mock(ContentDocument.class);
-    when(osRepository.findById(any(String.class))).thenReturn(Optional.of(mockDocument));
+    when(valueOperations.decrement(anyString())).thenReturn(5L);
 
     // when
     WatchingSessionChange returnedWatchingSessionChange = watchingSessionService.leaveSession(
@@ -309,9 +307,7 @@ public class WatchingSessionServiceTest {
     // then
     assertThat(returnedWatchingSessionChange.type()).isEqualTo(ChangeType.LEAVE);
     assertThat(returnedWatchingSession.id()).isEqualTo(watchingSessionId);
-    verify(watchingSessionRepository).deleteById(watchingSessionId);
-    verify(contentRepository).decrementWatcherCount(contentId);
-    verify(osRepository).save(mockDocument);
+    verify(valueOperations, times(1)).decrement(anyString());
   }
 
   @Test

@@ -40,7 +40,6 @@
       "contentType": { "type": "keyword" },
       "averageRating": { "type": "double" },
       "reviewCount": { "type": "integer" },
-      "watcherCount": { "type": "long" }
     }
   }
 }

@@ -28,6 +28,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.RedisTemplate;
 
 @ExtendWith(MockitoExtension.class)
 class WatchingSessionKafkaEventTest {
@@ -50,6 +51,9 @@ class WatchingSessionKafkaEventTest {
   @Mock
   private ContentOsRepository osRepository;
 
+  @Mock
+  private RedisTemplate<String, String> redisTemplate;
+
   private WatchingSessionService watchingSessionService;
 
   @BeforeEach
@@ -60,7 +64,7 @@ class WatchingSessionKafkaEventTest {
         contentRepository,
         userRepository,
         eventPublisher,
-        osRepository
+        redisTemplate
     );
   }
 

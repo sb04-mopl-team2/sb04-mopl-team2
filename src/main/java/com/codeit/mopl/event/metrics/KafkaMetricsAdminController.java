@@ -15,12 +15,12 @@ public class KafkaMetricsAdminController {
 
   //@PreAuthorize("hasRole('ADMIN')")
   @GetMapping("/api/kafka-metrics/LastMinutes")
-  public List<KafkaMetricsSummary> kafkaMetricsLastMinutes(@RequestParam(defaultValue = "10") int minutes) {
+  public List<KafkaMetricsSummary> kafkaMetricsLastMinutes(@RequestParam(defaultValue = "60") int minutes) {
     return queryRepository.aggregateLastMinutes(minutes);
   }
 
   @GetMapping("/api/kafka-metrics/BucketLastMinutes")
-  public List<KafkaMetricsSummary> kafkaMetricsBucketLastMinutes(@RequestParam(defaultValue = "10") int minutes) {
+  public List<KafkaMetricsSummary> kafkaMetricsBucketLastMinutes(@RequestParam(defaultValue = "60") int minutes) {
     return queryRepository.aggregateByBucketLastMinutes(minutes);
   }
 

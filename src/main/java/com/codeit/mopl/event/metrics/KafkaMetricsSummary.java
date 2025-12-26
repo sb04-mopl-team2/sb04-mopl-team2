@@ -7,17 +7,13 @@ public record KafkaMetricsSummary(
     String topic,
     String eventType,
 
-    // 집계 범위(전체집계에서 사용)
+    // 조회 범위 (UTC 기준)
     Instant fromUtc,
     Instant toUtc,
-    Instant fromKst,
-    Instant toKst,
 
-    // 버킷(버킷집계에서 사용)
+    // 버킷 (UTC 기준)
     Instant bucketStartUtc,
     Instant bucketEndUtc,
-    Instant bucketStartKst,
-    Instant bucketEndKst,
 
     // 집계 값
     long total,

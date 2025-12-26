@@ -4,9 +4,12 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,6 +35,8 @@ import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionNotFoundException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -321,5 +326,45 @@ public class WatchingSessionServiceTest {
     assertThrows(WatchingSessionNotFoundException.class, () -> {
       watchingSessionService.leaveSession(userId, watchingSessionId, contentId);
     });
+  }
+
+  @Test
+  @DisplayName("getWatcherCounts - 캐시 히트 성공")
+  void getWatcherCounts_AllCacheHits() {
+    // given
+    UUID id1 = UUID.randomUUID();
+    UUID id2 = UUID.randomUUID();
+    List<UUID> contentIds = List.of(id1, id2);
+
+    List<String> cachedValues = Arrays.asList("100", "200");
+    when(valueOperations.multiGet(anyList())).thenReturn(cachedValues);
+
+    // when
+    Map<UUID, Long> result = watchingSessionService.getWatcherCounts(contentIds);
+
+    // then
+    assertThat(result.get(id1)).isEqualTo(100L);
+    assertThat(result.get(id2)).isEqualTo(200L);
+    verify(watchingSessionRepository, never()).countByContentId(any());
+    verify(valueOperations, never()).set(any(String.class), any(String.class));
+  }
+
+  @Test
+  @DisplayName("getWatcherCounts - 캐시 미스 (DB 조회)")
+  void getWatcherCounts_AllCacheMiss() {
+    // given
+    UUID id1 = UUID.randomUUID();
+    List<UUID> contentIds = List.of(id1);
+    List<String> cachedValues = Collections.singletonList(null);
+    when(valueOperations.multiGet(anyList())).thenReturn(cachedValues);
+    when(watchingSessionRepository.countByContentId(id1)).thenReturn(50L);
+
+    // when
+    Map<UUID, Long> result = watchingSessionService.getWatcherCounts(contentIds);
+
+    // then
+    assertThat(result.get(id1)).isEqualTo(50L);
+    verify(watchingSessionRepository).countByContentId(id1);
+    verify(valueOperations).set(argThat(key -> key.endsWith(id1.toString())), eq("50"));
   }
 }

@@ -218,6 +218,9 @@ public class WatchingSessionService {
         .toList();
 
     List<String> values = redisTemplate.opsForValue().multiGet(keys);
+    if (values == null) {
+      return Map.of();
+    }
 
     Map<UUID, Long> result = new HashMap<>();
     for (int i = 0; i < contentIds.size(); i++) {
@@ -242,7 +245,10 @@ public class WatchingSessionService {
 
   private Long decreaseWatcherCount(UUID contentId) {
     String key = COUNT_KEY_PREFIX + contentId;
-    return redisTemplate.opsForValue().decrement(key);
+    if (redisTemplate.hasKey(key)) {
+      return redisTemplate.opsForValue().decrement(key);
+    }
+    return watchingSessionRepository.countByContentId(contentId);
   }
 
   // 관리자용

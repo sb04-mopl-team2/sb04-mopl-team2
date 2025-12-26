@@ -645,7 +645,7 @@ class KafkaConsumerTest {
             .thenReturn(Optional.empty());
     doNothing().when(notificationService).createNotification(any(UUID.class), anyString(), anyString(), any(Level.class));
     // when
-    kafkaConsumer.onNotificationCreated(kafkaEventJson, ack);
+    kafkaConsumer.onUserRoleUpdated(kafkaEventJson, ack);
 
     // then
     verify(processedEventRepository).findByEventIdAndEventType(event.eventId(), EventType.NOTIFICATION_CREATE);
@@ -674,7 +674,7 @@ class KafkaConsumerTest {
             .thenReturn(Optional.of(new ProcessedEvent(event.eventId(), EventType.NOTIFICATION_CREATE)));
 
     // when
-    kafkaConsumer.onNotificationCreated(kafkaEventJson, ack);
+    kafkaConsumer.onUserRoleUpdated(kafkaEventJson, ack);
 
     // then
     verify(processedEventRepository).findByEventIdAndEventType(event.eventId(), EventType.NOTIFICATION_CREATE);
@@ -692,7 +692,7 @@ class KafkaConsumerTest {
             .thenThrow(new JsonProcessingException("fail") {});
 
     // when
-    kafkaConsumer.onNotificationCreated(invalidJson, ack);
+    kafkaConsumer.onUserRoleUpdated(invalidJson, ack);
 
     // then
     verify(processedEventRepository, never()).findByEventIdAndEventType(any(), any());

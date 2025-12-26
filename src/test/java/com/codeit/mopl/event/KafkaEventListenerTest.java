@@ -17,6 +17,7 @@ import com.codeit.mopl.event.event.NotificationCreateEvent;
 import com.codeit.mopl.event.event.PlayListCreateEvent;
 import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
 import com.codeit.mopl.event.listener.KafkaEventListener;
+import com.codeit.mopl.event.metrics.KafkaEventStats10mCollector;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -86,6 +87,9 @@ class KafkaEventListenerTest {
 
   @Mock
   private FollowRepository followRepository;
+
+  @Mock
+  private KafkaEventStats10mCollector statsCollector;
 
   @BeforeEach
   void setUp() {

@@ -119,6 +119,7 @@ public class SecurityConfig {
                         .requestMatchers( "*","/actuator/**", "/swagger-resource/**"
                                 , "/swagger-ui.html", "/swagger-ui/**", "/v3/**",
                                 "/assets/**","/h2/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/kafka-metrics/**").permitAll()// 카프카 이벤트 지표
                         // ADMIN 권한이 있는 경우에만 접근 가능
                         .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")  // 전체 회원 목록 조회
                         .requestMatchers(HttpMethod.POST, "/api/users/{userId}/role", "/api/users/{userId}/locked",

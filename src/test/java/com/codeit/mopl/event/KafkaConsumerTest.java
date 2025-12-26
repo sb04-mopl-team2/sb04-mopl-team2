@@ -13,6 +13,7 @@ import com.codeit.mopl.event.consumer.KafkaConsumer;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.*;
+import com.codeit.mopl.event.metrics.KafkaEventStats10mCollector;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.codeit.mopl.mail.service.MailService;
 import com.codeit.mopl.mail.utils.RedisStoreUtils;
@@ -88,9 +89,13 @@ class KafkaConsumerTest {
   @Mock
   private MailService mailService;
 
+  @Mock
+  private KafkaEventStats10mCollector statsCollector;
+
+
   @BeforeEach
   void setUp() {
-    kafkaConsumer = new KafkaConsumer(objectMapper, notificationService, processedEventRepository, sseService, sseEmitterRegistry, mailService, redisStoreUtils);
+    kafkaConsumer = new KafkaConsumer(objectMapper, notificationService, processedEventRepository, sseService, sseEmitterRegistry, mailService, redisStoreUtils, statsCollector);
   }
 
   @Test
@@ -640,7 +645,7 @@ class KafkaConsumerTest {
             .thenReturn(Optional.empty());
     doNothing().when(notificationService).createNotification(any(UUID.class), anyString(), anyString(), any(Level.class));
     // when
-    kafkaConsumer.onNotificationCreate(kafkaEventJson, ack);
+    kafkaConsumer.onNotificationCreated(kafkaEventJson, ack);
 
     // then
     verify(processedEventRepository).findByEventIdAndEventType(event.eventId(), EventType.NOTIFICATION_CREATE);
@@ -669,7 +674,7 @@ class KafkaConsumerTest {
             .thenReturn(Optional.of(new ProcessedEvent(event.eventId(), EventType.NOTIFICATION_CREATE)));
 
     // when
-    kafkaConsumer.onNotificationCreate(kafkaEventJson, ack);
+    kafkaConsumer.onNotificationCreated(kafkaEventJson, ack);
 
     // then
     verify(processedEventRepository).findByEventIdAndEventType(event.eventId(), EventType.NOTIFICATION_CREATE);
@@ -687,7 +692,7 @@ class KafkaConsumerTest {
             .thenThrow(new JsonProcessingException("fail") {});
 
     // when
-    kafkaConsumer.onNotificationCreate(invalidJson, ack);
+    kafkaConsumer.onNotificationCreated(invalidJson, ack);
 
     // then
     verify(processedEventRepository, never()).findByEventIdAndEventType(any(), any());
@@ -718,7 +723,7 @@ class KafkaConsumerTest {
             .when(notificationService).createNotification(any(UUID.class), anyString(), anyString(), any(Level.class));
 
     // when & then
-    assertThatThrownBy(() -> kafkaConsumer.onNotificationCreate(kafkaEventJson, ack))
+    assertThatThrownBy(() -> kafkaConsumer.onNotificationCreated(kafkaEventJson, ack))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("unexpected");
 

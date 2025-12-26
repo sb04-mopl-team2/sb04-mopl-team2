@@ -2,7 +2,10 @@ package com.codeit.mopl.event.metrics;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +18,9 @@ import org.springframework.stereotype.Component;
 public class KafkaEventStats10mCollector {
 
   private static final long BUCKET_SECONDS = 600; // 10분
+
+  private static final int MAX_KEYS = 50_000;
+
   private final KafkaEventStatsJdbcRepository repo;
   private final Clock clock;
 
@@ -31,8 +37,20 @@ public class KafkaEventStats10mCollector {
   }
 
   private final Object lock = new Object();
-  private Map<String, Acc> active = new HashMap<>();
-  private Map<String, Acc> flushing = new HashMap<>();
+
+  private Map<String, Acc> active = newEvictingMap();
+  private Map<String, Acc> flushing = newEvictingMap();
+
+  private final LongAdder droppedKeys = new LongAdder();
+
+  private static Map<String, Acc> newEvictingMap() {
+    return new LinkedHashMap<>(16, 0.75f, false) {
+      @Override
+      protected boolean removeEldestEntry(Map.Entry<String, Acc> eldest) {
+        return size() > MAX_KEYS;
+      }
+    };
+  }
 
   public void incTotal(KafkaEventKey key) { add(key, 1, 0, 0); }
   public void incFail(KafkaEventKey key)  { add(key, 0, 1, 0); }
@@ -43,7 +61,12 @@ public class KafkaEventStats10mCollector {
     String mapKey = key.topic() + "|" + key.eventType() + "|" + bucket.getEpochSecond();
 
     synchronized (lock) {
+      int before = active.size();
       active.computeIfAbsent(mapKey, k -> new Acc()).add(total, fail, dup);
+
+      if (active.size() < before) {
+        droppedKeys.increment();
+      }
     }
   }
 
@@ -92,17 +115,29 @@ public class KafkaEventStats10mCollector {
       repo.upsertBatch10m(deltas);
       toFlush.clear();
     } catch (Exception ex) {
-      log.error("[KAFKA_STATS] flush 실패. deltas={}", deltas.size(), ex);
+      log.error("[KAFKA_STATS] flush 실패. deltas={}, activeSize={}, droppedKeys={}",
+          deltas.size(), sizeSafe(active), droppedKeys.sum(), ex);
 
-      // 실패 시 active로 되돌려 재집계
       synchronized (lock) {
+        int before = active.size();
+
         for (KafkaEventStatsDelta d : deltas) {
           String key = d.topic() + "|" + d.eventType() + "|" + d.bucketTime().getEpochSecond();
           active.computeIfAbsent(key, k -> new Acc())
               .add(d.totalDelta(), d.failDelta(), d.dupDelta());
         }
+
+        // eviction 감지(대략)
+        if (active.size() < before) {
+          droppedKeys.increment();
+        }
+
         toFlush.clear();
       }
     }
+  }
+
+  private static int sizeSafe(Map<?, ?> map) {
+    return (map == null) ? 0 : map.size();
   }
 }

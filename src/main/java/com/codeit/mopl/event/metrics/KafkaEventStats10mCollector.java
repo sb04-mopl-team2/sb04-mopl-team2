@@ -16,7 +16,7 @@ public class KafkaEventStats10mCollector {
 
   private static final long BUCKET_SECONDS = 600; // 10분
   private final KafkaEventStatsJdbcRepository repo;
-  private final Clock clock = Clock.systemUTC();
+  private final Clock clock;
 
   private static final class Acc {
     final LongAdder total = new LongAdder();

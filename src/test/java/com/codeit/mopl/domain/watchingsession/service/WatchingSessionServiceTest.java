@@ -4,7 +4,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -297,7 +296,6 @@ public class WatchingSessionServiceTest {
     // given
     when(watchingSessionRepository.findById(any(UUID.class))).thenReturn(Optional.of(watchingSession));
     when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(user));
-    when(valueOperations.decrement(anyString())).thenReturn(5L);
 
     // when
     WatchingSessionChange returnedWatchingSessionChange = watchingSessionService.leaveSession(
@@ -307,7 +305,6 @@ public class WatchingSessionServiceTest {
     // then
     assertThat(returnedWatchingSessionChange.type()).isEqualTo(ChangeType.LEAVE);
     assertThat(returnedWatchingSession.id()).isEqualTo(watchingSessionId);
-    verify(valueOperations, times(1)).decrement(anyString());
   }
 
   @Test

@@ -12,6 +12,7 @@ import com.codeit.mopl.domain.content.dto.request.ContentSearchRequest;
 import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
+import com.codeit.mopl.domain.watchingsession.service.WatchingSessionService;
 import com.codeit.mopl.exception.content.ContentOsStorageException;
 import com.codeit.mopl.search.converter.ContentDocumentMapper;
 import com.codeit.mopl.search.document.ContentDocument;
@@ -45,6 +46,9 @@ public class OpenSearchServiceTest {
 
   @Mock
   private ContentOsRepository osRepository;
+
+  @Mock
+  private WatchingSessionService watchingSessionService;
   
   @InjectMocks
   private OpenSearchService openSearchService;
@@ -140,21 +144,21 @@ public class OpenSearchServiceTest {
 
     UUID uuid1 = UUID.randomUUID();
     Hit<ContentDocument> hit1 = new Hit.Builder<ContentDocument>()
-        .id("1")
+        .id(uuid1.toString())
         .index("content")
         .source(doc1)
         .sort("4.5", uuid1.toString())
         .build();
     UUID uuid2 = UUID.randomUUID();
     Hit<ContentDocument> hit2 = new Hit.Builder<ContentDocument>()
-        .id("2")
+        .id(uuid2.toString())
         .index("content")
         .source(doc2)
         .sort("4.0", uuid2.toString())
         .build();
     UUID uuid3 = UUID.randomUUID();
     Hit<ContentDocument> hit3 = new Hit.Builder<ContentDocument>()
-        .id("3")
+        .id(uuid3.toString())
         .index("content")
         .source(doc3)
         .sort("3.9", uuid3.toString())

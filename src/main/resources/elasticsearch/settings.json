@@ -39,8 +39,7 @@
       "tags": { "type": "keyword" },
       "contentType": { "type": "keyword" },
       "averageRating": { "type": "double" },
-      "reviewCount": { "type": "integer" },
-      "watcherCount": { "type": "long" }
+      "reviewCount": { "type": "integer" }
     }
   }
 }

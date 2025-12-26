@@ -7,7 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,12 +19,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class WatchingSession extends DeletableEntity {
 
-  // user has at most one active session
-  @OneToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "user_id", nullable = false, columnDefinition = "uuid", unique = true)
+//  @OneToOne(fetch = FetchType.LAZY, optional = false)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_id", nullable = false, columnDefinition = "uuid")
   private User user;
 
-  // many users can watch the same content
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "content_id", nullable = false, columnDefinition = "uuid")
   private Content content;

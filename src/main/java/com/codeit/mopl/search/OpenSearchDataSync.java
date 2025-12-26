@@ -7,7 +7,6 @@ import com.codeit.mopl.domain.content.repository.ContentRepository;
 import com.codeit.mopl.search.converter.ContentDocumentMapper;
 import com.codeit.mopl.search.document.ContentDocument;
 import com.codeit.mopl.search.repository.ContentOsRepository;
-import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +33,7 @@ public class OpenSearchDataSync implements ApplicationRunner {
 
   @Transactional(readOnly = true)
   @Override
-  public void run(ApplicationArguments args) throws IOException {
+  public void run(ApplicationArguments args)  {
     log.info("[ElasticsearchDataSync] 콘텐츠 데이터 동기화 시작.");
 
     long count = repository.count();

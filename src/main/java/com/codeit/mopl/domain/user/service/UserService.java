@@ -187,6 +187,8 @@ public class UserService {
         return userMapper.toDto(findUser);
     }
 
+    @Transactional
+    @CachePut(value = "users", key = "#result.id")
     public UserDto findOrCreateOAuth2User(String email, String name, String profileImageUrl, Provider provider) {
         log.info("[사용자 관리] 소셜 로그인 시도 email = {}", email);
         if (userRepository.existsByEmail(email)) {

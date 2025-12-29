@@ -4,6 +4,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -15,11 +17,14 @@ import java.time.Duration;
 public abstract class IntegrationTestBase {
 
     // Redis
+    @Container
     static final GenericContainer<?> redis =
             new GenericContainer<>("redis:7.2")
-                    .withExposedPorts(6379);
+                    .withExposedPorts(6379)
+                    .waitingFor(Wait.forListeningPort());
 
     // Kafka
+    @Container
     static final KafkaContainer kafka =
             new KafkaContainer(
                     DockerImageName.parse("confluentinc/cp-kafka:7.5.0")
@@ -27,19 +32,19 @@ public abstract class IntegrationTestBase {
             );
 
     // OpenSearch
+    @Container
     static final GenericContainer<?> openSearch =
             new GenericContainer<>("opensearchproject/opensearch:2.11.0")
                     .withEnv("discovery.type", "single-node")
                     .withEnv("DISABLE_SECURITY_PLUGIN", "true")
                     .withEnv("plugins.security.disabled", "true")
                     .withExposedPorts(9200)
-                    .withStartupTimeout(Duration.ofMinutes(2));
-
-    static {
-        redis.start();
-        kafka.start();
-        openSearch.start();
-    }
+                    .withStartupTimeout(Duration.ofMinutes(2))
+                    .waitingFor(
+                            Wait.forHttp("/")
+                                    .forPort(9200)
+                                    .forStatusCode(200)
+                    );
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {

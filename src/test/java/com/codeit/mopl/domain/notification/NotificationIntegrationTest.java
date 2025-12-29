@@ -10,6 +10,7 @@ import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.security.CustomUserDetails;
+import com.codeit.mopl.util.IntegrationTestBase;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
-class NotificationIntegrationTest {
+class NotificationIntegrationTest extends IntegrationTestBase {
 
   @Autowired
   private MockMvc mockMvc;

@@ -82,7 +82,9 @@ public class SecurityConfig {
                                            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
                                            OAuth2UserSuccessHandler oAuth2UserSuccessHandler,
                                            OAuth2UserService oAuth2UserService,
-                                           StringRedisTemplate stringRedisTemplate, AuthenticationManager authenticationManager, OAuth2UserFailureHandler oAuth2UserFailureHandler) throws Exception {
+                                           StringRedisTemplate stringRedisTemplate,
+                                           AuthenticationManager authenticationManager,
+                                           OAuth2UserFailureHandler oAuth2UserFailureHandler) throws Exception {
         LoginAuthenticationFilter f = new LoginAuthenticationFilter(stringRedisTemplate);
         f.setUsernameParameter("username");
         f.setPasswordParameter("password");

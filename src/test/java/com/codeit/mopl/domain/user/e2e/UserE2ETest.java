@@ -396,7 +396,7 @@ public class UserE2ETest {
         HttpEntity changeLoginHttpEntity = getSignInRequest(lockUserSignInRequest);
         ResponseEntity<String> lockUserJwtDto = rest.postForEntity("/api/auth/sign-in", changeLoginHttpEntity, String.class);
 
-        assertEquals(HttpStatus.UNAUTHORIZED, lockUserJwtDto.getStatusCode());
+        assertEquals(HttpStatus.LOCKED, lockUserJwtDto.getStatusCode());
     }
 
     @DisplayName("일반 유저는 전체 유저 목록을 조회할 수 없다")

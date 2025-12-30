@@ -8,10 +8,12 @@ import com.codeit.mopl.oauth.client.GoogleClientProperties;
 import com.codeit.mopl.oauth.client.KakaoClientProperties;
 import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.security.CustomUserDetailsService;
-import com.codeit.mopl.security.TempPasswordAuthenticationProvider;
 import com.codeit.mopl.security.jwt.filter.JwtAuthenticationFilter;
+import com.codeit.mopl.security.jwt.filter.LoginAuthenticationFilter;
 import com.codeit.mopl.security.jwt.handler.*;
+import com.codeit.mopl.security.jwt.provider.BasicPasswordAuthenticationProvider;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
+import com.codeit.mopl.security.jwt.provider.TempPasswordAuthenticationProvider;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,11 +21,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -76,10 +80,18 @@ public class SecurityConfig {
                                            LoginFailureHandler loginFailureHandler,
                                            JwtLogoutHandler jwtLogoutHandler,
                                            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-                                           TempPasswordAuthenticationProvider tempPasswordAuthenticationProvider,
-                                           PasswordEncoder passwordEncoder,
                                            OAuth2UserSuccessHandler oAuth2UserSuccessHandler,
-                                           OAuth2UserService oAuth2UserService, OAuth2UserFailureHandler oAuth2UserFailureHandler) throws Exception {
+                                           OAuth2UserService oAuth2UserService,
+                                           StringRedisTemplate stringRedisTemplate, AuthenticationManager authenticationManager, OAuth2UserFailureHandler oAuth2UserFailureHandler) throws Exception {
+        LoginAuthenticationFilter f = new LoginAuthenticationFilter(stringRedisTemplate);
+        f.setUsernameParameter("username");
+        f.setPasswordParameter("password");
+
+        f.setFilterProcessesUrl("/api/auth/sign-in");
+        f.setAuthenticationManager(authenticationManager);
+        f.setAuthenticationSuccessHandler(jwtLoginSuccessHandler);
+        f.setAuthenticationFailureHandler(loginFailureHandler);
+
         http
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/api/batch/**")
@@ -89,11 +101,12 @@ public class SecurityConfig {
 //                .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService, jwtRegistry),
                         UsernamePasswordAuthenticationFilter.class)
-                .formLogin(login ->
-                    login.loginProcessingUrl("/api/auth/sign-in")
-                            .successHandler(jwtLoginSuccessHandler)
-                            .failureHandler(loginFailureHandler)
-                )
+//                .formLogin(login ->
+//                    login.loginProcessingUrl("/api/auth/sign-in")
+//                            .successHandler(jwtLoginSuccessHandler)
+//                            .failureHandler(loginFailureHandler)
+//                )
+                .addFilterAt(f, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
                 .logout(logout ->
                         logout.logoutUrl("/api/auth/sign-out")
                                 .addLogoutHandler(jwtLogoutHandler)
@@ -119,7 +132,6 @@ public class SecurityConfig {
                         .requestMatchers( "*","/actuator/**", "/swagger-resource/**"
                                 , "/swagger-ui.html", "/swagger-ui/**", "/v3/**",
                                 "/assets/**","/h2/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/kafka-metrics/**").permitAll()// 카프카 이벤트 지표
                         // ADMIN 권한이 있는 경우에만 접근 가능
                         .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")  // 전체 회원 목록 조회
                         .requestMatchers(HttpMethod.POST, "/api/users/{userId}/role", "/api/users/{userId}/locked",
@@ -134,12 +146,6 @@ public class SecurityConfig {
                                 .userService(oAuth2UserService))
                         .successHandler(oAuth2UserSuccessHandler)
                         .failureHandler(oAuth2UserFailureHandler));
-        AuthenticationManagerBuilder authBuilder =
-                http.getSharedObject(AuthenticationManagerBuilder.class);
-
-        authBuilder.authenticationProvider(tempPasswordAuthenticationProvider)
-                .userDetailsService(customUserDetailsService)
-                .passwordEncoder(passwordEncoder);
 
         return http.build();
     }
@@ -247,5 +253,16 @@ public class SecurityConfig {
                 .userNameAttributeName("id")
                 .clientName("Kakao")
                 .build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            TempPasswordAuthenticationProvider tempProvider,
+            UserDetailsService customUserDetailsService,
+            PasswordEncoder passwordEncoder
+    ) {
+        BasicPasswordAuthenticationProvider dao = new BasicPasswordAuthenticationProvider(customUserDetailsService, passwordEncoder);
+
+        return new ProviderManager(List.of(tempProvider, dao));
     }
 }

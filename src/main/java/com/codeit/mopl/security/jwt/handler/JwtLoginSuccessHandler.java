@@ -4,11 +4,11 @@ import com.codeit.mopl.domain.auth.dto.JwtDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.security.CustomUserDetails;
 import com.codeit.mopl.security.jwt.JwtInformation;
+import com.codeit.mopl.security.jwt.ProfileChecker;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +33,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
     private final JwtRegistry jwtRegistry;
+    private final ProfileChecker profileChecker;
 
     @Value("${jwt.refresh-token-expiration-minutes}")
     private int expiration;
@@ -66,7 +67,8 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
                 .path("/")
                 .maxAge(Duration.ofMinutes(expiration))
                 .httpOnly(true)
-                .sameSite("Strict")
+                .sameSite(profileChecker.isProd()?"None":"Lax")
+                .secure(profileChecker.isProd())
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());

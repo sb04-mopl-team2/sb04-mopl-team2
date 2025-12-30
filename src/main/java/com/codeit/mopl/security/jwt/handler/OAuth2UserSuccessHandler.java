@@ -2,12 +2,12 @@ package com.codeit.mopl.security.jwt.handler;
 
 import com.codeit.mopl.domain.auth.dto.JwtDto;
 import com.codeit.mopl.domain.user.dto.response.UserDto;
-import com.codeit.mopl.domain.user.service.UserService;
 import com.codeit.mopl.security.CustomUserDetails;
 import com.codeit.mopl.security.jwt.JwtInformation;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.codeit.mopl.security.jwt.ProfileChecker;
+import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
+import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,10 +18,8 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.net.URI;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
@@ -32,8 +30,9 @@ import java.util.UUID;
 @Slf4j
 @Component
 public class OAuth2UserSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
-    private final com.codeit.mopl.security.jwt.provider.JwtTokenProvider jwtTokenProvider;
-    private final com.codeit.mopl.security.jwt.registry.JwtRegistry jwtRegistry;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtRegistry jwtRegistry;
+    private final ProfileChecker profileChecker;
 
     @Value("${jwt.refresh-token-expiration-minutes}")
     private int expiration;
@@ -66,24 +65,13 @@ public class OAuth2UserSuccessHandler extends SimpleUrlAuthenticationSuccessHand
                 .path("/")
                 .maxAge(Duration.ofMinutes(expiration))
                 .httpOnly(true)
-                .sameSite("Strict")
+                .sameSite(profileChecker.isProd()?"None":"Lax")
+                .secure(profileChecker.isProd())
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-
         String redirectUri = "/";
-        // 테스트
-        String forwardedProto = request.getHeader("X-Forwarded-Proto");
-        String forwardedHost  = request.getHeader("X-Forwarded-Host");
-        String host           = request.getHeader("Host");
-
-        String scheme = forwardedProto != null ? forwardedProto : request.getScheme();
-        String domain = forwardedHost != null ? forwardedHost : host;
-
-        String absoluteRedirectUrl = scheme + "://" + domain + redirectUri;
-
-        log.info("[OAuth2] 실제 최종 URL = {}", absoluteRedirectUrl);
 
         getRedirectStrategy().sendRedirect(request, response, redirectUri);
     }

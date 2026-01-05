@@ -3,8 +3,10 @@ package com.codeit.mopl.domain.follow.service;
 import com.codeit.mopl.domain.follow.dto.FollowDto;
 import com.codeit.mopl.domain.follow.dto.FollowRequest;
 import com.codeit.mopl.domain.follow.entity.Follow;
+import com.codeit.mopl.outbox.entity.FollowOutBoxEvent;
 import com.codeit.mopl.domain.follow.entity.FollowStatus;
 import com.codeit.mopl.domain.follow.mapper.FollowMapper;
+import com.codeit.mopl.outbox.repository.FollowOutBoxRepository;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
@@ -16,7 +18,6 @@ import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
-import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.codeit.mopl.exception.follow.*;
 import com.codeit.mopl.exception.user.UserErrorCode;
@@ -39,6 +40,7 @@ public class FollowService {
 
     private final FollowRepository followRepository;
     private final FollowMapper followMapper;
+    private final FollowOutBoxRepository followOutBoxRepository;
     //
     private final NotificationService notificationService;
     private final UserRepository userRepository;
@@ -66,7 +68,9 @@ public class FollowService {
         // 팔로우 저장, 증가 이벤트 발행
         Follow follow = new Follow(follower, followee);
         FollowDto dto = followMapper.toDto(followRepository.save(follow));
-        eventPublisher.publishEvent(new FollowerIncreaseEvent(follow.getId(), followeeId));
+//        eventPublisher.publishEvent(new FollowerIncreaseEvent(follow.getId(), followeeId));
+        FollowOutBoxEvent followOutBoxEvent = FollowOutBoxEvent.increase(follow.getId(), followeeId);
+        followOutBoxRepository.save(followOutBoxEvent);
 
         // 알람 발행
         FollowCreatedContext ctx =
@@ -85,28 +89,21 @@ public class FollowService {
         return dto;
     }
 
-    /**
-     * RuntimeException 발생 시 Batch 트랜잭션 전체 rollback 방지
-     * retryCount 증가 및 상태 전이 보장을 위해 독립 트랜잭션(REQUIRES_NEW)으로 실행
-     */
-    @Transactional(propagation = REQUIRES_NEW)
+    @Transactional
     public void processFollowerIncrease(UUID followId, UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작: followId = {}, followeeId = {}", followId, followeeId);
-        // 이미 처리된 이벤트면 early return
-        if (isAlreadyProcessed(followId, EventType.FOLLOWER_INCREASE)) {
-            return;
-        }
         // 비관적 락 적용: WRITE (follow -> user)
         Follow follow = getFollowByIdWithWriteLock(followId);
         User followee = getUserByIdWithWriteLock(followeeId);
 
+        // 이미 처리된 객체면 early return
+        if (follow.getFollowStatus().equals(FollowStatus.CONFIRM)) {
+            return;
+        }
+
         // 팔로워 수 증가, 상태 변경
         followee.increaseFollowerCount();
         follow.setFollowStatus(FollowStatus.CONFIRM);
-
-        // 처리된 이벤트 저장
-        ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_INCREASE);
-        processedEventRepository.save(processedEvent);
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료: followId = {}, followeeId = {}", followId, followeeId);
     }
 
@@ -158,7 +155,9 @@ public class FollowService {
 
         // 팔로우 감소 이벤트 발행
         UUID followeeId = follow.getFollowee().getId();
-        eventPublisher.publishEvent(new FollowerDecreaseEvent(follow.getId(), followeeId));
+        FollowOutBoxEvent event = FollowOutBoxEvent.decrease(followId, followeeId);
+        followOutBoxRepository.save(event);
+        // eventPublisher.publishEvent(new FollowerDecreaseEvent(follow.getId(), followeeId));
         log.info("[팔로우 관리] 팔로우 삭제 완료: followId = {}, followeeId = {}", followId, followeeId);
     }
 

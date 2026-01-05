@@ -1,4 +1,4 @@
-package com.codeit.mopl.domain.follow.entity;
+package com.codeit.mopl.outbox.entity;
 
 import com.codeit.mopl.domain.base.BaseEntity;
 import com.codeit.mopl.event.entity.EventType;

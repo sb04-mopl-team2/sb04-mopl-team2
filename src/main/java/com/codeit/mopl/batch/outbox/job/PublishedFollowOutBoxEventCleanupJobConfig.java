@@ -1,4 +1,4 @@
-package com.codeit.mopl.batch.event.config.job;
+package com.codeit.mopl.batch.outbox.job;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
@@ -10,18 +10,18 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @RequiredArgsConstructor
-public class CancelledEventRetryJobConfig {
+public class PublishedFollowOutBoxEventCleanupJobConfig {
 
     private final JobRepository jobRepository;
-    private final Step retryFollowerDecreaseStep;
+    private final Step publishedFollowOutBoxEventStep;
 
-    /*
-     *  팔로워 감소 재시도 Job
-     * */
+    /**
+    *   PUBLISHED 상태의 FollowOutBoxEvent 객체 삭제 Job
+    */
     @Bean
-    public Job retryFollowerDecreaseJob() {
-        return new JobBuilder("retryFollowerDecreaseJob", jobRepository)
-                .start(retryFollowerDecreaseStep)
+    public Job publishedFollowOutBoxEventCleanupJob() {
+        return new JobBuilder("publishedFollowOutBoxEventCleanupJob", jobRepository)
+                .start(publishedFollowOutBoxEventStep)
                 .build();
     }
 }

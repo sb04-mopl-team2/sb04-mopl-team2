@@ -32,7 +32,11 @@ public class FollowerIncreaseHandler implements FollowOutBoxHandler {
             sender.send("mopl-follower-increase", key, followerIncreaseEvent);
             event.markPublished();
         } catch (Exception e) {
-            event.markFailed();
+            if (event.getRetryCount() >= FollowOutBoxEvent.MAX_RETRY_COUNT) {
+                event.markDead(e.getMessage());
+            } else {
+                event.markFailed(e.getMessage());
+            }
         }
     }
 }

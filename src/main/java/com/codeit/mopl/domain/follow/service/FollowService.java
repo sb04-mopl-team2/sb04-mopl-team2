@@ -6,7 +6,7 @@ import com.codeit.mopl.domain.follow.entity.Follow;
 import com.codeit.mopl.outbox.entity.FollowOutBoxEvent;
 import com.codeit.mopl.domain.follow.entity.FollowStatus;
 import com.codeit.mopl.domain.follow.mapper.FollowMapper;
-import com.codeit.mopl.outbox.repository.FollowOutBoxRepository;
+import com.codeit.mopl.outbox.repository.FollowOutBoxEventRepository;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
@@ -16,8 +16,6 @@ import com.codeit.mopl.domain.notification.template.context.FollowCreatedContext
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.entity.EventType;
-import com.codeit.mopl.event.entity.ProcessedEvent;
-import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
 import com.codeit.mopl.exception.follow.*;
 import com.codeit.mopl.exception.user.UserErrorCode;
@@ -31,8 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
-
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -40,7 +36,7 @@ public class FollowService {
 
     private final FollowRepository followRepository;
     private final FollowMapper followMapper;
-    private final FollowOutBoxRepository followOutBoxRepository;
+    private final FollowOutBoxEventRepository followOutBoxEventRepository;
     //
     private final NotificationService notificationService;
     private final UserRepository userRepository;
@@ -65,12 +61,11 @@ public class FollowService {
         User follower = getUserById(followerId);
         User followee = getUserById(followeeId);
 
-        // 팔로우 저장, 증가 이벤트 발행
+        // 팔로우 저장, 증가 이벤트 발행 (OutBox)
         Follow follow = new Follow(follower, followee);
         FollowDto dto = followMapper.toDto(followRepository.save(follow));
-//        eventPublisher.publishEvent(new FollowerIncreaseEvent(follow.getId(), followeeId));
         FollowOutBoxEvent followOutBoxEvent = FollowOutBoxEvent.increase(follow.getId(), followeeId);
-        followOutBoxRepository.save(followOutBoxEvent);
+        followOutBoxEventRepository.save(followOutBoxEvent);
 
         // 알람 발행
         FollowCreatedContext ctx =
@@ -139,8 +134,8 @@ public class FollowService {
             return;
         }
 
-        // PENDING, FAILED 상태의 팔로우 객체는 시스템에서 처리해야 함
-        if (followStatus == FollowStatus.PENDING || followStatus == FollowStatus.FAILED) {
+        // REQUESTED 상태는 이벤트 처리중인 객체이므로 예외
+        if (followStatus == FollowStatus.REQUESTED) {
             throw FollowCannotDeleteWhileProcessingException.withIdAndStatus(followId, followStatus);
         }
 
@@ -153,25 +148,16 @@ public class FollowService {
         // 팔로우 상태 변경
         follow.setFollowStatus(FollowStatus.CANCELLED);
 
-        // 팔로우 감소 이벤트 발행
+        // 팔로우 감소 이벤트 발행 (OutBox)
         UUID followeeId = follow.getFollowee().getId();
         FollowOutBoxEvent event = FollowOutBoxEvent.decrease(followId, followeeId);
-        followOutBoxRepository.save(event);
-        // eventPublisher.publishEvent(new FollowerDecreaseEvent(follow.getId(), followeeId));
+        followOutBoxEventRepository.save(event);
         log.info("[팔로우 관리] 팔로우 삭제 완료: followId = {}, followeeId = {}", followId, followeeId);
     }
 
-    /**
-     * RuntimeException 발생 시 Batch 트랜잭션 전체 rollback 방지
-     * retryCount 증가 및 상태 전이 보장을 위해 독립 트랜잭션(REQUIRES_NEW)으로 실행
-     */
-    @Transactional(propagation = REQUIRES_NEW)
+    @Transactional
     public void processFollowerDecrease(UUID followId, UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 시작: followId = {}, followeeId = {}", followId, followeeId);
-        // 이미 처리된 이벤트면 early return
-        if (isAlreadyProcessed(followId, EventType.FOLLOWER_DECREASE)) {
-            return;
-        }
         // 비관적 락 적용: WRITE (follow -> user)
         Follow follow = getFollowByIdWithWriteLock(followId);
         User followee = getUserByIdWithWriteLock(followeeId);
@@ -183,10 +169,6 @@ public class FollowService {
         // 팔로워 수 감소 & 삭제
         followee.decreaseFollowerCount();
         followRepository.delete(follow);
-
-        // 처리된 이벤트 저장
-        ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_DECREASE);
-        processedEventRepository.save(processedEvent);
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 완료: followId = {}, followeeId = {}", followId, followeeId);
     }
 

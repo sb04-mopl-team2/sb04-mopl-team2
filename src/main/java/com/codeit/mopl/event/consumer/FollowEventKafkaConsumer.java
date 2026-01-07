@@ -45,9 +45,11 @@ public class FollowEventKafkaConsumer {
             followService.processFollowerIncrease(followId, followeeId);
             processedEventRepository.save(new ProcessedEvent(followId, EventType.FOLLOWER_INCREASE));
             registerAfterCommitAck(ack);
+
         } catch (JsonProcessingException e) {
             log.error("[Kafka] 팔로워 증가 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
+
         } catch (Exception e) {
             log.error("[Kafka] 팔로워 증가 이벤트 처리 실패: {}", kafkaEventJson, e);
             throw e;
@@ -60,11 +62,21 @@ public class FollowEventKafkaConsumer {
             FollowerDecreaseEvent event = objectMapper.readValue(kafkaEventJson, FollowerDecreaseEvent.class);
             UUID followId = event.followId();
             UUID followeeId = event.followeeId();
+
+            // 이미 처리된 이벤트면 early return
+            if (isAlreadyProcessed(followId, EventType.FOLLOWER_DECREASE)) {
+                registerAfterCommitAck(ack);
+                return;
+            }
+
             followService.processFollowerDecrease(followId, followeeId);
-            ack.acknowledge();
+            processedEventRepository.save(new ProcessedEvent(followId, EventType.FOLLOWER_DECREASE));
+            registerAfterCommitAck(ack);
+
         } catch (JsonProcessingException e) {
             log.error("[Kafka] 팔로워 감소 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
+
         } catch (Exception e) {
             log.error("[Kafka] 팔로워 감소 이벤트 처리 실패: {}", kafkaEventJson, e);
             throw e;

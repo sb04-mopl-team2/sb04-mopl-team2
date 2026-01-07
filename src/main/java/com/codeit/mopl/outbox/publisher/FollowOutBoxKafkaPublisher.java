@@ -1,12 +1,11 @@
 package com.codeit.mopl.outbox.publisher;
 
 import com.codeit.mopl.event.entity.EventType;
-import com.codeit.mopl.outbox.entity.OutBoxStatus;
 import com.codeit.mopl.outbox.entity.FollowOutBoxEvent;
 import com.codeit.mopl.outbox.handler.FollowOutBoxHandler;
-import com.codeit.mopl.outbox.repository.FollowOutBoxRepository;
+import com.codeit.mopl.outbox.repository.FollowOutBoxEventRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,11 +18,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FollowOutBoxKafkaPublisher {
 
-    private final FollowOutBoxRepository followOutBoxRepository;
+    private static final int BATCH_SIZE = 100;
+
+    private final FollowOutBoxEventRepository followOutBoxEventRepository;
     private final Map<EventType, FollowOutBoxHandler> handlers;
 
-    public FollowOutBoxKafkaPublisher(FollowOutBoxRepository repository, List<FollowOutBoxHandler> handlerList) {
-        this.followOutBoxRepository = repository;
+    public FollowOutBoxKafkaPublisher(FollowOutBoxEventRepository repository, List<FollowOutBoxHandler> handlerList) {
+        this.followOutBoxEventRepository = repository;
         this.handlers = handlerList.stream()
                 .collect(Collectors.toMap(
                         FollowOutBoxHandler::supports,
@@ -32,11 +33,10 @@ public class FollowOutBoxKafkaPublisher {
     }
 
     @Transactional
-    @Scheduled(fixedDelay = 5000)
     public void publish() {
-        List<FollowOutBoxEvent> events = followOutBoxRepository.findTop100ByOutBoxStatusOrderByCreatedAtAsc(OutBoxStatus.PENDING);
+        List<FollowOutBoxEvent> events = followOutBoxEventRepository.findPublishTargets(PageRequest.of(0, BATCH_SIZE));
         if (events.isEmpty()) {
-            log.info("[팔로우 관리] PENDING 상태인 FollowOutBoxEvent 객체가 없습니다: events = {}", events);
+            log.info("[팔로우 관리] REQUESTED 혹은 FAILED 상태인 FollowOutBoxEvent 객체가 없습니다: events = {}", events);
             return;
         }
         for (FollowOutBoxEvent event : events) {

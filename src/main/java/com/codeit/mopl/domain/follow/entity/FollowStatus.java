@@ -6,10 +6,9 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum FollowStatus {
-    PENDING("처리중"),
-    CANCELLED("처리 중단"),
-    CONFIRM("처리 완료"),
-    FAILED("처리 실패");
+    REQUESTED("요청됨"),
+    CANCELLED("취소"),
+    CONFIRM("처리 완료");
 
     private final String value;
 }

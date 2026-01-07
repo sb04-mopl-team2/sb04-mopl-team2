@@ -152,8 +152,7 @@ CREATE TABLE IF NOT EXISTS follows
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     follower_id UUID NOT NULL,
     followee_id UUID NOT NULL,
-    follow_status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
-    retry_count INT NOT NULL DEFAULT 0,
+    follow_status VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
 
     FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (followee_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -197,8 +196,9 @@ CREATE TABLE IF NOT EXISTS follow_outbox_events
     event_type VARCHAR(255) NOT NULL,
     follow_id UUID NOT NULL,
     followee_id UUID NOT NULL,
-    outbox_status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
-    retry_count INT NOT NULL DEFAULT 0
+    outbox_status VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
+    retry_count INT NOT NULL DEFAULT 0,
+    last_error_message VARCHAR(1000)
     );
 
 

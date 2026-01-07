@@ -19,7 +19,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import java.util.List;
 import java.util.UUID;
 
-@Profile("!test")
 @Slf4j
 @Configuration
 @RequiredArgsConstructor

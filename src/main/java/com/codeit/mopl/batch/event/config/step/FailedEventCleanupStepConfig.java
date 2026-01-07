@@ -17,7 +17,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.List;
 
-@Profile("!test")
 @Slf4j
 @Configuration
 @RequiredArgsConstructor

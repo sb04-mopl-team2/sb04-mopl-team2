@@ -42,7 +42,6 @@ import java.util.UUID;
 
 @Slf4j
 @Transactional
-@Profile("!test")
 @Service
 @RequiredArgsConstructor
 public class NotificationService {

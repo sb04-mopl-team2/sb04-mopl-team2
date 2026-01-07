@@ -1,6 +1,6 @@
 package com.codeit.mopl.outbox.repository;
 
-import com.codeit.mopl.event.entity.OutBoxStatus;
+import com.codeit.mopl.outbox.entity.OutBoxStatus;
 import com.codeit.mopl.outbox.entity.FollowOutBoxEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 

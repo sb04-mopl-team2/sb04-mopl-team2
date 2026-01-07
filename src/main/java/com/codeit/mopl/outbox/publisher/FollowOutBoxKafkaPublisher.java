@@ -1,7 +1,7 @@
 package com.codeit.mopl.outbox.publisher;
 
 import com.codeit.mopl.event.entity.EventType;
-import com.codeit.mopl.event.entity.OutBoxStatus;
+import com.codeit.mopl.outbox.entity.OutBoxStatus;
 import com.codeit.mopl.outbox.entity.FollowOutBoxEvent;
 import com.codeit.mopl.outbox.handler.FollowOutBoxHandler;
 import com.codeit.mopl.outbox.repository.FollowOutBoxRepository;

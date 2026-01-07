@@ -1,4 +1,4 @@
-package com.codeit.mopl.event.entity;
+package com.codeit.mopl.outbox.entity;
 
 public enum OutBoxStatus {
     PENDING,

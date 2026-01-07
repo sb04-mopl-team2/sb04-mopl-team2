@@ -2,7 +2,6 @@ package com.codeit.mopl.outbox.entity;
 
 import com.codeit.mopl.domain.base.BaseEntity;
 import com.codeit.mopl.event.entity.EventType;
-import com.codeit.mopl.event.entity.OutBoxStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

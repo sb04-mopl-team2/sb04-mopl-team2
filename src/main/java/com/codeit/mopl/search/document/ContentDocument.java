@@ -15,5 +15,4 @@ public class ContentDocument extends AbstractDocument {
   private List<String> tags = new ArrayList<>();
   private Double averageRating = 0.0;
   private Integer reviewCount = 0;
-  private Long watcherCount = 0L;
 }

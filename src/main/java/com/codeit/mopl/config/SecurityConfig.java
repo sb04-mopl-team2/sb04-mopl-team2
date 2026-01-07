@@ -1,7 +1,5 @@
 package com.codeit.mopl.config;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-
 import com.codeit.mopl.domain.user.entity.Role;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
@@ -12,18 +10,11 @@ import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.security.CustomUserDetailsService;
 import com.codeit.mopl.security.TempPasswordAuthenticationProvider;
 import com.codeit.mopl.security.jwt.filter.JwtAuthenticationFilter;
-import com.codeit.mopl.security.jwt.handler.JwtAuthenticationEntryPoint;
-import com.codeit.mopl.security.jwt.handler.JwtLoginSuccessHandler;
-import com.codeit.mopl.security.jwt.handler.JwtLogoutHandler;
-import com.codeit.mopl.security.jwt.handler.LoginFailureHandler;
-import com.codeit.mopl.security.jwt.handler.OAuth2UserSuccessHandler;
+import com.codeit.mopl.security.jwt.handler.*;
 import com.codeit.mopl.security.jwt.provider.JwtTokenProvider;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -52,13 +43,15 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
-import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.*;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableMethodSecurity
@@ -86,7 +79,7 @@ public class SecurityConfig {
                                            TempPasswordAuthenticationProvider tempPasswordAuthenticationProvider,
                                            PasswordEncoder passwordEncoder,
                                            OAuth2UserSuccessHandler oAuth2UserSuccessHandler,
-                                           OAuth2UserService oAuth2UserService) throws Exception {
+                                           OAuth2UserService oAuth2UserService, OAuth2UserFailureHandler oAuth2UserFailureHandler) throws Exception {
         http
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/api/batch/**")
@@ -126,6 +119,7 @@ public class SecurityConfig {
                         .requestMatchers( "*","/actuator/**", "/swagger-resource/**"
                                 , "/swagger-ui.html", "/swagger-ui/**", "/v3/**",
                                 "/assets/**","/h2/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/kafka-metrics/**").permitAll()// 카프카 이벤트 지표
                         // ADMIN 권한이 있는 경우에만 접근 가능
                         .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")  // 전체 회원 목록 조회
                         .requestMatchers(HttpMethod.POST, "/api/users/{userId}/role", "/api/users/{userId}/locked",
@@ -138,7 +132,8 @@ public class SecurityConfig {
                         .loginPage("/api/auth/sign-in")
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(oAuth2UserService))
-                        .successHandler(oAuth2UserSuccessHandler));
+                        .successHandler(oAuth2UserSuccessHandler)
+                        .failureHandler(oAuth2UserFailureHandler));
         AuthenticationManagerBuilder authBuilder =
                 http.getSharedObject(AuthenticationManagerBuilder.class);
 

@@ -3,10 +3,8 @@ package com.codeit.mopl.domain.follow.service;
 import com.codeit.mopl.domain.follow.dto.FollowDto;
 import com.codeit.mopl.domain.follow.dto.FollowRequest;
 import com.codeit.mopl.domain.follow.entity.Follow;
-import com.codeit.mopl.outbox.entity.FollowOutBoxEvent;
 import com.codeit.mopl.domain.follow.entity.FollowStatus;
 import com.codeit.mopl.domain.follow.mapper.FollowMapper;
-import com.codeit.mopl.outbox.repository.FollowOutBoxEventRepository;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
@@ -16,13 +14,15 @@ import com.codeit.mopl.domain.notification.template.context.FollowCreatedContext
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.event.entity.EventType;
-import com.codeit.mopl.event.repository.ProcessedEventRepository;
+import com.codeit.mopl.event.event.FollowerDecreaseEvent;
+import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.exception.follow.*;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
+import com.codeit.mopl.outbox.service.OutBoxEventService;
+import com.codeit.mopl.outbox.util.AggregateTypes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,12 +36,11 @@ public class FollowService {
 
     private final FollowRepository followRepository;
     private final FollowMapper followMapper;
-    private final FollowOutBoxEventRepository followOutBoxEventRepository;
     //
     private final NotificationService notificationService;
     private final UserRepository userRepository;
-    private final ApplicationEventPublisher eventPublisher;
-    private final ProcessedEventRepository processedEventRepository;
+    //
+    private final OutBoxEventService outBoxEventService;
 
     @Transactional
     public FollowDto createFollow(FollowRequest request, UUID followerId) {
@@ -61,11 +60,13 @@ public class FollowService {
         User follower = getUserById(followerId);
         User followee = getUserById(followeeId);
 
-        // 팔로우 저장, 증가 이벤트 발행 (OutBox)
+        // 팔로우 저장
         Follow follow = new Follow(follower, followee);
         FollowDto dto = followMapper.toDto(followRepository.save(follow));
-        FollowOutBoxEvent followOutBoxEvent = FollowOutBoxEvent.increase(follow.getId(), followeeId);
-        followOutBoxEventRepository.save(followOutBoxEvent);
+
+        // 팔로우 증가 이벤트 발행(OutBox)
+        FollowerIncreaseEvent event = new FollowerIncreaseEvent(dto.id(), followeeId);
+        outBoxEventService.createOutBoxEvent(EventType.FOLLOWER_INCREASE, AggregateTypes.FOLLOW, dto.id(), event);
 
         // 알람 발행
         FollowCreatedContext ctx =
@@ -150,8 +151,9 @@ public class FollowService {
 
         // 팔로우 감소 이벤트 발행 (OutBox)
         UUID followeeId = follow.getFollowee().getId();
-        FollowOutBoxEvent event = FollowOutBoxEvent.decrease(followId, followeeId);
-        followOutBoxEventRepository.save(event);
+        FollowerDecreaseEvent event = new FollowerDecreaseEvent(followId, followeeId);
+        outBoxEventService.createOutBoxEvent(EventType.FOLLOWER_DECREASE, AggregateTypes.FOLLOW, followId, event);
+
         log.info("[팔로우 관리] 팔로우 삭제 완료: followId = {}, followeeId = {}", followId, followeeId);
     }
 
@@ -177,14 +179,6 @@ public class FollowService {
             log.error("[팔로우 관리] 팔로우 감소 중단 - 팔로워 수가 0이하 입니다: followeeId = {}, followerCount = {}", followeeId, followerCount);
             throw FollowerCountCannotBeNegativeException.withFolloweeIdAndFollowerCount(followeeId, followerCount);
         }
-    }
-
-    private boolean isAlreadyProcessed(UUID followId, EventType eventType) {
-        boolean isProcessed = processedEventRepository.existsByEventIdAndEventType(followId, eventType);
-        if (isProcessed) {
-            log.warn("[팔로우 관리] 이벤트 처리 중단 - 이미 처리된 이벤트입니다: eventId = {}, eventType = {}", followId, eventType);
-        }
-        return isProcessed;
     }
 
     private User getUserById(UUID userId) {

@@ -204,15 +204,16 @@ CREATE TABLE IF NOT EXISTS kafka_event_stats_10m
     PRIMARY KEY (topic, event_type, bucket_time)
     );
 
--- FollowOutBoxEvent
-CREATE TABLE IF NOT EXISTS follow_outbox_events
+-- OutBoxEvent
+CREATE TABLE IF NOT EXISTS outbox_events
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPZ NOT NULL DEFAULT now(),
     event_type VARCHAR(255) NOT NULL,
-    follow_id UUID NOT NULL,
-    followee_id UUID NOT NULL,
+    aggregate_type VARCHAR(255) NOT NULL,
+    aggregate_id UUID NOT NULL,
+    payload TEXT NOT NULL,
     outbox_status VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
     retry_count INT NOT NULL DEFAULT 0,
-    last_error_message VARCHAR(1000)
+    last_error_message VARCHAR(4000)
 );

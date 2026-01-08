@@ -1,8 +1,8 @@
 package com.codeit.mopl.batch.outbox.step;
 
-import com.codeit.mopl.outbox.entity.FollowOutBoxEvent;
+import com.codeit.mopl.outbox.entity.OutBoxEvent;
 import com.codeit.mopl.outbox.entity.OutBoxStatus;
-import com.codeit.mopl.outbox.repository.FollowOutBoxEventRepository;
+import com.codeit.mopl.outbox.repository.OutBoxEventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Step;
@@ -27,7 +27,7 @@ public class PublishedFollowOutBoxEventCleanupStepConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     //
-    private final FollowOutBoxEventRepository followOutBoxEventRepository;
+    private final OutBoxEventRepository outBoxEventRepository;
 
     /**
      * PUBLISHED 상태의 FollowOutBoxEvent 객체 삭제 Step
@@ -43,7 +43,7 @@ public class PublishedFollowOutBoxEventCleanupStepConfig {
     public Tasklet publihsedFollowOutBoxEventTasklet() {
         return ((contribution, chunkContext) -> {
             // PUBLISHED 상태인 OutBox 이벤트 목록 조회 (created_at 오름차순 정렬 기준 1000개)
-            List<FollowOutBoxEvent> events = followOutBoxEventRepository.findByOutBoxStatusOrderByCreatedAtAsc(OutBoxStatus.PUBLISHED, PageRequest.of(0, BATCH_SIZE));
+            List<OutBoxEvent> events = outBoxEventRepository.findByOutBoxStatusOrderByCreatedAtAsc(OutBoxStatus.PUBLISHED, PageRequest.of(0, BATCH_SIZE));
 
             if (events.isEmpty()) {
                 log.info("[배치] PUBLISHED 상태인 OutBox 이벤트 객체가 없습니다: events = {}", events);
@@ -53,7 +53,7 @@ public class PublishedFollowOutBoxEventCleanupStepConfig {
             int totalCount = events.size();
 
             // OutBox 이벤트 제거
-            followOutBoxEventRepository.deleteAll(events);
+            outBoxEventRepository.deleteAll(events);
 
             log.info("[배치] PUBLISHED 상태의 OutBox 이벤트 삭제 결과: totalCount = {}", totalCount);
             return RepeatStatus.FINISHED;

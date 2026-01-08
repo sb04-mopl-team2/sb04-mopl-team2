@@ -1,6 +1,6 @@
 package com.codeit.mopl.batch.outbox.scheduler;
 
-import com.codeit.mopl.outbox.publisher.FollowOutBoxKafkaPublisher;
+import com.codeit.mopl.outbox.publisher.OutBoxKafkaPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PublishEventJobScheduler {
 
-    private final FollowOutBoxKafkaPublisher publisher;
+    private final OutBoxKafkaPublisher publisher;
     
     /** 
      *  FollowOutBoxEvent 10초마다 퍼블리싱

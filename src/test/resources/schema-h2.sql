@@ -188,17 +188,18 @@ CREATE TABLE IF NOT EXISTS processed_events
 ALTER TABLE follows
     ADD CONSTRAINT no_self_follow CHECK (follower_id != followee_id);
 
--- FollowOutBoxEvent
-CREATE TABLE IF NOT EXISTS follow_outbox_events
+-- OutBoxEvent
+CREATE TABLE IF NOT EXISTS outbox_events
 (
     id UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     event_type VARCHAR(255) NOT NULL,
-    follow_id UUID NOT NULL,
-    followee_id UUID NOT NULL,
+    aggregate_type VARCHAR(255) NOT NULL,
+    aggregate_id UUID NOT NULL,
+    payload CLOB NOT NULL,
     outbox_status VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
     retry_count INT NOT NULL DEFAULT 0,
-    last_error_message VARCHAR(1000)
+    last_error_message VARCHAR(4000)
     );
 
 

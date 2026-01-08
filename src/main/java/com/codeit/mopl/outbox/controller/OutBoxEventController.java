@@ -1,8 +1,8 @@
 package com.codeit.mopl.outbox.controller;
 
 
-import com.codeit.mopl.outbox.dto.FollowOutBoxEventDto;
-import com.codeit.mopl.outbox.service.FollowOutBoxEventService;
+import com.codeit.mopl.outbox.dto.OutBoxEventDto;
+import com.codeit.mopl.outbox.service.OutBoxEventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,33 +17,33 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/api/follows/outbox")
-public class FollowOutBoxEventController {
+public class OutBoxEventController {
 
-    private final FollowOutBoxEventService followOutBoxEventService;
+    private final OutBoxEventService outBoxEventService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/dead")
-    public ResponseEntity<List<FollowOutBoxEventDto>> getDeadFollowOutBoxEvent() {
+    public ResponseEntity<List<OutBoxEventDto>> getDeadOutBoxEvent() {
         log.info("[OutBox] DEAD 상태의 OutBox 이벤트 목록 조회 요청");
-        List<FollowOutBoxEventDto> result = followOutBoxEventService.getDeadFollowOutBoxEvent();
+        List<OutBoxEventDto> result = outBoxEventService.getDeadFollowOutBoxEvent();
         log.info("[OutBox] DEAD 상태의 OutBox 이벤트 목록 조회 응답: totalCount = {}", result.size());
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/{followOutboxEventId}/retry")
-    public ResponseEntity<FollowOutBoxEventDto> retryFollowOutBoxEvent(@PathVariable("followOutboxEventId") UUID followOutboxEventId) {
-        log.info("[OutBox] 특정 OutBoxEvent 재시도 요청: followOutboxEventId = {}", followOutboxEventId);
-        FollowOutBoxEventDto result = followOutBoxEventService.retryFollowOutBoxEvent(followOutboxEventId);
-        log.info("[OutBox] 특정 OutBoxEvent 재시도 완료: followOutboxEventId = {}", followOutboxEventId);
+    @PostMapping("/{outboxEventId}/retry")
+    public ResponseEntity<OutBoxEventDto> retryOutBoxEvent(@PathVariable("outboxEventId") UUID outboxEventId) {
+        log.info("[OutBox] 특정 OutBox 이벤트 재시도 요청: outboxEventId = {}", outboxEventId);
+        OutBoxEventDto result = outBoxEventService.retryFollowOutBoxEvent(outboxEventId);
+        log.info("[OutBox] 특정 OutBox 이벤트 재시도 완료: outboxEventId = {}", outboxEventId);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/retry")
-    public ResponseEntity<List<FollowOutBoxEventDto>> retryAllDeadFollowOutBoxEvent() {
+    public ResponseEntity<List<OutBoxEventDto>> retryAllDeadOutBoxEvent() {
         log.info("[OutBox] DEAD 상태의 OutBox 이벤트 일괄 재시도 요청");
-        List<FollowOutBoxEventDto> result = followOutBoxEventService.retryAllDeadOutBoxEvent();
+        List<OutBoxEventDto> result = outBoxEventService.retryAllDeadOutBoxEvent();
         log.info("[OutBox] DEAD 상태의 OutBox 이벤트 일괄 재시도 완료");
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }

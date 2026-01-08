@@ -3,7 +3,10 @@ package com.codeit.mopl.outbox.handler;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.sender.KafkaEventSender;
-import com.codeit.mopl.outbox.entity.FollowOutBoxEvent;
+import com.codeit.mopl.exception.outbox.EventDeserializationFailedException;
+import com.codeit.mopl.outbox.entity.OutBoxEvent;
+import com.codeit.mopl.outbox.util.ErrorMessageSummarizer;
+import com.codeit.mopl.outbox.util.EventSerializer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -11,9 +14,10 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class FollowerDecreaseHandler implements FollowOutBoxHandler {
+public class FollowerDecreaseHandler implements OutBoxHandler {
 
     private final KafkaEventSender sender;
+    private final EventSerializer serializer;
 
     @Override
     public EventType supports() {
@@ -21,21 +25,25 @@ public class FollowerDecreaseHandler implements FollowOutBoxHandler {
     }
 
     @Override
-    public void publish(FollowOutBoxEvent event) {
+    public void publish(OutBoxEvent event) {
         try {
             log.info("kafka FollowerDecrease Event");
-            FollowerDecreaseEvent followerDecreaseEvent = new FollowerDecreaseEvent(
-                    event.getFollowId(),
-                    event.getFolloweeId()
-            );
-            String key = event.getFolloweeId().toString();
+            FollowerDecreaseEvent followerDecreaseEvent = serializer.deserialize(event, FollowerDecreaseEvent.class);
+            String key = followerDecreaseEvent.followeeId().toString();
             sender.send("mopl-follower-decrease", key, followerDecreaseEvent);
             event.markPublished();
+
+        } catch (EventDeserializationFailedException e) {
+            // 구조적인 문제 -> 재시도 X
+            log.error("[OutBox] payload 역직렬화 실패 -> DEAD: event = {}, errorMessage = {}", event, e.getMessage(), e);
+            event.markDead(e.getMessage());
+
         } catch (Exception e) {
-            if (event.getRetryCount() >= FollowOutBoxEvent.MAX_RETRY_COUNT) {
-                event.markDead(e.getMessage());
+            String errorMessage = ErrorMessageSummarizer.summarizeErrorMessage(e.getMessage());
+            if (event.getRetryCount() >= OutBoxEvent.MAX_RETRY_COUNT) {
+                event.markDead(errorMessage);
             } else {
-                event.markFailed(e.getMessage());
+                event.markFailed(errorMessage);
             }
         }
     }

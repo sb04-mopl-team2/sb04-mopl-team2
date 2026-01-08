@@ -5,11 +5,11 @@ import com.codeit.mopl.outbox.entity.OutBoxStatus;
 
 import java.util.UUID;
 
-public record FollowOutBoxEventDto(
+public record OutBoxEventDto(
         UUID id,
         EventType eventType,
-        UUID followId,
-        UUID followeeId,
+        UUID eventId,
+        String payload,
         OutBoxStatus outBoxStatus,
         int retryCount,
         String lastErrorMessage

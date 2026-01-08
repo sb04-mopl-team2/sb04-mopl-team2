@@ -6,26 +6,29 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.UUID;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "follow_outbox_events")
-public class FollowOutBoxEvent extends BaseEntity {
+@Table(name = "outbox_events")
+public class OutBoxEvent extends BaseEntity {
     public static final int MAX_RETRY_COUNT = 5;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false)
     private EventType eventType;
 
-    @Column(name = "follow_id", nullable = false)
-    private UUID followId;
+    @Column(name = "aggregate_type", nullable = false)
+    private String aggregateType;
 
-    @Column(name = "followee_id", nullable = false)
-    private UUID followeeId;
+    @Column(name = "aggregate_id", nullable = false)
+    private UUID aggregateId;
+
+    @Lob
+    @Column(name = "payload", nullable = false)
+    private String payload;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "outbox_status", nullable = false)
@@ -34,27 +37,14 @@ public class FollowOutBoxEvent extends BaseEntity {
     @Column(name = "retry_count", nullable = false)
     private int retryCount = 0;
 
-    @Column(name = "last_error_message", length = 1000)
+    @Column(name = "last_error_message", length = 4000)
     private String lastErrorMessage;
 
-    public static FollowOutBoxEvent increase(UUID followId, UUID followeeId) {
-        FollowOutBoxEvent e = new FollowOutBoxEvent();
-        e.eventType = EventType.FOLLOWER_INCREASE;
-        e.followId = followId;
-        e.followeeId = followeeId;
-        e.outBoxStatus = OutBoxStatus.REQUESTED;
-        e.retryCount = 0;
-        return e;
-    }
-
-    public static FollowOutBoxEvent decrease(UUID followId, UUID followeeId) {
-        FollowOutBoxEvent e = new FollowOutBoxEvent();
-        e.eventType = EventType.FOLLOWER_DECREASE;
-        e.followId = followId;
-        e.followeeId = followeeId;
-        e.outBoxStatus = OutBoxStatus.REQUESTED;
-        e.retryCount = 0;
-        return e;
+    public OutBoxEvent(EventType eventType, String aggregateType, UUID aggregateId, String payload) {
+        this.eventType = eventType;
+        this.aggregateType = aggregateType;
+        this.aggregateId = aggregateId;
+        this.payload = payload;
     }
 
     public void markPublished() {
@@ -70,8 +60,8 @@ public class FollowOutBoxEvent extends BaseEntity {
     }
 
     public void markDead(String lastErrorMessage) {
-       this.outBoxStatus = OutBoxStatus.DEAD;
-       this.lastErrorMessage = lastErrorMessage;
+        this.outBoxStatus = OutBoxStatus.DEAD;
+        this.lastErrorMessage = lastErrorMessage;
     }
 
     public void markRequested() {

@@ -71,6 +71,7 @@ public class DirectMessageE2ETest {
 
     @BeforeEach
     void setUp() throws Exception {
+        directMessageRepository.deleteAll();
         conversationRepository.deleteAll();
         userRepository.deleteAll();
 

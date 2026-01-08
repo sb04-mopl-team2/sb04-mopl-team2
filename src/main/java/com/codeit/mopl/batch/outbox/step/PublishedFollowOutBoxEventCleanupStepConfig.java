@@ -12,6 +12,7 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.List;
@@ -21,14 +22,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PublishedFollowOutBoxEventCleanupStepConfig {
 
+    private final int BATCH_SIZE = 1000;
+
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     //
     private final FollowOutBoxEventRepository followOutBoxEventRepository;
 
     /**
-    *   PUBLISHED 상태의 FollowOutBoxEvent 객체 삭제 Step
-    */
+     * PUBLISHED 상태의 FollowOutBoxEvent 객체 삭제 Step
+     */
     @Bean
     public Step publishedFollowOutBoxEventStep() {
         return new StepBuilder("publishedFollowOutBoxEventStep", jobRepository)
@@ -39,20 +42,20 @@ public class PublishedFollowOutBoxEventCleanupStepConfig {
     @Bean
     public Tasklet publihsedFollowOutBoxEventTasklet() {
         return ((contribution, chunkContext) -> {
-            // PUBLISHED 상태인 FollowOutBoxEvent 객체 조회
-            List<FollowOutBoxEvent> events = followOutBoxEventRepository.findByOutBoxStatus(OutBoxStatus.PUBLISHED);
+            // PUBLISHED 상태인 OutBox 이벤트 목록 조회 (created_at 오름차순 정렬 기준 1000개)
+            List<FollowOutBoxEvent> events = followOutBoxEventRepository.findByOutBoxStatusOrderByCreatedAtAsc(OutBoxStatus.PUBLISHED, PageRequest.of(0, BATCH_SIZE));
 
             if (events.isEmpty()) {
-                log.info("[배치] PUBLISHED 상태인 FollowOutBoxEvent 객체가 없습니다: events = {}", events);
+                log.info("[배치] PUBLISHED 상태인 OutBox 이벤트 객체가 없습니다: events = {}", events);
                 return RepeatStatus.FINISHED;
             }
-            log.info("[배치] PUBLISHED 상태인 FollowOutBoxEvent 객체를 찾았습니다: events = {}", events);
+            log.info("[배치] PUBLISHED 상태인 OutBox 이벤트 객체를 찾았습니다: events = {}", events);
             int totalCount = events.size();
 
-            // FollowOutBoxEvent 객체 삭제 (created_at 오름차순 정렬 기준 1000개)
-            followOutBoxEventRepository.deleteTop1000ByOutBoxStatusOrderByCreatedAtAsc(OutBoxStatus.PUBLISHED);
+            // OutBox 이벤트 제거
+            followOutBoxEventRepository.deleteAll(events);
 
-            log.info("[배치] PUBLISHED 상태의 FollowOutBoxEvent 객체 삭제 결과: totalCount = {}", totalCount);
+            log.info("[배치] PUBLISHED 상태의 OutBox 이벤트 삭제 결과: totalCount = {}", totalCount);
             return RepeatStatus.FINISHED;
         });
     }

@@ -73,4 +73,10 @@ public class FollowOutBoxEvent extends BaseEntity {
        this.outBoxStatus = OutBoxStatus.DEAD;
        this.lastErrorMessage = lastErrorMessage;
     }
+
+    public void markRequested() {
+        this.retryCount = 0;
+        this.outBoxStatus = OutBoxStatus.REQUESTED;
+        this.lastErrorMessage = null;
+    }
 }

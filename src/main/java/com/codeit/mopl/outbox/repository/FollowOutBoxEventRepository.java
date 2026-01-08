@@ -18,13 +18,11 @@ public interface FollowOutBoxEventRepository extends JpaRepository<FollowOutBoxE
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
-        SELECT e FROM FollowOutBoxEvent e
-        WHERE e.outBoxStatus IN ('REQUESTED', 'FAILED')
-        ORDER BY e.createdAt
-    """)
+                SELECT e FROM FollowOutBoxEvent e
+                WHERE e.outBoxStatus IN ('REQUESTED', 'FAILED')
+                ORDER BY e.createdAt ASC
+            """)
     List<FollowOutBoxEvent> findPublishTargets(Pageable pageable);
 
-    List<FollowOutBoxEvent> findByOutBoxStatus(OutBoxStatus outBoxStatus);
-
-    void deleteTop1000ByOutBoxStatusOrderByCreatedAtAsc(OutBoxStatus outBoxStatus);
+    List<FollowOutBoxEvent> findByOutBoxStatusOrderByCreatedAtAsc(OutBoxStatus outBoxStatus, Pageable pageable);
 }

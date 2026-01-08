@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.message.directmessage.controller;
 
+import com.codeit.mopl.domain.message.conversation.repository.ConversationRepository;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageSendRequest;
 import com.codeit.mopl.domain.message.directmessage.service.DirectMessageService;
@@ -26,13 +27,17 @@ public class DirectMessageController {
 
     private final DirectMessageService directMessageService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ConversationRepository conversationRepository;
 
     @MessageMapping("/conversations/{conversationId}/direct-messages")
     public void sendDirectMessage (@DestinationVariable UUID conversationId,
                                    @Payload DirectMessageSendRequest request,
                                    Authentication authentication
     ) {
-        log.info("[WS CONTROLLER] sendDirectMessage called, authentication={}", authentication);
+        if (!conversationRepository.existsById(conversationId)) {
+            log.warn("[WS] 존재하지 않는 채팅방입니다.: {}", conversationId);
+            return;
+        }
         UUID senderId = null;
 
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {

@@ -13,16 +13,14 @@ import com.codeit.mopl.domain.notification.template.NotificationTemplate;
 import com.codeit.mopl.domain.notification.template.context.FollowCreatedContext;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
-import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.exception.follow.*;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.exception.user.UserNotFoundException;
-import com.codeit.mopl.outbox.service.OutBoxEventService;
-import com.codeit.mopl.outbox.util.AggregateTypes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +38,7 @@ public class FollowService {
     private final NotificationService notificationService;
     private final UserRepository userRepository;
     //
-    private final OutBoxEventService outBoxEventService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public FollowDto createFollow(FollowRequest request, UUID followerId) {
@@ -66,7 +64,7 @@ public class FollowService {
 
         // 팔로우 증가 이벤트 발행(OutBox)
         FollowerIncreaseEvent event = new FollowerIncreaseEvent(dto.id(), followeeId);
-        outBoxEventService.createOutBoxEvent(EventType.FOLLOWER_INCREASE, AggregateTypes.FOLLOW, dto.id(), event);
+        eventPublisher.publishEvent(event);
 
         // 알람 발행
         FollowCreatedContext ctx =
@@ -152,7 +150,7 @@ public class FollowService {
         // 팔로우 감소 이벤트 발행 (OutBox)
         UUID followeeId = follow.getFollowee().getId();
         FollowerDecreaseEvent event = new FollowerDecreaseEvent(followId, followeeId);
-        outBoxEventService.createOutBoxEvent(EventType.FOLLOWER_DECREASE, AggregateTypes.FOLLOW, followId, event);
+        eventPublisher.publishEvent(event);
 
         log.info("[팔로우 관리] 팔로우 삭제 완료: followId = {}, followeeId = {}", followId, followeeId);
     }

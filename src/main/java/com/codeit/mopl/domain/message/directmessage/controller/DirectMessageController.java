@@ -27,17 +27,12 @@ public class DirectMessageController {
 
     private final DirectMessageService directMessageService;
     private final SimpMessagingTemplate messagingTemplate;
-    private final ConversationRepository conversationRepository;
 
     @MessageMapping("/conversations/{conversationId}/direct-messages")
     public void sendDirectMessage (@DestinationVariable UUID conversationId,
                                    @Payload DirectMessageSendRequest request,
                                    Authentication authentication
     ) {
-        if (!conversationRepository.existsById(conversationId)) {
-            log.warn("[WS] 존재하지 않는 채팅방입니다.: {}", conversationId);
-            return;
-        }
         UUID senderId = null;
 
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {

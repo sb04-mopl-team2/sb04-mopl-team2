@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum OutBoxErrorCode implements ErrorCodeInterface {
     OUTBOX_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "OutBox 이벤트를 찾을 수 없습니다."),
+    OUTBOX_EVENT_RETRY_NOT_ALLOWED(HttpStatus.CONFLICT, "DEAD 상태가 아닌 OutBox 이벤트의 재시도 횟수를 초기화할 수 없습니다."),
     EVENT_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이벤트 직렬화에 실패했습니다."),
     EVENT_DESERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이벤트 역직렬화에 실패했습니다.");
 

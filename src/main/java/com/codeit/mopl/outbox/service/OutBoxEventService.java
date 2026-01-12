@@ -2,6 +2,7 @@ package com.codeit.mopl.outbox.service;
 
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.exception.outbox.OutBoxEventNotFoundException;
+import com.codeit.mopl.exception.outbox.OutBoxEventRetryNotAllowedException;
 import com.codeit.mopl.outbox.dto.OutBoxEventDto;
 import com.codeit.mopl.outbox.entity.OutBoxEvent;
 import com.codeit.mopl.outbox.entity.OutBoxStatus;
@@ -53,6 +54,13 @@ public class OutBoxEventService {
         log.info("[OutBox] OutBox 이벤트 재시도 횟수 초기화 시작: outBoxId = {}", outBoxEventId);
         OutBoxEvent event = outBoxEventRepository.findById(outBoxEventId)
                 .orElseThrow(() -> OutBoxEventNotFoundException.withId(outBoxEventId));
+        
+        // DEAD 상태가 아닌 OutBoxEvent는 재시도 횟수를 초기화할 수 없음
+        OutBoxStatus status = event.getOutBoxStatus();
+        if (status != OutBoxStatus.DEAD) {
+            throw OutBoxEventRetryNotAllowedException.withIdAndStatus(outBoxEventId, status);
+        }
+
         event.markRequested();
         OutBoxEventDto result = outBoxEventMapper.toDto(event);
         log.info("[OutBox] OutBox 이벤트 재시도 횟수 초기화 완료: outBoxId = {}, retryCount = {}, status = {}", outBoxEventId, result.retryCount(), result.outBoxStatus());

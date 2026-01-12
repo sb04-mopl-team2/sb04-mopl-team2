@@ -16,7 +16,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-@RequestMapping("/api/follows/outbox")
+@RequestMapping("/api/outbox")
 public class OutBoxEventController {
 
     private final OutBoxEventService outBoxEventService;

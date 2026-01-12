@@ -130,6 +130,7 @@ public class FollowService {
 
         // 이미 CANCELLED 상태인 팔로우 객체면 return
         if (followStatus == FollowStatus.CANCELLED) {
+            log.debug("[팔로우 관리] 이미 CANCELLED 처리된 팔로우입니다: followId = {}, requesterId = {}", followId, requesterId);
             return;
         }
 

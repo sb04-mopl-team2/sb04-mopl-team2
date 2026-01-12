@@ -57,6 +57,7 @@ public class FollowEventKafkaConsumer {
     }
 
     @KafkaListener(topics = "mopl-follower-decrease", groupId = "mopl-follow", concurrency = "3")
+    @Transactional
     public void onFollowerDecrease(String kafkaEventJson, Acknowledgment ack) {
         try {
             FollowerDecreaseEvent event = objectMapper.readValue(kafkaEventJson, FollowerDecreaseEvent.class);

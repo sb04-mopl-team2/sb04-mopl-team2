@@ -46,11 +46,11 @@ public class PublishedFollowOutBoxEventCleanupStepConfig {
             List<OutBoxEvent> events = outBoxEventRepository.findByOutBoxStatusOrderByCreatedAtAsc(OutBoxStatus.PUBLISHED, PageRequest.of(0, BATCH_SIZE));
 
             if (events.isEmpty()) {
-                log.info("[배치] PUBLISHED 상태인 OutBox 이벤트 객체가 없습니다: events = {}", events);
+                log.info("[배치] PUBLISHED 상태인 OutBox 이벤트 객체가 없습니다.");
                 return RepeatStatus.FINISHED;
             }
-            log.info("[배치] PUBLISHED 상태인 OutBox 이벤트 객체를 찾았습니다: events = {}", events);
             int totalCount = events.size();
+            log.info("[배치] PUBLISHED 상태인 OutBox 이벤트 객체를 찾았습니다: totalCount = {}", totalCount);
 
             // OutBox 이벤트 제거
             outBoxEventRepository.deleteAll(events);

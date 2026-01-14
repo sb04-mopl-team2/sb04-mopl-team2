@@ -20,8 +20,9 @@ public class OutBoxEvent extends BaseEntity {
     @Column(name = "event_type", nullable = false)
     private EventType eventType;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "aggregate_type", nullable = false)
-    private String aggregateType;
+    private AggregateType aggregateType;
 
     @Column(name = "aggregate_id", nullable = false)
     private UUID aggregateId;
@@ -40,7 +41,7 @@ public class OutBoxEvent extends BaseEntity {
     @Column(name = "last_error_message", length = 4000)
     private String lastErrorMessage;
 
-    public OutBoxEvent(EventType eventType, String aggregateType, UUID aggregateId, String payload) {
+    public OutBoxEvent(EventType eventType, AggregateType aggregateType, UUID aggregateId, String payload) {
         this.eventType = eventType;
         this.aggregateType = aggregateType;
         this.aggregateId = aggregateId;

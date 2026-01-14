@@ -11,7 +11,8 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 import java.util.UUID;
 
-public interface OutBoxEventRepository extends JpaRepository<OutBoxEvent, UUID> {
+public interface OutBoxEventRepository extends JpaRepository<OutBoxEvent, UUID>,
+        CustomOutBoxEventRepository {
 
     /**
      * 멀티 인스턴스 확장 시 SELECT ... FOR UPDATE SKIP LOCKED 적용 필요

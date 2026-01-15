@@ -2,6 +2,7 @@ package com.codeit.mopl.outbox.repository;
 
 import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.event.entity.EventType;
+import com.codeit.mopl.outbox.dto.DeadOutBoxEventsRetryRequest;
 import com.codeit.mopl.outbox.dto.OutBoxSearchRequest;
 import com.codeit.mopl.outbox.entity.*;
 import com.querydsl.core.types.OrderSpecifier;
@@ -11,6 +12,9 @@ import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @Repository
@@ -22,7 +26,6 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
 
     @Override
     public List<OutBoxEvent> findByCursor(OutBoxSearchRequest request) {
-
         return query.selectFrom(outbox)
                 .where(
                         eventTypeEq(request.eventType()),
@@ -33,6 +36,20 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
                 )
                 .orderBy(buildOrderBy(request.sortBy(), request.sortDirection()))
                 .limit(resolveLimit(request.limit()) + 1)
+                .fetch();
+    }
+
+    @Override
+    public List<OutBoxEvent> findDeadOutBoxEventsByConditions(DeadOutBoxEventsRetryRequest request) {
+        return query.selectFrom(outbox)
+                .where(
+                        eventTypeEq(request.eventType()),
+                        aggregateTypeEq(request.aggregateType()),
+                        outBoxStatusEq(OutBoxStatus.DEAD),
+                        createdAtBetween(request.createdFrom(), request.createdTo())
+                )
+                .orderBy(outbox.createdAt.asc())
+                .limit(resolveLimit(request.limit()))
                 .fetch();
     }
 
@@ -54,6 +71,26 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
 
     private BooleanExpression lastErrorMessageContains(String lastErrorMessage) {
         return StringUtils.isNotBlank(lastErrorMessage) ? outbox.lastErrorMessage.contains(lastErrorMessage) : null;
+    }
+
+    private BooleanExpression createdAtBetween(LocalDate createdFrom, LocalDate createdTo) {
+        if (createdFrom == null && createdTo == null) return null;
+
+        ZoneId zoneId = ZoneId.systemDefault();
+
+        if (createdFrom != null && createdTo != null) {
+            Instant from = createdFrom.atStartOfDay(zoneId).toInstant();
+            Instant to = createdTo.plusDays(1).atStartOfDay(zoneId).toInstant();
+
+            return outbox.createdAt.goe(from).and(outbox.createdAt.goe(to));
+        } else if (createdFrom != null) {
+            Instant from = createdFrom.atStartOfDay(zoneId).toInstant();
+            return outbox.createdAt.goe(from);
+        } else {
+            // createdTo만 존재
+            Instant to = createdTo.plusDays(1).atStartOfDay(zoneId).toInstant();
+            return outbox.createdAt.goe(to);
+        }
     }
 
     private OrderSpecifier<?> buildOrderBy(OutBoxSortBy outBoxSortBy, SortDirection sortDirection) {

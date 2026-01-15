@@ -1,9 +1,7 @@
 package com.codeit.mopl.outbox.controller;
 
 
-import com.codeit.mopl.outbox.dto.CursorResponseOutBoxEventDto;
-import com.codeit.mopl.outbox.dto.OutBoxEventDto;
-import com.codeit.mopl.outbox.dto.OutBoxSearchRequest;
+import com.codeit.mopl.outbox.dto.*;
 import com.codeit.mopl.outbox.service.OutBoxEventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 
@@ -21,12 +18,13 @@ import java.util.UUID;
  * 운영 중 장애 대응을 위한 OutBox Admin API
  * - 일반 사용자 접근 불가
  * - 관리자 수동 재처리 용도
+ * - Swagger UI로 접근 가능 (관리자 JWT 인증 필요)
  */
 @RestController
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/api/outbox")
-public class OutBoxEventController implements OutBoxEventApi{
+public class OutBoxEventController implements OutBoxEventApi {
 
     private final OutBoxEventService outBoxEventService;
 
@@ -42,19 +40,19 @@ public class OutBoxEventController implements OutBoxEventApi{
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{outboxEventId}/retry")
-    public ResponseEntity<OutBoxEventDto> retryOutBoxEvent(@PathVariable("outboxEventId") UUID outboxEventId) {
-        log.info("[OutBox] 특정 OutBox 이벤트 재시도 요청: outboxEventId = {}", outboxEventId);
-        OutBoxEventDto result = outBoxEventService.retryFollowOutBoxEvent(outboxEventId);
-        log.info("[OutBox] 특정 OutBox 이벤트 재시도 완료: outboxEventId = {}", outboxEventId);
+    public ResponseEntity<OutBoxEventDto> retryDeadOutBoxEvent(@PathVariable("outboxEventId") UUID outboxEventId) {
+        log.info("[OutBox] DEAD 상태의 특정 OutBox 이벤트 재시도 요청: outboxEventId = {}", outboxEventId);
+        OutBoxEventDto result = outBoxEventService.resetDeadOutBoxEventToRequested(outboxEventId);
+        log.info("[OutBox] DEAD 상태의 특정 OutBox 이벤트 재시도 완료: outboxEventId = {}", outboxEventId);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/retry")
-    public ResponseEntity<List<OutBoxEventDto>> retryAllDeadOutBoxEvents(@RequestParam(defaultValue = "100") int limit) {
-        log.info("[OutBox] DEAD 상태의 OutBox 이벤트 일괄 재시도 요청: limit = {}", limit);
-        List<OutBoxEventDto> result = outBoxEventService.retryAllDeadOutBoxEvent(limit);
-        log.info("[OutBox] DEAD 상태의 OutBox 이벤트 일괄 재시도 완료: totalCount = {}", result.size());
+    public ResponseEntity<DeadOutBoxEventsRetryDto> retryDeadOutBoxEvents(@RequestBody DeadOutBoxEventsRetryRequest request) {
+        log.info("[OutBox] DEAD 상태의 OutBox 이벤트 일괄 재시도 요청: request = {}", request);
+        DeadOutBoxEventsRetryDto result = outBoxEventService.resetDeadOutBoxEventsToRequested(request);
+        log.info("[OutBox] DEAD 상태의 OutBox 이벤트 일괄 재시도 완료: result = {}", result);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }

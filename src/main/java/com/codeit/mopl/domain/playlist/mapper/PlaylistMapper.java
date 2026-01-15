@@ -1,6 +1,7 @@
 package com.codeit.mopl.domain.playlist.mapper;
 
 import com.codeit.mopl.domain.base.FrontendKstOffsetAdjuster;
+import com.codeit.mopl.domain.playlist.dto.PlaylistCachedDto;
 import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.playlistitem.mapper.PlaylistItemMapper;
@@ -15,6 +16,10 @@ public interface PlaylistMapper {
     @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "adjustForFrontend")
     @Mapping(source = "user", target = "owner")
     @Mapping(source = "playlistItems", target = "contents")
-    PlaylistDto toPlaylistDto(Playlist entity);
+    PlaylistDto toPlaylistDto(PlaylistCachedDto cached, boolean subscribedByMe);
 
+    @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "adjustForFrontend")
+    @Mapping(source = "user", target = "owner")
+    @Mapping(source = "playlistItems", target = "contents")
+    PlaylistCachedDto toCachedDto(Playlist entity);
 }

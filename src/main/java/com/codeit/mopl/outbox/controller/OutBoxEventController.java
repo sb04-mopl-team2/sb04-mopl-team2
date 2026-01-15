@@ -18,13 +18,12 @@ import java.util.UUID;
  * 운영 중 장애 대응을 위한 OutBox Admin API
  * - 일반 사용자 접근 불가
  * - 관리자 수동 재처리 용도
- * - Swagger UI로 접근 가능 (관리자 JWT 인증 필요)
  */
 @RestController
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/api/outbox")
-public class OutBoxEventController implements OutBoxEventApi {
+public class OutBoxEventController {
 
     private final OutBoxEventService outBoxEventService;
 

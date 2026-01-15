@@ -27,8 +27,7 @@ public class OutBoxEvent extends BaseEntity {
     @Column(name = "aggregate_id", nullable = false)
     private UUID aggregateId;
 
-    @Lob
-    @Column(name = "payload", nullable = false)
+    @Column(name = "payload", columnDefinition = "TEXT", nullable = false)
     private String payload;
 
     @Enumerated(EnumType.STRING)

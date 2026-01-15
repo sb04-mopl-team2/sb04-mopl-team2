@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record PaylistCachedDto(
+public record PlaylistCachedDto(
         UUID id,
         UserSummary owner,
         String title,

@@ -26,7 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/api/outbox")
-public class OutBoxEventController {
+public class OutBoxEventController implements OutBoxEventApi{
 
     private final OutBoxEventService outBoxEventService;
 

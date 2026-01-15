@@ -5,26 +5,40 @@ import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.outbox.entity.AggregateType;
 import com.codeit.mopl.outbox.entity.OutBoxSortBy;
 import com.codeit.mopl.outbox.entity.OutBoxStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
 import java.util.UUID;
 
 public record OutBoxSearchRequest(
+        @Schema(example = "FOLLOWER_INCREASE")
         EventType eventType,
-        AggregateType aggregateType,
-        OutBoxStatus outBoxStatus,
-        Integer retryCount,
-        String lastErrorMessage,
 
-        String cursor,
-        UUID idAfter,
+        @Schema(example = "FOLLOW")
+        AggregateType aggregateType,
+
+        @Schema(example = "DEAD")
+        OutBoxStatus outBoxStatus,
 
         @Min(1)
         @Max(1000)
+        @Schema(example = "100")
         Integer limit,
 
+        @Schema(example = "3")
+        Integer retryCount,
+
+        @Schema(example = "TimeoutException")
+        String lastErrorMessage,
+
+        @Schema(example = "ASC")
         SortDirection sortDirection,
-        OutBoxSortBy sortBy
+
+        @Schema(example = "createdAt")
+        OutBoxSortBy sortBy,
+
+        String cursor,
+        UUID idAfter
 ) {
 }

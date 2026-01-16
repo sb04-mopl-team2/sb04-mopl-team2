@@ -12,11 +12,9 @@ import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -34,7 +32,8 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
                         outBoxStatusEq(request.outBoxStatus()),
                         retryCountEq(request.retryCount()),
                         lastErrorMessageContains(request.lastErrorMessage()),
-                        createdAtBetween(request.createdFrom(), request.createdTo())
+                        createdAtBetween(request.createdFrom(), request.createdTo()),
+                        buildCursorCondition(request.cursor(), request.idAfter(), request.sortDirection())
                 )
                 .orderBy(buildOrderBy(request.sortBy(), request.sortDirection()))
                 .limit(resolveLimit(request.limit()) + 1)
@@ -91,6 +90,27 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
             // createdTo만 존재
             Instant to = createdTo.plusDays(1).atStartOfDay(zoneId).toInstant();
             return outbox.createdAt.loe(to);
+        }
+    }
+
+    private BooleanExpression buildCursorCondition(String cursor, UUID idAfter, SortDirection sortDirection) {
+        if (cursor == null || idAfter == null) {
+            return null;
+        }
+        Instant cursorInstant;
+        try {
+            cursorInstant = Instant.parse(cursor);
+        } catch (DateTimeException e) {
+            throw new IllegalArgumentException("올바르지 않은 커서 포맷입니다: " + cursor, e);
+        }
+
+        if (sortDirection == SortDirection.DESCENDING) {
+            return outbox.createdAt.lt(cursorInstant)
+                    .or(outbox.createdAt.eq(cursorInstant).and(outbox.id.lt(idAfter)));
+        } else {
+            // ASCENDING
+            return outbox.createdAt.gt(cursorInstant)
+                    .or(outbox.createdAt.eq(cursorInstant).and(outbox.id.gt(idAfter)));
         }
     }
 

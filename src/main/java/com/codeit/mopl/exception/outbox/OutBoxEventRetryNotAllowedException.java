@@ -11,7 +11,7 @@ public class OutBoxEventRetryNotAllowedException extends OutBoxException {
     }
 
     public static OutBoxEventRetryNotAllowedException withIdAndStatus(UUID outBoxId, OutBoxStatus outBoxStatus) {
-        Map<String, Object> details = Map.of("outBoxId", outBoxId, "OutBoxStatus", outBoxStatus.name());
+        Map<String, Object> details = Map.of("outBoxId", outBoxId, "outBoxStatus", outBoxStatus.name());
         return new OutBoxEventRetryNotAllowedException(details);
     }
 }

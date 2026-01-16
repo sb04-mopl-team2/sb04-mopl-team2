@@ -48,7 +48,7 @@ public class OutBoxEventController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/retry")
-    public ResponseEntity<DeadOutBoxEventsRetryDto> retryDeadOutBoxEvents(@RequestBody DeadOutBoxEventsRetryRequest request) {
+    public ResponseEntity<DeadOutBoxEventsRetryDto> retryDeadOutBoxEvents(@Valid @RequestBody DeadOutBoxEventsRetryRequest request) {
         log.info("[OutBox] DEAD 상태의 OutBox 일괄 재시도 요청: request = {}", request);
         DeadOutBoxEventsRetryDto result = outBoxEventService.resetDeadOutBoxEventsToRequested(request);
         log.info("[OutBox] DEAD 상태의 OutBox 일괄 재시도 완료: result = {}", result);

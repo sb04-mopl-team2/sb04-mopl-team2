@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class PublishEventJobScheduler {
+public class PublishFailedEventsJobScheduler {
 
     private final OutBoxKafkaPublisher publisher;
     

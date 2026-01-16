@@ -10,18 +10,18 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @RequiredArgsConstructor
-public class PublishedFollowOutBoxEventCleanupJobConfig {
+public class PublishedOutBoxEventCleanupJobConfig {
 
     private final JobRepository jobRepository;
-    private final Step publishedFollowOutBoxEventStep;
+    private final Step publishedOutBoxEventStep;
 
     /**
     *   PUBLISHED 상태의 FollowOutBoxEvent 객체 삭제 Job
     */
     @Bean
-    public Job publishedFollowOutBoxEventCleanupJob() {
-        return new JobBuilder("publishedFollowOutBoxEventCleanupJob", jobRepository)
-                .start(publishedFollowOutBoxEventStep)
+    public Job publishedOutBoxEventCleanupJob() {
+        return new JobBuilder("publishedOutBoxEventCleanupJob", jobRepository)
+                .start(publishedOutBoxEventStep)
                 .build();
     }
 }

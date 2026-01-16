@@ -12,26 +12,26 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PublishedFollowOutBoxEventCleanupJobScheduler {
+public class PublishedOutBoxEventCleanupJobScheduler {
 
     private final JobLauncher jobLauncher;
-    private final Job publishedFollowOutBoxEventCleanupJob;
+    private final Job publishedOutBoxEventCleanupJob;
 
     /**
      *   PUBLISHED 상태의 FollowOutBoxEvent 객체 삭제 Scheduler
      */
     @Scheduled(cron = "0 0 14 * * Wed")
-    public void runPublishedFollowOutBoxEventCleanupJob() {
+    public void runPublishedOutBoxEventCleanupJob() {
         try {
-            log.info("=== PUBLISHED 상태의 FollowOutBoxEvent 객체 삭제 시작 ===");
+            log.info("=== PUBLISHED 상태의 OutBox 삭제 시작 ===");
             JobParameters params = new JobParametersBuilder()
                     .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters();
 
-            jobLauncher.run(publishedFollowOutBoxEventCleanupJob, params);
-            log.info("=== PUBLISHED 상태의 FollowOutBoxEvent 객체 삭제 완료 ===");
+            jobLauncher.run(publishedOutBoxEventCleanupJob, params);
+            log.info("=== PUBLISHED 상태의 OutBox 삭제 완료 ===");
         } catch (Exception e) {
-            log.error("[배치] PUBLISHED 상태의 FollowOutBoxEvent 객체 삭제 실패: errorMessage = {}", e.getMessage(), e);
+            log.error("[배치] PUBLISHED 상태의 OutBox 삭제 실패: errorMessage = {}", e.getMessage(), e);
         }
     }
 }

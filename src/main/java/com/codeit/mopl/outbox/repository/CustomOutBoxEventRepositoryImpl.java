@@ -101,26 +101,34 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
         if (cursor == null || idAfter == null) {
             return null;
         }
-        Instant cursorInstant;
-        try {
-            cursorInstant = Instant.parse(cursor);
-        } catch (DateTimeException e) {
-            throw new IllegalArgumentException("올바르지 않은 커서 포맷입니다: " + cursor, e);
-        }
 
         OutBoxSortBy sortBy = outBoxSortBy != null ? outBoxSortBy : OutBoxSortBy.CREATED_AT;
         SortDirection direction = sortDirection != null ? sortDirection : SortDirection.ASCENDING;
         Order order = direction == SortDirection.ASCENDING ? Order.ASC : Order.DESC;
 
         return switch (sortBy) {
-            case CREATED_AT -> order == Order.ASC
+            case CREATED_AT -> {
+                Instant cursorInstant;
+                try {
+                    cursorInstant = Instant.parse(cursor);
+                } catch (DateTimeException e) {
+                    throw new IllegalArgumentException("올바르지 않은 커서 포맷입니다: " + cursor, e);
+                }
+
+                yield order == Order.ASC
                         ? outbox.createdAt.gt(cursorInstant)
                         .or(outbox.createdAt.eq(cursorInstant).and(outbox.id.gt(idAfter)))
                         : outbox.createdAt.lt(cursorInstant)
                         .or(outbox.createdAt.eq(cursorInstant).and(outbox.id.lt(idAfter)));
+            }
 
             case RETRY_COUNT -> {
-                int retryCountCursor = Integer.parseInt(cursor);
+                int retryCountCursor;
+                try {
+                    retryCountCursor = Integer.parseInt(cursor);
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("올바르지 않은 커서 포맷입니다:  " + cursor, e);
+                }
                 yield order == Order.ASC
                         ? outbox.retryCount.gt(retryCountCursor)
                         .or(outbox.retryCount.eq(retryCountCursor).and(outbox.id.gt(idAfter)))

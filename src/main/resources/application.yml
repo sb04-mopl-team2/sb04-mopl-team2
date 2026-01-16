@@ -124,3 +124,8 @@ mail:
           enable: true
       debug: true
   expiration: 180
+
+outbox:
+  batch:
+    cleanup:
+      size: 1000

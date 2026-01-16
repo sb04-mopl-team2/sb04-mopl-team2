@@ -2,7 +2,7 @@ package com.codeit.mopl.outbox.util;
 
 public final class ErrorMessageSummarizer {
 
-    public ErrorMessageSummarizer() {
+    private ErrorMessageSummarizer() {
     }
 
     private static final int MAX_LENGTH = 4000;

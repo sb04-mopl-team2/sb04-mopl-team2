@@ -153,7 +153,7 @@ public class OutBoxEventService {
         Set<AggregateType> aggregateTypes = outBoxEventList.stream()
                 .map(OutBoxEvent::getAggregateType)
                 .collect(Collectors.toSet());
-        
+
         // 일괄 초기화는 무조건 ASC 정렬
         Instant createdFrom = outBoxEventList.get(0).getCreatedAt();
         Instant createdTo = outBoxEventList.get(outBoxEventList.size() - 1).getCreatedAt();
@@ -174,12 +174,10 @@ public class OutBoxEventService {
     public void deleteOutBoxEvent(UUID outBoxEventId) {
         log.info("[OutBox] OutBox 삭제 시작: outBoxEventId = {}", outBoxEventId);
 
-        if (!outBoxEventRepository.existsById(outBoxEventId)) {
-            log.info("[OutBox] 해당 id를 가진 OutBox가 없습니다: outBoxEventId = {}", outBoxEventId);
-            throw OutBoxEventNotFoundException.withId(outBoxEventId);
-        }
+        OutBoxEvent outbox = outBoxEventRepository.findById(outBoxEventId)
+                .orElseThrow(() -> OutBoxEventNotFoundException.withId(outBoxEventId));
 
-        outBoxEventRepository.deleteById(outBoxEventId);
+        outBoxEventRepository.delete(outbox);
         log.info("[OutBox] OutBox 삭제 완료: outBoxEventId = {}", outBoxEventId);
     }
 }

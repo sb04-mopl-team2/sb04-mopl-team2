@@ -20,7 +20,7 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRES_NE
 @RequiredArgsConstructor
 @Slf4j
 public class OutBoxEventProcessor {
-    
+
     private final OutBoxEventRepository outBoxEventRepository;
 
     /**

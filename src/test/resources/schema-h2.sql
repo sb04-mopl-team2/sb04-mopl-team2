@@ -170,8 +170,8 @@ CREATE TABLE IF NOT EXISTS watching_sessions
     content_id UUID NOT NULL,
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (content_id) REFERENCES contents(id) ON DELETE CASCADE,
-    UNIQUE(user_id)
+    FOREIGN KEY (content_id) REFERENCES contents(id) ON DELETE CASCADE
+    -- UNIQUE(user_id)
     );
 
 -- PROCESSED EVENT

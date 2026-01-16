@@ -41,12 +41,12 @@ public class PublishedOutBoxEventCleanupStepConfig {
     @Bean
     public Step publishedOutBoxEventStep() {
         return new StepBuilder("publishedOutBoxEventStep", jobRepository)
-                .tasklet(publihsedOutBoxEventTasklet(), transactionManager)
+                .tasklet(publishedOutBoxEventTasklet(), transactionManager)
                 .build();
     }
 
     @Bean
-    public Tasklet publihsedOutBoxEventTasklet() {
+    public Tasklet publishedOutBoxEventTasklet() {
         // 누적 삭제 건수 Counter
         Counter deletedCounter = Counter.builder("outbox.cleanup.deleted.count")
                 .description("PUBLISHED 상태 OutBox 누적 삭제 건수")

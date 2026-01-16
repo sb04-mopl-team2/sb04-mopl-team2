@@ -76,7 +76,14 @@ public class OutBoxEventService {
             // hasNext가 true면 1만큼 더 조회되었으므로 초과 부분 자르기
             outBoxEventList = outBoxEventList.subList(0, limit);
             OutBoxEvent lastOutBoxEvent = outBoxEventList.get(outBoxEventList.size() - 1);
-            nextCursor = lastOutBoxEvent.getCreatedAt().toString();
+
+            switch (sortBy) {
+                case CREATED_AT -> nextCursor = lastOutBoxEvent.getCreatedAt().toString();
+                case RETRY_COUNT -> {
+                    Integer retryCount = lastOutBoxEvent.getRetryCount();
+                    nextCursor = retryCount.toString();
+                }
+            }
             nextIdAfter = lastOutBoxEvent.getId();
         }
 

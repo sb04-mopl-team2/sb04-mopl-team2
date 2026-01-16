@@ -5,6 +5,7 @@ import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.outbox.dto.DeadOutBoxEventsRetryRequest;
 import com.codeit.mopl.outbox.dto.OutBoxSearchRequest;
 import com.codeit.mopl.outbox.entity.*;
+import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +27,8 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
 
     @Override
     public List<OutBoxEvent> findByCursor(OutBoxSearchRequest request) {
+        List<OrderSpecifier<?>> orders = buildOrderSpecification(request.sortBy(), request.sortDirection());
+
         return query.selectFrom(outbox)
                 .where(
                         eventTypeEq(request.eventType()),
@@ -33,9 +37,9 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
                         retryCountEq(request.retryCount()),
                         lastErrorMessageContains(request.lastErrorMessage()),
                         createdAtBetween(request.createdFrom(), request.createdTo()),
-                        buildCursorCondition(request.cursor(), request.idAfter(), request.sortDirection())
+                        buildCursorCondition(request.cursor(), request.idAfter(), request.sortBy(), request.sortDirection())
                 )
-                .orderBy(buildOrderBy(request.sortBy(), request.sortDirection()))
+                .orderBy(orders.toArray(OrderSpecifier[]::new))
                 .limit(resolveLimit(request.limit()) + 1)
                 .fetch();
     }
@@ -93,7 +97,7 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
         }
     }
 
-    private BooleanExpression buildCursorCondition(String cursor, UUID idAfter, SortDirection sortDirection) {
+    private BooleanExpression buildCursorCondition(String cursor, UUID idAfter, OutBoxSortBy outBoxSortBy, SortDirection sortDirection) {
         if (cursor == null || idAfter == null) {
             return null;
         }
@@ -104,29 +108,46 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
             throw new IllegalArgumentException("올바르지 않은 커서 포맷입니다: " + cursor, e);
         }
 
-        if (sortDirection == SortDirection.DESCENDING) {
-            return outbox.createdAt.lt(cursorInstant)
-                    .or(outbox.createdAt.eq(cursorInstant).and(outbox.id.lt(idAfter)));
-        } else {
-            // ASCENDING
-            return outbox.createdAt.gt(cursorInstant)
-                    .or(outbox.createdAt.eq(cursorInstant).and(outbox.id.gt(idAfter)));
-        }
+        OutBoxSortBy sortBy = outBoxSortBy != null ? outBoxSortBy : OutBoxSortBy.CREATED_AT;
+        SortDirection direction = sortDirection != null ? sortDirection : SortDirection.ASCENDING;
+        Order order = direction == SortDirection.ASCENDING ? Order.ASC : Order.DESC;
+
+        return switch (sortBy) {
+            case CREATED_AT -> order == Order.ASC
+                        ? outbox.createdAt.gt(cursorInstant)
+                        .or(outbox.createdAt.eq(cursorInstant).and(outbox.id.gt(idAfter)))
+                        : outbox.createdAt.lt(cursorInstant)
+                        .or(outbox.createdAt.eq(cursorInstant).and(outbox.id.lt(idAfter)));
+
+            case RETRY_COUNT -> {
+                int retryCountCursor = Integer.parseInt(cursor);
+                yield order == Order.ASC
+                        ? outbox.retryCount.gt(retryCountCursor)
+                        .or(outbox.retryCount.eq(retryCountCursor).and(outbox.id.gt(idAfter)))
+                        : outbox.retryCount.lt(retryCountCursor)
+                        .or(outbox.retryCount.eq(retryCountCursor).and(outbox.id.lt(idAfter)));
+            }
+        };
     }
 
-    private OrderSpecifier<?> buildOrderBy(OutBoxSortBy outBoxSortBy, SortDirection sortDirection) {
+    private List<OrderSpecifier<?>> buildOrderSpecification(OutBoxSortBy outBoxSortBy, SortDirection sortDirection) {
         // 정렬 조건 디폴트 값: CREATED_AT, 정렬 방향 디폴트 값: ASCENDING
         OutBoxSortBy sortBy = outBoxSortBy != null ? outBoxSortBy : OutBoxSortBy.CREATED_AT;
         SortDirection direction = sortDirection != null ? sortDirection : SortDirection.ASCENDING;
-
-        return switch (sortBy) {
-            case CREATED_AT -> direction == SortDirection.ASCENDING
-                    ? outbox.createdAt.asc()
-                    : outbox.createdAt.desc();
-            case RETRY_COUNT -> direction == SortDirection.ASCENDING
-                    ? outbox.retryCount.asc()
-                    : outbox.retryCount.desc();
-        };
+    
+        Order order = direction == SortDirection.ASCENDING
+                ? Order.ASC
+                : Order.DESC;
+        
+        List<OrderSpecifier<?>> orders = new ArrayList<>();
+        
+        switch (sortBy) {
+            case CREATED_AT -> orders.add(new OrderSpecifier<>(order, outbox.createdAt));
+            case RETRY_COUNT -> orders.add(new OrderSpecifier<>(order, outbox.retryCount));
+        }
+        // id 보조 정렬 추가
+        orders.add(new OrderSpecifier<>(order, outbox.id));
+        return orders;
     }
 
     private int resolveLimit(Integer limit) {

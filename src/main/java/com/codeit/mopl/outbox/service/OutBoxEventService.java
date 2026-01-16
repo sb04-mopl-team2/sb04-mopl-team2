@@ -157,4 +157,17 @@ public class OutBoxEventService {
         log.info("[OutBox] DEAD 상태의 OutBox 일괄 초기화 완료: totalCount = {}", result.totalCount());
         return result;
     }
+    
+    @Transactional
+    public void deleteOutBoxEvent(UUID outBoxEventId) {
+        log.info("[OutBox] OutBox 삭제 시작: outBoxEventId = {}", outBoxEventId);
+
+        if (!outBoxEventRepository.existsById(outBoxEventId)) {
+            log.info("[OutBox] 해당 id를 가진 OutBox가 없습니다: outBoxEventId = {}", outBoxEventId);
+            throw OutBoxEventNotFoundException.withId(outBoxEventId);
+        }
+
+        outBoxEventRepository.deleteById(outBoxEventId);
+        log.info("[OutBox] OutBox 삭제 완료: outBoxEventId = {}", outBoxEventId);
+    }
 }

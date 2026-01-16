@@ -30,9 +30,9 @@ public class OutBoxEventController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<CursorResponseOutBoxEventDto> getOutBoxEvents(@Valid OutBoxSearchRequest request) {
-        log.info("[OutBox] OutBox 이벤트 목록 조회 요청");
+        log.info("[OutBox] OutBox 목록 조회 요청");
         CursorResponseOutBoxEventDto result = outBoxEventService.getOutBoxEvents(request);
-        log.info("[OutBox] OutBox 이벤트 목록 조회 응답: totalCount = {}, hasNext = {}, nextCursor = {}",
+        log.info("[OutBox] OutBox 목록 조회 응답: totalCount = {}, hasNext = {}, nextCursor = {}",
                 result.totalCount(), result.hasNext(), result.nextCursor());
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
@@ -40,18 +40,27 @@ public class OutBoxEventController {
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{outboxEventId}/retry")
     public ResponseEntity<OutBoxEventDto> retryDeadOutBoxEvent(@PathVariable("outboxEventId") UUID outboxEventId) {
-        log.info("[OutBox] DEAD 상태의 특정 OutBox 이벤트 재시도 요청: outboxEventId = {}", outboxEventId);
+        log.info("[OutBox] DEAD 상태의 특정 OutBox 재시도 요청: outboxEventId = {}", outboxEventId);
         OutBoxEventDto result = outBoxEventService.resetDeadOutBoxEventToRequested(outboxEventId);
-        log.info("[OutBox] DEAD 상태의 특정 OutBox 이벤트 재시도 완료: outboxEventId = {}", outboxEventId);
+        log.info("[OutBox] DEAD 상태의 특정 OutBox 재시도 완료: outboxEventId = {}", outboxEventId);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/retry")
     public ResponseEntity<DeadOutBoxEventsRetryDto> retryDeadOutBoxEvents(@RequestBody DeadOutBoxEventsRetryRequest request) {
-        log.info("[OutBox] DEAD 상태의 OutBox 이벤트 일괄 재시도 요청: request = {}", request);
+        log.info("[OutBox] DEAD 상태의 OutBox 일괄 재시도 요청: request = {}", request);
         DeadOutBoxEventsRetryDto result = outBoxEventService.resetDeadOutBoxEventsToRequested(request);
-        log.info("[OutBox] DEAD 상태의 OutBox 이벤트 일괄 재시도 완료: result = {}", result);
+        log.info("[OutBox] DEAD 상태의 OutBox 일괄 재시도 완료: result = {}", result);
         return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{outboxEventId}")
+    public ResponseEntity<Void> deleteOutBoxEvent(@PathVariable("outboxEventId") UUID outboxEventId) {
+        log.info("[OutBox] OutBox 삭제 요청: outboxEventId = {}", outboxEventId);
+        outBoxEventService.deleteOutBoxEvent(outboxEventId);
+        log.info("[OutBox] OutBox 삭제 완료: outboxEventId = {}", outboxEventId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

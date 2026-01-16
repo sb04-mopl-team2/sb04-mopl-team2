@@ -35,13 +35,13 @@ public class OutBoxEventService {
 
     @Transactional
     public OutBoxEventDto createOutBoxEvent(OutBoxEventCreateRequest request) {
-        log.info("[OutBox] OutBox 생성 시작");
+        log.info("[OutBox] OutBox 생성 시작: request = {}", request);
         String payload = serializer.serialize(request.domainEvent());
         OutBoxEvent event = new OutBoxEvent(request.eventType(), request.aggregateType(), request.aggregateId(), payload);
         outBoxEventRepository.save(event);
         OutBoxEventDto result = outBoxEventMapper.toDto(event);
         eventPublisher.publishEvent(event);
-        log.info("[OutBox] OutBox 생성 완료");
+        log.info("[OutBox] OutBox 생성 완료: id = {}", result.id());
         return result;
     }
 

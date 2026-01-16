@@ -29,20 +29,6 @@ public class KafkaEventListener {
         sender.send("mopl-notification-create", key, event);
     }
 
-//    @Async("taskExecutor")
-//    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-//    public void on(FollowerIncreaseEvent event) {
-//        String key = event.followeeId().toString();
-//        sender.send("mopl-follower-increase", key, event);
-//    }
-//
-//    @Async("taskExecutor")
-//    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-//    public void on(FollowerDecreaseEvent event) {
-//        String key = event.followeeId().toString();
-//        sender.send("mopl-follower-decrease", key, event);
-//    }
-
     @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(UserRoleUpdateEvent event) {

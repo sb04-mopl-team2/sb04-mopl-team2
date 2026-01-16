@@ -35,10 +35,10 @@ public class KafkaEventSender {
 
             return kafkaTemplate.send(record).whenComplete((result, ex) -> {
                 if (ex != null) {
-                    log.warn("[Kafka] 전송 실패 topic={}, key={}, error={}", topic, key, ex.getMessage(), ex);
+                    log.warn("[Kafka] 전송 실패 topic={}, keyPresent={}, error={}", topic, key != null, ex.getMessage(), ex);
                 } else {
-                    log.info("[Kafka] 전송 성공 topic={}, key={}, partition={}, offset={}",
-                            topic, key,
+                    log.info("[Kafka] 전송 성공 topic={}, keyPresent={}, partition={}, offset={}",
+                            topic, key != null,
                             result.getRecordMetadata().partition(),
                             result.getRecordMetadata().offset());
                 }

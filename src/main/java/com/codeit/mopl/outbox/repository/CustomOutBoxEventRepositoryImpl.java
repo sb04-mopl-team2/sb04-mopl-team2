@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Repository
@@ -32,7 +33,8 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
                         aggregateTypeEq(request.aggregateType()),
                         outBoxStatusEq(request.outBoxStatus()),
                         retryCountEq(request.retryCount()),
-                        lastErrorMessageContains(request.lastErrorMessage())
+                        lastErrorMessageContains(request.lastErrorMessage()),
+                        createdAtBetween(request.createdFrom(), request.createdTo())
                 )
                 .orderBy(buildOrderBy(request.sortBy(), request.sortDirection()))
                 .limit(resolveLimit(request.limit()) + 1)
@@ -76,20 +78,19 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
     private BooleanExpression createdAtBetween(LocalDate createdFrom, LocalDate createdTo) {
         if (createdFrom == null && createdTo == null) return null;
 
-        ZoneId zoneId = ZoneId.systemDefault();
+        ZoneId zoneId = ZoneOffset.UTC;
 
         if (createdFrom != null && createdTo != null) {
             Instant from = createdFrom.atStartOfDay(zoneId).toInstant();
             Instant to = createdTo.plusDays(1).atStartOfDay(zoneId).toInstant();
-
-            return outbox.createdAt.goe(from).and(outbox.createdAt.goe(to));
+            return outbox.createdAt.between(from, to);
         } else if (createdFrom != null) {
             Instant from = createdFrom.atStartOfDay(zoneId).toInstant();
             return outbox.createdAt.goe(from);
         } else {
             // createdTo만 존재
             Instant to = createdTo.plusDays(1).atStartOfDay(zoneId).toInstant();
-            return outbox.createdAt.goe(to);
+            return outbox.createdAt.loe(to);
         }
     }
 

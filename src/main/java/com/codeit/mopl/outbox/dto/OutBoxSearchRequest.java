@@ -8,6 +8,7 @@ import com.codeit.mopl.outbox.entity.OutBoxStatus;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record OutBoxSearchRequest(
@@ -28,6 +29,9 @@ public record OutBoxSearchRequest(
         @Min(1)
         @Max(1000)
         Integer limit,
+
+        LocalDate createdFrom,
+        LocalDate createdTo,
 
         String cursor,
 

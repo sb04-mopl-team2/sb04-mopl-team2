@@ -4,6 +4,7 @@ import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.outbox.entity.AggregateType;
 import com.codeit.mopl.outbox.entity.OutBoxStatus;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public record OutBoxEventDto(
@@ -14,6 +15,7 @@ public record OutBoxEventDto(
         String payload,
         OutBoxStatus outBoxStatus,
         int retryCount,
-        String lastErrorMessage
+        String lastErrorMessage,
+        Instant createdAt
 ) {
 }

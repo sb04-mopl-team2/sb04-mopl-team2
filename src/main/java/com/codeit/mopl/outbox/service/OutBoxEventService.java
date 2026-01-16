@@ -91,18 +91,18 @@ public class OutBoxEventService {
                 .map(outBoxEventMapper::toDto)
                 .toList();
 
-        long totalCount = data.size();
+        long currentPageCount = data.size();
 
         CursorResponseOutBoxEventDto result = new CursorResponseOutBoxEventDto(
                 data,
                 nextCursor,
                 nextIdAfter,
                 hasNext,
-                totalCount,
+                currentPageCount,
                 sortBy,
                 sortDirection
         );
-        log.info("[OutBox] OutBox 목록 조회 완료: totalCount = {}", totalCount);
+        log.info("[OutBox] OutBox 목록 조회 완료: currentPageCount = {}", currentPageCount);
         return result;
     }
 

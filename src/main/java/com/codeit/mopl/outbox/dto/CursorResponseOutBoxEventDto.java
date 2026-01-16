@@ -11,7 +11,7 @@ public record CursorResponseOutBoxEventDto(
         String nextCursor,
         UUID nextIdAfter,
         boolean hasNext,
-        long totalCount,
+        long currentPageCount,
         OutBoxSortBy sortBy,
         SortDirection sortDirection
 ) {

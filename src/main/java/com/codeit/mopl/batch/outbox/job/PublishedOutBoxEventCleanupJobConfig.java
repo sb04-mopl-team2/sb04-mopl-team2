@@ -16,7 +16,7 @@ public class PublishedOutBoxEventCleanupJobConfig {
     private final Step publishedOutBoxEventStep;
 
     /**
-    *   PUBLISHED 상태의 FollowOutBoxEvent 객체 삭제 Job
+    *   PUBLISHED 상태의 OutBox 객체 삭제 Job
     */
     @Bean
     public Job publishedOutBoxEventCleanupJob() {

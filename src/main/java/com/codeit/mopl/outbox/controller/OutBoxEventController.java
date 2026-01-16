@@ -33,7 +33,7 @@ public class OutBoxEventController {
         log.info("[OutBox] OutBox 목록 조회 요청");
         CursorResponseOutBoxEventDto result = outBoxEventService.getOutBoxEvents(request);
         log.info("[OutBox] OutBox 목록 조회 응답: totalCount = {}, hasNext = {}, nextCursor = {}",
-                result.totalCount(), result.hasNext(), result.nextCursor());
+                result.currentPageCount(), result.hasNext(), result.nextCursor());
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 

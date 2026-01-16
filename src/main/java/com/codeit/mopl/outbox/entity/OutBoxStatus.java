@@ -1,8 +1,10 @@
 package com.codeit.mopl.outbox.entity;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
+@Getter
 public enum OutBoxStatus {
     REQUESTED("요청됨"),
     PUBLISHED("발행됨"),

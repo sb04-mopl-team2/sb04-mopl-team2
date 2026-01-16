@@ -20,10 +20,10 @@ public interface OutBoxEventRepository extends JpaRepository<OutBoxEvent, UUID>,
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
                 SELECT e FROM OutBoxEvent e
-                WHERE e.outBoxStatus IN ('REQUESTED', 'FAILED')
+                WHERE e.outBoxStatus = 'FAILED'
                 ORDER BY e.createdAt ASC
             """)
-    List<OutBoxEvent> findPublishTargets(Pageable pageable);
+    List<OutBoxEvent> findFailedTargets(Pageable pageable);
 
     List<OutBoxEvent> findByOutBoxStatusOrderByCreatedAtAsc(OutBoxStatus outBoxStatus, Pageable pageable);
 }

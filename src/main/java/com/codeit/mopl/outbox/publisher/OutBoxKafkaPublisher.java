@@ -31,16 +31,18 @@ public class OutBoxKafkaPublisher {
                         Function.identity()
                 ));
     }
-    
-    // 배치 처리 용도
+
+    /**
+     * FAILED OutBox 배치 처리
+     */
     @Transactional
-    public void publishEvents() {
-        List<OutBoxEvent> events = outBoxEventRepository.findPublishTargets(PageRequest.of(0, BATCH_SIZE));
+    public void publishFailedEvents() {
+        List<OutBoxEvent> events = outBoxEventRepository.findFailedTargets(PageRequest.of(0, BATCH_SIZE));
         if (events.isEmpty()) {
-            log.info("[OutBox] REQUESTED 혹은 FAILED 상태인 OutBox가 없습니다: events = {}", events);
+            log.info("[OutBox] FAILED 상태인 OutBox가 없습니다: events = {}", events);
             return;
         }
-        log.info("[OutBox] REQUESTED 혹은 FAILED 상태의 OutBox를 찾았습니다: totalCount = {}", events.size());
+        log.info("[OutBox] FAILED 상태의 OutBox를 찾았습니다: totalCount = {}", events.size());
         for (OutBoxEvent event : events) {
             handlers.get(event.getEventType()).publish(event);
         }

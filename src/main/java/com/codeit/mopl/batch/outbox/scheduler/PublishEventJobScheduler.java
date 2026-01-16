@@ -12,10 +12,10 @@ public class PublishEventJobScheduler {
     private final OutBoxKafkaPublisher publisher;
     
     /** 
-     *  FollowOutBoxEvent 10초마다 퍼블리싱
+     *  FAILED OutBoxEvent 1분 마다 퍼블리싱
      * */
-    @Scheduled(cron = "10 * * * * *")
+    @Scheduled(cron = "0 * * * * *")
     public void publish() {
-        publisher.publishEvents();
+        publisher.publishFailedEvents();
     }
 }

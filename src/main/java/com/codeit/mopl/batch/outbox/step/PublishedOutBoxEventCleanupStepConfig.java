@@ -67,6 +67,7 @@ public class PublishedOutBoxEventCleanupStepConfig {
 
             if (events.isEmpty()) {
                 log.info("[배치] PUBLISHED 상태인 OutBox가 없습니다.");
+                lastDeletedCount.set(0);
                 return RepeatStatus.FINISHED;
             }
             int totalCount = events.size();

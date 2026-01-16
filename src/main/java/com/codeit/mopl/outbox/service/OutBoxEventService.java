@@ -49,6 +49,10 @@ public class OutBoxEventService {
         log.info("[OutBox] OutBox 목록 조회 시작: request = {}", request);
         List<OutBoxEvent> outBoxEventList = outBoxEventRepository.findByCursor(request);
 
+        // 정렬 조건 디폴트 값: CREATED_AT, 정렬 방향 디폴트 값: ASCENDING
+        OutBoxSortBy sortBy = request.sortBy() != null ? request.sortBy() : OutBoxSortBy.CREATED_AT;
+        SortDirection sortDirection = request.sortDirection() != null ? request.sortDirection() : SortDirection.ASCENDING;
+
         if (outBoxEventList.isEmpty()) {
             log.info("[OutBox] OutBox 목록 조회 완료: 결과 없음");
             return new CursorResponseOutBoxEventDto(
@@ -57,8 +61,8 @@ public class OutBoxEventService {
                     null,
                     false,
                     0L,
-                    request.sortBy(),
-                    request.sortDirection()
+                    sortBy,
+                    sortDirection
             );
         }
 
@@ -67,10 +71,6 @@ public class OutBoxEventService {
         boolean hasNext = outBoxEventList.size() > limit;
         String nextCursor = null;
         UUID nextIdAfter = null;
-
-        // 정렬 조건 디폴트 값: CREATED_AT, 정렬 방향 디폴트 값: ASCENDING
-        OutBoxSortBy sortBy = request.sortBy() != null ? request.sortBy() : OutBoxSortBy.CREATED_AT;
-        SortDirection sortDirection = request.sortDirection() != null ? request.sortDirection() : SortDirection.ASCENDING;
 
         if (hasNext) {
             // hasNext가 true면 1만큼 더 조회되었으므로 초과 부분 자르기

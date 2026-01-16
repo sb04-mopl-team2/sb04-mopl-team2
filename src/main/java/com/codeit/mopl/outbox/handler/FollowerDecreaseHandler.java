@@ -7,12 +7,10 @@ import com.codeit.mopl.exception.outbox.EventDeserializationFailedException;
 import com.codeit.mopl.outbox.entity.OutBoxEvent;
 import com.codeit.mopl.outbox.entity.OutBoxStatus;
 import com.codeit.mopl.outbox.processor.OutBoxEventProcessor;
-import com.codeit.mopl.outbox.util.ErrorMessageSummarizer;
 import com.codeit.mopl.outbox.util.EventSerializer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -41,9 +39,7 @@ public class FollowerDecreaseHandler implements OutBoxHandler {
             String key = followerDecreaseEvent.followeeId().toString();
 
             sender.send("mopl-follower-decrease", key, followerDecreaseEvent)
-                            .whenComplete((result, ex) -> {
-                                processor.handleDeserializationFailure(event, ex.getMessage());
-                            });
+                    .whenComplete((result, ex) -> processor.processKafkaResult(event, ex));
         } catch (EventDeserializationFailedException e) {
             // 구조적인 문제 -> 재시도 X
             processor.handleDeserializationFailure(event, e.getMessage());

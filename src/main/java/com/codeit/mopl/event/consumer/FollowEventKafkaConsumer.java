@@ -87,7 +87,7 @@ public class FollowEventKafkaConsumer {
     private boolean isAlreadyProcessed(UUID followId, EventType eventType) {
         boolean isProcessed = processedEventRepository.existsByEventIdAndEventType(followId, eventType);
         if (isProcessed) {
-            log.warn("[팔로우 관리] 이벤트 처리 중단 - 이미 처리된 이벤트입니다: eventId = {}, eventType = {}", followId, eventType);
+            log.warn("[Kafka] 이벤트 처리 중단 - 이미 처리된 이벤트입니다: eventId = {}, eventType = {}", followId, eventType);
         }
         return isProcessed;
     }

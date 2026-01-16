@@ -39,9 +39,7 @@ public class FollowerIncreaseHandler implements OutBoxHandler {
             String key = followerIncreaseEvent.followeeId().toString();
 
             sender.send("mopl-follower-increase", key, followerIncreaseEvent)
-                    .whenComplete((result, ex) -> {
-                        processor.processKafkaResult(event, ex);
-                    });
+                    .whenComplete((result, ex) -> processor.processKafkaResult(event, ex));
         } catch (EventDeserializationFailedException e) {
             // 구조적인 문제 -> 재시도 X
             processor.handleDeserializationFailure(event, e.getMessage());

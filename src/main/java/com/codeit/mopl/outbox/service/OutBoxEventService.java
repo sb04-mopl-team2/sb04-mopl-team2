@@ -10,7 +10,6 @@ import com.codeit.mopl.outbox.entity.OutBoxEvent;
 import com.codeit.mopl.outbox.entity.OutBoxSortBy;
 import com.codeit.mopl.outbox.entity.OutBoxStatus;
 import com.codeit.mopl.outbox.mapper.OutBoxEventMapper;
-import com.codeit.mopl.outbox.publisher.OutBoxKafkaPublisher;
 import com.codeit.mopl.outbox.repository.OutBoxEventRepository;
 import com.codeit.mopl.outbox.util.EventSerializer;
 import lombok.RequiredArgsConstructor;

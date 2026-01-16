@@ -1,10 +1,8 @@
 package com.codeit.mopl.outbox.repository;
 
 import com.codeit.mopl.outbox.entity.OutBoxEvent;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,15 +14,13 @@ import java.util.UUID;
 public interface OutBoxEventRepository extends JpaRepository<OutBoxEvent, UUID>,
         CustomOutBoxEventRepository {
 
-    /**
-     * 멀티 인스턴스 확장 시 SELECT ... FOR UPDATE SKIP LOCKED 적용 필요
-     */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-                SELECT o FROM OutBoxEvent o
-                WHERE o.outBoxStatus = 'FAILED'
-                ORDER BY o.createdAt ASC
-            """)
+    @Query(value = """
+                SELECT *
+                FROM outbox_events
+                WHERE outbox_status = 'FAILED'
+                ORDER BY created_at ASC
+                FOR UPDATE SKIP LOCKED
+            """, nativeQuery = true)
     List<OutBoxEvent> findFailedTargets(Pageable pageable);
 
     @Transactional

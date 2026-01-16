@@ -9,6 +9,7 @@ public record OutBoxEventCreateRequest(
         EventType eventType,
         AggregateType aggregateType,
         UUID aggregateId,
-        Object domainEvent
+        Object domainEvent,
+        String eventClassName
 ) {
 }

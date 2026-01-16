@@ -42,7 +42,7 @@ public class OutBoxEventProcessor {
     @Transactional(propagation = REQUIRES_NEW)
     public void handleDeserializationFailure(OutBoxEvent event, String errorMessage) {
         String summarized = ErrorMessageSummarizer.summarizeErrorMessage(errorMessage);
-        log.error("[OutBox] payload 역직렬화 실패: event = {}, errorMessage = {}", event, summarized);
+        log.error("[OutBox] payload 역직렬화 실패: outBoxEventId = {}, errorMessage = {}", event.getId(), summarized);
         event.markDead(summarized);
         outBoxEventRepository.save(event);
     }
@@ -50,7 +50,7 @@ public class OutBoxEventProcessor {
     /**
      * 공통 실패 처리
      */
-    public void handleFailure(OutBoxEvent event, String errorMessage) {
+    private void handleFailure(OutBoxEvent event, String errorMessage) {
         String summarized = ErrorMessageSummarizer.summarizeErrorMessage(errorMessage);
         if (event.getRetryCount() >= OutBoxEvent.MAX_RETRY_COUNT) {
             event.markDead(summarized);

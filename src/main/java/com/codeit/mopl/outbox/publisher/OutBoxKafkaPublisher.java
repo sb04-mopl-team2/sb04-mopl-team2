@@ -44,12 +44,22 @@ public class OutBoxKafkaPublisher {
         }
         log.info("[OutBox] FAILED 상태의 OutBox를 찾았습니다: totalCount = {}", events.size());
         for (OutBoxEvent event : events) {
-            handlers.get(event.getEventType()).publish(event);
+            OutBoxHandler handler = getHandler(event);
+            handler.publish(event);
         }
     }
 
     @Transactional
     public void publishEvent(OutBoxEvent event) {
-        handlers.get(event.getEventType()).publish(event);
+        OutBoxHandler handler = getHandler(event);
+        handler.publish(event);
+    }
+
+    private OutBoxHandler getHandler(OutBoxEvent event) {
+        OutBoxHandler handler = handlers.get(event.getEventType());
+        if (handler == null) {
+            log.error("[OutBox] EventType에 대한 핸들러가 없습니다: eventType = {}, outBoxEventId = {}", event.getEventType(), event.getId());
+        }
+        return handler;
     }
 }

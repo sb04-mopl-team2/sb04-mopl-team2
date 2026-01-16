@@ -35,7 +35,7 @@ public class OutBoxEventService {
     @Transactional
     public OutBoxEventDto createOutBoxEvent(OutBoxEventCreateRequest request) {
         log.info("[OutBox] OutBox 생성 시작: request = {}", request);
-        String payload = serializer.serialize(request.domainEvent());
+        String payload = serializer.serialize(request.domainEvent(), request.eventClassName());
         OutBoxEvent event = new OutBoxEvent(request.eventType(), request.aggregateType(), request.aggregateId(), payload);
         outBoxEventRepository.save(event);
         OutBoxEventDto result = outBoxEventMapper.toDto(event);
@@ -68,6 +68,10 @@ public class OutBoxEventService {
         String nextCursor = null;
         UUID nextIdAfter = null;
 
+        // 정렬 조건 디폴트 값: CREATED_AT, 정렬 방향 디폴트 값: ASCENDING
+        OutBoxSortBy sortBy = request.sortBy() != null ? request.sortBy() : OutBoxSortBy.CREATED_AT;
+        SortDirection sortDirection = request.sortDirection() != null ? request.sortDirection() : SortDirection.ASCENDING;
+
         if (hasNext) {
             // hasNext가 true면 1만큼 더 조회되었으므로 초과 부분 자르기
             outBoxEventList = outBoxEventList.subList(0, limit);
@@ -81,9 +85,6 @@ public class OutBoxEventService {
                 .toList();
 
         long totalCount = data.size();
-        // 정렬 조건 디폴트 값: CREATED_AT, 정렬 방향 디폴트 값: ASCENDING
-        OutBoxSortBy sortBy = request.sortBy() != null ? request.sortBy() : OutBoxSortBy.CREATED_AT;
-        SortDirection sortDirection = request.sortDirection() != null ? request.sortDirection() : SortDirection.ASCENDING;
 
         CursorResponseOutBoxEventDto result = new CursorResponseOutBoxEventDto(
                 data,
@@ -145,7 +146,8 @@ public class OutBoxEventService {
         Set<AggregateType> aggregateTypes = outBoxEventList.stream()
                 .map(OutBoxEvent::getAggregateType)
                 .collect(Collectors.toSet());
-
+        
+        // 일괄 초기화는 무조건 ASC 정렬
         Instant createdFrom = outBoxEventList.get(0).getCreatedAt();
         Instant createdTo = outBoxEventList.get(outBoxEventList.size() - 1).getCreatedAt();
 

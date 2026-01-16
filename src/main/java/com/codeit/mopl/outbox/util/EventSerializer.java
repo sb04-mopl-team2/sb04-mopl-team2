@@ -18,8 +18,7 @@ public class EventSerializer {
         this.objectMapper = objectMapper;
     }
 
-    public String serialize(Object event) {
-        String eventClassName = event.getClass().getSimpleName();
+    public String serialize(Object event, String eventClassName) {
         try {
             log.debug("[OutBox] payload 직렬화 수행: eventClass = {}", eventClassName);
             return objectMapper.writeValueAsString(event);
@@ -34,7 +33,7 @@ public class EventSerializer {
         try {
             log.debug("[OutBox] payload 역직렬화 수행: eventClass = {}", eventClassName);
             return objectMapper.readValue(event.getPayload(), eventClass);
-        } catch (JsonProcessingException e) {
+        } catch (JsonProcessingException | IllegalArgumentException e) {
             log.error("[OutBox] payload 역직렬화 실패: eventClass = {}, errorMessage = {}", eventClassName, e.getMessage(), e);
             throw EventDeserializationFailedException.withDetails(event);
         }

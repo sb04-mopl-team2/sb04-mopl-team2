@@ -25,13 +25,13 @@ public class OutBoxEventListener {
 
     @EventListener
     public void handleFollowerIncreaseEvent(FollowerIncreaseEvent event) {
-        OutBoxEventCreateRequest request = createRequest(EventType.FOLLOWER_INCREASE, AggregateType.FOLLOW, event.followId(), event);
+        OutBoxEventCreateRequest request = createRequest(EventType.FOLLOWER_INCREASE, AggregateType.FOLLOW, event.followId(), event, event.getClass().getSimpleName());
         outBoxEventService.createOutBoxEvent(request);
     }
 
     @EventListener
     public void handleFollowerDecreaseEvent(FollowerDecreaseEvent event) {
-        OutBoxEventCreateRequest request = createRequest(EventType.FOLLOWER_DECREASE, AggregateType.FOLLOW, event.followId(), event);
+        OutBoxEventCreateRequest request = createRequest(EventType.FOLLOWER_DECREASE, AggregateType.FOLLOW, event.followId(), event, event.getClass().getSimpleName());
         outBoxEventService.createOutBoxEvent(request);
     }
 
@@ -40,12 +40,13 @@ public class OutBoxEventListener {
         publisher.publishEvent(event);
     }
 
-    private OutBoxEventCreateRequest createRequest(EventType eventType, AggregateType aggregateType, UUID aggregateId, Object domainEvent) {
+    private OutBoxEventCreateRequest createRequest(EventType eventType, AggregateType aggregateType, UUID aggregateId, Object domainEvent, String eventClassName) {
         return new OutBoxEventCreateRequest(
                 eventType,
                 aggregateType,
                 aggregateId,
-                domainEvent
+                domainEvent,
+                eventClassName
         );
     }
 }

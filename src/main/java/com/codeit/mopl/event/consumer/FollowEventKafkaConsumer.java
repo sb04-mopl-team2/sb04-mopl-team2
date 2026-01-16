@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
@@ -50,6 +51,9 @@ public class FollowEventKafkaConsumer {
             log.error("[Kafka] 팔로워 증가 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
 
+        } catch (DataIntegrityViolationException e) {
+            log.info("[Kafka] 이미 처리된 이벤트입니다: {}", kafkaEventJson, e);
+            registerAfterCommitAck(ack);
         } catch (Exception e) {
             log.error("[Kafka] 팔로워 증가 이벤트 처리 실패: {}", kafkaEventJson, e);
             throw e;
@@ -78,6 +82,9 @@ public class FollowEventKafkaConsumer {
             log.error("[Kafka] 팔로워 감소 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
 
+        } catch (DataIntegrityViolationException e) {
+            log.info("[Kafka] 이미 처리된 이벤트입니다: {}", kafkaEventJson, e);
+            registerAfterCommitAck(ack);
         } catch (Exception e) {
             log.error("[Kafka] 팔로워 감소 이벤트 처리 실패: {}", kafkaEventJson, e);
             throw e;

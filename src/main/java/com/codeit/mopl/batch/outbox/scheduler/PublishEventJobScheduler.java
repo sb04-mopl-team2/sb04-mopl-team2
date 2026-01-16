@@ -16,6 +16,6 @@ public class PublishEventJobScheduler {
      * */
     @Scheduled(cron = "10 * * * * *")
     public void publish() {
-        publisher.publish();
+        publisher.publishEvents();
     }
 }

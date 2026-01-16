@@ -31,16 +31,23 @@ public class OutBoxKafkaPublisher {
                         Function.identity()
                 ));
     }
-
+    
+    // 배치 처리 용도
     @Transactional
-    public void publish() {
+    public void publishEvents() {
         List<OutBoxEvent> events = outBoxEventRepository.findPublishTargets(PageRequest.of(0, BATCH_SIZE));
         if (events.isEmpty()) {
-            log.info("[팔로우 관리] REQUESTED 혹은 FAILED 상태인 OutBox 이벤트 객체가 없습니다: events = {}", events);
+            log.info("[OutBox] REQUESTED 혹은 FAILED 상태인 OutBox가 없습니다: events = {}", events);
             return;
         }
+        log.info("[OutBox] REQUESTED 혹은 FAILED 상태의 OutBox를 찾았습니다: totalCount = {}", events.size());
         for (OutBoxEvent event : events) {
             handlers.get(event.getEventType()).publish(event);
         }
+    }
+
+    @Transactional
+    public void publishEvent(OutBoxEvent event) {
+        handlers.get(event.getEventType()).publish(event);
     }
 }

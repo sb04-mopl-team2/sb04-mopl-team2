@@ -10,10 +10,12 @@ import com.codeit.mopl.outbox.entity.OutBoxEvent;
 import com.codeit.mopl.outbox.entity.OutBoxSortBy;
 import com.codeit.mopl.outbox.entity.OutBoxStatus;
 import com.codeit.mopl.outbox.mapper.OutBoxEventMapper;
+import com.codeit.mopl.outbox.publisher.OutBoxKafkaPublisher;
 import com.codeit.mopl.outbox.repository.OutBoxEventRepository;
 import com.codeit.mopl.outbox.util.EventSerializer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,7 @@ public class OutBoxEventService {
     private final OutBoxEventRepository outBoxEventRepository;
     private final OutBoxEventMapper outBoxEventMapper;
     private final EventSerializer serializer;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public OutBoxEventDto createOutBoxEvent(OutBoxEventCreateRequest request) {
@@ -37,6 +40,7 @@ public class OutBoxEventService {
         OutBoxEvent event = new OutBoxEvent(request.eventType(), request.aggregateType(), request.aggregateId(), payload);
         outBoxEventRepository.save(event);
         OutBoxEventDto result = outBoxEventMapper.toDto(event);
+        eventPublisher.publishEvent(event);
         log.info("[OutBox] OutBox 생성 완료");
         return result;
     }
@@ -157,7 +161,7 @@ public class OutBoxEventService {
         log.info("[OutBox] DEAD 상태의 OutBox 일괄 초기화 완료: totalCount = {}", result.totalCount());
         return result;
     }
-    
+
     @Transactional
     public void deleteOutBoxEvent(UUID outBoxEventId) {
         log.info("[OutBox] OutBox 삭제 시작: outBoxEventId = {}", outBoxEventId);

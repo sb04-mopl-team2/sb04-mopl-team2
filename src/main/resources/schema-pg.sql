@@ -217,3 +217,6 @@ CREATE TABLE IF NOT EXISTS outbox_events
     retry_count INT NOT NULL DEFAULT 0,
     last_error_message VARCHAR(4000)
 );
+
+CREATE INDEX IF NOT EXISTS idx_outbox_events_status_created_at
+    ON outbox_events(outbox_status, created_at);

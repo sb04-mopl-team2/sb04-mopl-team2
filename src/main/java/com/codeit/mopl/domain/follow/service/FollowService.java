@@ -90,8 +90,10 @@ public class FollowService {
         Follow follow = getFollowByIdWithWriteLock(followId);
         User followee = getUserByIdWithWriteLock(followeeId);
 
-        // 이미 처리된 객체면 early return
-        if (follow.getFollowStatus().equals(FollowStatus.CONFIRM)) {
+        // REQUESTED 상태가 아닌 객체는 처리 하지 않음
+        FollowStatus followStatus = follow.getFollowStatus();
+        if (followStatus != FollowStatus.REQUESTED) {
+            log.warn("[팔로우 관리] REQUESTED가 아닌 팔로우 객체의 증가 이벤트는 처리되지 않습니다: followId = {}, followStatus = {}", followId, followStatus);
             return;
         }
 
@@ -160,7 +162,14 @@ public class FollowService {
     public void processFollowerDecrease(UUID followId, UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 시작: followId = {}, followeeId = {}", followId, followeeId);
         // 비관적 락 적용: WRITE (follow -> user)
-        Follow follow = getFollowByIdWithWriteLock(followId);
+        Follow follow = followRepository.findByIdForUpdate(followId)
+                .orElse(null);
+
+        if (follow == null) {
+            log.warn("[팔로우 관리] 이미 삭제된 팔로우의 감소 이벤트는 처리되지 않습니다: followId = {}, followeeId = {}", followId, followeeId);
+            return;
+        }
+
         User followee = getUserByIdWithWriteLock(followeeId);
 
         // followerCount가 0이하인지 검사

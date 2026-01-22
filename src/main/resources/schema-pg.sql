@@ -174,7 +174,6 @@ CREATE TABLE IF NOT EXISTS watching_sessions
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (content_id) REFERENCES contents(id) ON DELETE CASCADE
---     UNIQUE(user_id)
     );
 
 -- PROCESSED EVENT

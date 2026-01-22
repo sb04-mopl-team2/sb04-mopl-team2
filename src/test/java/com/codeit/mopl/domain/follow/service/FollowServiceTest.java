@@ -100,7 +100,7 @@ class FollowServiceTest {
         Follow savedFollow = followCaptor.getValue();
         assertThat(savedFollow.getFollower().getId()).isEqualTo(follower.getId());
         assertThat(savedFollow.getFollowee().getId()).isEqualTo(followee.getId());
-        assertThat(savedFollow.getFollowStatus()).isEqualTo(FollowStatus.PENDING);
+        assertThat(savedFollow.getFollowStatus()).isEqualTo(FollowStatus.REQUESTED);
 
         assertThat(result.followerId()).isEqualTo(followerId);
         assertThat(result.followeeId()).isEqualTo(followeeId);
@@ -179,7 +179,7 @@ class FollowServiceTest {
         Follow follow = new Follow(follower, followee);
         UUID followId = UUID.randomUUID();
         ReflectionTestUtils.setField(follow, "id", followId);
-        follow.setFollowStatus(FollowStatus.PENDING);
+        follow.setFollowStatus(FollowStatus.REQUESTED);
 
         ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_INCREASE);
 
@@ -197,7 +197,7 @@ class FollowServiceTest {
     }
 
     @Test
-    @DisplayName("팔로워 증가 이벤트 처리 중단 - 이미 처리된 이벤트면 팔로워 증가가 발생하지 않음")
+    @DisplayName("팔로워 증가 이벤트 처리 중단 - REQUESTED 상태가 아닌 객체는 처리하지 않음")
     void processFollowerIncrease_ProcessedEvent_NoFollowerChange() {
         // given
         User followee = new User();
@@ -210,20 +210,12 @@ class FollowServiceTest {
         ReflectionTestUtils.setField(follow, "id", followId);
         follow.setFollowStatus(FollowStatus.CONFIRM);
 
-        given(processedEventRepository.existsByEventIdAndEventType(eq(followId), eq(EventType.FOLLOWER_INCREASE)))
-                .willReturn(true);
-
         // when
         followService.processFollowerIncrease(followId, followeeId);
 
         // then
-        verify(followRepository, never()).findByIdForUpdate(eq(followId));
-        verify(userRepository, never()).findByIdForUpdate(eq(followeeId));
-
         assertThat(followee.getFollowerCount()).isEqualTo(1L);
         assertThat(follow.getFollowStatus()).isEqualTo(FollowStatus.CONFIRM);
-
-        verify(processedEventRepository, never()).save(any(ProcessedEvent.class));
     }
 
     @Test
@@ -419,42 +411,22 @@ class FollowServiceTest {
     }
 
     @Test
-    @DisplayName("팔로우 삭제 실패 - 시스템에서 처리 중인 팔로우는 삭제할 수 없음: PENDING")
-    void deleteFollow_PENDING_FollowCannotDeleteWhileProcessing_ThrowsException() {
+    @DisplayName("팔로우 삭제 실패 - 팔로우 이벤트 처리 중인 객체를 삭제할 수 없음")
+    void deleteFollow_REQUESTED_FollowCannotDeleteWhileProcessing_ThrowsException() {
         // given
         UUID requesterId = UUID.randomUUID();
 
         Follow follow = new Follow();
         UUID followId = UUID.randomUUID();
         ReflectionTestUtils.setField(follow, "id", followId);
-        follow.setFollowStatus(FollowStatus.PENDING);
+        follow.setFollowStatus(FollowStatus.REQUESTED);
 
         given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(follow));
 
         // when & then
         assertThatThrownBy(() -> followService.deleteFollow(followId, requesterId))
                 .isInstanceOf(FollowCannotDeleteWhileProcessingException.class);
-        assertThat(follow.getFollowStatus()).isEqualTo(FollowStatus.PENDING);
-        verify(eventPublisher, never()).publishEvent(any(FollowerDecreaseEvent.class));
-    }
-
-    @Test
-    @DisplayName("팔로우 삭제 실패 - 시스템에서 처리 중인 팔로우는 삭제할 수 없음: FAILED")
-    void deleteFollow_FAILED_FollowCannotDeleteWhileProcessing_ThrowsException() {
-        // given
-        UUID requesterId = UUID.randomUUID();
-
-        Follow follow = new Follow();
-        UUID followId = UUID.randomUUID();
-        ReflectionTestUtils.setField(follow, "id", followId);
-        follow.setFollowStatus(FollowStatus.FAILED);
-
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(follow));
-
-        // when & then
-        assertThatThrownBy(() -> followService.deleteFollow(followId, requesterId))
-                .isInstanceOf(FollowCannotDeleteWhileProcessingException.class);
-        assertThat(follow.getFollowStatus()).isEqualTo(FollowStatus.FAILED);
+        assertThat(follow.getFollowStatus()).isEqualTo(FollowStatus.REQUESTED);
         verify(eventPublisher, never()).publishEvent(any(FollowerDecreaseEvent.class));
     }
 
@@ -526,40 +498,18 @@ class FollowServiceTest {
         Follow follow = new Follow();
         UUID followId = UUID.randomUUID();
         ReflectionTestUtils.setField(follow, "id", followId);
-        follow.setFollowStatus(FollowStatus.CANCELLED);
 
-        given(processedEventRepository.existsByEventIdAndEventType(eq(followId), eq(EventType.FOLLOWER_DECREASE)))
-                .willReturn(true);
+        given(followRepository.findByIdForUpdate(eq(followId)))
+                .willReturn(Optional.empty());
 
         // when
         followService.processFollowerDecrease(followId, followeeId);
 
         // then
-        verify(followRepository, never()).findByIdForUpdate(eq(followId));
         verify(userRepository, never()).findByIdForUpdate(eq(followeeId));
 
         assertThat(followee.getFollowerCount()).isEqualTo(1L);
         verify(followRepository, never()).delete(eq(follow));
-
-        verify(processedEventRepository, never()).save(any(ProcessedEvent.class));
-    }
-
-    @Test
-    @DisplayName("팔로우 감소 이벤트 처리 실패 - followId에 해당하는 팔로우가 없음")
-    void processFollowerDecrease_FollowNotFound_ThrowsException() {
-        // given
-        UUID followId = UUID.randomUUID();
-        UUID followeeId = UUID.randomUUID();
-
-        given(processedEventRepository.existsByEventIdAndEventType(eq(followId), eq(EventType.FOLLOWER_DECREASE)))
-                .willReturn(false);
-
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.empty());
-
-        // when & then
-        assertThatThrownBy(() -> followService.processFollowerDecrease(followId, followeeId))
-                .isInstanceOf(FollowNotFoundException.class);
-        verify(processedEventRepository, never()).save(any(ProcessedEvent.class));
     }
 
     @Test

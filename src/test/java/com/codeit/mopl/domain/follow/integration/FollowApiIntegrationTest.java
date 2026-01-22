@@ -435,35 +435,11 @@ public class FollowApiIntegrationTest {
     }
 
     @Test
-    @DisplayName("팔로우 취소 실패 - 시스템 처리 중인 팔로우 객체는 삭제할 수 없음: PENDING")
-    void deleteFollow_PENDING_Failure_FollowCannotDeleteWhileProcessing() throws Exception {
+    @DisplayName("팔로우 취소 실패 - 팔로우 이벤트 처리 중인 객체를 삭제할 수 없음")
+    void deleteFollow_REQUESTED_Failure_FollowCannotDeleteWhileProcessing() throws Exception {
         // given
         Follow follow = new Follow(follower, followee);
-        follow.setFollowStatus(FollowStatus.PENDING);
-        followRepository.saveAndFlush(follow);
-
-        UUID followId = follow.getId();
-
-        // when
-        ResultActions resultActions = mockMvc.perform(
-                delete("/api/follows/" + followId)
-                        .with(csrf())
-                        .with(user(followerUserDetails))
-                        .contentType(MediaType.APPLICATION_JSON)
-        );
-
-        // then
-        resultActions
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").exists());
-    }
-
-    @Test
-    @DisplayName("팔로우 취소 실패 - 시스템 처리 중인 팔로우 객체는 삭제할 수 없음: FAILED")
-    void deleteFollow_FAILED_Failure_FollowCannotDeleteWhileProcessing() throws Exception {
-        // given
-        Follow follow = new Follow(follower, followee);
-        follow.setFollowStatus(FollowStatus.FAILED);
+        follow.setFollowStatus(FollowStatus.REQUESTED);
         followRepository.saveAndFlush(follow);
 
         UUID followId = follow.getId();

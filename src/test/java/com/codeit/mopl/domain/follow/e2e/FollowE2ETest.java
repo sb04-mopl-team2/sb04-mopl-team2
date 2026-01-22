@@ -117,7 +117,7 @@ public class FollowE2ETest {
         Follow createdFollow = followRepository.findById(followId)
                 .orElseThrow(() -> new AssertionError("createdFollow 객체를 찾을 수 없음"));
         assertThat(createdFollow).isNotNull();
-        assertEquals(FollowStatus.PENDING, createdFollow.getFollowStatus());
+        assertEquals(FollowStatus.REQUESTED, createdFollow.getFollowStatus());
     }
 
     @Test
@@ -381,11 +381,11 @@ public class FollowE2ETest {
     }
 
     @Test
-    @DisplayName("팔로우 삭제 실패 - PENDING, FAILED 상태의 팔로우 객체는 시스템에서 처리해야 함")
+    @DisplayName("팔로우 삭제 실패 - REQUESTED 상태의 팔로우 객체는 이벤트 처리가 선행되어야 함")
     void deleteFollow_Failure_FollowCannotDeleteWhileProcessingException() {
         // given
         Follow follow = createFollow();
-        follow.setFollowStatus(FollowStatus.PENDING);
+        follow.setFollowStatus(FollowStatus.REQUESTED);
         followRepository.saveAndFlush(follow);
 
         HttpEntity<Void> entity = new HttpEntity<>(defaultHeaders);
@@ -404,7 +404,7 @@ public class FollowE2ETest {
         ErrorResponse errorResponse = response.getBody();
         assertThat(errorResponse).isNotNull();
         assertEquals("FOLLOW_CANNOT_DELETE_WHILE_PROCESSING", errorResponse.exceptionName());
-        assertEquals("시스템에서 처리 중인 팔로우 객체는 삭제할 수 없습니다.", errorResponse.message());
+        assertEquals("팔로우 이벤트 처리 중인 객체를 삭제할 수 없습니다.", errorResponse.message());
         assertEquals(follow.getId().toString(), errorResponse.details().get("followId"));
         assertEquals(follow.getFollowStatus().name(), errorResponse.details().get("followStatus"));
     }

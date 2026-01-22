@@ -182,7 +182,7 @@ class FollowEventKafkaConsumerTest {
         given(objectMapper.readValue(json, FollowerIncreaseEvent.class))
                 .willReturn(event);
 
-        given(processedEventRepository.existsByEventIdAndEventType(eq(followId), eq(EventType.FOLLOWER_DECREASE)))
+        given(processedEventRepository.existsByEventIdAndEventType(eq(followId), eq(EventType.FOLLOWER_INCREASE)))
                 .willReturn(false);
 
         doThrow(new RuntimeException("service error"))

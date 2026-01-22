@@ -5,6 +5,7 @@ import com.codeit.mopl.event.event.UserLogInOutEvent;
 import com.codeit.mopl.event.event.UserRoleUpdateEvent;
 import com.codeit.mopl.event.listener.KafkaEventListener;
 import com.codeit.mopl.event.sender.KafkaEventSender;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,11 @@ public class UserKafkaEventListenerTest {
     @BeforeEach
     void setUp() {
         MDC.put("requestId", UUID.randomUUID().toString());
+    }
+
+    @AfterEach
+    void cleanUp() {
+        MDC.clear();
     }
 
     @Test

@@ -45,6 +45,10 @@ public class OutBoxKafkaPublisher {
         log.info("[OutBox] FAILED 상태의 OutBox를 찾았습니다: totalCount = {}", events.size());
         for (OutBoxEvent event : events) {
             OutBoxHandler handler = getHandler(event);
+            if (handler == null) {
+                log.debug("[OutBox] FAILED 상태의 이벤트를 찾았지만, 핸들러가 null입니다: event = {}", event);
+                continue;
+            }
             handler.publish(event);
         }
     }
@@ -52,6 +56,9 @@ public class OutBoxKafkaPublisher {
     @Transactional
     public void publishEvent(OutBoxEvent event) {
         OutBoxHandler handler = getHandler(event);
+        if (handler == null) {
+            throw new IllegalArgumentException("[OutBox] 해당 이벤트를 처리하기 위한 핸들러가 없습니다: event = " + event);
+        }
         handler.publish(event);
     }
 

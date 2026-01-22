@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Header;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,11 @@ class KafkaEventSenderTest {
 
     @InjectMocks
     private KafkaEventSender kafkaEventSender;
+
+    @AfterEach
+    void cleanUp() {
+        MDC.clear();
+    }
 
     @Test
     @DisplayName("이벤트 전송 성공 시 헤더와 함께 카프카 메시지를 전송한다.")

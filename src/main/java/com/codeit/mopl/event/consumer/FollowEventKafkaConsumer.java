@@ -1,6 +1,7 @@
 package com.codeit.mopl.event.consumer;
 
 import com.codeit.mopl.domain.follow.service.FollowService;
+import com.codeit.mopl.event.entity.EventResult;
 import com.codeit.mopl.event.entity.EventType;
 import com.codeit.mopl.event.entity.ProcessedEvent;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
@@ -15,8 +16,6 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.UUID;
 
@@ -28,6 +27,7 @@ public class FollowEventKafkaConsumer {
     private final FollowService followService;
     private final ObjectMapper objectMapper;
     private final ProcessedEventRepository processedEventRepository;
+    private final KafkaAckManager ackManager;
 
     @KafkaListener(topics = "mopl-follower-increase", groupId = "mopl-follow", concurrency = "3")
     @Transactional
@@ -39,21 +39,26 @@ public class FollowEventKafkaConsumer {
 
             // 이미 처리된 이벤트면 early return
             if (isAlreadyProcessed(followId, EventType.FOLLOWER_INCREASE)) {
-                registerAfterCommitAck(ack);
+                ackManager.ackAfterCommit(ack);
                 return;
             }
 
-            followService.processFollowerIncrease(followId, followeeId);
-            processedEventRepository.save(new ProcessedEvent(followId, EventType.FOLLOWER_INCREASE));
-            registerAfterCommitAck(ack);
+            EventResult result = followService.processFollowerIncrease(followId, followeeId);
 
+            if (result == EventResult.IGNORED) {
+                ackManager.ackAfterCommit(ack);
+                return;
+            }
+
+            processedEventRepository.save(new ProcessedEvent(followId, EventType.FOLLOWER_INCREASE));
+            ackManager.ackAfterCommit(ack);
         } catch (JsonProcessingException e) {
             log.error("[Kafka] 팔로워 증가 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
             ack.acknowledge();
 
         } catch (DataIntegrityViolationException e) {
             log.info("[Kafka] 이미 처리된 이벤트입니다: {}", kafkaEventJson, e);
-            registerAfterCommitAck(ack);
+            ackManager.ackAfterCommit(ack);
         } catch (Exception e) {
             log.error("[Kafka] 팔로워 증가 이벤트 처리 실패: {}", kafkaEventJson, e);
             throw e;
@@ -70,13 +75,19 @@ public class FollowEventKafkaConsumer {
 
             // 이미 처리된 이벤트면 early return
             if (isAlreadyProcessed(followId, EventType.FOLLOWER_DECREASE)) {
-                registerAfterCommitAck(ack);
+                ackManager.ackAfterCommit(ack);
                 return;
             }
 
-            followService.processFollowerDecrease(followId, followeeId);
+            EventResult result = followService.processFollowerDecrease(followId, followeeId);
+
+            if (result == EventResult.IGNORED) {
+                ackManager.ackAfterCommit(ack);
+                return;
+            }
+
             processedEventRepository.save(new ProcessedEvent(followId, EventType.FOLLOWER_DECREASE));
-            registerAfterCommitAck(ack);
+            ackManager.ackAfterCommit(ack);
 
         } catch (JsonProcessingException e) {
             log.error("[Kafka] 팔로워 감소 이벤트 역직렬화 실패: {}", kafkaEventJson, e);
@@ -84,7 +95,7 @@ public class FollowEventKafkaConsumer {
 
         } catch (DataIntegrityViolationException e) {
             log.info("[Kafka] 이미 처리된 이벤트입니다: {}", kafkaEventJson, e);
-            registerAfterCommitAck(ack);
+            ackManager.ackAfterCommit(ack);
         } catch (Exception e) {
             log.error("[Kafka] 팔로워 감소 이벤트 처리 실패: {}", kafkaEventJson, e);
             throw e;
@@ -97,16 +108,5 @@ public class FollowEventKafkaConsumer {
             log.warn("[Kafka] 이벤트 처리 중단 - 이미 처리된 이벤트입니다: eventId = {}, eventType = {}", followId, eventType);
         }
         return isProcessed;
-    }
-
-    private void registerAfterCommitAck(Acknowledgment ack) {
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        ack.acknowledge();
-                    }
-                }
-        );
     }
 }

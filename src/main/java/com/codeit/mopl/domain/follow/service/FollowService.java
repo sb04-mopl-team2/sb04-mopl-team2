@@ -13,6 +13,7 @@ import com.codeit.mopl.domain.notification.template.NotificationTemplate;
 import com.codeit.mopl.domain.notification.template.context.FollowCreatedContext;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.entity.EventResult;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.exception.follow.*;
@@ -84,7 +85,7 @@ public class FollowService {
     }
 
     @Transactional
-    public void processFollowerIncrease(UUID followId, UUID followeeId) {
+    public EventResult processFollowerIncrease(UUID followId, UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 시작: followId = {}, followeeId = {}", followId, followeeId);
         // 비관적 락 적용: WRITE (follow -> user)
         Follow follow = getFollowByIdWithWriteLock(followId);
@@ -94,13 +95,14 @@ public class FollowService {
         FollowStatus followStatus = follow.getFollowStatus();
         if (followStatus != FollowStatus.REQUESTED) {
             log.warn("[팔로우 관리] REQUESTED가 아닌 팔로우 객체의 증가 이벤트는 처리되지 않습니다: followId = {}, followStatus = {}", followId, followStatus);
-            return;
+            return EventResult.IGNORED;
         }
 
         // 팔로워 수 증가, 상태 변경
         followee.increaseFollowerCount();
         follow.setFollowStatus(FollowStatus.CONFIRM);
         log.info("[팔로우 관리] 팔로워 증가 이벤트 처리 완료: followId = {}, followeeId = {}", followId, followeeId);
+        return EventResult.PROCESSED;
     }
 
     @Transactional(readOnly = true)
@@ -159,7 +161,7 @@ public class FollowService {
     }
 
     @Transactional
-    public void processFollowerDecrease(UUID followId, UUID followeeId) {
+    public EventResult processFollowerDecrease(UUID followId, UUID followeeId) {
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 시작: followId = {}, followeeId = {}", followId, followeeId);
         // 비관적 락 적용: WRITE (follow -> user)
         Follow follow = followRepository.findByIdForUpdate(followId)
@@ -167,7 +169,7 @@ public class FollowService {
 
         if (follow == null) {
             log.warn("[팔로우 관리] 이미 삭제된 팔로우의 감소 이벤트는 처리되지 않습니다: followId = {}, followeeId = {}", followId, followeeId);
-            return;
+            return EventResult.IGNORED;
         }
 
         User followee = getUserByIdWithWriteLock(followeeId);
@@ -180,6 +182,7 @@ public class FollowService {
         followee.decreaseFollowerCount();
         followRepository.delete(follow);
         log.info("[팔로우 관리] 팔로워 감소 이벤트 처리 완료: followId = {}, followeeId = {}", followId, followeeId);
+        return EventResult.PROCESSED;
     }
 
     private void detectFollowerCountIsZeroOrNegative(UUID followeeId, long followerCount) {

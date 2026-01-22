@@ -10,6 +10,7 @@ import com.codeit.mopl.domain.notification.entity.Level;
 import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.entity.EventResult;
 import com.codeit.mopl.event.event.FollowerDecreaseEvent;
 import com.codeit.mopl.event.event.FollowerIncreaseEvent;
 import com.codeit.mopl.event.repository.ProcessedEventRepository;
@@ -183,12 +184,13 @@ class FollowServiceTest {
         given(userRepository.findByIdForUpdate(eq(followeeId))).willReturn(Optional.of(followee));
 
         // when
-        followService.processFollowerIncrease(followId, followeeId);
+        EventResult result = followService.processFollowerIncrease(followId, followeeId);
 
         // then
         verify(userRepository, times(1)).findByIdForUpdate(eq(followeeId));
         assertThat(followee.getFollowerCount()).isEqualTo(1L);
         assertThat(follow.getFollowStatus()).isEqualTo(FollowStatus.CONFIRM);
+        assertThat(result).isEqualTo(EventResult.PROCESSED);
     }
 
     @Test
@@ -209,11 +211,12 @@ class FollowServiceTest {
         given(userRepository.findByIdForUpdate(eq(followeeId))).willReturn(Optional.of(followee));
 
         // when
-        followService.processFollowerIncrease(followId, followeeId);
+        EventResult result = followService.processFollowerIncrease(followId, followeeId);
 
         // then
         assertThat(followee.getFollowerCount()).isEqualTo(1L);
         assertThat(follow.getFollowStatus()).isEqualTo(FollowStatus.CONFIRM);
+        assertThat(result).isEqualTo(EventResult.IGNORED);
     }
 
     @Test
@@ -475,11 +478,12 @@ class FollowServiceTest {
         given(userRepository.findByIdForUpdate(eq(followeeId))).willReturn(Optional.of(followee));
 
         // when
-        followService.processFollowerDecrease(followId, followeeId);
+        EventResult result = followService.processFollowerDecrease(followId, followeeId);
 
         // then
         verify(followRepository, times(1)).delete(eq(follow));
         assertThat(followee.getFollowerCount()).isEqualTo(0L);
+        assertThat(result).isEqualTo(EventResult.PROCESSED);
     }
 
     @Test
@@ -499,13 +503,14 @@ class FollowServiceTest {
                 .willReturn(Optional.empty());
 
         // when
-        followService.processFollowerDecrease(followId, followeeId);
+        EventResult result = followService.processFollowerDecrease(followId, followeeId);
 
         // then
         verify(userRepository, never()).findByIdForUpdate(eq(followeeId));
 
         assertThat(followee.getFollowerCount()).isEqualTo(1L);
         verify(followRepository, never()).delete(eq(follow));
+        assertThat(result).isEqualTo(EventResult.IGNORED);
     }
 
     @Test

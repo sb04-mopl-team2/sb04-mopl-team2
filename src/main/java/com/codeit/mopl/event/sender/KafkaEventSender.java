@@ -37,10 +37,15 @@ public class KafkaEventSender {
                 if (ex != null) {
                     log.warn("[Kafka] 전송 실패 topic={}, keyPresent={}, error={}", topic, key != null, ex.getMessage(), ex);
                 } else {
-                    log.info("[Kafka] 전송 성공 topic={}, keyPresent={}, partition={}, offset={}",
-                            topic, key != null,
-                            result.getRecordMetadata().partition(),
-                            result.getRecordMetadata().offset());
+                    if (result != null && result.getRecordMetadata() != null) {
+                        log.info("[Kafka] 전송 성공 topic={}, keyPresent={}, partition={}, offset={}",
+                                topic, key != null,
+                                result.getRecordMetadata().partition(),
+                                result.getRecordMetadata().offset());
+                    } else {
+                        log.info("[Kafka] 전송 성공 topic={}, keyPresent={}, metadata=N/A",
+                                topic, key != null);
+                    }
                 }
             });
         } catch (JsonProcessingException e) {

@@ -127,7 +127,7 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
                 try {
                     retryCountCursor = Integer.parseInt(cursor);
                 } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("올바르지 않은 커서 포맷입니다:  " + cursor, e);
+                    throw new IllegalArgumentException("올바르지 않은 커서 포맷입니다: " + cursor, e);
                 }
                 yield order == Order.ASC
                         ? outbox.retryCount.gt(retryCountCursor)

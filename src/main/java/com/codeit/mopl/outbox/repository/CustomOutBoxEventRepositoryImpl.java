@@ -86,19 +86,23 @@ public class CustomOutBoxEventRepositoryImpl implements CustomOutBoxEventReposit
         if (createdFrom != null && createdTo != null) {
             Instant from = createdFrom.atStartOfDay(zoneId).toInstant();
             Instant to = createdTo.plusDays(1).atStartOfDay(zoneId).toInstant();
-            return outbox.createdAt.between(from, to);
+            return outbox.createdAt.goe(from).and(outbox.createdAt.lt(to));
         } else if (createdFrom != null) {
             Instant from = createdFrom.atStartOfDay(zoneId).toInstant();
             return outbox.createdAt.goe(from);
         } else {
             // createdTo만 존재
             Instant to = createdTo.plusDays(1).atStartOfDay(zoneId).toInstant();
-            return outbox.createdAt.loe(to);
+            return outbox.createdAt.lt(to);
         }
     }
 
     private BooleanExpression buildCursorCondition(String cursor, UUID idAfter, OutBoxSortBy outBoxSortBy, SortDirection sortDirection) {
-        if (cursor == null || idAfter == null) {
+        if (cursor == null ^ idAfter == null) {
+            throw new IllegalArgumentException("cursor와 idAfter는 함께 전달되어야 합니다.");
+        }
+
+        if (cursor == null) {
             return null;
         }
 

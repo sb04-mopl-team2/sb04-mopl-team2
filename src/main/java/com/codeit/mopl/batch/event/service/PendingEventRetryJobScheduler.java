@@ -20,7 +20,7 @@ public class PendingEventRetryJobScheduler {
     /*
     *  팔로워 증가 재시도 스케줄러
     * */
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "0 * * * * *")
     public void runRetryFollowerIncrease() {
         try {
             log.info("=== 팔로워 증가 재시도 시작 ===");

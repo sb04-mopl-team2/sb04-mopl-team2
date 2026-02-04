@@ -20,7 +20,7 @@ public class CancelledEventRetryJobScheduler {
     /*
     *  팔로워 감소 재시도 스케줄러
     * */
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "0 * * * * *")
     public void runRetryFollowerDecreaseJob() {
         try {
             log.info("=== 팔로워 감소 재시도 시작 ===");

@@ -96,9 +96,8 @@ public class FollowService {
         if (isAlreadyProcessed(followId, EventType.FOLLOWER_INCREASE)) {
             return;
         }
-        // 비관적 락 적용: WRITE (follow -> user)
-        Follow follow = getFollowByIdWithWriteLock(followId);
-        User followee = getUserByIdWithWriteLock(followeeId);
+        Follow follow = getFollowById(followId);
+        User followee = getUserById(followeeId);
 
         // 팔로워 수 증가, 상태 변경
         followee.increaseFollowerCount();
@@ -133,8 +132,7 @@ public class FollowService {
     @Transactional
     public void deleteFollow(UUID followId, UUID requesterId) {
         log.info("[팔로우 관리] 팔로우 삭제 시작: followId = {}, requesterId = {}", followId, requesterId);
-        // 비관적 락 적용: WRITE
-        Follow follow = getFollowByIdWithWriteLock(followId);
+        Follow follow = getFollowById(followId);
         FollowStatus followStatus = follow.getFollowStatus();
 
         // 이미 CANCELLED 상태인 팔로우 객체면 return
@@ -173,9 +171,9 @@ public class FollowService {
         if (isAlreadyProcessed(followId, EventType.FOLLOWER_DECREASE)) {
             return;
         }
-        // 비관적 락 적용: WRITE (follow -> user)
-        Follow follow = getFollowByIdWithWriteLock(followId);
-        User followee = getUserByIdWithWriteLock(followeeId);
+
+        Follow follow = getFollowById(followId);
+        User followee = getUserById(followeeId);
 
         // followerCount가 0이하인지 검사
         long followerCount = followee.getFollowerCount();
@@ -211,13 +209,8 @@ public class FollowService {
                 .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
     }
 
-    private User getUserByIdWithWriteLock(UUID userId) {
-        return userRepository.findByIdForUpdate(userId)
-                .orElseThrow(() -> new UserNotFoundException(UserErrorCode.USER_NOT_FOUND, Map.of("userId", userId)));
-    }
-
-    private Follow getFollowByIdWithWriteLock(UUID followId) {
-        return followRepository.findByIdForUpdate(followId)
+    private Follow getFollowById(UUID followId) {
+        return followRepository.findById(followId)
                 .orElseThrow(() -> FollowNotFoundException.withId(followId));
     }
 }

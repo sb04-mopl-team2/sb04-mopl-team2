@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.message.directmessage.controller;
 
+import com.codeit.mopl.domain.message.conversation.repository.ConversationRepository;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageSendRequest;
 import com.codeit.mopl.domain.message.directmessage.service.DirectMessageService;
@@ -32,7 +33,6 @@ public class DirectMessageController {
                                    @Payload DirectMessageSendRequest request,
                                    Authentication authentication
     ) {
-        log.info("[WS CONTROLLER] sendDirectMessage called, authentication={}", authentication);
         UUID senderId = null;
 
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {

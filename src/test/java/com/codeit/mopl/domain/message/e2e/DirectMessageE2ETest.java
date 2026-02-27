@@ -9,6 +9,9 @@ import com.codeit.mopl.domain.message.e2e.config.TestWebSocketConfig;
 import com.codeit.mopl.domain.notification.service.NotificationService;
 import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.repository.UserRepository;
+import com.codeit.mopl.event.consumer.KafkaConsumer;
+import com.codeit.mopl.event.event.DirectMessageCreateEvent;
+import com.codeit.mopl.event.listener.KafkaEventListener;
 import com.codeit.mopl.search.OpenSearchDataSync;
 import com.codeit.mopl.search.service.OpenSearchService;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +21,7 @@ import org.opensearch.client.opensearch.OpenSearchClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
@@ -50,6 +54,15 @@ public class DirectMessageE2ETest {
 
     @MockitoBean
     private OpenSearchDataSync openSearchDataSync;
+
+    @MockitoBean
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    @MockitoBean
+    private KafkaEventListener kafkaEventListener;
+
+    @MockitoBean
+    private KafkaConsumer kafkaConsumer;
 
     @Autowired
     private UserRepository userRepository;

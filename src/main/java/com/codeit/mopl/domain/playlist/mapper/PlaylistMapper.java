@@ -13,9 +13,7 @@ import org.mapstruct.Mapping;
         uses = {UserMapper.class, PlaylistItemMapper.class, FrontendKstOffsetAdjuster.class})
 public interface PlaylistMapper {
 
-    @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "adjustForFrontend")
-    @Mapping(source = "user", target = "owner")
-    @Mapping(source = "playlistItems", target = "contents")
+    @Mapping(source = "cached.updatedAt", target = "updatedAt", qualifiedByName = "adjustForFrontend")
     PlaylistDto toPlaylistDto(PlaylistCachedDto cached, boolean subscribedByMe);
 
     @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "adjustForFrontend")

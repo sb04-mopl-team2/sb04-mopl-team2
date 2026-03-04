@@ -39,7 +39,6 @@ public class PlaylistService {
     private final ApplicationEventPublisher eventPublisher;
     private final SubscriptionRepository subscriptionRepository;
 
-    private final StringRedisTemplate stringRedisTemplate;
     private static final String PLAYLIST_DERAIL = "playlist:detail";
 
 

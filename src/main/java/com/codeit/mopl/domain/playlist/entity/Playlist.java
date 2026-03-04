@@ -6,7 +6,6 @@ import com.codeit.mopl.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 

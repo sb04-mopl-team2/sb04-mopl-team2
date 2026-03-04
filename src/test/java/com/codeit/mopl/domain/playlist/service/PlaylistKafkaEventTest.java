@@ -1,5 +1,6 @@
 package com.codeit.mopl.domain.playlist.service;
 
+import com.codeit.mopl.domain.playlist.dto.PlaylistCachedDto;
 import com.codeit.mopl.domain.playlist.dto.PlaylistCreateRequest;
 import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
@@ -50,8 +51,8 @@ class PlaylistKafkaEventTest {
   @BeforeEach
   void setUp() {
     playlistService = new PlaylistService(
-        userRepository,
         playlistRepository,
+        userRepository,
         playlistMapper,
         eventPublisher,
         subscriptionRepository
@@ -82,7 +83,8 @@ class PlaylistKafkaEventTest {
 
     // mapper 는 단순히 호출만 되면 되므로 mock 반환
     PlaylistDto playlistDto = mock(PlaylistDto.class);
-    when(playlistMapper.toPlaylistDto(savedPlaylist))
+    PlaylistCachedDto cached = playlistMapper.toCachedDto(savedPlaylist);
+    when(playlistMapper.toPlaylistDto(cached, false))
         .thenReturn(playlistDto);
 
     // when

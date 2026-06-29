@@ -3,6 +3,7 @@ package com.codeit.mopl.domain.notification.service;
 import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.follow.entity.Follow;
 import com.codeit.mopl.domain.follow.repository.FollowRepository;
+import com.codeit.mopl.domain.message.conversation.repository.ConversationSubscriptionRegistry;
 import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
@@ -53,6 +54,7 @@ public class NotificationService {
   private final ApplicationEventPublisher eventPublisher;
   private final StringRedisTemplate stringRedisTemplate;
   private final FollowRepository followRepository;
+  private final ConversationSubscriptionRegistry conversationSubscriptionRegistry;
 
   public static final String NOTIFICATIONS_FIRST_PAGE = "notifications:first-page";
   public static final String EVENT_NOTIFICATIONS = "notifications";
@@ -139,6 +141,12 @@ public class NotificationService {
     log.info("[알림] DM 생성 SSE 전송 호출 시작, notificationDto = {}", directMessageDto);
 
     UUID receiverId = directMessageDto.receiver().userId();
+    UUID conversationId = directMessageDto.conversationId();
+
+    if (conversationSubscriptionRegistry.isActive(receiverId, conversationId)) {
+      log.info("[알림] 수신자가 채팅창 열고 있음 - SSE/알림 생략, receiverId={}, conversationId={}", receiverId, conversationId);
+      return;
+    }
 
     DirectMessageContext ctx =
         new DirectMessageContext(directMessageDto.sender().name(), directMessageDto.content());

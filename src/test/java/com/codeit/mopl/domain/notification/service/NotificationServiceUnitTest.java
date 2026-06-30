@@ -9,6 +9,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.codeit.mopl.domain.message.conversation.repository.ConversationSubscriptionRegistry;
+import com.codeit.mopl.domain.message.directmessage.dto.DirectMessageDto;
 import com.codeit.mopl.domain.notification.dto.CursorResponseNotificationDto;
 import com.codeit.mopl.domain.notification.dto.NotificationDto;
 import com.codeit.mopl.domain.notification.entity.Level;
@@ -16,6 +18,7 @@ import com.codeit.mopl.domain.notification.entity.Notification;
 import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.notification.entity.Status;
+import com.codeit.mopl.domain.user.dto.response.UserSummary;
 import com.codeit.mopl.exception.notification.NotificationForbidden;
 import com.codeit.mopl.exception.notification.NotificationNotFoundException;
 import com.codeit.mopl.domain.notification.mapper.NotificationMapper;
@@ -31,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.codeit.mopl.domain.follow.repository.FollowRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -65,6 +69,12 @@ class NotificationServiceUnitTest {
 
   @Mock
   private StringRedisTemplate stringRedisTemplate;
+
+  @Mock
+  private FollowRepository followRepository;
+
+  @Mock
+  private ConversationSubscriptionRegistry conversationSubscriptionRegistry;
 
   private UUID userId;
   private String cursor;
@@ -286,6 +296,52 @@ class NotificationServiceUnitTest {
 
     NotificationCreateEvent event = (NotificationCreateEvent) published;
     assertThat(event.notificationDto()).isEqualTo(notificationDto);
+  }
+
+  @Test
+  @DisplayName("sendDirectMessage - 수신자가 채팅창 열고 있으면 SSE/DB 알림 생략")
+  void sendDirectMessage_whenReceiverActive_shouldSkipSseAndNotification() {
+    // given
+    UUID receiverId = UUID.randomUUID();
+    UUID conversationId = UUID.randomUUID();
+    DirectMessageDto dto = new DirectMessageDto(
+        UUID.randomUUID(), conversationId, Instant.now(),
+        new UserSummary(UUID.randomUUID(), "sender", null),
+        new UserSummary(receiverId, "receiver", null),
+        "안녕"
+    );
+    when(conversationSubscriptionRegistry.isActive(receiverId, conversationId)).thenReturn(true);
+
+    // when
+    notificationService.sendDirectMessage(dto);
+
+    // then
+    verify(sseService, never()).send(any(), any(), any());
+    verify(notificationRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("sendDirectMessage - 수신자가 채팅창 닫고 있으면 SSE push + DB 알림 생성")
+  void sendDirectMessage_whenReceiverInactive_shouldSendSseAndCreateNotification() {
+    // given
+    UUID receiverId = UUID.randomUUID();
+    UUID conversationId = UUID.randomUUID();
+    DirectMessageDto dto = new DirectMessageDto(
+        UUID.randomUUID(), conversationId, Instant.now(),
+        new UserSummary(UUID.randomUUID(), "sender", null),
+        new UserSummary(receiverId, "receiver", null),
+        "안녕"
+    );
+    when(conversationSubscriptionRegistry.isActive(receiverId, conversationId)).thenReturn(false);
+    when(userRepository.findById(receiverId)).thenReturn(Optional.of(new User()));
+    when(notificationMapper.toDto(any())).thenReturn(mock(NotificationDto.class));
+
+    // when
+    notificationService.sendDirectMessage(dto);
+
+    // then
+    verify(notificationRepository).save(any());
+    verify(sseService).send(eq(receiverId), eq("direct-messages"), eq(dto));
   }
 
   @Test

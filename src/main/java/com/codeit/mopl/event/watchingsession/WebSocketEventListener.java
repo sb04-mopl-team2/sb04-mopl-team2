@@ -1,11 +1,13 @@
 package com.codeit.mopl.event.watchingsession;
 
+import com.codeit.mopl.domain.message.conversation.repository.ConversationSubscriptionRegistry;
 import com.codeit.mopl.domain.watchingsession.entity.WatchingSessionChange;
 import com.codeit.mopl.domain.watchingsession.service.RedisPublisher;
 import com.codeit.mopl.domain.watchingsession.service.WatchingSessionService;
 import com.codeit.mopl.exception.watchingsession.UserNotAuthenticatedException;
 import com.codeit.mopl.exception.watchingsession.WatchingSessionErrorCode;
 import com.codeit.mopl.security.CustomUserDetails;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class WebSocketEventListener {
   private final WatchingSessionService service;
 //  private final SimpMessagingTemplate messagingTemplate;
   private final RedisPublisher redisPublisher;
+  private final ConversationSubscriptionRegistry conversationSubscriptionRegistry;
 
   /**
      콘텐츠 시청 세션: 누가 시청 세션에 들어오고 나가는지 (참가자 목록) 업데이트를 받기 위해
@@ -42,6 +45,24 @@ public class WebSocketEventListener {
     String sessionId = accessor.getSessionId();
     String destination = accessor.getDestination();
     if (destination == null) return;
+
+    if (destination.startsWith("/sub/conversations/") && destination.endsWith("/direct-messages")) {
+      String subscriptionId = accessor.getSubscriptionId();
+      UUID userId = getUserId(accessor, sessionId);
+      UUID conversationId = parseConversationId(destination);
+
+      conversationSubscriptionRegistry.join(userId, conversationId);
+
+      @SuppressWarnings("unchecked")
+      Map<String, UUID> dmSubscriptions = (Map<String, UUID>) accessor.getSessionAttributes()
+          .computeIfAbsent("dmSubscriptions", k -> new HashMap<String, UUID>());
+      dmSubscriptions.put(subscriptionId, conversationId);
+
+      log.info("[WebsocketEventListener] DM 구독 등록 - userId: {}, conversationId: {}, subscriptionId: {}",
+          userId, conversationId, subscriptionId);
+      return;
+    }
+
     if (destination.startsWith("/sub/contents/") && destination.endsWith("/watch")) {
       log.info("[WebsocketEventListener] handleSessionSubscribe 시작 - sessionId: {}, destination: {}",
           sessionId, destination);
@@ -72,8 +93,25 @@ public class WebSocketEventListener {
   public void handleSessionUnSubscribe(SessionUnsubscribeEvent event) {
     StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
     String sessionId = accessor.getSessionId();
-    UUID watchingSessionId = (UUID) accessor.getSessionAttributes().get("watchingSessionId");
-    UUID contentId = (UUID) accessor.getSessionAttributes().get("watchingContentId");
+
+    String subscriptionId = accessor.getSubscriptionId();
+    Map<String, Object> sessionAttrs = accessor.getSessionAttributes();
+    @SuppressWarnings("unchecked")
+    Map<String, UUID> dmSubscriptions = sessionAttrs != null
+        ? (Map<String, UUID>) sessionAttrs.get("dmSubscriptions") : null;
+    if (dmSubscriptions != null && subscriptionId != null) {
+      UUID conversationId = dmSubscriptions.remove(subscriptionId);
+      if (conversationId != null) {
+        UUID userId = getUserId(accessor, sessionId);
+        conversationSubscriptionRegistry.leave(userId, conversationId);
+        log.info("[WebsocketEventListener] DM 구독 해제 - userId: {}, conversationId: {}", userId, conversationId);
+        return;
+      }
+    }
+
+    Map<String, Object> watchAttrs = accessor.getSessionAttributes();
+    UUID watchingSessionId = watchAttrs != null ? (UUID) watchAttrs.get("watchingSessionId") : null;
+    UUID contentId = watchAttrs != null ? (UUID) watchAttrs.get("watchingContentId") : null;
     log.info("[WebsocketEventListener] SessionUnsubscribeEvent 시작 - sessionId: {}, watchingSessionId: {}, contentId: {}",
         sessionId, watchingSessionId, contentId);
 
@@ -102,8 +140,21 @@ public class WebSocketEventListener {
     StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
     String sessionId = accessor.getSessionId();
 
-    UUID watchingSessionId = (UUID) accessor.getSessionAttributes().get("watchingSessionId");
-    UUID contentId = (UUID) accessor.getSessionAttributes().get("watchingContentId");
+    Map<String, Object> attrs = accessor.getSessionAttributes();
+
+    @SuppressWarnings("unchecked")
+    Map<String, UUID> dmSubscriptions = attrs != null
+        ? (Map<String, UUID>) attrs.get("dmSubscriptions") : null;
+    if (dmSubscriptions != null && !dmSubscriptions.isEmpty()) {
+      UUID userId = getUserId(accessor, sessionId);
+      for (UUID conversationId : dmSubscriptions.values()) {
+        conversationSubscriptionRegistry.leave(userId, conversationId);
+        log.info("[WebsocketEventListener] Disconnect - DM 구독 해제: userId={}, conversationId={}", userId, conversationId);
+      }
+    }
+
+    UUID watchingSessionId = attrs != null ? (UUID) attrs.get("watchingSessionId") : null;
+    UUID contentId = attrs != null ? (UUID) attrs.get("watchingContentId") : null;
 
     log.info("[WebsocketEventListener] SessionDisconnectEvent 시작 - sessionId: {}, watchingSessionId: {}, contentId: {}",
         sessionId, watchingSessionId, contentId);
@@ -152,6 +203,16 @@ public class WebSocketEventListener {
 
     log.info("[WebsocketEventListener] getUser 완료 - userId: {}", userId);
     return userId;
+  }
+
+  private UUID parseConversationId(String destination) {
+    // /sub/conversations/{conversationId}/direct-messages
+    try {
+      String[] parts = destination.split("/");
+      return UUID.fromString(parts[3]);
+    } catch (Exception e) {
+      throw new IllegalArgumentException("conversationId 파싱 오류: " + destination, e);
+    }
   }
 
   private String getContentId(String destination) {

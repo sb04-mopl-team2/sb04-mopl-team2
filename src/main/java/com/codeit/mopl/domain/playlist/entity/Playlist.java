@@ -6,7 +6,6 @@ import com.codeit.mopl.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,8 +39,8 @@ public class Playlist extends UpdatableEntity {
     @Column(name = "subscriber_count", nullable = false)
     private long subscriberCount;
 
-    @Column(name = "subscribed_by_me", nullable = false)
-    private boolean subscribedByMe;
+//    @Column(name = "subscribed_by_me", nullable = false)
+//    private boolean subscribedByMe;
 
     public void update(String title, String description) {
         this.title = title;
@@ -56,10 +55,6 @@ public class Playlist extends UpdatableEntity {
         if (this.subscriberCount > 0) {
             this.subscriberCount--;
         }
-    }
-
-    public boolean isSubscribedByMe() {
-        return subscribedByMe;
     }
 
     public void  addPlaylistItem(PlaylistItem playlistItem) {

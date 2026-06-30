@@ -3,6 +3,7 @@ package com.codeit.mopl.domain.playlist.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -11,6 +12,7 @@ import com.codeit.mopl.domain.base.BaseEntity;
 import com.codeit.mopl.domain.base.SortBy;
 import com.codeit.mopl.domain.base.SortDirection;
 import com.codeit.mopl.domain.playlist.dto.CursorResponsePlaylistDto;
+import com.codeit.mopl.domain.playlist.dto.PlaylistCachedDto;
 import com.codeit.mopl.domain.playlist.dto.PlaylistCreateRequest;
 import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
 import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
@@ -75,20 +77,19 @@ public class PlaylistServiceTest {
                     .title("test title")
                     .description("test description")
                     .subscriberCount(10)
-                    .subscribedByMe(false)
                     .build();
 
             UserSummary summary = new UserSummary(ownerId, "test", "test");
-            PlaylistDto dto =
-                    new PlaylistDto(UUID.randomUUID(), summary, "test title","test description", null,10,false,null);
+            PlaylistCachedDto cachedDto = new PlaylistCachedDto(null, summary, "test title", "test description", null, 10, null);
+            PlaylistDto dto = new PlaylistDto(UUID.randomUUID(), summary, "test title", "test description", null, 10, false, null);
 
             given(userRepository.findById(ownerId)).willReturn(Optional.of(user));
-            given(playlistRepository.save(any(Playlist.class)))
-                    .willReturn(saved);
-            given(playlistMapper.toPlaylistDto(saved)).willReturn(dto);
+            given(playlistRepository.save(any(Playlist.class))).willReturn(saved);
+            given(playlistMapper.toCachedDto(saved)).willReturn(cachedDto);
+            given(playlistMapper.toPlaylistDto(cachedDto, false)).willReturn(dto);
 
             //when
-            PlaylistDto result =  playlistService.createPlaylist(ownerId, request);
+            PlaylistDto result = playlistService.createPlaylist(ownerId, request);
 
             //then
             verify(userRepository).findById(ownerId);
@@ -137,18 +138,23 @@ public class PlaylistServiceTest {
             UUID playlistId = UUID.randomUUID();
             UUID ownerId = UUID.randomUUID();
             UserSummary userSummary = new UserSummary(ownerId, "test", "test");
-            Playlist playlist = Playlist.builder().title("테스트").subscribedByMe(true).build();
+            Playlist playlist = Playlist.builder().title("테스트").build();
             setId(playlist, playlistId);
+
+            PlaylistCachedDto cachedDto = new PlaylistCachedDto(playlistId, userSummary, "테스트", "테스트 설명", null, 0, null);
 
             given(playlistRepository.findAllByCond(any(PlaylistSearchCond.class)))
                     .willReturn(Arrays.asList(playlist));
             given(subscriptionRepository.existsBySubscriberIdAndPlaylistId(loginUserId, playlistId))
                     .willReturn(true);
-            given(playlistMapper.toPlaylistDto(playlist)).willReturn(new PlaylistDto(playlistId, userSummary, "테스트","테스트 설명", null, 0, false,null));
+            given(playlistMapper.toCachedDto(playlist)).willReturn(cachedDto);
+            given(playlistMapper.toPlaylistDto(cachedDto, true))
+                    .willReturn(new PlaylistDto(playlistId, userSummary, "테스트", "테스트 설명", null, 0, false, null));
             given(playlistRepository.countAllByCond(any(PlaylistSearchCond.class)))
                     .willReturn(1L);
+
             // when
-            CursorResponsePlaylistDto result = playlistService.getAllPlaylists(loginUserId,cond);
+            CursorResponsePlaylistDto result = playlistService.getAllPlaylists(loginUserId, cond);
 
             //then
             assertThat(result.totalCount()).isEqualTo(1);
@@ -159,7 +165,7 @@ public class PlaylistServiceTest {
 
         @Test
         @DisplayName("해당 키워드가 제목 또는 설명에 포함된 플레이리스트만 조회함")
-        void shouldReturnPlaylistsByKeyword(){
+        void shouldReturnPlaylistsByKeyword() {
             //given
             PlaylistSearchCond cond = new PlaylistSearchCond();
             cond.setKeywordLike("키워드");
@@ -169,32 +175,34 @@ public class PlaylistServiceTest {
             cond.setLimit(10);
             cond.setSortDirection(SortDirection.DESCENDING);
             cond.setSortBy(SortBy.UPDATED_AT);
-            UUID playlist1_Id = UUID.randomUUID();
-            UUID playlist2_Id = UUID.randomUUID();
+            UUID playlist1Id = UUID.randomUUID();
+            UUID playlist2Id = UUID.randomUUID();
             UUID loginUserId = UUID.randomUUID();
             UUID ownerId = UUID.randomUUID();
-            User owner= new User();
+            User owner = new User();
             UserSummary userSummary = new UserSummary(ownerId, "test", "test");
-            Playlist playlist1 = Playlist.builder().user(owner).title("키워드 포함 제목1").description("테스트 설명1").subscribedByMe(true).build();
-            setId(playlist1, playlist1_Id);
-            Playlist playlist2 = Playlist.builder().user(owner).title("키워드 포함 제목2").description("테스트 설명2").subscribedByMe(false).build();
-            setId(playlist2, playlist2_Id);
+            Playlist playlist1 = Playlist.builder().user(owner).title("키워드 포함 제목1").description("테스트 설명1").build();
+            setId(playlist1, playlist1Id);
+            Playlist playlist2 = Playlist.builder().user(owner).title("키워드 포함 제목2").description("테스트 설명2").build();
+            setId(playlist2, playlist2Id);
             List<Playlist> playlists = Arrays.asList(playlist1, playlist2);
-            given(playlistRepository.findAllByCond(any(PlaylistSearchCond.class)))
-                    .willReturn(playlists);
 
-            given(subscriptionRepository.existsBySubscriberIdAndPlaylistId(loginUserId, playlist1_Id))
-                    .willReturn(true);
-            given(subscriptionRepository.existsBySubscriberIdAndPlaylistId(loginUserId, playlist2_Id))
-                    .willReturn(false);
-            given(playlistMapper.toPlaylistDto(playlist1))
-                    .willReturn(new PlaylistDto(playlist1_Id, userSummary, "키워드 포함 제목1", "테스트 설명1", null, 0, false,null));
-            given(playlistMapper.toPlaylistDto(playlist2))
-                    .willReturn(new PlaylistDto(playlist2_Id, userSummary, "키워드 포함 제목2", "테스트 설명2", null, 0, false,null));
-            given(playlistRepository.countAllByCond(any(PlaylistSearchCond.class)))
-                    .willReturn(2L);
+            PlaylistCachedDto cachedDto1 = new PlaylistCachedDto(playlist1Id, userSummary, "키워드 포함 제목1", "테스트 설명1", null, 0, null);
+            PlaylistCachedDto cachedDto2 = new PlaylistCachedDto(playlist2Id, userSummary, "키워드 포함 제목2", "테스트 설명2", null, 0, null);
+
+            given(playlistRepository.findAllByCond(any(PlaylistSearchCond.class))).willReturn(playlists);
+            given(subscriptionRepository.existsBySubscriberIdAndPlaylistId(loginUserId, playlist1Id)).willReturn(true);
+            given(subscriptionRepository.existsBySubscriberIdAndPlaylistId(loginUserId, playlist2Id)).willReturn(false);
+            given(playlistMapper.toCachedDto(playlist1)).willReturn(cachedDto1);
+            given(playlistMapper.toCachedDto(playlist2)).willReturn(cachedDto2);
+            given(playlistMapper.toPlaylistDto(cachedDto1, true))
+                    .willReturn(new PlaylistDto(playlist1Id, userSummary, "키워드 포함 제목1", "테스트 설명1", null, 0, false, null));
+            given(playlistMapper.toPlaylistDto(cachedDto2, false))
+                    .willReturn(new PlaylistDto(playlist2Id, userSummary, "키워드 포함 제목2", "테스트 설명2", null, 0, false, null));
+            given(playlistRepository.countAllByCond(any(PlaylistSearchCond.class))).willReturn(2L);
+
             //when
-            CursorResponsePlaylistDto result = playlistService.getAllPlaylists(loginUserId,cond);
+            CursorResponsePlaylistDto result = playlistService.getAllPlaylists(loginUserId, cond);
 
             //then
             assertThat(result.totalCount()).isEqualTo(2);
@@ -220,7 +228,7 @@ public class PlaylistServiceTest {
             given(playlistRepository.findAllByCond(cond)).willReturn(Collections.emptyList());
 
             //when
-            CursorResponsePlaylistDto result = playlistService.getAllPlaylists(loginUserId,cond);
+            CursorResponsePlaylistDto result = playlistService.getAllPlaylists(loginUserId, cond);
 
             //then
             assertThat(result.totalCount()).isEqualTo(0);
@@ -238,24 +246,20 @@ public class PlaylistServiceTest {
             Playlist playlist = Playlist.builder()
                     .title("테스트 제목")
                     .description("테스트 설명")
-                    .subscribedByMe(false)
                     .build();
 
             PlaylistDto dto = new PlaylistDto(
-                    playlistId,
-                    userSummary,
-                    "테스트 제목",
-                    "테스트 설명",
-                    null,
-                    2,
-                    true,
-                    null);
+                    playlistId, userSummary, "테스트 제목", "테스트 설명", null, 2, true, null);
+            PlaylistCachedDto cachedDto = new PlaylistCachedDto(
+                    playlistId, userSummary, "테스트 제목", "테스트 설명", null, 2, null);
+
             given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
             given(subscriptionRepository.existsBySubscriberIdAndPlaylistId(loginUserId, playlistId)).willReturn(false);
-            given(playlistMapper.toPlaylistDto(playlist)).willReturn(dto);
+            given(playlistMapper.toCachedDto(playlist)).willReturn(cachedDto);
+            given(playlistMapper.toPlaylistDto(cachedDto, false)).willReturn(dto);
 
             //when
-            PlaylistDto result = playlistService.getPlaylist(loginUserId,playlistId);
+            PlaylistDto result = playlistService.getPlaylist(loginUserId, playlistId);
 
             //then
             assertThat(result.title()).isEqualTo("테스트 제목");
@@ -271,9 +275,8 @@ public class PlaylistServiceTest {
 
             given(playlistRepository.findById(nonExistentPlaylistId)).willReturn(Optional.empty());
             //when & then
-            assertThrows(PlaylistNotFoundException.class, () -> {
-                playlistService.getPlaylist(loginUserId,nonExistentPlaylistId);
-            });
+            assertThrows(PlaylistNotFoundException.class, () ->
+                    playlistService.getPlaylist(loginUserId, nonExistentPlaylistId));
         }
 
         @Test
@@ -288,23 +291,19 @@ public class PlaylistServiceTest {
                     .title("테스트 제목")
                     .description("테스트 설명")
                     .playlistItems(Collections.emptyList())
-                    .subscribedByMe(true)
                     .build();
             PlaylistDto dto = new PlaylistDto(
-                    playlistId,
-                    userSummary,
-                    "테스트 제목",
-                    "테스트 설명",
-                    null,
-                    0,
-                    true,
-                    Collections.emptyList());
+                    playlistId, userSummary, "테스트 제목", "테스트 설명", null, 0, true, Collections.emptyList());
+            PlaylistCachedDto cachedDto = new PlaylistCachedDto(
+                    playlistId, userSummary, "테스트 제목", "테스트 설명", null, 0, Collections.emptyList());
+
             given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
             given(subscriptionRepository.existsBySubscriberIdAndPlaylistId(loginUserId, playlistId)).willReturn(true);
-            given(playlistMapper.toPlaylistDto(playlist)).willReturn(dto);
+            given(playlistMapper.toCachedDto(playlist)).willReturn(cachedDto);
+            given(playlistMapper.toPlaylistDto(cachedDto, true)).willReturn(dto);
 
             //when
-            PlaylistDto result = playlistService.getPlaylist(loginUserId,playlistId);
+            PlaylistDto result = playlistService.getPlaylist(loginUserId, playlistId);
 
             //then
             assertThat(result.contents()).isEmpty();
@@ -331,26 +330,21 @@ public class PlaylistServiceTest {
                     .playlistItems(Collections.emptyList())
                     .build();
 
-            PlaylistUpdateRequest request = new PlaylistUpdateRequest(
-                    "테스트 제목 수정",
-                    "테스트 설명 수정"
-            );
+            PlaylistUpdateRequest request = new PlaylistUpdateRequest("테스트 제목 수정", "테스트 설명 수정");
             given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
+
             UserSummary summary = new UserSummary(UUID.randomUUID(), "test", "test");
             PlaylistDto updatedDto = new PlaylistDto(
-                    playlistId,
-                    summary,
-                    "테스트 제목 수정",
-                    "테스트 설명 수정",
-                    null,
-                    0,
-                    true,
-                    Collections.emptyList()
-            );
-            given(playlistMapper.toPlaylistDto(playlist)).willReturn(updatedDto);
+                    playlistId, summary, "테스트 제목 수정", "테스트 설명 수정", null, 0, true, Collections.emptyList());
+            PlaylistCachedDto cachedDto = new PlaylistCachedDto(
+                    playlistId, summary, "테스트 제목 수정", "테스트 설명 수정", null, 0, Collections.emptyList());
+
+            given(playlistMapper.toCachedDto(playlist)).willReturn(cachedDto);
+            given(playlistMapper.toPlaylistDto(cachedDto, false)).willReturn(updatedDto);
 
             //when
-            PlaylistDto result = playlistService.updatePlaylist(ownerId,playlistId,request);
+            PlaylistDto result = playlistService.updatePlaylist(ownerId, playlistId, request);
+
             //then
             assertThat(result.title()).isEqualTo("테스트 제목 수정");
             assertThat(result.description()).isEqualTo("테스트 설명 수정");
@@ -368,25 +362,21 @@ public class PlaylistServiceTest {
             User owner = new User();
             setId(owner, ownerId);
 
-            User requester = new User();
-            setId(requester, requestUserId);
-
             Playlist playlist = Playlist.builder()
                     .title("테스트 제목")
                     .description("테스트 설명")
                     .user(owner)
                     .playlistItems(Collections.emptyList())
                     .build();
-            PlaylistUpdateRequest request = new PlaylistUpdateRequest(
-                    "테스트 제목 수정",
-                    "테스트 설명 수정"
-            );
-            given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
-            //when & then
-            assertThrows(PlaylistUpdateForbiddenException.class, () -> playlistService.updatePlaylist(requestUserId,playlistId,request) );
-            verify(playlistRepository).findById(playlistId);
-            verify(playlistMapper, never()).toPlaylistDto(any());
+            PlaylistUpdateRequest request = new PlaylistUpdateRequest("테스트 제목 수정", "테스트 설명 수정");
 
+            given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
+
+            //when & then
+            assertThrows(PlaylistUpdateForbiddenException.class,
+                    () -> playlistService.updatePlaylist(requestUserId, playlistId, request));
+            verify(playlistRepository).findById(playlistId);
+            verify(playlistMapper, never()).toPlaylistDto(any(PlaylistCachedDto.class), anyBoolean());
         }
     }
 
@@ -412,7 +402,8 @@ public class PlaylistServiceTest {
             given(playlistRepository.findById(playlistId)).willReturn(Optional.ofNullable(playlist));
 
             //when
-            playlistService.deletePlaylist(playlistId,ownerId);
+            playlistService.deletePlaylist(playlistId, ownerId);
+
             //then
             verify(playlistRepository).findById(playlistId);
             verify(subscriptionRepository).deleteByPlaylistId(playlistId);
@@ -429,8 +420,6 @@ public class PlaylistServiceTest {
             setId(owner, ownerId);
 
             UUID requestUserId = UUID.randomUUID();
-            User requester = new User();
-            setId(requester, requestUserId);
 
             Playlist playlist = Playlist.builder()
                     .title("테스트 제목")
@@ -442,14 +431,14 @@ public class PlaylistServiceTest {
 
             //when & then
             assertThrows(PlaylistUpdateForbiddenException.class,
-                    () -> playlistService.deletePlaylist(playlistId,requestUserId));
+                    () -> playlistService.deletePlaylist(playlistId, requestUserId));
             verify(playlistRepository).findById(playlistId);
-            verify(playlistMapper, never()).toPlaylistDto(any());
+            verify(playlistMapper, never()).toPlaylistDto(any(PlaylistCachedDto.class), anyBoolean());
             verify(playlistRepository, never()).deleteById(playlistId);
         }
     }
 
-    //UpdatableEntity 상속 받 엔티티의 setId()를 가능하게 하는 헬퍼메서드
+    // UpdatableEntity를 상속받은 엔티티의 id 필드를 리플렉션으로 설정하는 헬퍼
     private static void setId(Object target, UUID id) {
         try {
             Field idField = BaseEntity.class.getDeclaredField("id");

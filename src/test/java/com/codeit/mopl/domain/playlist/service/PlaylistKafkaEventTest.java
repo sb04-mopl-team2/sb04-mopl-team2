@@ -81,11 +81,10 @@ class PlaylistKafkaEventTest {
     when(playlistRepository.save(any(Playlist.class)))
         .thenReturn(savedPlaylist);
 
-    // mapper 는 단순히 호출만 되면 되므로 mock 반환
-    PlaylistDto playlistDto = mock(PlaylistDto.class);
-    PlaylistCachedDto cached = playlistMapper.toCachedDto(savedPlaylist);
-    when(playlistMapper.toPlaylistDto(cached, false))
-        .thenReturn(playlistDto);
+    PlaylistCachedDto cachedDto = new PlaylistCachedDto(playlistId, null, request.title(), null, null, 0, null);
+    PlaylistDto playlistDto = new PlaylistDto(playlistId, null, request.title(), null, null, 0, false, null);
+    when(playlistMapper.toCachedDto(savedPlaylist)).thenReturn(cachedDto);
+    when(playlistMapper.toPlaylistDto(cachedDto, false)).thenReturn(playlistDto);
 
     // when
     PlaylistDto result = playlistService.createPlaylist(ownerId, request);

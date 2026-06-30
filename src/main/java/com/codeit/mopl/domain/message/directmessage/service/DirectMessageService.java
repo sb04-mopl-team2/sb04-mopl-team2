@@ -152,16 +152,24 @@ public class DirectMessageService {
                                               UUID conversationId,
                                               DirectMessageSendRequest request
                                               ){
+        if (loginUserId == null) {
+            throw new IllegalStateException("🔥 loginUserId is NULL in saveDirectMessage");
+        }
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> ConversationNotFound.of());
 
         // 채팅방 참여자 일치 여부 검증
         UUID userA= conversation.getUser().getId();
         UUID userB = conversation.getWith().getId();
-
         if (!userA.equals(loginUserId) && !userB.equals(loginUserId)) {
             throw ConversationForbiddenException.withId(loginUserId);
         }
+        log.info(
+                "[DM CHECK] loginUserId={}, userA={}, userB={}",
+                loginUserId,
+                userA,
+                userB
+        );
 
         UUID receiverId = userA.equals(loginUserId) ? userB : userA;
 

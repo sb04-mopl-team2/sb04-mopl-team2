@@ -2,6 +2,7 @@ package com.codeit.mopl.domain.watchingsession.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -16,7 +17,6 @@ import com.codeit.mopl.domain.watchingsession.mapper.WatchingSessionMapper;
 import com.codeit.mopl.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.mopl.event.event.WatchingSessionCreateEvent;
 import com.codeit.mopl.search.document.ContentDocument;
-import com.codeit.mopl.search.repository.ContentOsRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +28,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 @ExtendWith(MockitoExtension.class)
 class WatchingSessionKafkaEventTest {
@@ -48,19 +50,24 @@ class WatchingSessionKafkaEventTest {
   private ApplicationEventPublisher eventPublisher;
 
   @Mock
-  private ContentOsRepository osRepository;
+  private RedisTemplate<String, String> redisTemplate;
+
+  @Mock
+  private ValueOperations<String, String> valueOperations;
 
   private WatchingSessionService watchingSessionService;
 
   @BeforeEach
   void setUp() {
+    lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
     watchingSessionService = new WatchingSessionService(
         watchingSessionRepository,
         watchingSessionMapper,
         contentRepository,
         userRepository,
         eventPublisher,
-        osRepository
+        redisTemplate
     );
   }
 
@@ -79,8 +86,6 @@ class WatchingSessionKafkaEventTest {
     when(content.getTitle()).thenReturn("테스트 콘텐츠");
     when(content.getTags()).thenReturn(List.of());
     ContentDocument contentDocument = mock(ContentDocument.class);
-    when(osRepository.findById(contentId.toString()))
-        .thenReturn(Optional.of(contentDocument));
 
     // user 조회 성공
     User user = mock(User.class);
@@ -115,8 +120,6 @@ class WatchingSessionKafkaEventTest {
 
     assertThat(event.watchingSessionId()).isEqualTo(watchingSessionId);
     assertThat(event.watchingSessionContentTitle()).isEqualTo("테스트 콘텐츠");
-    verify(watchingSessionRepository, times(1)).deleteByUserId(userId);
-    verify(watchingSessionRepository, times(1)).flush();
     verify(watchingSessionRepository, times(1)).save(any(WatchingSession.class));
   }
 }

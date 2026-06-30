@@ -18,7 +18,8 @@ public interface ContentDocumentMapper {
 
   ContentDocument fromDtoToDocument(ContentDto dto);
 
-  ContentDto fromDocumentToDto(ContentDocument doc);
+  @Mapping(target = "watcherCount", source = "watcherCount")
+  ContentDto fromDocumentToDto(ContentDocument doc, Long watcherCount);
 
   default ContentType stringToEnum(String type) {
     if (type == null) return null;

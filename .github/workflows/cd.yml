@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - "main"
+      - "develop"
 
 # Job1: Docker 이미지 빌드, ECR 푸시
 jobs:

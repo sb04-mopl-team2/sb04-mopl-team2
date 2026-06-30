@@ -1,10 +1,6 @@
 package com.codeit.mopl.domain.playlist.service;
 
-import com.codeit.mopl.domain.playlist.dto.CursorResponsePlaylistDto;
-import com.codeit.mopl.domain.playlist.dto.PlaylistCreateRequest;
-import com.codeit.mopl.domain.playlist.dto.PlaylistDto;
-import com.codeit.mopl.domain.playlist.dto.PlaylistSearchCond;
-import com.codeit.mopl.domain.playlist.dto.PlaylistUpdateRequest;
+import com.codeit.mopl.domain.playlist.dto.*;
 import com.codeit.mopl.domain.playlist.entity.Playlist;
 import com.codeit.mopl.domain.playlist.mapper.PlaylistMapper;
 import com.codeit.mopl.domain.playlist.repository.PlaylistRepository;
@@ -21,14 +17,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class PlaylistService {
 
     private final PlaylistRepository playlistRepository;
@@ -37,13 +39,8 @@ public class PlaylistService {
     private final ApplicationEventPublisher eventPublisher;
     private final SubscriptionRepository subscriptionRepository;
 
-    public PlaylistService(UserRepository userRepository, PlaylistRepository playlistRepository, PlaylistMapper playlistMapper, ApplicationEventPublisher eventPublisher, SubscriptionRepository subscriptionRepository) {
-        this.userRepository = userRepository;
-        this.playlistRepository = playlistRepository;
-        this.playlistMapper = playlistMapper;
-        this.eventPublisher = eventPublisher;
-        this.subscriptionRepository = subscriptionRepository;
-    }
+    private static final String PLAYLIST_DERAIL = "playlist:detail";
+
 
     public PlaylistDto createPlaylist(UUID ownerId, PlaylistCreateRequest request) {
         log.info("[플레이리스트] 플레이리스트 생성 시작");
@@ -59,13 +56,13 @@ public class PlaylistService {
             .description(request.description())
             .playlistItems(new ArrayList<>())
             .subscriberCount(0)
-            .subscribedByMe(false)
             .build();
 
         Playlist saved = playlistRepository.save(playlist);
         eventPublisher.publishEvent(new PlayListCreateEvent(saved.getId(), ownerId, saved.getTitle()));
-        log.info("[플레이리스트] 플레이리스트 생성 완료 - 플레이리스트 제목 = {}", saved.getTitle());
-        return playlistMapper.toPlaylistDto(saved);
+        PlaylistCachedDto cached = playlistMapper.toCachedDto(saved);
+        log.info("[플레이리스트] 플레이리스트 생성 완료 - 플레이리스트 제목 = {}", cached.title());
+        return playlistMapper.toPlaylistDto(cached, false);
     }
 
     @Transactional(readOnly = true)
@@ -96,13 +93,15 @@ public class PlaylistService {
         String nextCursor = hasNext ? lastPlaylist.getCreatedAt().toString() : null;
         UUID nextIdAfter = hasNext ? lastPlaylist.getId() : null;
 
-        for (Playlist playlist : resultPlaylists) {
-            boolean subscribed = subscriptionRepository.existsBySubscriberIdAndPlaylistId(loginUserId, playlist.getId());
-            playlist.setSubscribedByMe(subscribed);
-        }
 
         List<PlaylistDto> playlistDtos =
-            resultPlaylists.stream().map(playlistMapper::toPlaylistDto).collect(Collectors.toList());
+            resultPlaylists.stream()
+                    .map(playlist -> {
+                        PlaylistCachedDto cached = playlistMapper.toCachedDto(playlist);
+                        boolean subscribed = subscriptionRepository.existsBySubscriberIdAndPlaylistId(loginUserId, playlist.getId());
+                        return playlistMapper.toPlaylistDto(cached, subscribed);
+                    })
+                    .collect(Collectors.toList());
 
         long totalCount = playlistRepository.countAllByCond(cond.withoutCursor());
         log.info("[플레이리스트] 플레이리스트 목록 조회 완료 - totalCount = {}", totalCount);
@@ -118,21 +117,31 @@ public class PlaylistService {
     }
 
     @Transactional(readOnly = true)
-    public PlaylistDto getPlaylist(UUID loginUserId,UUID playlistId) {
-        log.info("[플레이리스트] 플레이리스트 단건 조회 시작 - playlistId = {}", playlistId);
+    @Cacheable(
+            cacheNames = PLAYLIST_DERAIL,
+            key = "#playlistId"
+    )
+    public PlaylistCachedDto getPlaylistCached(UUID playlistId) {
         Playlist playlist = playlistRepository.findById(playlistId)
-            .orElseThrow(() -> {
-                log.warn("[플레이리스트] 플레이리스트 조회 실패 - 플레이리스트가 존재하지 않음 - playlistId = {}", playlistId);
-                return PlaylistNotFoundException.withId(playlistId);
-            });
-
-        boolean subscribed = subscriptionRepository.existsBySubscriberIdAndPlaylistId(loginUserId, playlistId);
-        playlist.setSubscribedByMe(subscribed);
-
-        log.info("[플레이리스트] 플레이리스트 단건 조회 완료 - playlistId = {}", playlistId);
-        return playlistMapper.toPlaylistDto(playlist);
+                .orElseThrow(()-> {
+                    log.warn("[플레이리스트 캐시] 플레이리스트 조회 실패 - 플레이리스트가 존재하지 않음 - playlistId = {}", playlistId);
+                    return PlaylistNotFoundException.withId(playlistId);
+                });
+        return playlistMapper.toCachedDto(playlist);
     }
 
+    @Transactional(readOnly = true)
+    public PlaylistDto getPlaylist(UUID loginUserId,UUID playlistId) {
+        log.info("[플레이리스트] 플레이리스트 단건 조회 시작 - playlistId = {}", playlistId);
+        PlaylistCachedDto cached = getPlaylistCached(playlistId);
+        boolean subscribed = subscriptionRepository.existsBySubscriberIdAndPlaylistId(loginUserId, playlistId);
+
+        log.info("[플레이리스트] 플레이리스트 단건 조회 완료 - playlistId = {}", playlistId);
+        return playlistMapper.toPlaylistDto(cached, subscribed);
+    }
+
+    @CacheEvict(value = PLAYLIST_DERAIL,
+            key = "#playlistId")
     public PlaylistDto updatePlaylist(UUID requestUserId, UUID playlistId, PlaylistUpdateRequest request) {
         log.info("[플레이리스트] 플레이리스트 정보 수정 시작 - playlistId = {}", playlistId);
 
@@ -147,10 +156,13 @@ public class PlaylistService {
         }
 
         playlist.update(request.title(), request.description());
+        PlaylistCachedDto cached = playlistMapper.toCachedDto(playlist);
         log.info("[플레이리스트] 플레이리스트 정보 수정 완료 - playlistId = {}", playlistId);
-        return playlistMapper.toPlaylistDto(playlist);
+        return playlistMapper.toPlaylistDto(cached, false);
     }
 
+    @CacheEvict(value = PLAYLIST_DERAIL,
+            key = "#playlistId")
     public void deletePlaylist(UUID playlistId, UUID requestUserId) {
         log.info("[플레이리스트] 플레이리스트 삭제 시작 - playlistId = {}", playlistId);
         Playlist playlist = playlistRepository.findById(playlistId)

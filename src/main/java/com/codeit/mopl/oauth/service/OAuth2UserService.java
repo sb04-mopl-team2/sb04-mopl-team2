@@ -1,13 +1,14 @@
 package com.codeit.mopl.oauth.service;
 
+import com.codeit.mopl.domain.user.dto.response.UserDto;
 import com.codeit.mopl.domain.user.entity.Provider;
+import com.codeit.mopl.domain.user.service.UserService;
+import com.codeit.mopl.exception.auth.OAuth2LockedException;
 import com.codeit.mopl.exception.user.NotSupportedSocialLoginException;
 import com.codeit.mopl.exception.user.UserErrorCode;
 import com.codeit.mopl.oauth.userInfo.GoogleUserInfo;
 import com.codeit.mopl.oauth.userInfo.KakaoUserInfo;
 import com.codeit.mopl.oauth.userInfo.OAuth2UserInfo;
-import com.codeit.mopl.domain.user.dto.response.UserDto;
-import com.codeit.mopl.domain.user.service.UserService;
 import com.codeit.mopl.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,9 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         String profileImageUrl = oAuth2UserInfo.getProfileImageUrl();
         Provider provider = oAuth2UserInfo.getProvider();
         UserDto user = userService.findOrCreateOAuth2User(email, name, profileImageUrl,provider);
+        if (user.locked()) {
+            throw new OAuth2LockedException(UserErrorCode.USER_LOCKED, Map.of("email",email));
+        }
         return new CustomUserDetails(user,oAuth2User.getAttributes());
     }
 

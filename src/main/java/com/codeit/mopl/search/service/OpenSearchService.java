@@ -5,6 +5,7 @@ import com.codeit.mopl.domain.content.dto.response.ContentDto;
 import com.codeit.mopl.domain.content.dto.response.CursorResponseContentDto;
 import com.codeit.mopl.domain.content.entity.Content;
 import com.codeit.mopl.domain.base.SortDirection;
+import com.codeit.mopl.domain.watchingsession.service.WatchingSessionService;
 import com.codeit.mopl.exception.content.ContentErrorCode;
 import com.codeit.mopl.exception.content.ContentOsStorageException;
 import com.codeit.mopl.search.converter.ContentDocumentMapper;
@@ -37,6 +38,8 @@ public class OpenSearchService {
   private final OpenSearchClient client;
   private final ContentDocumentMapper contentDocumentMapper;
   private final ContentOsRepository osRepository;
+
+  private final WatchingSessionService watchingSessionService;
 
   public void save(Content content) {
     osRepository.save(contentDocumentMapper.toDocument(content));
@@ -77,8 +80,19 @@ public class OpenSearchService {
     List<Hit<ContentDocument>> hits = res.hits().hits();
     boolean hasNext = hits.size() > request.getLimit();
 
+    List<UUID> contentIds = hits.stream()
+        .map(d -> UUID.fromString(d.id()))
+        .limit(request.getLimit())
+        .toList();
+    Map<UUID, Long> watcherCounts = watchingSessionService.getWatcherCounts(contentIds);
+
     List<ContentDto> data = hits.stream()
-        .map(d -> contentDocumentMapper.fromDocumentToDto(d.source()))
+        .map(d -> {
+          UUID cid = UUID.fromString(d.id());
+          Long watcherCount = watcherCounts.getOrDefault(cid, 0L);
+          return contentDocumentMapper.fromDocumentToDto(d.source(), watcherCount);
+          }
+        )
         .limit(request.getLimit())
         .toList();
 

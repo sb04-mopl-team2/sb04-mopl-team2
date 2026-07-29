@@ -105,6 +105,11 @@ dependencies {
     // 웹소켓 security
     implementation group: 'org.springframework.security', name: 'spring-security-messaging', version: '6.1.1'
 
+    // Testcontainers
+    testImplementation "org.testcontainers:junit-jupiter"
+    testImplementation "org.testcontainers:testcontainers"
+    testImplementation "org.testcontainers:kafka"
+
 }
 
 tasks.named('test') {

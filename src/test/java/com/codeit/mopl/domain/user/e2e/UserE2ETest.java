@@ -14,6 +14,7 @@ import com.codeit.mopl.mail.utils.PasswordUtils;
 import com.codeit.mopl.mail.utils.RedisStoreUtils;
 import com.codeit.mopl.oauth.service.OAuth2UserService;
 import com.codeit.mopl.security.jwt.registry.JwtRegistry;
+import com.codeit.mopl.util.IntegrationTestBase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.internet.MimeMessage;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -48,7 +49,7 @@ import static org.mockito.BDDMockito.willDoNothing;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-public class UserE2ETest {
+public class UserE2ETest extends IntegrationTestBase {
 
     @Autowired
     private TestRestTemplate rest;

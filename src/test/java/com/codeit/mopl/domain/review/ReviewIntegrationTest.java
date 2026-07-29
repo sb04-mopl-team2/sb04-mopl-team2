@@ -25,6 +25,7 @@ import com.codeit.mopl.domain.user.entity.User;
 import com.codeit.mopl.domain.user.mapper.UserMapper;
 import com.codeit.mopl.domain.user.repository.UserRepository;
 import com.codeit.mopl.security.CustomUserDetails;
+import com.codeit.mopl.util.IntegrationTestBase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -44,7 +45,7 @@ import org.springframework.test.web.servlet.ResultActions;
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
-class ReviewIntegrationTest {
+class ReviewIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private MockMvc mockMvc;
@@ -181,7 +182,6 @@ class ReviewIntegrationTest {
                         .param("sortBy", sortBy.name())               // "createdAt"
                         .accept(MediaType.APPLICATION_JSON)
         ).andExpect(status().isBadRequest());
-        ;
 
     }
 

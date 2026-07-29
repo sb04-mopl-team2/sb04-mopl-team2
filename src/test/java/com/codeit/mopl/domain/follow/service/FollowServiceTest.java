@@ -183,15 +183,15 @@ class FollowServiceTest {
 
         ProcessedEvent processedEvent = new ProcessedEvent(followId, EventType.FOLLOWER_INCREASE);
 
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(follow));
-        given(userRepository.findByIdForUpdate(eq(followeeId))).willReturn(Optional.of(followee));
+        given(followRepository.findById(eq(followId))).willReturn(Optional.of(follow));
+        given(userRepository.findById(eq(followeeId))).willReturn(Optional.of(followee));
         given(processedEventRepository.save(any(ProcessedEvent.class))).willReturn(processedEvent);
 
         // when
         followService.processFollowerIncrease(followId, followeeId);
 
         // then
-        verify(userRepository, times(1)).findByIdForUpdate(eq(followeeId));
+        verify(userRepository, times(1)).findById(eq(followeeId));
         assertThat(followee.getFollowerCount()).isEqualTo(1L);
         assertThat(follow.getFollowStatus()).isEqualTo(FollowStatus.CONFIRM);
     }
@@ -217,8 +217,8 @@ class FollowServiceTest {
         followService.processFollowerIncrease(followId, followeeId);
 
         // then
-        verify(followRepository, never()).findByIdForUpdate(eq(followId));
-        verify(userRepository, never()).findByIdForUpdate(eq(followeeId));
+        verify(followRepository, never()).findById(eq(followId));
+        verify(userRepository, never()).findById(eq(followeeId));
 
         assertThat(followee.getFollowerCount()).isEqualTo(1L);
         assertThat(follow.getFollowStatus()).isEqualTo(FollowStatus.CONFIRM);
@@ -236,7 +236,7 @@ class FollowServiceTest {
         given(processedEventRepository.existsByEventIdAndEventType(eq(followId), eq(EventType.FOLLOWER_INCREASE)))
                 .willReturn(false);
 
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.empty());
+        given(followRepository.findById(eq(followId))).willReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> followService.processFollowerIncrease(followId, followeeId))
@@ -255,8 +255,8 @@ class FollowServiceTest {
         given(processedEventRepository.existsByEventIdAndEventType(eq(followId), eq(EventType.FOLLOWER_INCREASE)))
                 .willReturn(false);
 
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(new Follow()));
-        given(userRepository.findByIdForUpdate(eq(followeeId))).willReturn(Optional.empty());
+        given(followRepository.findById(eq(followId))).willReturn(Optional.of(new Follow()));
+        given(userRepository.findById(eq(followeeId))).willReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> followService.processFollowerIncrease(followId, followeeId))
@@ -368,7 +368,7 @@ class FollowServiceTest {
         ReflectionTestUtils.setField(follow, "id", followId);
         follow.setFollowStatus(FollowStatus.CONFIRM);
 
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(follow));
+        given(followRepository.findById(eq(followId))).willReturn(Optional.of(follow));
 
         ArgumentCaptor<FollowerDecreaseEvent> eventCaptor = ArgumentCaptor.forClass(FollowerDecreaseEvent.class);
 
@@ -394,13 +394,13 @@ class FollowServiceTest {
         ReflectionTestUtils.setField(follow, "id", followId);
         follow.setFollowStatus(FollowStatus.CANCELLED);
 
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(follow));
+        given(followRepository.findById(eq(followId))).willReturn(Optional.of(follow));
 
         // when
         followService.deleteFollow(followId, requesterId);
 
         // then
-        verify(followRepository, times(1)).findByIdForUpdate(eq(followId));
+        verify(followRepository, times(1)).findById(eq(followId));
         verify(eventPublisher, never()).publishEvent(any(FollowerDecreaseEvent.class));
     }
 
@@ -410,7 +410,7 @@ class FollowServiceTest {
         // given
         UUID requesterId = UUID.randomUUID();
         UUID followId = UUID.randomUUID();
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.empty());
+        given(followRepository.findById(eq(followId))).willReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> followService.deleteFollow(followId, requesterId))
@@ -429,7 +429,7 @@ class FollowServiceTest {
         ReflectionTestUtils.setField(follow, "id", followId);
         follow.setFollowStatus(FollowStatus.PENDING);
 
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(follow));
+        given(followRepository.findById(eq(followId))).willReturn(Optional.of(follow));
 
         // when & then
         assertThatThrownBy(() -> followService.deleteFollow(followId, requesterId))
@@ -449,7 +449,7 @@ class FollowServiceTest {
         ReflectionTestUtils.setField(follow, "id", followId);
         follow.setFollowStatus(FollowStatus.FAILED);
 
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(follow));
+        given(followRepository.findById(eq(followId))).willReturn(Optional.of(follow));
 
         // when & then
         assertThatThrownBy(() -> followService.deleteFollow(followId, requesterId))
@@ -476,7 +476,7 @@ class FollowServiceTest {
         ReflectionTestUtils.setField(follow, "id", followId);
         follow.setFollowStatus(FollowStatus.CONFIRM);
 
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(follow));
+        given(followRepository.findById(eq(followId))).willReturn(Optional.of(follow));
 
         // when & then
         assertThatThrownBy(() -> followService.deleteFollow(followId, requesterId))
@@ -502,8 +502,8 @@ class FollowServiceTest {
         given(processedEventRepository.existsByEventIdAndEventType(eq(followId), eq(EventType.FOLLOWER_DECREASE)))
                 .willReturn(false);
 
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(follow));
-        given(userRepository.findByIdForUpdate(eq(followeeId))).willReturn(Optional.of(followee));
+        given(followRepository.findById(eq(followId))).willReturn(Optional.of(follow));
+        given(userRepository.findById(eq(followeeId))).willReturn(Optional.of(followee));
 
         // when
         followService.processFollowerDecrease(followId, followeeId);
@@ -535,8 +535,8 @@ class FollowServiceTest {
         followService.processFollowerDecrease(followId, followeeId);
 
         // then
-        verify(followRepository, never()).findByIdForUpdate(eq(followId));
-        verify(userRepository, never()).findByIdForUpdate(eq(followeeId));
+        verify(followRepository, never()).findById(eq(followId));
+        verify(userRepository, never()).findById(eq(followeeId));
 
         assertThat(followee.getFollowerCount()).isEqualTo(1L);
         verify(followRepository, never()).delete(eq(follow));
@@ -554,7 +554,7 @@ class FollowServiceTest {
         given(processedEventRepository.existsByEventIdAndEventType(eq(followId), eq(EventType.FOLLOWER_DECREASE)))
                 .willReturn(false);
 
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.empty());
+        given(followRepository.findById(eq(followId))).willReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> followService.processFollowerDecrease(followId, followeeId))
@@ -576,8 +576,8 @@ class FollowServiceTest {
         given(processedEventRepository.existsByEventIdAndEventType(eq(followId), eq(EventType.FOLLOWER_DECREASE)))
                 .willReturn(false);
 
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(follow));
-        given(userRepository.findByIdForUpdate(eq(followeeId))).willReturn(Optional.empty());
+        given(followRepository.findById(eq(followId))).willReturn(Optional.of(follow));
+        given(userRepository.findById(eq(followeeId))).willReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> followService.processFollowerDecrease(followId, followeeId))
@@ -602,8 +602,8 @@ class FollowServiceTest {
         given(processedEventRepository.existsByEventIdAndEventType(eq(followId), eq(EventType.FOLLOWER_DECREASE)))
                 .willReturn(false);
 
-        given(followRepository.findByIdForUpdate(eq(followId))).willReturn(Optional.of(follow));
-        given(userRepository.findByIdForUpdate(eq(followeeId))).willReturn(Optional.of(followee));
+        given(followRepository.findById(eq(followId))).willReturn(Optional.of(follow));
+        given(userRepository.findById(eq(followeeId))).willReturn(Optional.of(followee));
 
         // when & then
         assertThatThrownBy(() -> followService.processFollowerDecrease(followId, followeeId))
